@@ -8,7 +8,6 @@
       </div>
 
       <div class="text-right text-[10px] uppercase tracking-[0.3em] text-zinc-500">
-        <div>{{ tracks.length }} tracks</div>
         <div>{{ samplesPerTick }} samples per tick</div>
       </div>
     </div>
