@@ -1,5 +1,5 @@
 <template>
-  <div class="flex border-b border-zinc-800 last:border-b-0" @click="dawStore.selectTrack(track.id)">
+  <div class="flex min-w-full w-max border-b border-zinc-800 last:border-b-0" @click="dawStore.selectTrack(track.id)">
     <div
       class="flex shrink-0 flex-col justify-center border-r border-zinc-800 px-4 py-4"
       :class="track.id === selectedTrackId ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-900 text-zinc-300'"
