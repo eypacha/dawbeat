@@ -102,9 +102,9 @@ Basado en:
 
 https://github.com/greggman/html5bytebeat
 
-Editor de fórmulas:
+Biblioteca de fórmulas:
 
-- editor simple
+- biblioteca simple
 - sin Monaco
 - resaltado de sintaxis básico
 
@@ -133,9 +133,9 @@ Luego el motor convierte ese valor en señal de audio reproducible.
 
 # Características planeadas
 
-## Editor de fórmulas
+## Biblioteca de fórmulas
 
-Un editor simple optimizado para fórmulas bytebeat.
+Una biblioteca simple optimizada para fórmulas bytebeat.
 
 Funciones:
 
@@ -204,7 +204,7 @@ compiler.js
 audioWorklet.js
 
 components/
-FormulaEditor.vue
+FormulaLibrary.vue
 Transport.vue
 Oscilloscope.vue
 
@@ -291,7 +291,7 @@ Prioridades actuales:
 
 1. integrar motor bytebeat
 2. implementar pipeline de audio
-3. crear editor de fórmulas
+3. crear biblioteca de fórmulas
 4. reproducción en tiempo real
 5. visualización básica
 

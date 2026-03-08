@@ -166,8 +166,8 @@ components/
 transport/
 TransportBar.vue
 
-editor/
-FormulaEditor.vue
+library/
+FormulaLibrary.vue
 
 timeline/
 Timeline.vue
@@ -275,9 +275,9 @@ El playhead debe ser **reactivo al estado del store**.
 
 ---
 
-# Editor de fórmulas
+# Biblioteca de fórmulas
 
-El editor de fórmulas debe ser simple.
+La biblioteca de fórmulas debe ser simple.
 
 No usar Monaco.
 
@@ -304,11 +304,11 @@ t*(t>>5|t>>8)
 
 ---
 
-# Interacción entre editor y timeline
+# Interacción entre biblioteca y timeline
 
 Cuando se selecciona un clip:
 
-- el editor debe mostrar su fórmula
+- la biblioteca debe mostrar su fórmula
 - editar la fórmula debe modificar el clip seleccionado
 
 Flujo esperado:
@@ -317,7 +317,7 @@ Flujo esperado:
 
 Seleccionar clip
 ↓
-Editor muestra fórmula
+Biblioteca muestra fórmula
 ↓
 Usuario modifica fórmula
 ↓
@@ -357,7 +357,7 @@ Orden recomendado de desarrollo:
 
 1. estructura base del proyecto
 2. store del DAW
-3. editor de fórmulas
+3. biblioteca de fórmulas
 4. timeline base
 5. clips
 6. playhead

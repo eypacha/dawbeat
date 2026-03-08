@@ -151,7 +151,7 @@ Layout inicial:
 +-------------------------------------+
 | TransportBar                        |
 +-------------------+-----------------+
-| FormulaEditor     | Timeline        |
+| FormulaLibrary    | Timeline        |
 |                   |                 |
 |                   |                 |
 +-------------------+-----------------+
@@ -163,7 +163,7 @@ Componentes:
 ```
 
 TransportBar.vue
-FormulaEditor.vue
+FormulaLibrary.vue
 Timeline.vue
 
 ```
@@ -174,9 +174,9 @@ La UI principal visible aunque todavía sin funcionalidad completa.
 
 ---
 
-# Fase 4 — Editor de fórmulas
+# Fase 4 — Biblioteca de fórmulas
 
-Objetivo: crear un editor simple para fórmulas bytebeat.
+Objetivo: crear una biblioteca simple para fórmulas bytebeat.
 
 Características:
 
@@ -189,7 +189,7 @@ Comportamiento:
 
 Si hay un clip seleccionado:
 
-- el editor muestra su fórmula
+- la biblioteca muestra su fórmula
 - editar la fórmula actualiza el clip
 
 Resultado esperado:
