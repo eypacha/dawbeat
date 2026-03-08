@@ -3,6 +3,7 @@ import { BASE_TICK_SIZE } from '@/utils/timeUtils'
 
 export const useDawStore = defineStore('dawStore', {
   state: () => ({
+    audioReady: false,
     playing: false,
     time: 0,
     zoom: 1,
@@ -15,21 +16,21 @@ export const useDawStore = defineStore('dawStore', {
         clips: [
           {
             id: 'clip1',
-            formula: 't>>4',
+            formula: 't & 64 | t >> 4',
             start: 0,
-            duration: 16
+            duration: 4
           },
           {
             id: 'clip2',
-            formula: 't>>4|t>>5',
-            start: 16,
-            duration: 16
+            formula: 't & 32 | t >> 4',
+            start: 4,
+            duration: 4
           },
           {
             id: 'clip2',
             formula: 't>>4',
-            start: 32,
-            duration: 16
+            start: 8,
+            duration: 4
           }
         ]
       },
@@ -39,7 +40,7 @@ export const useDawStore = defineStore('dawStore', {
         clips: [
           {
             id: 'clip3',
-            formula: 't*(t>>8)',
+            formula: 't*(t>>8) & 64 % 128',
             start: 8,
             duration: 20
           }
@@ -51,6 +52,10 @@ export const useDawStore = defineStore('dawStore', {
   }),
 
   actions: {
+    setAudioReady(ready) {
+      this.audioReady = ready
+    },
+
     startPlayback() {
       this.playing = true
     },

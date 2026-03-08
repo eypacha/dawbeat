@@ -19,8 +19,18 @@
 
         <button
           class="border px-3 py-1 transition-colors"
-          :class="playing ? 'border-amber-400/60 bg-amber-400/10 text-amber-200 hover:bg-amber-400/20' : 'border-zinc-800 bg-zinc-950 text-zinc-600'"
+          :class="playing ? 'border-sky-400/60 bg-sky-400/10 text-sky-200 hover:bg-sky-400/20' : 'border-zinc-800 bg-zinc-950 text-zinc-600'"
           :disabled="!playing"
+          type="button"
+          @click="pause"
+        >
+          PAUSE
+        </button>
+
+        <button
+          class="border px-3 py-1 transition-colors"
+          :class="playing ? 'border-amber-400/60 bg-amber-400/10 text-amber-200 hover:bg-amber-400/20' : 'border-zinc-800 bg-zinc-950 text-zinc-600'"
+          :disabled="!playing && time === 0"
           type="button"
           @click="stop"
         >
@@ -41,7 +51,7 @@ import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
 
 const dawStore = useDawStore()
-const { play, stop } = useTransportPlayback()
+const { play, pause, stop } = useTransportPlayback()
 const { playing, sampleRate, time } = storeToRefs(dawStore)
 
 const transportTime = computed(() => `${time.value.toFixed(2)} ticks`)

@@ -7,7 +7,7 @@ import { samplesToTicks } from '@/utils/timeUtils'
 
 export function useTransportPlayback() {
   const dawStore = useDawStore()
-  const { playing, sampleRate, tickSize, tracks } = storeToRefs(dawStore)
+  const { audioReady, playing, sampleRate, tickSize, tracks } = storeToRefs(dawStore)
 
   let frameId = 0
 
@@ -33,20 +33,41 @@ export function useTransportPlayback() {
     }
   }
 
+  const enableAudio = async () => {
+    if (audioReady.value) {
+      return
+    }
+
+    await bytebeatService.init()
+    bytebeatService.setDesiredSampleRate(sampleRate.value)
+
+    const initialFormula = getActiveFormula(0, tracks.value)
+    await bytebeatService.setFormula(initialFormula, true)
+    await bytebeatService.unlock()
+
+    dawStore.setAudioReady(true)
+  }
+
   const play = async () => {
     if (playing.value) {
       return
     }
 
     try {
-      await bytebeatService.init()
+      await enableAudio()
       bytebeatService.setDesiredSampleRate(sampleRate.value)
 
-      const initialFormula = getActiveFormula(0, tracks.value)
-      await bytebeatService.setFormula(initialFormula)
-      await bytebeatService.play()
+      const resumeTime = dawStore.time
+      const resumeFromPause = resumeTime > 0
+      const initialFormula = getActiveFormula(resumeTime, tracks.value)
 
-      dawStore.setTime(0)
+      await bytebeatService.setFormula(initialFormula, !resumeFromPause)
+      await bytebeatService.play({ resetTime: !resumeFromPause })
+
+      if (!resumeFromPause) {
+        dawStore.setTime(0)
+      }
+
       dawStore.startPlayback()
 
       cancelLoop()
@@ -54,6 +75,21 @@ export function useTransportPlayback() {
     } catch (error) {
       dawStore.stopPlayback()
       console.error('No se pudo iniciar la reproduccion bytebeat', error)
+    }
+  }
+
+  const pause = async () => {
+    if (!playing.value) {
+      return
+    }
+
+    cancelLoop()
+    dawStore.stopPlayback()
+
+    try {
+      await bytebeatService.pause()
+    } catch (error) {
+      console.error('No se pudo pausar la reproduccion bytebeat', error)
     }
   }
 
@@ -75,6 +111,8 @@ export function useTransportPlayback() {
 
   return {
     play,
+    enableAudio,
+    pause,
     stop
   }
 }

@@ -84,16 +84,34 @@ const bytebeatService = {
     return initPromise
   },
 
-  async play() {
+  async play({ resetTime = true } = {}) {
     const node = await this.init()
 
-    node.reset()
+    if (resetTime) {
+      node.reset()
+    }
 
     if (audioContext.state === 'suspended') {
       await audioContext.resume()
     }
 
     node.connect(audioContext.destination)
+  },
+
+  async unlock() {
+    await this.init()
+
+    if (audioContext.state === 'suspended') {
+      await audioContext.resume()
+    }
+  },
+
+  async pause() {
+    if (!byteBeatNode) {
+      return
+    }
+
+    byteBeatNode.disconnect()
   },
 
   async stop() {
@@ -104,13 +122,9 @@ const bytebeatService = {
     byteBeatNode.disconnect()
     byteBeatNode.reset()
     currentFormula = null
-
-    if (audioContext.state === 'running') {
-      await audioContext.suspend()
-    }
   },
 
-  async setFormula(formula) {
+  async setFormula(formula, resetToZero = false) {
     const nextFormula = formula ?? SILENT_FORMULA
 
     await this.init()
@@ -124,7 +138,7 @@ const bytebeatService = {
         return
       }
 
-      await byteBeatNode.setExpressions([nextFormula], false)
+      await byteBeatNode.setExpressions([nextFormula], resetToZero)
       currentFormula = nextFormula
     })
 

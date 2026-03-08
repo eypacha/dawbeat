@@ -1,7 +1,7 @@
 export const TIMELINE_SCALE = 72
 export const TRACK_LABEL_WIDTH = 144
 export const DEFAULT_TIMELINE_TICKS = 32
-export const BASE_TICK_SIZE = 256
+export const BASE_TICK_SIZE = 1024
 export const TICK_DURATION_MULTIPLIER = 4
 
 export function getSamplesPerTick(tickSize = BASE_TICK_SIZE) {
