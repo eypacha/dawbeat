@@ -1,0 +1,29 @@
+/node_modules
+# Vite build output
+dist/
+
+# Test coverage
+coverage/
+
+# Log files
+*.log
+yarn-error.log
+npm-debug.log*
+
+# Local env files
+.env.*
+.env
+
+# VS Code settings
+.vscode/
+
+# Package manager locks (ignora el que no uses)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Mac system files
+.DS_Store
+
+# Others
+.idea/

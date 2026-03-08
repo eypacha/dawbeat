@@ -1,0 +1,57 @@
+:root {
+  --p-inputtext-color: var(--color-blue);
+  --p-inputtext-padding-x: 0.5rem;
+  --p-inputtext-padding-y: 0.5rem;
+
+  --p-textarea-color: var(--color-blue);
+  --p-textarea-padding-x: 0.5rem;
+  --p-textarea-padding-y: 0.5rem;
+
+  --p-floatlabel-font-weight: 400;
+  --p-floatlabel-position-x: 0.5rem;
+  --p-floatlabel-position-y: 0.85rem;
+  --p-floatlabel-transition-duration: .2s;
+  --p-floatlabel-over-active-top: -1rem;
+  --p-floatlabel-active-font-size: 0.75rem;
+
+  --p-button-padding-x: 1rem;
+  --p-button-padding-y: 0.25rem;
+  --p-button-border-radius: 10rem;
+  --p-button-label-font-weight: 700;
+
+  --p-button-lg-font-size: 2rem;
+  --p-button-lg-padding-x: 1rem;
+  --p-button-lg-padding-y: 0rem;
+
+  --p-button-primary-color: var(--color-gray);
+  --p-button-primary-background: var(--color-lila);
+  --p-button-primary-border-color: var(--color-orange);
+  --p-button-primary-hover-color: var(--color-gray);
+  --p-button-primary-hover-background: var(--color-lila);
+  --p-button-primary-hover-border-color: var(--color-orange);
+  --p-button-primary-active-color: var(--color-gray);
+  --p-button-primary-active-background: var(--color-lila);
+  --p-button-primary-active-border-color: var(--color-orange);
+
+  --p-drawer-background: var(--color-blue);
+}
+
+.p-inputtext {
+  border-bottom: solid 2px var(--color-blue) !important;
+  width: 100%;
+}
+
+.p-textarea {
+  border-bottom: solid 2px var(--color-blue) !important;
+  width: 100%;
+  resize: none;
+}
+
+.p-button {
+  box-shadow: 0 0 0 0 var(--color-orange) !important;
+  transition: box-shadow .2s ease-in-out !important;
+}
+
+.p-button:hover {
+  box-shadow: -.25rem .25rem 0 0 var(--color-orange) !important;
+}

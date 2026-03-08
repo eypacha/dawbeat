@@ -1,0 +1,24 @@
+{
+  "app": {
+    "title": "Aplicación de Ejemplo",
+    "description": "Esta es una aplicación de ejemplo para demostrar la internacionalización.",
+    "welcome": "Bienvenido a nuestra aplicación"
+  },
+  "footer": {
+    "rights": "Todos los derechos reservados."
+  },
+  "sections": {
+    "section1": {
+      "title": "Sección 1",
+      "description": "Esta es la descripción de la Sección 1."
+    },
+    "section2": {
+      "title": "Sección 2",
+      "description": "Esta es la descripción de la Sección 2."
+    },
+    "section3": {
+      "title": "Sección 3",
+      "description": "Esta es la descripción de la Sección 3."
+    }
+  }
+}

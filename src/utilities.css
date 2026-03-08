@@ -1,0 +1,66 @@
+.semibold {
+  font-weight: 500;
+}
+
+.text-lustria {
+  font-family: 'Lustria', serif !important;
+}
+
+.hover\:text-lustria:hover {
+  font-family: 'Lustria', serif !important;
+}
+
+.text-blue {
+  color: var(--color-blue) !important;
+}
+
+.text-lila {
+  color: var(--color-lila) !important;
+}
+
+.text-gray {
+  color: var(--color-gray) !important;
+}
+
+.text-orange {
+  color: var(--color-orange) !important;
+}
+
+.bg-blue {
+  background-color: var(--color-blue) !important
+}
+
+.bg-lila {
+  background-color: var(--color-lila) !important;
+}
+
+.bg-gray {
+  background-color: var(--color-gray) !important;
+}
+
+.bg-orange {
+  background-color: var(--color-orange) !important;
+}
+
+.border-blue {
+  border-color: var(--color-blue) !important;
+}
+
+.border-lila {
+  border-color: var(--color-lila) !important;
+}
+
+.border-gray {
+  border-color: var(--color-gray) !important;
+}
+
+.waves {
+  background-image: url('/images/waves.png');
+  background-repeat: repeat-x;
+  animation: move-bg 5000s linear infinite;
+}
+
+@keyframes move-bg {
+  0% { background-position-x: 0; }
+  100% { background-position-x: 200000px; }
+}
