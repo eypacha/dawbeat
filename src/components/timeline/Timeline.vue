@@ -12,7 +12,10 @@
       </div>
     </div>
 
-    <div class="flex-1 overflow-auto border border-zinc-800 bg-zinc-950/80">
+    <div
+      ref="scrollContainer"
+      class="flex-1 overflow-auto border border-zinc-800 bg-zinc-950/80"
+    >
       <div class="sticky top-0 z-20 flex min-w-full w-max border-b border-zinc-800 bg-zinc-900/95">
         <div
           class="flex shrink-0 items-center border-r border-zinc-800 px-4 text-[10px] uppercase tracking-[0.3em] text-zinc-500"
@@ -52,7 +55,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import Playhead from '@/components/timeline/Playhead.vue'
 import TimelineTrack from '@/components/timeline/TimelineTrack.vue'
@@ -65,8 +68,11 @@ import {
   ticksToPixels
 } from '@/utils/timeUtils'
 
+const AUTO_SCROLL_PADDING = 96
+
 const dawStore = useDawStore()
-const { tickSize, time, tracks } = storeToRefs(dawStore)
+const { playing, tickSize, time, tracks } = storeToRefs(dawStore)
+const scrollContainer = ref(null)
 
 const timelineTicks = computed(() => {
   const maxClipEnd = tracks.value.reduce((largestEnd, track) => {
@@ -83,4 +89,27 @@ const timelineTicks = computed(() => {
 const samplesPerTick = computed(() => getSamplesPerTick(tickSize.value))
 const rulerMarks = computed(() => Array.from({ length: timelineTicks.value }, (_, index) => index))
 const timelineWidthStyle = computed(() => `${ticksToPixels(timelineTicks.value)}px`)
+
+watch(time, (nextTime) => {
+  if (!scrollContainer.value) {
+    return
+  }
+
+  if (!playing.value && nextTime === 0) {
+    scrollContainer.value.scrollLeft = 0
+    return
+  }
+
+  if (!playing.value) {
+    return
+  }
+
+  const playheadOffset = TRACK_LABEL_WIDTH + ticksToPixels(nextTime)
+  const viewportLeft = scrollContainer.value.scrollLeft
+  const viewportRight = viewportLeft + scrollContainer.value.clientWidth
+
+  if (playheadOffset > viewportRight - AUTO_SCROLL_PADDING) {
+    scrollContainer.value.scrollLeft = playheadOffset - scrollContainer.value.clientWidth + AUTO_SCROLL_PADDING
+  }
+})
 </script>
