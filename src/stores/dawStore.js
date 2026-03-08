@@ -13,6 +13,7 @@ function createClipId() {
 export const useDawStore = defineStore('dawStore', {
   state: () => ({
     audioReady: false,
+    editingClipId: null,
     playing: false,
     time: 0,
     zoom: 1,
@@ -103,6 +104,22 @@ export const useDawStore = defineStore('dawStore', {
       track.clips.sort((leftClip, rightClip) => leftClip.start - rightClip.start)
     },
 
+    updateClip(trackId, clipId, updates) {
+      const track = this.tracks.find((entry) => entry.id === trackId)
+
+      if (!track) {
+        return
+      }
+
+      const clip = track.clips.find((entry) => entry.id === clipId)
+
+      if (!clip) {
+        return
+      }
+
+      Object.assign(clip, updates)
+    },
+
     moveClip(trackId, clipId, nextStart) {
       const track = this.tracks.find((entry) => entry.id === trackId)
 
@@ -169,9 +186,14 @@ export const useDawStore = defineStore('dawStore', {
         }
 
         track.clips.splice(clipIndex, 1)
+        this.editingClipId = null
         this.selectedClipId = null
         return
       }
+    },
+
+    setEditingClip(clipId) {
+      this.editingClipId = clipId
     },
 
     selectClip(clipId) {

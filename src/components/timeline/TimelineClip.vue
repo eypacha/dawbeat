@@ -1,34 +1,47 @@
 <template>
-  <button
-    class="absolute top-3 bottom-3 box-border overflow-hidden border border-blue-400/70 bg-blue-500/80 px-2 py-1 text-left text-xs text-blue-50 transition-colors"
+  <div
+    class="absolute top-3 bottom-3 box-border overflow-hidden border border-blue-400/70 px-2 py-1 text-left text-xs text-blue-50 transition-colors"
     :class="buttonClassName"
     :style="clipStyle"
     :title="clipTitle"
     data-timeline-clip="true"
-    type="button"
     @click.stop="handleSelect"
+    @dblclick.stop="handleEditStart"
     @pointerdown.stop="handlePointerDown"
   >
     <span
+      v-if="isSelected && !isEditing"
       class="absolute inset-y-0 left-0 w-2 cursor-ew-resize border-r border-blue-200/30 bg-blue-100/10"
       data-timeline-resize-handle="true"
       @pointerdown.stop="handleResizeStartPointerDown"
     />
     <span
+      v-if="isSelected && !isEditing"
       class="absolute inset-y-0 right-0 w-2 cursor-ew-resize border-l border-blue-200/30 bg-blue-100/10"
       data-timeline-resize-handle="true"
       @pointerdown.stop="handleResizeEndPointerDown"
     />
 
-    <span class="block truncate font-medium">{{ clip.formula }}</span>
-    <span class="mt-1 block text-[10px] uppercase tracking-[0.18em] opacity-70">
+    <input
+      v-if="isEditing"
+      ref="formulaInput"
+      v-model="draftFormula"
+      class="h-full w-full border border-blue-200/30 bg-zinc-950/70 px-2 text-xs text-blue-50 outline-none"
+      type="text"
+      @blur="saveFormula"
+      @keydown.enter.prevent="saveFormula"
+      @keydown.esc.prevent="cancelEdit"
+    />
+
+    <span v-else class="block truncate font-medium">{{ clip.formula }}</span>
+    <span v-if="!isEditing" class="mt-1 block text-[10px] uppercase tracking-[0.18em] opacity-70">
       {{ clip.duration }} ticks
     </span>
-  </button>
+  </div>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useDawStore } from '@/stores/dawStore'
 import { TIMELINE_SCALE, ticksToPixels, ticksToSamples } from '@/utils/timeUtils'
@@ -45,9 +58,11 @@ const props = defineProps({
 })
 
 const dawStore = useDawStore()
-const { selectedClipId, tickSize } = storeToRefs(dawStore)
+const { editingClipId, selectedClipId, tickSize } = storeToRefs(dawStore)
 const isDragging = ref(false)
 const resizeMode = ref(null)
+const draftFormula = ref(props.clip.formula)
+const formulaInput = ref(null)
 
 let dragStartX = 0
 let dragStartTick = 0
@@ -59,18 +74,25 @@ const clipStyle = computed(() => ({
   width: `${Math.max(ticksToPixels(props.clip.duration), 56)}px`
 }))
 
+const isEditing = computed(() => editingClipId.value === props.clip.id)
+const isSelected = computed(() => selectedClipId.value === props.clip.id)
+
 const buttonClassName = computed(() => {
+  if (isEditing.value) {
+    return 'bg-blue-400/90 text-blue-50 ring-2 ring-indigo-300'
+  }
+
   if (isDragging.value) {
-    return 'cursor-grabbing bg-blue-300 text-zinc-950'
+    return 'cursor-grabbing bg-blue-300 text-blue-50'
   }
 
   if (resizeMode.value) {
-    return 'bg-blue-300 text-zinc-950'
+    return 'bg-blue-300 text-blue-50'
   }
 
-  return props.clip.id === selectedClipId.value
-    ? 'cursor-grab bg-blue-400 text-zinc-950'
-    : 'cursor-grab hover:bg-blue-400/90'
+  return isSelected.value
+    ? 'cursor-grab bg-blue-400/90 text-blue-50 ring-2 ring-indigo-300'
+    : 'cursor-grab bg-blue-500/80 hover:bg-blue-400/90'
 })
 
 const clipTitle = computed(() => {
@@ -83,6 +105,11 @@ const clipTitle = computed(() => {
 function handleSelect() {
   dawStore.selectTrack(props.trackId)
   dawStore.selectClip(props.clip.id)
+}
+
+function handleEditStart() {
+  handleSelect()
+  dawStore.setEditingClip(props.clip.id)
 }
 
 function handlePointerDown(event) {
@@ -113,7 +140,7 @@ function handleResizeEndPointerDown(event) {
 }
 
 function startInteraction(event) {
-  if (event.button !== 0) {
+  if (event.button !== 0 || editingClipId.value) {
     return false
   }
 
@@ -160,6 +187,39 @@ function handlePointerUp() {
   window.removeEventListener('pointerup', handlePointerUp)
   window.removeEventListener('pointercancel', handlePointerUp)
 }
+
+function saveFormula() {
+  if (!isEditing.value) {
+    return
+  }
+
+  dawStore.updateClip(props.trackId, props.clip.id, { formula: draftFormula.value })
+  dawStore.setEditingClip(null)
+}
+
+function cancelEdit() {
+  if (!isEditing.value) {
+    return
+  }
+
+  draftFormula.value = props.clip.formula
+  dawStore.setEditingClip(null)
+}
+
+watch(
+  isEditing,
+  async (editing) => {
+    if (!editing) {
+      draftFormula.value = props.clip.formula
+      return
+    }
+
+    draftFormula.value = props.clip.formula
+    await nextTick()
+    formulaInput.value?.focus()
+    formulaInput.value?.select()
+  }
+)
 
 onBeforeUnmount(() => {
   handlePointerUp()

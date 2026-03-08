@@ -25,7 +25,7 @@ import { useDawStore } from '@/stores/dawStore'
 
 const dawStore = useDawStore()
 const { enableAudio } = useTransportPlayback()
-const { audioReady, selectedClipId } = storeToRefs(dawStore)
+const { audioReady, editingClipId, selectedClipId } = storeToRefs(dawStore)
 
 async function handleStart() {
   await enableAudio()
@@ -37,6 +37,10 @@ function handleKeydown(event) {
   }
 
   if (!selectedClipId.value) {
+    return
+  }
+
+  if (editingClipId.value) {
     return
   }
 
