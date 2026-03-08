@@ -1,11 +1,17 @@
 export function getActiveFormula(timeTicks, tracks) {
+  const activeFormulas = []
+
   for (const track of tracks) {
     for (const clip of track.clips) {
       if (timeTicks >= clip.start && timeTicks < clip.start + clip.duration) {
-        return clip.formula
+        activeFormulas.push(`(${clip.formula})`)
       }
     }
   }
 
-  return null
+  if (!activeFormulas.length) {
+    return null
+  }
+
+  return activeFormulas.join(' | ')
 }
