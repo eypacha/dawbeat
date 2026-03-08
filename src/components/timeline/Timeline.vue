@@ -77,7 +77,7 @@ const timelineTicks = computed(() => {
     return Math.max(largestEnd, trackEnd)
   }, 0)
 
-  return Math.max(DEFAULT_TIMELINE_TICKS, maxClipEnd + 1)
+  return Math.max(DEFAULT_TIMELINE_TICKS, Math.ceil(maxClipEnd + 1))
 })
 
 const samplesPerTick = computed(() => getSamplesPerTick(tickSize.value))

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { clampClipStart } from '@/services/timelineService'
-import { BASE_TICK_SIZE } from '@/utils/timeUtils'
+import { BASE_TICK_SIZE, snapTicks } from '@/utils/timeUtils'
 
 export const useDawStore = defineStore('dawStore', {
   state: () => ({
@@ -102,7 +102,8 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      clip.start = clampClipStart(track, clipId, Math.max(0, nextStart))
+      const snappedStart = snapTicks(Math.max(0, nextStart))
+      clip.start = clampClipStart(track, clipId, snappedStart)
     },
 
     selectClip(clipId) {

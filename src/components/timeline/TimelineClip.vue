@@ -88,7 +88,7 @@ function handlePointerMove(event) {
     return
   }
 
-  const deltaTicks = Math.round((event.clientX - dragStartX) / TIMELINE_SCALE)
+  const deltaTicks = (event.clientX - dragStartX) / TIMELINE_SCALE
   dawStore.moveClip(props.trackId, props.clip.id, dragStartTick + deltaTicks)
 }
 
