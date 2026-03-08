@@ -4,16 +4,19 @@
     :class="buttonClassName"
     :style="clipStyle"
     :title="clipTitle"
+    data-timeline-clip="true"
     type="button"
     @click.stop="handleSelect"
     @pointerdown.stop="handlePointerDown"
   >
     <span
       class="absolute inset-y-0 left-0 w-2 cursor-ew-resize border-r border-blue-200/30 bg-blue-100/10"
+      data-timeline-resize-handle="true"
       @pointerdown.stop="handleResizeStartPointerDown"
     />
     <span
       class="absolute inset-y-0 right-0 w-2 cursor-ew-resize border-l border-blue-200/30 bg-blue-100/10"
+      data-timeline-resize-handle="true"
       @pointerdown.stop="handleResizeEndPointerDown"
     />
 

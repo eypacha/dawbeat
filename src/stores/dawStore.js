@@ -2,6 +2,14 @@ import { defineStore } from 'pinia'
 import { clampClipResizeEnd, clampClipResizeStart, clampClipStart } from '@/services/timelineService'
 import { BASE_TICK_SIZE, getClipEnd, snapTicks } from '@/utils/timeUtils'
 
+function createClipId() {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID()
+  }
+
+  return `clip-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
 export const useDawStore = defineStore('dawStore', {
   state: () => ({
     audioReady: false,
@@ -86,7 +94,13 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      track.clips.push(clip)
+      track.clips.push({
+        id: clip.id ?? createClipId(),
+        formula: clip.formula ?? 't',
+        ...clip
+      })
+
+      track.clips.sort((leftClip, rightClip) => leftClip.start - rightClip.start)
     },
 
     moveClip(trackId, clipId, nextStart) {
@@ -144,6 +158,20 @@ export const useDawStore = defineStore('dawStore', {
       const clampedEnd = clampClipResizeEnd(track, clipId, snappedEnd)
 
       clip.duration = clampedEnd - clip.start
+    },
+
+    removeClip(clipId) {
+      for (const track of this.tracks) {
+        const clipIndex = track.clips.findIndex((entry) => entry.id === clipId)
+
+        if (clipIndex === -1) {
+          continue
+        }
+
+        track.clips.splice(clipIndex, 1)
+        this.selectedClipId = null
+        return
+      }
     },
 
     selectClip(clipId) {

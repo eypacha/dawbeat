@@ -13,6 +13,10 @@ export function ticksToPixels(ticks, scale = TIMELINE_SCALE) {
   return ticks * scale
 }
 
+export function pixelsToTicks(pixels, scale = TIMELINE_SCALE) {
+  return pixels / scale
+}
+
 export function snapTicks(ticks, subdivisions = TIMELINE_SNAP_SUBDIVISIONS) {
   return Math.round(ticks * subdivisions) / subdivisions
 }

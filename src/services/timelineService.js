@@ -1,6 +1,7 @@
 import { getClipEnd, TIMELINE_SNAP_SUBDIVISIONS } from '@/utils/timeUtils'
 
 const MIN_CLIP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
+const MIN_NEW_CLIP_DURATION = 1
 
 function sortClipsByStart(clips, excludedClipId) {
   return clips
@@ -117,4 +118,66 @@ export function clampClipResizeStart(track, clipId, nextStart) {
 export function clampClipResizeEnd(track, clipId, nextEnd) {
   const { minEnd, maxEnd } = getClipResizeEndBounds(track, clipId)
   return Math.max(minEnd, Math.min(nextEnd, maxEnd))
+}
+
+export function getTrackCreateBounds(track, tick) {
+  const sortedClips = track.clips
+    .slice()
+    .sort((leftClip, rightClip) => leftClip.start - rightClip.start)
+
+  let minStart = 0
+  let maxEnd = Number.POSITIVE_INFINITY
+
+  for (const clip of sortedClips) {
+    if (tick >= clip.start && tick < getClipEnd(clip)) {
+      return null
+    }
+
+    if (getClipEnd(clip) <= tick) {
+      minStart = Math.max(minStart, getClipEnd(clip))
+      continue
+    }
+
+    if (clip.start > tick) {
+      maxEnd = clip.start
+      break
+    }
+  }
+
+  return {
+    minStart,
+    maxEnd
+  }
+}
+
+export function buildCreatedClip(anchorTick, currentTick, bounds) {
+  if (!bounds || bounds.maxEnd - bounds.minStart < MIN_NEW_CLIP_DURATION) {
+    return null
+  }
+
+  let start = Math.max(bounds.minStart, Math.min(anchorTick, currentTick))
+  let end = Math.min(bounds.maxEnd, Math.max(anchorTick, currentTick))
+
+  if (end - start >= MIN_NEW_CLIP_DURATION) {
+    return {
+      start,
+      duration: end - start
+    }
+  }
+
+  if (currentTick >= anchorTick) {
+    start = Math.min(Math.max(anchorTick, bounds.minStart), bounds.maxEnd - MIN_NEW_CLIP_DURATION)
+
+    return {
+      start,
+      duration: MIN_NEW_CLIP_DURATION
+    }
+  }
+
+  end = Math.max(Math.min(anchorTick, bounds.maxEnd), bounds.minStart + MIN_NEW_CLIP_DURATION)
+
+  return {
+    start: end - MIN_NEW_CLIP_DURATION,
+    duration: MIN_NEW_CLIP_DURATION
+  }
 }

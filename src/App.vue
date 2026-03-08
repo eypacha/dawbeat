@@ -14,6 +14,7 @@
 </template>
 
 <script setup>
+import { onBeforeUnmount, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import StartScreen from '@/components/boot/StartScreen.vue'
 import FormulaLibrary from '@/components/library/FormulaLibrary.vue'
@@ -24,9 +25,33 @@ import { useDawStore } from '@/stores/dawStore'
 
 const dawStore = useDawStore()
 const { enableAudio } = useTransportPlayback()
-const { audioReady } = storeToRefs(dawStore)
+const { audioReady, selectedClipId } = storeToRefs(dawStore)
 
 async function handleStart() {
   await enableAudio()
 }
+
+function handleKeydown(event) {
+  if (event.key !== 'Delete' && event.key !== 'Backspace') {
+    return
+  }
+
+  if (!selectedClipId.value) {
+    return
+  }
+
+  if (document.activeElement?.tagName === 'INPUT') {
+    return
+  }
+
+  dawStore.removeClip(selectedClipId.value)
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
 </script>
