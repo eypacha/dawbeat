@@ -7,9 +7,42 @@
       </div>
 
       <div class="flex items-center gap-2 text-xs text-zinc-400">
-        <span class="border border-zinc-800 bg-zinc-950 px-2 py-1">STOP</span>
-        <span class="border border-zinc-800 bg-zinc-950 px-2 py-1">00:00</span>
+        <button
+          class="border px-3 py-1 transition-colors"
+          :class="playing ? 'border-zinc-800 bg-zinc-950 text-zinc-600' : 'border-emerald-500/60 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'"
+          :disabled="playing"
+          type="button"
+          @click="play"
+        >
+          PLAY
+        </button>
+
+        <button
+          class="border px-3 py-1 transition-colors"
+          :class="playing ? 'border-amber-400/60 bg-amber-400/10 text-amber-200 hover:bg-amber-400/20' : 'border-zinc-800 bg-zinc-950 text-zinc-600'"
+          :disabled="!playing"
+          type="button"
+          @click="stop"
+        >
+          STOP
+        </button>
+
+        <span class="border border-zinc-800 bg-zinc-950 px-3 py-1">{{ transportTime }}</span>
+        <span class="border border-zinc-800 bg-zinc-950 px-3 py-1">{{ sampleRate }} hz</span>
       </div>
     </div>
   </header>
 </template>
+
+<script setup>
+import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useTransportPlayback } from '@/composables/useTransportPlayback'
+import { useDawStore } from '@/stores/dawStore'
+
+const dawStore = useDawStore()
+const { play, stop } = useTransportPlayback()
+const { playing, sampleRate, time } = storeToRefs(dawStore)
+
+const transportTime = computed(() => `${time.value.toFixed(2)} ticks`)
+</script>
