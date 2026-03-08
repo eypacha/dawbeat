@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { clampClipStart } from '@/services/timelineService'
-import { BASE_TICK_SIZE, snapTicks } from '@/utils/timeUtils'
+import { clampClipResizeEnd, clampClipResizeStart, clampClipStart } from '@/services/timelineService'
+import { BASE_TICK_SIZE, getClipEnd, snapTicks } from '@/utils/timeUtils'
 
 export const useDawStore = defineStore('dawStore', {
   state: () => ({
@@ -104,6 +104,46 @@ export const useDawStore = defineStore('dawStore', {
 
       const snappedStart = snapTicks(Math.max(0, nextStart))
       clip.start = clampClipStart(track, clipId, snappedStart)
+    },
+
+    resizeClipStart(trackId, clipId, nextStart) {
+      const track = this.tracks.find((entry) => entry.id === trackId)
+
+      if (!track) {
+        return
+      }
+
+      const clip = track.clips.find((entry) => entry.id === clipId)
+
+      if (!clip) {
+        return
+      }
+
+      const clipEnd = getClipEnd(clip)
+      const snappedStart = snapTicks(Math.max(0, nextStart))
+      const clampedStart = clampClipResizeStart(track, clipId, snappedStart)
+
+      clip.start = clampedStart
+      clip.duration = clipEnd - clampedStart
+    },
+
+    resizeClipEnd(trackId, clipId, nextEnd) {
+      const track = this.tracks.find((entry) => entry.id === trackId)
+
+      if (!track) {
+        return
+      }
+
+      const clip = track.clips.find((entry) => entry.id === clipId)
+
+      if (!clip) {
+        return
+      }
+
+      const snappedEnd = snapTicks(Math.max(0, nextEnd))
+      const clampedEnd = clampClipResizeEnd(track, clipId, snappedEnd)
+
+      clip.duration = clampedEnd - clip.start
     },
 
     selectClip(clipId) {
