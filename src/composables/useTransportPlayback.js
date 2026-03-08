@@ -3,13 +3,14 @@ import { storeToRefs } from 'pinia'
 import { getActiveFormula } from '@/engine/timelineEngine'
 import bytebeatService from '@/services/bytebeatService'
 import { useDawStore } from '@/stores/dawStore'
-import { samplesToTicks } from '@/utils/timeUtils'
+import { samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 
 export function useTransportPlayback() {
   const dawStore = useDawStore()
-  const { audioReady, playing, sampleRate, tickSize, tracks } = storeToRefs(dawStore)
+  const { audioReady, loopEnabled, loopEnd, loopStart, playing, sampleRate, tickSize, tracks } = storeToRefs(dawStore)
 
   let frameId = 0
+  let loopJumpInProgress = false
 
   const cancelLoop = () => {
     if (!frameId) {
@@ -20,9 +21,32 @@ export function useTransportPlayback() {
     frameId = 0
   }
 
-  const syncPlaybackFrame = () => {
+  const syncPlaybackFrame = async () => {
     const currentSample = bytebeatService.getCurrentSample()
     const timeTicks = samplesToTicks(currentSample, tickSize.value)
+
+    if (loopEnabled.value && timeTicks >= loopEnd.value && !loopJumpInProgress) {
+      loopJumpInProgress = true
+
+      try {
+        const loopStartSample = ticksToSamples(loopStart.value, tickSize.value)
+        const loopFormula = getActiveFormula(loopStart.value, tracks.value)
+
+        await bytebeatService.seekToSample(loopStartSample, loopFormula)
+        dawStore.setTime(loopStart.value)
+      } catch (error) {
+        console.error('No se pudo reiniciar el loop', error)
+      }
+
+      loopJumpInProgress = false
+
+      if (playing.value) {
+        frameId = requestAnimationFrame(syncPlaybackFrame)
+      }
+
+      return
+    }
+
     const activeFormula = getActiveFormula(timeTicks, tracks.value)
 
     dawStore.setTime(timeTicks)
@@ -61,7 +85,11 @@ export function useTransportPlayback() {
       const resumeFromPause = resumeTime > 0
       const initialFormula = getActiveFormula(resumeTime, tracks.value)
 
-      await bytebeatService.setFormula(initialFormula, !resumeFromPause)
+      if (!resumeFromPause) {
+        bytebeatService.setSampleOffset(0)
+      }
+
+      await bytebeatService.setFormula(initialFormula, !resumeFromPause, !resumeFromPause)
       await bytebeatService.play({ resetTime: !resumeFromPause })
 
       if (!resumeFromPause) {
@@ -83,6 +111,7 @@ export function useTransportPlayback() {
       return
     }
 
+    loopJumpInProgress = false
     cancelLoop()
     dawStore.stopPlayback()
 
@@ -94,6 +123,7 @@ export function useTransportPlayback() {
   }
 
   const stop = async () => {
+    loopJumpInProgress = false
     cancelLoop()
     dawStore.stopPlayback()
     dawStore.setTime(0)

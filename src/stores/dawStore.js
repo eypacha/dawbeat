@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { clampClipResizeEnd, clampClipResizeStart, clampClipStart } from '@/services/timelineService'
-import { BASE_TICK_SIZE, getClipEnd, snapTicks } from '@/utils/timeUtils'
+import { BASE_TICK_SIZE, TIMELINE_SNAP_SUBDIVISIONS, getClipEnd, snapTicks } from '@/utils/timeUtils'
+
+const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
 
 function createClipId() {
   if (globalThis.crypto?.randomUUID) {
@@ -14,6 +16,9 @@ export const useDawStore = defineStore('dawStore', {
   state: () => ({
     audioReady: false,
     editingClipId: null,
+    loopEnabled: false,
+    loopStart: 0,
+    loopEnd: 16,
     playing: false,
     time: 0,
     zoom: 1,
@@ -64,6 +69,20 @@ export const useDawStore = defineStore('dawStore', {
   actions: {
     setAudioReady(ready) {
       this.audioReady = ready
+    },
+
+    toggleLoop() {
+      this.loopEnabled = !this.loopEnabled
+    },
+
+    setLoopStart(tick) {
+      const snappedTick = snapTicks(Math.max(0, tick))
+      this.loopStart = Math.min(snappedTick, this.loopEnd - MIN_LOOP_DURATION)
+    },
+
+    setLoopEnd(tick) {
+      const snappedTick = snapTicks(Math.max(0, tick))
+      this.loopEnd = Math.max(snappedTick, this.loopStart + MIN_LOOP_DURATION)
     },
 
     startPlayback() {

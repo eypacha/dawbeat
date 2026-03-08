@@ -29,6 +29,12 @@
             Ticks
           </span>
 
+          <TimelineLoopRegion
+            :loop-enabled="loopEnabled"
+            :loop-start="loopStart"
+            :loop-end="loopEnd"
+          />
+
           <div
             v-for="mark in rulerMarks"
             :key="mark"
@@ -58,6 +64,7 @@
 import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import Playhead from '@/components/timeline/Playhead.vue'
+import TimelineLoopRegion from '@/components/timeline/TimelineLoopRegion.vue'
 import TimelineTrack from '@/components/timeline/TimelineTrack.vue'
 import { useDawStore } from '@/stores/dawStore'
 import {
@@ -71,7 +78,7 @@ import {
 const AUTO_SCROLL_PADDING = 96
 
 const dawStore = useDawStore()
-const { playing, tickSize, time, tracks } = storeToRefs(dawStore)
+const { loopEnabled, loopEnd, loopStart, playing, tickSize, time, tracks } = storeToRefs(dawStore)
 const scrollContainer = ref(null)
 
 const timelineTicks = computed(() => {
@@ -83,7 +90,7 @@ const timelineTicks = computed(() => {
     return Math.max(largestEnd, trackEnd)
   }, 0)
 
-  return Math.max(DEFAULT_TIMELINE_TICKS, Math.ceil(maxClipEnd + 1))
+  return Math.max(DEFAULT_TIMELINE_TICKS, Math.ceil(maxClipEnd + 1), Math.ceil(loopEnd.value + 1))
 })
 
 const samplesPerTick = computed(() => getSamplesPerTick(tickSize.value))
@@ -107,6 +114,11 @@ watch(time, (nextTime) => {
   const playheadOffset = TRACK_LABEL_WIDTH + ticksToPixels(nextTime)
   const viewportLeft = scrollContainer.value.scrollLeft
   const viewportRight = viewportLeft + scrollContainer.value.clientWidth
+
+  if (playheadOffset < viewportLeft + AUTO_SCROLL_PADDING) {
+    scrollContainer.value.scrollLeft = Math.max(0, playheadOffset - AUTO_SCROLL_PADDING)
+    return
+  }
 
   if (playheadOffset > viewportRight - AUTO_SCROLL_PADDING) {
     scrollContainer.value.scrollLeft = playheadOffset - scrollContainer.value.clientWidth + AUTO_SCROLL_PADDING

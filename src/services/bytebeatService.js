@@ -9,6 +9,17 @@ let initPromise = null
 let formulaUpdatePromise = Promise.resolve()
 let currentFormula = null
 let desiredSampleRate = 8000
+let sampleOffset = 0
+
+function buildCompiledFormula(formula) {
+  const nextFormula = formula ?? SILENT_FORMULA
+
+  if (sampleOffset === 0) {
+    return nextFormula
+  }
+
+  return `((t) => (${nextFormula}))(t + ${sampleOffset})`
+}
 
 function getAudioContextConstructor() {
   return window.AudioContext || window.webkitAudioContext
@@ -122,24 +133,25 @@ const bytebeatService = {
     byteBeatNode.disconnect()
     byteBeatNode.reset()
     currentFormula = null
+    sampleOffset = 0
   },
 
-  async setFormula(formula, resetToZero = false) {
-    const nextFormula = formula ?? SILENT_FORMULA
+  async setFormula(formula, resetToZero = false, force = false) {
+    const compiledFormula = buildCompiledFormula(formula)
 
     await this.init()
 
-    if (nextFormula === currentFormula) {
+    if (!force && compiledFormula === currentFormula) {
       return
     }
 
     formulaUpdatePromise = formulaUpdatePromise.catch(() => {}).then(async () => {
-      if (nextFormula === currentFormula) {
+      if (!force && compiledFormula === currentFormula) {
         return
       }
 
-      await byteBeatNode.setExpressions([nextFormula], resetToZero)
-      currentFormula = nextFormula
+      await byteBeatNode.setExpressions([compiledFormula], resetToZero)
+      currentFormula = compiledFormula
     })
 
     return formulaUpdatePromise
@@ -147,10 +159,20 @@ const bytebeatService = {
 
   getCurrentSample() {
     if (!byteBeatNode) {
-      return 0
+      return sampleOffset
     }
 
-    return byteBeatNode.getTime()
+    return sampleOffset + byteBeatNode.getTime()
+  },
+
+  async seekToSample(sample, formula) {
+    await this.init()
+
+    sampleOffset = Math.max(0, Math.floor(sample))
+    byteBeatNode.reset()
+    currentFormula = null
+
+    await this.setFormula(formula, true, true)
   },
 
   setDesiredSampleRate(sampleRate) {
@@ -159,6 +181,10 @@ const bytebeatService = {
     if (byteBeatNode) {
       byteBeatNode.setDesiredSampleRate(sampleRate)
     }
+  },
+
+  setSampleOffset(sample) {
+    sampleOffset = Math.max(0, Math.floor(sample))
   }
 }
 

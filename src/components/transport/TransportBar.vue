@@ -37,6 +37,15 @@
           STOP
         </button>
 
+        <button
+          class="border px-3 py-1 transition-colors"
+          :class="loopEnabled ? 'border-emerald-400/60 bg-emerald-400/10 text-emerald-200 hover:bg-emerald-400/20' : 'border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700'"
+          type="button"
+          @click="dawStore.toggleLoop()"
+        >
+          LOOP
+        </button>
+
         <span class="border border-zinc-800 bg-zinc-950 px-3 py-1">{{ transportTime }}</span>
         <span class="border border-zinc-800 bg-zinc-950 px-3 py-1">{{ sampleRate }} hz</span>
       </div>
@@ -52,7 +61,7 @@ import { useDawStore } from '@/stores/dawStore'
 
 const dawStore = useDawStore()
 const { play, pause, stop } = useTransportPlayback()
-const { playing, sampleRate, time } = storeToRefs(dawStore)
+const { loopEnabled, playing, sampleRate, time } = storeToRefs(dawStore)
 
 const transportTime = computed(() => `${time.value.toFixed(2)} ticks`)
 </script>
