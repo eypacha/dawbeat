@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { clampClipStart } from '@/services/timelineService'
 import { BASE_TICK_SIZE } from '@/utils/timeUtils'
 
 export const useDawStore = defineStore('dawStore', {
@@ -15,13 +16,13 @@ export const useDawStore = defineStore('dawStore', {
         name: 'Track 1',
         clips: [
           {
-            id: 'clip1',
+            id: 'clip0',
             formula: 't & 64 | t >> 4',
             start: 0,
             duration: 4
           },
           {
-            id: 'clip2',
+            id: 'clip1',
             formula: 't & 32 | t >> 4',
             start: 4,
             duration: 4
@@ -86,6 +87,22 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       track.clips.push(clip)
+    },
+
+    moveClip(trackId, clipId, nextStart) {
+      const track = this.tracks.find((entry) => entry.id === trackId)
+
+      if (!track) {
+        return
+      }
+
+      const clip = track.clips.find((entry) => entry.id === clipId)
+
+      if (!clip) {
+        return
+      }
+
+      clip.start = clampClipStart(track, clipId, Math.max(0, nextStart))
     },
 
     selectClip(clipId) {
