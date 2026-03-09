@@ -85,7 +85,7 @@ function handleKeydown(event) {
     return
   }
 
-  if (document.activeElement?.tagName === 'INPUT') {
+  if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
     return
   }
 
@@ -114,6 +114,11 @@ function handleContextMenuSelect(action, item) {
 
   if (action === 'set-track-color') {
     dawStore.setTrackColor(item.trackId, item.color)
+    return
+  }
+
+  if (action === 'add-clip-formula-to-library') {
+    dawStore.addClipFormulaToLibrary(item.trackId, item.clipId)
   }
 }
 

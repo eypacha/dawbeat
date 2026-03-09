@@ -72,7 +72,8 @@ export function findTrackWithClip(tracks, clipId) {
 export function createTrackClip(clip) {
   return {
     id: clip.id ?? createClipId(),
-    formula: clip.formula ?? 't',
+    formula: clip.formula ?? null,
+    formulaId: clip.formulaId ?? null,
     ...clip
   }
 }

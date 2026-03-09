@@ -39,8 +39,11 @@
     <div
       ref="laneElement"
       class="relative h-20 shrink-0 transition-opacity"
-      :class="isMuted ? 'opacity-35' : 'opacity-100'"
+      :class="laneClassName"
       :style="laneStyle"
+      @dragover.prevent="handleLaneDragOver"
+      @dragleave="handleLaneDragLeave"
+      @drop.prevent="handleLaneDrop"
       @pointerdown="handleLanePointerDown"
     >
       <TimelineClipPreview
@@ -71,7 +74,7 @@ import { storeToRefs } from 'pinia'
 import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
 import TimelineClip from '@/components/timeline/TimelineClip.vue'
 import TimelineClipPreview from '@/components/timeline/TimelineClipPreview.vue'
-import { buildCreatedClip, getTrackCreateBounds } from '@/services/timelineService'
+import { buildCreatedClip, clampClipPlacementStart, getTrackCreateBounds } from '@/services/timelineService'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useDawStore } from '@/stores/dawStore'
 import {
@@ -104,16 +107,26 @@ const { openContextMenu } = useContextMenu()
 const { clipDragPreview, pixelsPerTick, selectedTrackId } = storeToRefs(dawStore)
 const laneElement = ref(null)
 const creationPreview = ref(null)
+const isFormulaDropTarget = ref(false)
 
 let creationAnchorTick = 0
 let creationBounds = null
 let creationStartX = 0
+const FORMULA_DROP_DURATION = 1
 
 const laneStyle = computed(() => ({
   width: props.timelineWidth,
   backgroundImage: 'linear-gradient(to right, rgba(63, 63, 70, 0.5) 1px, transparent 1px)',
   backgroundSize: `${pixelsPerTick.value}px 100%`
 }))
+
+const laneClassName = computed(() => {
+  if (isFormulaDropTarget.value) {
+    return 'opacity-100 ring-1 ring-inset ring-[var(--track-color-light)]'
+  }
+
+  return isMuted.value ? 'opacity-35' : 'opacity-100'
+})
 
 const dragPreview = computed(() => {
   if (clipDragPreview.value?.targetTrackId !== props.track.id) {
@@ -218,6 +231,39 @@ function handleLanePointerDown(event) {
   window.addEventListener('pointercancel', handleCreationPointerCancel)
 }
 
+function handleLaneDragOver(event) {
+  if (!getDroppedFormulaId(event)) {
+    return
+  }
+
+  isFormulaDropTarget.value = true
+}
+
+function handleLaneDragLeave(event) {
+  if (event.currentTarget?.contains(event.relatedTarget)) {
+    return
+  }
+
+  isFormulaDropTarget.value = false
+}
+
+function handleLaneDrop(event) {
+  const formulaId = getDroppedFormulaId(event)
+  isFormulaDropTarget.value = false
+
+  if (!formulaId) {
+    return
+  }
+
+  const start = clampClipPlacementStart(props.track, getPointerTick(event), FORMULA_DROP_DURATION)
+
+  dawStore.addClip(props.track.id, {
+    duration: FORMULA_DROP_DURATION,
+    formulaId,
+    start
+  })
+}
+
 function handleCreationPointerMove(event) {
   if (!creationBounds) {
     return
@@ -246,7 +292,8 @@ function handleCreationPointerUp() {
 
   const nextClip = {
     ...creationPreview.value,
-    formula: 't'
+    formula: '',
+    formulaId: null
   }
 
   dawStore.addClip(props.track.id, nextClip)
@@ -265,12 +312,23 @@ function getPointerTick(event) {
 }
 
 function cleanupCreation() {
+  isFormulaDropTarget.value = false
   creationPreview.value = null
   creationBounds = null
   creationStartX = 0
   window.removeEventListener('pointermove', handleCreationPointerMove)
   window.removeEventListener('pointerup', handleCreationPointerUp)
   window.removeEventListener('pointercancel', handleCreationPointerCancel)
+}
+
+function getDroppedFormulaId(event) {
+  const formulaId = event.dataTransfer?.getData('formulaId')
+
+  if (formulaId) {
+    return formulaId
+  }
+
+  return event.dataTransfer?.getData('text/plain') || ''
 }
 
 onBeforeUnmount(() => {

@@ -17,6 +17,7 @@ import {
   findTrackWithClip,
   sortTrackClips
 } from '@/services/dawStoreService'
+import { createFormula, getFormulaById } from '@/services/formulaService'
 import {
   BASE_PIXELS_PER_TICK,
   BASE_TICK_SIZE,
@@ -36,6 +37,7 @@ export const useDawStore = defineStore('dawStore', {
     audioReady: false,
     clipDragPreview: null,
     editingClipId: null,
+    formulas: [],
     loopEnabled: false,
     loopStart: 0,
     loopEnd: 16,
@@ -54,18 +56,21 @@ export const useDawStore = defineStore('dawStore', {
           {
             id: 'clip0',
             formula: 't & 64 | t >> 4',
+            formulaId: null,
             start: 0,
             duration: 4
           },
           {
             id: 'clip1',
             formula: 't & 32 | t >> 4',
+            formulaId: null,
             start: 4,
             duration: 4
           },
           {
             id: 'clip2',
             formula: 't>>4',
+            formulaId: null,
             start: 8,
             duration: 4
           }
@@ -80,12 +85,14 @@ export const useDawStore = defineStore('dawStore', {
           {
             id: 'clip3',
             formula: 't*(t>>8) & 64 % 128',
+            formulaId: null,
             start: 8,
             duration: 20
           }
         ]
       }
     ],
+    selectedFormulaId: null,
     selectedClipId: null,
     selectedTrackId: null
   }),
@@ -139,6 +146,29 @@ export const useDawStore = defineStore('dawStore', {
 
     clearClipDragPreview() {
       this.clipDragPreview = null
+    },
+
+    addFormula(formula = {}) {
+      const nextFormula = createFormula(formula)
+      this.formulas.push(nextFormula)
+      this.selectedFormulaId = nextFormula.id
+      return nextFormula.id
+    },
+
+    updateFormula(formulaId, updates) {
+      const formula = getFormulaById(this.formulas, formulaId)
+
+      if (!formula) {
+        return
+      }
+
+      if (typeof updates.name === 'string') {
+        formula.name = updates.name
+      }
+
+      if (typeof updates.code === 'string') {
+        formula.code = updates.code
+      }
     },
 
     addTrack(beforeTrackId = null) {
@@ -216,11 +246,25 @@ export const useDawStore = defineStore('dawStore', {
       const track = findTrack(this.tracks, trackId)
 
       if (!track) {
-        return
+        return null
       }
 
-      track.clips.push(createTrackClip(clip))
+      const nextClip = createTrackClip({
+        ...clip,
+        formula: clip.formula ?? null,
+        formulaId: clip.formulaId ?? null
+      })
+
+      track.clips.push(nextClip)
       sortTrackClips(track)
+      this.selectedClipId = nextClip.id
+      this.selectedTrackId = trackId
+
+      if (nextClip.formulaId) {
+        this.selectedFormulaId = nextClip.formulaId
+      }
+
+      return nextClip.id
     },
 
     updateClip(trackId, clipId, updates) {
@@ -237,6 +281,10 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       Object.assign(clip, updates)
+
+      if (clip.formulaId) {
+        this.selectedFormulaId = clip.formulaId
+      }
     },
 
     moveClip(trackId, clipId, nextStart, shouldSnap = true) {
@@ -365,7 +413,60 @@ export const useDawStore = defineStore('dawStore', {
       this.selectedTrackId = trackId
       this.selectedClipId = duplicateClipId
 
+      if (duplicateClip.formulaId) {
+        this.selectedFormulaId = duplicateClip.formulaId
+      }
+
       return duplicateClipId
+    },
+
+    addClipFormulaToLibrary(trackId, clipId) {
+      const track = findTrack(this.tracks, trackId)
+
+      if (!track) {
+        return null
+      }
+
+      const clip = findClip(track, clipId)
+
+      if (!clip) {
+        return null
+      }
+
+      if (clip.formulaId) {
+        this.selectedFormulaId = clip.formulaId
+        return clip.formulaId
+      }
+
+      const formulaId = this.addFormula({
+        code: clip.formula ?? '',
+        name: ''
+      })
+
+      clip.formulaId = formulaId
+      clip.formula = null
+      return formulaId
+    },
+
+    assignFormulaToClip(trackId, clipId, formulaId) {
+      const track = findTrack(this.tracks, trackId)
+      const formula = getFormulaById(this.formulas, formulaId)
+
+      if (!track || !formula) {
+        return
+      }
+
+      const clip = findClip(track, clipId)
+
+      if (!clip) {
+        return
+      }
+
+      clip.formulaId = formula.id
+      clip.formula = null
+      this.selectedClipId = clip.id
+      this.selectedTrackId = trackId
+      this.selectedFormulaId = formula.id
     },
 
     removeClip(clipId) {
@@ -386,6 +487,21 @@ export const useDawStore = defineStore('dawStore', {
 
     selectClip(clipId) {
       this.selectedClipId = clipId
+    },
+
+    selectFormula(formulaId) {
+      if (!formulaId) {
+        this.selectedFormulaId = null
+        return
+      }
+
+      const formula = getFormulaById(this.formulas, formulaId)
+
+      if (!formula) {
+        return
+      }
+
+      this.selectedFormulaId = formula.id
     },
 
     selectTrack(trackId) {

@@ -6,6 +6,10 @@
     :title="clipTitle"
     data-timeline-clip="true"
     @click.stop="handleSelect"
+    @contextmenu.stop.prevent="handleContextMenu"
+    @dragover.prevent.stop="handleFormulaDragOver"
+    @dragleave.stop="handleFormulaDragLeave"
+    @drop.prevent.stop="handleFormulaDrop"
     @dblclick.stop="handleEditStart"
     @pointerdown.stop="handlePointerDown"
   >
@@ -33,17 +37,21 @@
       @keydown.esc.prevent="cancelEdit"
     />
 
-    <span v-else class="block truncate font-medium">{{ clip.formula }}</span>
-    <span v-if="!isEditing" class="mt-1 block text-[10px] uppercase tracking-[0.18em] opacity-70">
-      {{ clip.duration }} ticks
-    </span>
+    <template v-else-if="showReferenceName">
+      <span class="block truncate font-medium">{{ referenceName }}</span>
+      <span class="mt-1 block truncate text-[10px] opacity-70">{{ resolvedFormula }}</span>
+    </template>
+
+    <span v-else class="block truncate font-medium">{{ resolvedFormula }}</span>
   </div>
 </template>
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineClipInteraction } from '@/composables/useTimelineClipInteraction'
+import { getFormulaById, resolveClipFormula } from '@/services/formulaService'
 import { useDawStore } from '@/stores/dawStore'
 import { ticksToPixels, ticksToSamples } from '@/utils/timeUtils'
 
@@ -59,9 +67,17 @@ const props = defineProps({
 })
 
 const dawStore = useDawStore()
-const { editingClipId, pixelsPerTick, selectedClipId, tickSize, tracks } = storeToRefs(dawStore)
-const draftFormula = ref(props.clip.formula)
+const { openContextMenu } = useContextMenu()
+const { editingClipId, formulas, pixelsPerTick, selectedClipId, tickSize, tracks } = storeToRefs(dawStore)
+const draftFormula = ref('')
 const formulaInput = ref(null)
+const isFormulaDropTarget = ref(false)
+
+const referencedFormula = computed(() => getFormulaById(formulas.value, props.clip.formulaId))
+const resolvedFormula = computed(() => resolveClipFormula(props.clip, formulas.value))
+const isReferenceClip = computed(() => Boolean(props.clip.formulaId))
+const referenceName = computed(() => referencedFormula.value?.name.trim() ?? '')
+const showReferenceName = computed(() => isReferenceClip.value && Boolean(referenceName.value))
 
 const clipStyle = computed(() => ({
   left: `${ticksToPixels(props.clip.start, pixelsPerTick.value)}px`,
@@ -78,6 +94,7 @@ function handleSelect() {
 
   dawStore.selectTrack(props.trackId)
   dawStore.selectClip(props.clip.id)
+  dawStore.selectFormula(props.clip.formulaId ?? null)
 }
 
 const {
@@ -116,14 +133,19 @@ const buttonClassName = computed(() => {
     return 'timeline-clip--dragging'
   }
 
+  if (isFormulaDropTarget.value) {
+    return 'timeline-clip--drop-target'
+  }
+
   return isSelected.value ? 'timeline-clip--selected' : 'timeline-clip--default'
 })
 
 const clipTitle = computed(() => {
   const startSamples = ticksToSamples(props.clip.start, tickSize.value)
   const durationSamples = ticksToSamples(props.clip.duration, tickSize.value)
+  const clipKind = isReferenceClip.value ? 'reference' : 'inline'
 
-  return `${props.clip.formula} | start ${props.clip.start} ticks (${startSamples} samples) | duration ${props.clip.duration} ticks (${durationSamples} samples)`
+  return `${resolvedFormula.value} | ${clipKind} | start ${props.clip.start} ticks (${startSamples} samples) | duration ${props.clip.duration} ticks (${durationSamples} samples)`
 })
 
 function handleEditStart() {
@@ -136,7 +158,12 @@ function saveFormula() {
     return
   }
 
-  dawStore.updateClip(props.trackId, props.clip.id, { formula: draftFormula.value })
+  if (props.clip.formulaId) {
+    dawStore.updateFormula(props.clip.formulaId, { code: draftFormula.value })
+  } else {
+    dawStore.updateClip(props.trackId, props.clip.id, { formula: draftFormula.value })
+  }
+
   dawStore.setEditingClip(null)
 }
 
@@ -145,24 +172,80 @@ function cancelEdit() {
     return
   }
 
-  draftFormula.value = props.clip.formula
+  draftFormula.value = resolvedFormula.value
   dawStore.setEditingClip(null)
+}
+
+function handleContextMenu(event) {
+  handleSelect()
+
+  openContextMenu({
+    x: event.clientX,
+    y: event.clientY,
+    items: [
+      {
+        action: 'add-clip-formula-to-library',
+        clipId: props.clip.id,
+        label: props.clip.formulaId ? 'Show In Library' : 'Add To Library...',
+        trackId: props.trackId
+      }
+    ]
+  })
+}
+
+function handleFormulaDragOver(event) {
+  if (!getDroppedFormulaId(event)) {
+    return
+  }
+
+  isFormulaDropTarget.value = true
+}
+
+function handleFormulaDragLeave() {
+  isFormulaDropTarget.value = false
+}
+
+function handleFormulaDrop(event) {
+  const formulaId = getDroppedFormulaId(event)
+  isFormulaDropTarget.value = false
+
+  if (!formulaId) {
+    return
+  }
+
+  dawStore.assignFormulaToClip(props.trackId, props.clip.id, formulaId)
+}
+
+function getDroppedFormulaId(event) {
+  const formulaId = event.dataTransfer?.getData('formulaId')
+
+  if (formulaId) {
+    return formulaId
+  }
+
+  return event.dataTransfer?.getData('text/plain') || ''
 }
 
 watch(
   isEditing,
   async (editing) => {
     if (!editing) {
-      draftFormula.value = props.clip.formula
+      draftFormula.value = resolvedFormula.value
       return
     }
 
-    draftFormula.value = props.clip.formula
+    draftFormula.value = resolvedFormula.value
     await nextTick()
     formulaInput.value?.focus()
     formulaInput.value?.select()
   }
 )
+
+watch(resolvedFormula, (nextFormula) => {
+  if (!isEditing.value) {
+    draftFormula.value = nextFormula
+  }
+})
 
 onBeforeUnmount(() => {
   dawStore.clearClipDragPreview()
@@ -191,6 +274,11 @@ onBeforeUnmount(() => {
 .timeline-clip--dragging {
   background: color-mix(in srgb, var(--track-color-light) 76%, transparent);
   cursor: grabbing;
+}
+
+.timeline-clip--drop-target {
+  background: color-mix(in srgb, var(--track-color-light) 92%, white 8%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--track-color-light) 78%, white 22%);
 }
 
 .timeline-clip-handle {

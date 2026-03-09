@@ -12,7 +12,7 @@ export function useTransportPlayback() {
   }
 
   const dawStore = useDawStore()
-  const { audioReady, loopEnabled, loopEnd, loopStart, playing, sampleRate, tickSize, tracks } =
+  const { audioReady, formulas, loopEnabled, loopEnd, loopStart, playing, sampleRate, tickSize, tracks } =
     storeToRefs(dawStore)
 
   let frameId = 0
@@ -36,7 +36,7 @@ export function useTransportPlayback() {
 
       try {
         const loopStartSample = ticksToSamples(loopStart.value, tickSize.value)
-        const loopFormula = getActiveFormula(loopStart.value, tracks.value)
+        const loopFormula = getActiveFormula(loopStart.value, tracks.value, formulas.value)
 
         await bytebeatService.seekToSample(loopStartSample, loopFormula)
         dawStore.setTime(loopStart.value)
@@ -53,7 +53,7 @@ export function useTransportPlayback() {
       return
     }
 
-    const activeFormula = getActiveFormula(timeTicks, tracks.value)
+    const activeFormula = getActiveFormula(timeTicks, tracks.value, formulas.value)
 
     dawStore.setTime(timeTicks)
     void bytebeatService.setFormula(activeFormula)
@@ -71,7 +71,7 @@ export function useTransportPlayback() {
     await bytebeatService.init()
     bytebeatService.setDesiredSampleRate(sampleRate.value)
 
-    const initialFormula = getActiveFormula(0, tracks.value)
+    const initialFormula = getActiveFormula(0, tracks.value, formulas.value)
     await bytebeatService.setFormula(initialFormula, true)
     await bytebeatService.unlock()
 
@@ -89,7 +89,7 @@ export function useTransportPlayback() {
 
       const resumeTime = dawStore.time
       const resumeFromPause = resumeTime > 0
-      const initialFormula = getActiveFormula(resumeTime, tracks.value)
+      const initialFormula = getActiveFormula(resumeTime, tracks.value, formulas.value)
 
       if (!resumeFromPause) {
         bytebeatService.setSampleOffset(0)

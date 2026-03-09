@@ -1,4 +1,6 @@
-export function getActiveFormula(timeTicks, tracks) {
+import { resolveClipFormula } from '@/services/formulaService'
+
+export function getActiveFormula(timeTicks, tracks, formulas) {
   const activeFormulas = []
 
   for (const track of tracks) {
@@ -8,7 +10,13 @@ export function getActiveFormula(timeTicks, tracks) {
 
     for (const clip of track.clips) {
       if (timeTicks >= clip.start && timeTicks < clip.start + clip.duration) {
-        activeFormulas.push(`(${clip.formula})`)
+        const resolvedFormula = resolveClipFormula(clip, formulas)
+
+        if (!resolvedFormula.trim()) {
+          continue
+        }
+
+        activeFormulas.push(`(${resolvedFormula})`)
       }
     }
   }
