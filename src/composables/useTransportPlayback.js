@@ -77,10 +77,7 @@ export function useTransportPlayback() {
     bytebeatService.setDesiredSampleRate(sampleRate.value)
     await bytebeatService.syncAudioEffects(audioEffects.value)
     await bytebeatService.setMasterGain(masterGain.value)
-
-    const initialFormula = getActiveFormula(0, tracks.value, formulas.value)
-    const initialExpressions = applyEvalEffects(initialFormula, evalEffects.value)
-    await bytebeatService.setExpressions(initialExpressions, true)
+    await bytebeatService.setExpressions([''], true, true)
 
     dawStore.setAudioReady(true)
   }
@@ -101,11 +98,13 @@ export function useTransportPlayback() {
       const initialFormula = getActiveFormula(resumeTime, tracks.value, formulas.value)
       const initialExpressions = applyEvalEffects(initialFormula, evalEffects.value)
 
-      if (!resumeFromPause) {
+      if (resumeFromPause) {
+        bytebeatService.releaseHeldSample()
+      } else {
         bytebeatService.setSampleOffset(0)
       }
 
-      await bytebeatService.setExpressions(initialExpressions, !resumeFromPause, !resumeFromPause)
+      await bytebeatService.setExpressions(initialExpressions, !resumeFromPause, true)
       await bytebeatService.play({ resetTime: !resumeFromPause })
 
       if (!resumeFromPause) {
@@ -127,9 +126,13 @@ export function useTransportPlayback() {
       return
     }
 
+    const pausedSample = bytebeatService.getCurrentSample()
+    const pausedTime = samplesToTicks(pausedSample, tickSize.value)
+
     loopJumpInProgress = false
     cancelLoop()
     dawStore.stopPlayback()
+    dawStore.setTime(pausedTime)
 
     try {
       await bytebeatService.pause()

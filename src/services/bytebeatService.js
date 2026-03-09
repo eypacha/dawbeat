@@ -14,6 +14,7 @@ let formulaUpdatePromise = Promise.resolve()
 let currentExpressionsKey = null
 let desiredSampleRate = 8000
 let sampleOffset = 0
+let heldSample = null
 let currentAudioEffects = []
 let masterGainValue = 1
 let masterGainNode = null
@@ -193,6 +194,11 @@ function buildCompiledExpressions(expressions) {
   return nextExpressions.map((expression) => `((t) => (${expression}))(t + ${sampleOffset})`)
 }
 
+function setSampleOffsetValue(sample) {
+  const numericSample = Number(sample)
+  sampleOffset = Number.isFinite(numericSample) ? Math.floor(numericSample) : 0
+}
+
 function sanitizeCompiledExpressions(compiledExpressions = []) {
   let replacedInvalidExpression = false
 
@@ -289,6 +295,8 @@ const bytebeatService = {
   async play({ resetTime = true } = {}) {
     const node = await this.init()
 
+    this.releaseHeldSample()
+
     if (resetTime) {
       node.reset()
     }
@@ -313,7 +321,8 @@ const bytebeatService = {
       return
     }
 
-    safeDisconnect(byteBeatNode)
+    heldSample = this.getCurrentSample()
+    await this.setExpressions([''], false, true)
   },
 
   async stop() {
@@ -321,10 +330,11 @@ const bytebeatService = {
       return
     }
 
-    safeDisconnect(byteBeatNode)
+    heldSample = null
     byteBeatNode.reset()
     currentExpressionsKey = null
     sampleOffset = 0
+    await this.setExpressions([''], true, true)
   },
 
   async syncAudioEffects(audioEffects = []) {
@@ -385,6 +395,10 @@ const bytebeatService = {
   },
 
   getCurrentSample() {
+    if (heldSample !== null) {
+      return heldSample
+    }
+
     if (!byteBeatNode) {
       return sampleOffset
     }
@@ -395,7 +409,8 @@ const bytebeatService = {
   async seekToSample(sample, expressions) {
     await this.init()
 
-    sampleOffset = Math.max(0, Math.floor(sample))
+    heldSample = null
+    setSampleOffsetValue(Math.max(0, sample))
     byteBeatNode.reset()
     currentExpressionsKey = null
 
@@ -410,8 +425,18 @@ const bytebeatService = {
     }
   },
 
+  releaseHeldSample() {
+    if (heldSample === null || !byteBeatNode) {
+      return
+    }
+
+    setSampleOffsetValue(heldSample - byteBeatNode.getTime())
+    heldSample = null
+  },
+
   setSampleOffset(sample) {
-    sampleOffset = Math.max(0, Math.floor(sample))
+    heldSample = null
+    setSampleOffsetValue(Math.max(0, sample))
   }
 }
 
