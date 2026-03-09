@@ -2,6 +2,7 @@
   <div
     class="flex min-w-full w-max border-b border-zinc-800 last:border-b-0"
     :data-track-id="track.id"
+    :style="trackColorStyle"
     @click="dawStore.selectTrack(track.id)"
   >
     <div
@@ -52,6 +53,12 @@ import TimelineClipPreview from '@/components/timeline/TimelineClipPreview.vue'
 import { buildCreatedClip, getTrackCreateBounds } from '@/services/timelineService'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useDawStore } from '@/stores/dawStore'
+import {
+  TRACK_COLOR_PALETTE,
+  darkenHex,
+  getTrackColor,
+  lightenHex
+} from '@/utils/colorUtils'
 import { TRACK_LABEL_WIDTH, pixelsToTicks, snapTicks } from '@/utils/timeUtils'
 
 const DRAG_THRESHOLD_PX = 6
@@ -103,6 +110,14 @@ const displayTrackName = computed(() => {
   return `Track ${props.trackIndex + 1}`
 })
 
+const trackColor = computed(() => getTrackColor(props.track.color))
+
+const trackColorStyle = computed(() => ({
+  '--track-color': trackColor.value,
+  '--track-color-border': darkenHex(trackColor.value, 15),
+  '--track-color-light': lightenHex(trackColor.value, 15)
+}))
+
 function handleContextMenu(event) {
   event.preventDefault()
   dawStore.selectTrack(props.track.id)
@@ -117,6 +132,14 @@ function handleContextMenu(event) {
         action: 'rename-track',
         trackId: props.track.id,
         trackName: props.track.name ?? ''
+      },
+      {
+        action: 'set-track-color',
+        colors: TRACK_COLOR_PALETTE,
+        label: 'Color',
+        selectedColor: trackColor.value,
+        trackId: props.track.id,
+        type: 'palette'
       },
       {
         label: 'Delete Track',

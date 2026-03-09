@@ -109,6 +109,11 @@ function handleContextMenuSelect(action, item) {
     renameDialog.trackId = item.trackId
     renameDialog.trackName = item.trackName ?? ''
     renameDialog.visible = true
+    return
+  }
+
+  if (action === 'set-track-color') {
+    dawStore.setTrackColor(item.trackId, item.color)
   }
 }
 

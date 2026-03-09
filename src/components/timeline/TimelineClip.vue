@@ -1,6 +1,6 @@
 <template>
   <div
-    class="absolute top-3 bottom-3 box-border overflow-hidden border border-blue-400/70 px-2 py-1 text-left text-xs text-blue-50 transition-colors"
+    class="timeline-clip absolute top-3 bottom-3 box-border overflow-hidden border px-2 py-1 text-left text-xs text-zinc-50 transition-colors"
     :class="buttonClassName"
     :style="clipStyle"
     :title="clipTitle"
@@ -11,13 +11,13 @@
   >
     <span
       v-if="isSelected && !isEditing"
-      class="absolute inset-y-0 left-0 w-2 cursor-ew-resize border-r border-blue-200/30 bg-blue-100/10"
+      class="timeline-clip-handle absolute inset-y-0 left-0 w-2 cursor-ew-resize border-r"
       data-timeline-resize-handle="true"
       @pointerdown.stop="handleResizeStartPointerDown"
     />
     <span
       v-if="isSelected && !isEditing"
-      class="absolute inset-y-0 right-0 w-2 cursor-ew-resize border-l border-blue-200/30 bg-blue-100/10"
+      class="timeline-clip-handle absolute inset-y-0 right-0 w-2 cursor-ew-resize border-l"
       data-timeline-resize-handle="true"
       @pointerdown.stop="handleResizeEndPointerDown"
     />
@@ -26,7 +26,7 @@
       v-if="isEditing"
       ref="formulaInput"
       v-model="draftFormula"
-      class="h-full w-full border border-blue-200/30 bg-zinc-950/70 px-2 text-xs text-blue-50 outline-none"
+      class="timeline-clip-input h-full w-full border px-2 text-xs text-zinc-50 outline-none"
       type="text"
       @blur="saveFormula"
       @keydown.enter.prevent="saveFormula"
@@ -82,20 +82,18 @@ const isSelected = computed(() => selectedClipId.value === props.clip.id)
 
 const buttonClassName = computed(() => {
   if (isEditing.value) {
-    return 'bg-blue-400/90 text-blue-50 ring-2 ring-indigo-300'
+    return 'timeline-clip--editing'
   }
 
   if (isDragging.value) {
-    return 'cursor-grabbing bg-blue-300 text-blue-50'
+    return 'timeline-clip--dragging'
   }
 
   if (resizeMode.value) {
-    return 'bg-blue-300 text-blue-50'
+    return 'timeline-clip--dragging'
   }
 
-  return isSelected.value
-    ? 'cursor-grab bg-blue-400/90 text-blue-50 ring-2 ring-indigo-300'
-    : 'cursor-grab bg-blue-500/80 hover:bg-blue-400/90'
+  return isSelected.value ? 'timeline-clip--selected' : 'timeline-clip--default'
 })
 
 const clipTitle = computed(() => {
@@ -288,3 +286,37 @@ onBeforeUnmount(() => {
   handlePointerUp()
 })
 </script>
+
+<style scoped>
+.timeline-clip {
+  background: color-mix(in srgb, var(--track-color) 78%, transparent);
+  border-color: var(--track-color-border);
+  cursor: grab;
+}
+
+.timeline-clip:hover,
+.timeline-clip--default {
+  background: color-mix(in srgb, var(--track-color) 84%, transparent);
+}
+
+.timeline-clip--selected,
+.timeline-clip--editing {
+  background: color-mix(in srgb, var(--track-color-light) 88%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--track-color-light) 70%, white 30%);
+}
+
+.timeline-clip--dragging {
+  background: color-mix(in srgb, var(--track-color-light) 76%, transparent);
+  cursor: grabbing;
+}
+
+.timeline-clip-handle {
+  background: color-mix(in srgb, var(--track-color-light) 18%, transparent);
+  border-color: color-mix(in srgb, var(--track-color-border) 55%, white 45%);
+}
+
+.timeline-clip-input {
+  background: color-mix(in srgb, black 72%, var(--track-color) 28%);
+  border-color: color-mix(in srgb, var(--track-color-border) 55%, white 45%);
+}
+</style>

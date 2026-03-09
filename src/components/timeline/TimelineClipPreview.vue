@@ -1,6 +1,6 @@
 <template>
   <div
-    class="pointer-events-none absolute top-3 bottom-3 box-border border border-dashed border-blue-200/60 bg-blue-300/20"
+    class="timeline-clip-preview pointer-events-none absolute top-3 bottom-3 box-border border border-dashed"
     :style="previewStyle"
   />
 </template>
@@ -30,3 +30,10 @@ const previewStyle = computed(() => ({
   width: `${Math.max(ticksToPixels(props.duration, pixelsPerTick.value), 56)}px`
 }))
 </script>
+
+<style scoped>
+.timeline-clip-preview {
+  background: color-mix(in srgb, var(--track-color) 24%, transparent);
+  border-color: color-mix(in srgb, var(--track-color-border) 70%, white 30%);
+}
+</style>
