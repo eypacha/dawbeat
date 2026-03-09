@@ -228,6 +228,14 @@ onBeforeUnmount(() => {
 .formula-editor {
   position: relative;
   min-height: 8rem;
+  border: 1px solid rgb(63 63 70);
+  border-radius: 0.25rem;
+  background: rgb(9 9 11);
+  transition: border-color 150ms;
+}
+
+.formula-editor:focus-within {
+  border-color: rgb(113 113 122);
 }
 
 .formula-editor__highlight,
@@ -235,8 +243,6 @@ onBeforeUnmount(() => {
   min-height: 8rem;
   width: 100%;
   border-radius: 0.25rem;
-  border: 1px solid rgb(63 63 70);
-  background: rgb(9 9 11);
   box-sizing: border-box;
   font-family: inherit;
   font-size: 0.875rem;
@@ -260,17 +266,14 @@ onBeforeUnmount(() => {
 
 .formula-editor__textarea {
   position: relative;
-  resize: vertical;
+  overflow: auto;
+  resize: none;
   background: transparent;
+  border: 0;
   color: transparent;
   caret-color: rgb(244 244 245);
   outline: none;
-  transition: border-color 150ms;
   z-index: 1;
-}
-
-.formula-editor__textarea:focus {
-  border-color: rgb(113 113 122);
 }
 
 .formula-editor__textarea::selection {
