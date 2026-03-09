@@ -379,10 +379,6 @@ const bytebeatService = {
         return
       }
 
-      if (replacedInvalidExpression) {
-        console.warn('Se reemplazo una formula invalida por silencio para evitar cortar el playback')
-      }
-
       await byteBeatNode.setExpressions(playableExpressions, resetToZero)
       currentExpressionsKey = nextExpressionsKey
     })
