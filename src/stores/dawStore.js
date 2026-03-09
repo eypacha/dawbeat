@@ -206,6 +206,16 @@ export const useDawStore = defineStore('dawStore', {
       effect.enabled = !effect.enabled
     },
 
+    toggleEvalEffectExpanded(effectId) {
+      const effect = this.evalEffects.find((entry) => entry.id === effectId)
+
+      if (!effect) {
+        return
+      }
+
+      effect.expanded = !effect.expanded
+    },
+
     updateEvalEffectParams(effectId, params) {
       const effect = this.evalEffects.find((entry) => entry.id === effectId)
 

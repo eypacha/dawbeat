@@ -12,52 +12,39 @@
   >
     <div class="flex min-w-0 items-start gap-3">
       <div
-        class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-700 bg-zinc-900 text-zinc-500 transition group-hover:text-zinc-300"
+        class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded border border-zinc-700 bg-zinc-900 text-zinc-500 transition group-hover:text-zinc-300"
         title="Drag effect"
       >
-        <GripVertical class="h-4 w-4" />
+        <GripVertical class="h-3.5 w-3.5" />
       </div>
 
       <button
         class="min-w-0 flex-1 text-left"
         type="button"
       >
-        <div class="flex items-start justify-between gap-3">
-          <div class="min-w-0">
+        <div class="flex items-center justify-between gap-3">
+          <div class="min-w-0 flex-1">
             <p class="truncate text-sm font-medium text-zinc-50">{{ effect.name }}</p>
-            <div class="mt-2 flex flex-wrap items-center gap-2">
-              <span
-                class="rounded border px-2 py-0.5 text-[10px] uppercase tracking-[0.2em]"
-                :class="effect.type === 'formula'
-                  ? 'border-sky-500/30 bg-sky-500/10 text-sky-200'
-                  : 'border-amber-500/30 bg-amber-500/10 text-amber-200'"
-              >
-                {{ effect.type }}
-              </span>
-              <span class="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-                {{ effect.enabled ? 'enabled' : 'bypassed' }}
-              </span>
-            </div>
           </div>
 
-          <div class="flex shrink-0 items-center gap-2">
+          <div class="flex shrink-0 items-center gap-1.5">
             <button
-              class="flex h-8 w-8 items-center justify-center rounded border border-zinc-700 bg-zinc-900 text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100"
+              class="flex h-7 w-7 items-center justify-center rounded border border-zinc-700 bg-zinc-900 text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100"
               type="button"
               @click.stop="emit('toggle-expanded', effect.id)"
             >
-              <SlidersHorizontal class="h-4 w-4" />
+              <SlidersHorizontal class="h-3.5 w-3.5" />
             </button>
 
             <button
-              class="flex h-8 w-8 items-center justify-center rounded border transition"
+              class="flex h-7 w-7 items-center justify-center rounded border transition"
               :class="effect.enabled
                 ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20'
                 : 'border-zinc-700 bg-zinc-900 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300'"
               type="button"
               @click.stop="emit('toggle-enabled', effect.id)"
             >
-              <Power class="h-4 w-4" />
+              <Power class="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
@@ -66,7 +53,7 @@
 
     <div
       v-if="effect.expanded"
-      class="mt-3 border-t border-zinc-700 pt-3"
+      class="mt-3"
     >
       <div class="grid gap-3">
         <div

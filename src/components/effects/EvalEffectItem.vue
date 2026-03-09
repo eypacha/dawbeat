@@ -8,39 +8,41 @@
   >
     <div class="flex min-w-0 items-start gap-3">
       <div
-        class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded border border-zinc-700 bg-zinc-900 text-zinc-500"
+        class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded border border-zinc-700 bg-zinc-900 text-zinc-500"
         title="Drag effect"
       >
-        <GripVertical class="h-4 w-4" />
+        <GripVertical class="h-3.5 w-3.5" />
       </div>
 
       <div class="min-w-0 flex-1">
-        <div class="flex items-start justify-between gap-3">
-          <div class="min-w-0">
+        <div class="flex items-center justify-between gap-3">
+          <div class="min-w-0 flex-1">
             <p class="truncate text-sm font-medium text-zinc-50">Stereo Offset</p>
-            <div class="mt-2 flex flex-wrap items-center gap-2">
-              <span class="rounded border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-sky-200">
-                formula
-              </span>
-              <span class="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-                {{ effect.enabled ? 'enabled' : 'bypassed' }}
-              </span>
-            </div>
           </div>
 
-          <button
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded border transition"
-            :class="effect.enabled
-              ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20'
-              : 'border-zinc-700 bg-zinc-900 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300'"
-            type="button"
-            @click="emit('toggle-enabled', effect.id)"
-          >
-            <Power class="h-4 w-4" />
-          </button>
+          <div class="flex shrink-0 items-center gap-1.5">
+            <button
+              class="flex h-7 w-7 items-center justify-center rounded border border-zinc-700 bg-zinc-900 text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100"
+              type="button"
+              @click="emit('toggle-expanded', effect.id)"
+            >
+              <SlidersHorizontal class="h-3.5 w-3.5" />
+            </button>
+
+            <button
+              class="flex h-7 w-7 items-center justify-center rounded border transition"
+              :class="effect.enabled
+                ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20'
+                : 'border-zinc-700 bg-zinc-900 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300'"
+              type="button"
+              @click="emit('toggle-enabled', effect.id)"
+            >
+              <Power class="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
 
-        <div class="mt-4 border-t border-zinc-700 pt-3">
+        <div v-if="effect.expanded" class="mt-4">
           <label class="grid gap-2">
             <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Offset</span>
             <input
@@ -58,7 +60,7 @@
 </template>
 
 <script setup>
-import { GripVertical, Power } from 'lucide-vue-next'
+import { GripVertical, Power, SlidersHorizontal } from 'lucide-vue-next'
 
 const props = defineProps({
   dragging: {
@@ -71,7 +73,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['drag-end', 'drag-start', 'toggle-enabled', 'update-offset'])
+const emit = defineEmits(['drag-end', 'drag-start', 'toggle-enabled', 'toggle-expanded', 'update-offset'])
 
 function handleOffsetInput(event) {
   emit('update-offset', props.effect.id, Number(event.target.value))

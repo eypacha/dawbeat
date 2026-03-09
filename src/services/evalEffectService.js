@@ -13,8 +13,9 @@ export function createStereoOffsetEvalEffect(effect = {}) {
     id: effect.id ?? createEvalEffectId(),
     type: 'stereoOffset',
     enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
     params: {
-      offset: effect.params?.offset ?? 32
+      offset: effect.params?.offset ?? 128
     }
   }
 }

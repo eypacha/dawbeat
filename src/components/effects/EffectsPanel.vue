@@ -106,6 +106,7 @@
                   @drag-end="handleDragEnd"
                   @drag-start="handleDragStart('formula', $event)"
                   @toggle-enabled="handleToggleEnabled('formula', $event)"
+                  @toggle-expanded="handleToggleExpanded('formula', $event)"
                   @update-offset="handleUpdateEvalEffectOffset"
                 />
               </template>
@@ -264,6 +265,7 @@ function handleToggleEnabled(section, effectIdToToggle) {
 
 function handleToggleExpanded(section, effectIdToToggle) {
   if (section === 'formula') {
+    dawStore.toggleEvalEffectExpanded(effectIdToToggle)
     return
   }
 
