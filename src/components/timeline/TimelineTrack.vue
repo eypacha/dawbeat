@@ -3,12 +3,12 @@
     class="flex min-w-full w-max border-b border-zinc-800 last:border-b-0"
     :data-track-id="track.id"
     @click="dawStore.selectTrack(track.id)"
-    @contextmenu="handleContextMenu"
   >
     <div
       class="sticky left-0 z-10 flex shrink-0 flex-col justify-center border-r border-zinc-800 px-4 py-4"
       :class="track.id === selectedTrackId ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-900 text-zinc-300'"
       :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
+      @contextmenu="handleContextMenu"
     >
       <span class="text-sm">{{ track.name }}</span>
       <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">
