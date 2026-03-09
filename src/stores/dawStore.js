@@ -13,6 +13,7 @@ import {
   TIMELINE_SNAP_SUBDIVISIONS,
   clamp,
   getClipEnd,
+  maybeSnapTicks,
   snapTicks
 } from '@/utils/timeUtils'
 import { DEFAULT_TRACK_COLOR, TRACK_COLOR_PALETTE, getTrackColor } from '@/utils/colorUtils'
@@ -258,7 +259,7 @@ export const useDawStore = defineStore('dawStore', {
       Object.assign(clip, updates)
     },
 
-    moveClip(trackId, clipId, nextStart) {
+    moveClip(trackId, clipId, nextStart, shouldSnap = true) {
       const track = this.tracks.find((entry) => entry.id === trackId)
 
       if (!track) {
@@ -271,11 +272,11 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      const snappedStart = snapTicks(Math.max(0, nextStart))
+      const snappedStart = maybeSnapTicks(Math.max(0, nextStart), shouldSnap)
       clip.start = clampClipStart(track, clipId, snappedStart)
     },
 
-    placeClip(trackId, clipId, nextStart) {
+    placeClip(trackId, clipId, nextStart, shouldSnap = true) {
       const track = this.tracks.find((entry) => entry.id === trackId)
 
       if (!track) {
@@ -288,12 +289,12 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      const snappedStart = snapTicks(Math.max(0, nextStart))
+      const snappedStart = maybeSnapTicks(Math.max(0, nextStart), shouldSnap)
       clip.start = clampClipPlacementStart(track, snappedStart, clip.duration, clipId)
       track.clips.sort((leftClip, rightClip) => leftClip.start - rightClip.start)
     },
 
-    moveClipToTrack(sourceTrackId, targetTrackId, clipId, nextStart) {
+    moveClipToTrack(sourceTrackId, targetTrackId, clipId, nextStart, shouldSnap = true) {
       const sourceTrack = this.tracks.find((entry) => entry.id === sourceTrackId)
       const targetTrack = this.tracks.find((entry) => entry.id === targetTrackId)
 
@@ -308,13 +309,13 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       if (sourceTrackId === targetTrackId) {
-        this.moveClip(sourceTrackId, clipId, nextStart)
+        this.moveClip(sourceTrackId, clipId, nextStart, shouldSnap)
         this.selectedTrackId = targetTrackId
         return
       }
 
       const [clip] = sourceTrack.clips.splice(clipIndex, 1)
-      const snappedStart = snapTicks(Math.max(0, nextStart))
+      const snappedStart = maybeSnapTicks(Math.max(0, nextStart), shouldSnap)
       const clampedStart = clampClipPlacementStart(targetTrack, snappedStart, clip.duration)
 
       clip.start = clampedStart
@@ -323,7 +324,7 @@ export const useDawStore = defineStore('dawStore', {
       this.selectedTrackId = targetTrackId
     },
 
-    resizeClipStart(trackId, clipId, nextStart) {
+    resizeClipStart(trackId, clipId, nextStart, shouldSnap = true) {
       const track = this.tracks.find((entry) => entry.id === trackId)
 
       if (!track) {
@@ -337,14 +338,14 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       const clipEnd = getClipEnd(clip)
-      const snappedStart = snapTicks(Math.max(0, nextStart))
+      const snappedStart = maybeSnapTicks(Math.max(0, nextStart), shouldSnap)
       const clampedStart = clampClipResizeStart(track, clipId, snappedStart)
 
       clip.start = clampedStart
       clip.duration = clipEnd - clampedStart
     },
 
-    resizeClipEnd(trackId, clipId, nextEnd) {
+    resizeClipEnd(trackId, clipId, nextEnd, shouldSnap = true) {
       const track = this.tracks.find((entry) => entry.id === trackId)
 
       if (!track) {
@@ -357,7 +358,7 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      const snappedEnd = snapTicks(Math.max(0, nextEnd))
+      const snappedEnd = maybeSnapTicks(Math.max(0, nextEnd), shouldSnap)
       const clampedEnd = clampClipResizeEnd(track, clipId, snappedEnd)
 
       clip.duration = clampedEnd - clip.start

@@ -45,7 +45,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { clampClipPlacementStart } from '@/services/timelineService'
 import { useDawStore } from '@/stores/dawStore'
-import { snapTicks, ticksToPixels, ticksToSamples } from '@/utils/timeUtils'
+import { maybeSnapTicks, ticksToPixels, ticksToSamples } from '@/utils/timeUtils'
 
 const props = defineProps({
   clip: {
@@ -191,51 +191,65 @@ function handlePointerMove(event) {
   }
 
   const deltaTicks = (event.clientX - dragStartX) / pixelsPerTick.value
+  const shouldSnap = !event.shiftKey
 
   if (isDragging.value) {
-    dragDesiredStart = snapTicks(Math.max(0, dragStartTick + deltaTicks))
+    dragDesiredStart = maybeSnapTicks(Math.max(0, dragStartTick + deltaTicks), shouldSnap)
     dragTargetTrackId = getDragTargetTrackId(event)
 
     if (duplicateDrag) {
-      syncDragPreview()
+      syncDragPreview(shouldSnap)
       return
     }
 
-    syncSourceClipPosition()
-    syncDragPreview()
+    syncSourceClipPosition(shouldSnap)
+    syncDragPreview(shouldSnap)
     return
   }
 
   if (resizeMode.value === 'start') {
-    dawStore.resizeClipStart(props.trackId, props.clip.id, resizeStartTick + deltaTicks)
+    dawStore.resizeClipStart(props.trackId, props.clip.id, resizeStartTick + deltaTicks, shouldSnap)
     return
   }
 
-  dawStore.resizeClipEnd(props.trackId, props.clip.id, resizeEndTick + deltaTicks)
+  dawStore.resizeClipEnd(props.trackId, props.clip.id, resizeEndTick + deltaTicks, shouldSnap)
 }
 
-function handlePointerUp() {
+function handlePointerUp(event) {
   if (!isDragging.value && !resizeMode.value) {
     return
   }
 
   const shouldClearDuplicateClickGuard = ignoreNextClick
+  const shouldSnap = !event.shiftKey
 
   if (isDragging.value) {
     if (duplicateDrag) {
       const duplicateClipId = dawStore.duplicateClip(dragSourceTrackId, props.clip.id)
 
       if (duplicateClipId) {
-        const previewStart = getDuplicatePreviewStart(dragTargetTrackId)
+        const previewStart = getDuplicatePreviewStart(dragTargetTrackId, shouldSnap)
 
         if (dragTargetTrackId === dragSourceTrackId) {
-          dawStore.placeClip(dragSourceTrackId, duplicateClipId, previewStart)
+          dawStore.placeClip(dragSourceTrackId, duplicateClipId, previewStart, shouldSnap)
         } else {
-          dawStore.moveClipToTrack(dragSourceTrackId, dragTargetTrackId, duplicateClipId, previewStart)
+          dawStore.moveClipToTrack(
+            dragSourceTrackId,
+            dragTargetTrackId,
+            duplicateClipId,
+            previewStart,
+            shouldSnap
+          )
         }
       }
     } else if (dragTargetTrackId !== dragSourceTrackId) {
-      dawStore.moveClipToTrack(dragSourceTrackId, dragTargetTrackId, dragClipId, dragDesiredStart)
+      dawStore.moveClipToTrack(
+        dragSourceTrackId,
+        dragTargetTrackId,
+        dragClipId,
+        dragDesiredStart,
+        shouldSnap
+      )
     }
   }
 
@@ -276,23 +290,27 @@ function getDragTargetTrackId(event) {
   return trackExists && nextTrackId ? nextTrackId : props.trackId
 }
 
-function getDuplicatePreviewStart(trackId) {
+function getDuplicatePreviewStart(trackId, shouldSnap = true) {
   const targetTrack = tracks.value.find((track) => track.id === trackId)
 
   if (!targetTrack) {
     return dragDesiredStart
   }
 
-  return clampClipPlacementStart(targetTrack, dragDesiredStart, props.clip.duration)
+  return clampClipPlacementStart(
+    targetTrack,
+    maybeSnapTicks(dragDesiredStart, shouldSnap),
+    props.clip.duration
+  )
 }
 
-function syncDragPreview() {
+function syncDragPreview(shouldSnap = true) {
   if (duplicateDrag) {
     dawStore.setClipDragPreview({
       clipId: `duplicate-preview-${props.clip.id}`,
       duration: props.clip.duration,
       sourceTrackId: dragSourceTrackId,
-      start: getDuplicatePreviewStart(dragTargetTrackId),
+      start: getDuplicatePreviewStart(dragTargetTrackId, shouldSnap),
       targetTrackId: dragTargetTrackId
     })
     return
@@ -314,18 +332,22 @@ function syncDragPreview() {
     clipId: dragClipId,
     duration: props.clip.duration,
     sourceTrackId: dragSourceTrackId,
-    start: clampClipPlacementStart(targetTrack, dragDesiredStart, props.clip.duration),
+    start: clampClipPlacementStart(
+      targetTrack,
+      maybeSnapTicks(dragDesiredStart, shouldSnap),
+      props.clip.duration
+    ),
     targetTrackId: dragTargetTrackId
   })
 }
 
-function syncSourceClipPosition() {
+function syncSourceClipPosition(shouldSnap = true) {
   if (dragTargetTrackId === dragSourceTrackId) {
-    dawStore.moveClip(dragSourceTrackId, dragClipId, dragDesiredStart)
+    dawStore.moveClip(dragSourceTrackId, dragClipId, dragDesiredStart, shouldSnap)
     return
   }
 
-  dawStore.moveClip(dragSourceTrackId, dragClipId, dragStartTick)
+  dawStore.moveClip(dragSourceTrackId, dragClipId, dragStartTick, shouldSnap)
 }
 
 function removeInteractionListeners() {

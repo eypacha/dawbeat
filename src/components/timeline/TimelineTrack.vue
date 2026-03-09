@@ -79,7 +79,7 @@ import {
   getTrackColor,
   lightenHex
 } from '@/utils/colorUtils'
-import { TRACK_LABEL_WIDTH, pixelsToTicks, snapTicks } from '@/utils/timeUtils'
+import { TRACK_LABEL_WIDTH, maybeSnapTicks, pixelsToTicks } from '@/utils/timeUtils'
 
 const DRAG_THRESHOLD_PX = 6
 
@@ -255,7 +255,8 @@ function handleCreationPointerUp() {
 function getPointerTick(event) {
   const laneRect = laneElement.value.getBoundingClientRect()
   const relativeX = Math.max(0, event.clientX - laneRect.left)
-  return snapTicks(pixelsToTicks(relativeX, pixelsPerTick.value))
+  const rawTick = pixelsToTicks(relativeX, pixelsPerTick.value)
+  return maybeSnapTicks(rawTick, !event.shiftKey)
 }
 
 function cleanupCreation() {

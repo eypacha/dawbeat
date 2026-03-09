@@ -27,6 +27,10 @@ export function snapTicks(ticks, subdivisions = TIMELINE_SNAP_SUBDIVISIONS) {
   return Math.round(ticks * subdivisions) / subdivisions
 }
 
+export function maybeSnapTicks(ticks, shouldSnap = true) {
+  return shouldSnap ? snapTicks(ticks) : ticks
+}
+
 export function ticksToSamples(ticks, tickSize) {
   return ticks * getSamplesPerTick(tickSize)
 }
