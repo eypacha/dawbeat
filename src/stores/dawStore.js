@@ -275,6 +275,24 @@ export const useDawStore = defineStore('dawStore', {
       clip.start = clampClipStart(track, clipId, snappedStart)
     },
 
+    placeClip(trackId, clipId, nextStart) {
+      const track = this.tracks.find((entry) => entry.id === trackId)
+
+      if (!track) {
+        return
+      }
+
+      const clip = track.clips.find((entry) => entry.id === clipId)
+
+      if (!clip) {
+        return
+      }
+
+      const snappedStart = snapTicks(Math.max(0, nextStart))
+      clip.start = clampClipPlacementStart(track, snappedStart, clip.duration, clipId)
+      track.clips.sort((leftClip, rightClip) => leftClip.start - rightClip.start)
+    },
+
     moveClipToTrack(sourceTrackId, targetTrackId, clipId, nextStart) {
       const sourceTrack = this.tracks.find((entry) => entry.id === sourceTrackId)
       const targetTrack = this.tracks.find((entry) => entry.id === targetTrackId)
@@ -343,6 +361,33 @@ export const useDawStore = defineStore('dawStore', {
       const clampedEnd = clampClipResizeEnd(track, clipId, snappedEnd)
 
       clip.duration = clampedEnd - clip.start
+    },
+
+    duplicateClip(trackId, clipId) {
+      const track = this.tracks.find((entry) => entry.id === trackId)
+
+      if (!track) {
+        return null
+      }
+
+      const sourceClip = track.clips.find((entry) => entry.id === clipId)
+
+      if (!sourceClip) {
+        return null
+      }
+
+      const duplicateClipId = createClipId()
+      const duplicateClip = {
+        ...sourceClip,
+        id: duplicateClipId
+      }
+
+      track.clips.push(duplicateClip)
+      track.clips.sort((leftClip, rightClip) => leftClip.start - rightClip.start)
+      this.selectedTrackId = trackId
+      this.selectedClipId = duplicateClipId
+
+      return duplicateClipId
     },
 
     removeClip(clipId) {

@@ -69,6 +69,10 @@ let dragStartX = 0
 let dragStartTick = 0
 let dragDesiredStart = 0
 let dragTargetTrackId = props.trackId
+let dragClipId = props.clip.id
+let dragSourceTrackId = props.trackId
+let duplicateDrag = false
+let ignoreNextClick = false
 let resizeStartTick = 0
 let resizeEndTick = 0
 
@@ -86,6 +90,10 @@ const buttonClassName = computed(() => {
   }
 
   if (isDragging.value) {
+    if (duplicateDrag) {
+      return isSelected.value ? 'timeline-clip--selected' : 'timeline-clip--default'
+    }
+
     return 'timeline-clip--dragging'
   }
 
@@ -104,6 +112,10 @@ const clipTitle = computed(() => {
 })
 
 function handleSelect() {
+  if (ignoreNextClick) {
+    return
+  }
+
   dawStore.selectTrack(props.trackId)
   dawStore.selectClip(props.clip.id)
 }
@@ -118,9 +130,24 @@ function handlePointerDown(event) {
     return
   }
 
+  dragClipId = props.clip.id
   dragStartTick = props.clip.start
   dragDesiredStart = props.clip.start
+  dragSourceTrackId = props.trackId
+  dragTargetTrackId = props.trackId
+  duplicateDrag = event.altKey === true
+
+  if (duplicateDrag) {
+    ignoreNextClick = true
+  } else {
+    handleSelect()
+  }
+
   isDragging.value = true
+
+  if (duplicateDrag) {
+    syncDragPreview()
+  }
 }
 
 function handleResizeStartPointerDown(event) {
@@ -128,6 +155,7 @@ function handleResizeStartPointerDown(event) {
     return
   }
 
+  handleSelect()
   resizeMode.value = 'start'
   resizeStartTick = props.clip.start
 }
@@ -137,6 +165,7 @@ function handleResizeEndPointerDown(event) {
     return
   }
 
+  handleSelect()
   resizeMode.value = 'end'
   resizeEndTick = props.clip.start + props.clip.duration
 }
@@ -148,10 +177,6 @@ function startInteraction(event) {
 
   event.preventDefault()
   dragStartX = event.clientX
-  dragDesiredStart = props.clip.start
-  dragTargetTrackId = props.trackId
-
-  handleSelect()
 
   window.addEventListener('pointermove', handlePointerMove)
   window.addEventListener('pointerup', handlePointerUp)
@@ -170,6 +195,12 @@ function handlePointerMove(event) {
   if (isDragging.value) {
     dragDesiredStart = snapTicks(Math.max(0, dragStartTick + deltaTicks))
     dragTargetTrackId = getDragTargetTrackId(event)
+
+    if (duplicateDrag) {
+      syncDragPreview()
+      return
+    }
+
     syncSourceClipPosition()
     syncDragPreview()
     return
@@ -188,18 +219,46 @@ function handlePointerUp() {
     return
   }
 
-  if (isDragging.value && dragTargetTrackId !== props.trackId) {
-    dawStore.moveClipToTrack(props.trackId, dragTargetTrackId, props.clip.id, dragDesiredStart)
+  const shouldClearDuplicateClickGuard = ignoreNextClick
+
+  if (isDragging.value) {
+    if (duplicateDrag) {
+      const duplicateClipId = dawStore.duplicateClip(dragSourceTrackId, props.clip.id)
+
+      if (duplicateClipId) {
+        const previewStart = getDuplicatePreviewStart(dragTargetTrackId)
+
+        if (dragTargetTrackId === dragSourceTrackId) {
+          dawStore.placeClip(dragSourceTrackId, duplicateClipId, previewStart)
+        } else {
+          dawStore.moveClipToTrack(dragSourceTrackId, dragTargetTrackId, duplicateClipId, previewStart)
+        }
+      }
+    } else if (dragTargetTrackId !== dragSourceTrackId) {
+      dawStore.moveClipToTrack(dragSourceTrackId, dragTargetTrackId, dragClipId, dragDesiredStart)
+    }
   }
 
   dawStore.clearClipDragPreview()
+  cleanupInteraction()
+
+  if (shouldClearDuplicateClickGuard) {
+    requestAnimationFrame(() => {
+      ignoreNextClick = false
+    })
+  }
+}
+
+function cleanupInteraction() {
   isDragging.value = false
   resizeMode.value = null
+  duplicateDrag = false
+  dragClipId = props.clip.id
+  dragSourceTrackId = props.trackId
   dragDesiredStart = props.clip.start
+  dragStartTick = props.clip.start
   dragTargetTrackId = props.trackId
-  window.removeEventListener('pointermove', handlePointerMove)
-  window.removeEventListener('pointerup', handlePointerUp)
-  window.removeEventListener('pointercancel', handlePointerUp)
+  removeInteractionListeners()
 }
 
 function getDragTargetTrackId(event) {
@@ -217,8 +276,29 @@ function getDragTargetTrackId(event) {
   return trackExists && nextTrackId ? nextTrackId : props.trackId
 }
 
+function getDuplicatePreviewStart(trackId) {
+  const targetTrack = tracks.value.find((track) => track.id === trackId)
+
+  if (!targetTrack) {
+    return dragDesiredStart
+  }
+
+  return clampClipPlacementStart(targetTrack, dragDesiredStart, props.clip.duration)
+}
+
 function syncDragPreview() {
-  if (dragTargetTrackId === props.trackId) {
+  if (duplicateDrag) {
+    dawStore.setClipDragPreview({
+      clipId: `duplicate-preview-${props.clip.id}`,
+      duration: props.clip.duration,
+      sourceTrackId: dragSourceTrackId,
+      start: getDuplicatePreviewStart(dragTargetTrackId),
+      targetTrackId: dragTargetTrackId
+    })
+    return
+  }
+
+  if (dragTargetTrackId === dragSourceTrackId) {
     dawStore.clearClipDragPreview()
     return
   }
@@ -231,21 +311,27 @@ function syncDragPreview() {
   }
 
   dawStore.setClipDragPreview({
-    clipId: props.clip.id,
+    clipId: dragClipId,
     duration: props.clip.duration,
-    sourceTrackId: props.trackId,
+    sourceTrackId: dragSourceTrackId,
     start: clampClipPlacementStart(targetTrack, dragDesiredStart, props.clip.duration),
     targetTrackId: dragTargetTrackId
   })
 }
 
 function syncSourceClipPosition() {
-  if (dragTargetTrackId === props.trackId) {
-    dawStore.moveClip(props.trackId, props.clip.id, dragDesiredStart)
+  if (dragTargetTrackId === dragSourceTrackId) {
+    dawStore.moveClip(dragSourceTrackId, dragClipId, dragDesiredStart)
     return
   }
 
-  dawStore.moveClip(props.trackId, props.clip.id, dragStartTick)
+  dawStore.moveClip(dragSourceTrackId, dragClipId, dragStartTick)
+}
+
+function removeInteractionListeners() {
+  window.removeEventListener('pointermove', handlePointerMove)
+  window.removeEventListener('pointerup', handlePointerUp)
+  window.removeEventListener('pointercancel', handlePointerUp)
 }
 
 function saveFormula() {
@@ -283,7 +369,7 @@ watch(
 
 onBeforeUnmount(() => {
   dawStore.clearClipDragPreview()
-  handlePointerUp()
+  cleanupInteraction()
 })
 </script>
 
