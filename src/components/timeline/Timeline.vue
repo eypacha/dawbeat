@@ -4,11 +4,6 @@
       <div>
         <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">Timeline</p>
       </div>
-
-      <div class="text-right text-[10px] uppercase tracking-[0.3em] text-zinc-500">
-        <div>{{ samplesPerTick }} samples per tick</div>
-        <div>{{ pixelsPerTick.toFixed(0) }} px per tick</div>
-      </div>
     </div>
 
     <div
