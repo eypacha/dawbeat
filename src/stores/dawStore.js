@@ -47,10 +47,23 @@ const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
 
 function createDefaultProject() {
   return {
+    audioEffects: [
+      createDelayAudioEffect({
+        id: 'fx-audio-delay'
+      })
+    ],
+    evalEffects: [
+      createStereoOffsetEvalEffect({
+        id: 'fx1'
+      })
+    ],
     formulas: [],
     loopEnabled: false,
     loopStart: 0,
     loopEnd: 16,
+    masterGain: 1,
+    sampleRate: 8000,
+    tickSize: BASE_TICK_SIZE,
     tracks: [
       {
         id: 'f2a8b8d6-6b53-4c4c-81df-5f6d9d85a101',
@@ -112,29 +125,21 @@ function createInitialState() {
 
   return {
     audioReady: false,
-    audioEffects: [
-      createDelayAudioEffect({
-        id: 'fx-audio-delay'
-      })
-    ],
+    audioEffects: project.audioEffects,
     clipDragPreview: null,
-    evalEffects: [
-      createStereoOffsetEvalEffect({
-        id: 'fx1'
-      })
-    ],
+    evalEffects: project.evalEffects,
     editingClipId: null,
     editingFormulaId: null,
     formulas: project.formulas,
     loopEnabled: project.loopEnabled,
     loopStart: project.loopStart,
     loopEnd: project.loopEnd,
-    masterGain: 1,
+    masterGain: project.masterGain,
     playing: false,
     time: 0,
     zoom: project.zoom,
-    sampleRate: 8000,
-    tickSize: BASE_TICK_SIZE,
+    sampleRate: project.sampleRate,
+    tickSize: project.tickSize,
     tracks: project.tracks,
     selectedFormulaId: null,
     selectedClipId: null,
@@ -312,6 +317,28 @@ export const useDawStore = defineStore('dawStore', {
 
     setZoom(nextZoom) {
       this.zoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM)
+    },
+
+    applyProject(project) {
+      this.audioEffects = project.audioEffects
+      this.clipDragPreview = null
+      this.evalEffects = project.evalEffects
+      this.editingClipId = null
+      this.editingFormulaId = null
+      this.formulas = project.formulas
+      this.loopEnabled = project.loopEnabled
+      this.loopStart = project.loopStart
+      this.loopEnd = project.loopEnd
+      this.masterGain = project.masterGain
+      this.playing = false
+      this.time = 0
+      this.zoom = project.zoom
+      this.sampleRate = project.sampleRate
+      this.tickSize = project.tickSize
+      this.tracks = project.tracks
+      this.selectedFormulaId = null
+      this.selectedClipId = null
+      this.selectedTrackId = null
     },
 
     adjustZoom(delta) {

@@ -57,6 +57,8 @@
       @eval="evaluateFormulaDialog"
       @save="saveFormulaDialog"
     />
+
+    <SnackbarContainer />
   </div>
 </template>
 
@@ -71,6 +73,7 @@ import TransportBar from '@/components/transport/TransportBar.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import ContextMenu from '@/components/ui/ContextMenu.vue'
 import FormulaInputDialog from '@/components/ui/FormulaInputDialog.vue'
+import SnackbarContainer from '@/components/ui/SnackbarContainer.vue'
 import TextInputDialog from '@/components/ui/TextInputDialog.vue'
 import TrackColorPalette from '@/components/timeline/TrackColorPalette.vue'
 import { provideContextMenu } from '@/composables/useContextMenu'
