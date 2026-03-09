@@ -17,8 +17,9 @@
 
 <script setup>
 import { computed, onBeforeUnmount, ref } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useDawStore } from '@/stores/dawStore'
-import { TIMELINE_SCALE, ticksToPixels } from '@/utils/timeUtils'
+import { ticksToPixels } from '@/utils/timeUtils'
 
 const props = defineProps({
   loopEnabled: {
@@ -36,13 +37,14 @@ const props = defineProps({
 })
 
 const dawStore = useDawStore()
+const { pixelsPerTick } = storeToRefs(dawStore)
 const resizeMode = ref(null)
 const startPointerX = ref(0)
 const initialTick = ref(0)
 
 const loopStyle = computed(() => ({
-  left: `${ticksToPixels(props.loopStart)}px`,
-  width: `${Math.max(ticksToPixels(props.loopEnd - props.loopStart), 12)}px`
+  left: `${ticksToPixels(props.loopStart, pixelsPerTick.value)}px`,
+  width: `${Math.max(ticksToPixels(props.loopEnd - props.loopStart, pixelsPerTick.value), 12)}px`
 }))
 
 function handleStartPointerDown(event) {
@@ -73,7 +75,7 @@ function handlePointerMove(event) {
     return
   }
 
-  const deltaTicks = (event.clientX - startPointerX.value) / TIMELINE_SCALE
+  const deltaTicks = (event.clientX - startPointerX.value) / pixelsPerTick.value
 
   if (resizeMode.value === 'start') {
     dawStore.setLoopStart(initialTick.value + deltaTicks)

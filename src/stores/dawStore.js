@@ -1,6 +1,15 @@
 import { defineStore } from 'pinia'
 import { clampClipResizeEnd, clampClipResizeStart, clampClipStart } from '@/services/timelineService'
-import { BASE_TICK_SIZE, TIMELINE_SNAP_SUBDIVISIONS, getClipEnd, snapTicks } from '@/utils/timeUtils'
+import {
+  BASE_PIXELS_PER_TICK,
+  BASE_TICK_SIZE,
+  MAX_ZOOM,
+  MIN_ZOOM,
+  TIMELINE_SNAP_SUBDIVISIONS,
+  clamp,
+  getClipEnd,
+  snapTicks
+} from '@/utils/timeUtils'
 
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
 
@@ -66,6 +75,10 @@ export const useDawStore = defineStore('dawStore', {
     selectedTrackId: null
   }),
 
+  getters: {
+    pixelsPerTick: (state) => BASE_PIXELS_PER_TICK * state.zoom
+  },
+
   actions: {
     setAudioReady(ready) {
       this.audioReady = ready
@@ -95,6 +108,14 @@ export const useDawStore = defineStore('dawStore', {
 
     setTime(time) {
       this.time = time
+    },
+
+    setZoom(nextZoom) {
+      this.zoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM)
+    },
+
+    adjustZoom(delta) {
+      this.setZoom(this.zoom + delta * -0.001)
     },
 
     addTrack() {

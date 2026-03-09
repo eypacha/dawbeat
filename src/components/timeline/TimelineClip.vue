@@ -44,7 +44,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useDawStore } from '@/stores/dawStore'
-import { TIMELINE_SCALE, ticksToPixels, ticksToSamples } from '@/utils/timeUtils'
+import { ticksToPixels, ticksToSamples } from '@/utils/timeUtils'
 
 const props = defineProps({
   clip: {
@@ -58,7 +58,7 @@ const props = defineProps({
 })
 
 const dawStore = useDawStore()
-const { editingClipId, selectedClipId, tickSize } = storeToRefs(dawStore)
+const { editingClipId, pixelsPerTick, selectedClipId, tickSize } = storeToRefs(dawStore)
 const isDragging = ref(false)
 const resizeMode = ref(null)
 const draftFormula = ref(props.clip.formula)
@@ -70,8 +70,8 @@ let resizeStartTick = 0
 let resizeEndTick = 0
 
 const clipStyle = computed(() => ({
-  left: `${ticksToPixels(props.clip.start)}px`,
-  width: `${Math.max(ticksToPixels(props.clip.duration), 56)}px`
+  left: `${ticksToPixels(props.clip.start, pixelsPerTick.value)}px`,
+  width: `${Math.max(ticksToPixels(props.clip.duration, pixelsPerTick.value), 56)}px`
 }))
 
 const isEditing = computed(() => editingClipId.value === props.clip.id)
@@ -161,7 +161,7 @@ function handlePointerMove(event) {
     return
   }
 
-  const deltaTicks = (event.clientX - dragStartX) / TIMELINE_SCALE
+  const deltaTicks = (event.clientX - dragStartX) / pixelsPerTick.value
 
   if (isDragging.value) {
     dawStore.moveClip(props.trackId, props.clip.id, dragStartTick + deltaTicks)

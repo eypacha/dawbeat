@@ -7,6 +7,8 @@
 
 <script setup>
 import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useDawStore } from '@/stores/dawStore'
 import { ticksToPixels } from '@/utils/timeUtils'
 
 const props = defineProps({
@@ -20,8 +22,11 @@ const props = defineProps({
   }
 })
 
+const dawStore = useDawStore()
+const { pixelsPerTick } = storeToRefs(dawStore)
+
 const previewStyle = computed(() => ({
-  left: `${ticksToPixels(props.start)}px`,
-  width: `${Math.max(ticksToPixels(props.duration), 56)}px`
+  left: `${ticksToPixels(props.start, pixelsPerTick.value)}px`,
+  width: `${Math.max(ticksToPixels(props.duration, pixelsPerTick.value), 56)}px`
 }))
 </script>

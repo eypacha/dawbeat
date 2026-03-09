@@ -9,16 +9,18 @@
 
       <div class="text-right text-[10px] uppercase tracking-[0.3em] text-zinc-500">
         <div>{{ samplesPerTick }} samples per tick</div>
+        <div>{{ pixelsPerTick.toFixed(0) }} px per tick</div>
       </div>
     </div>
 
     <div
       ref="scrollContainer"
       class="flex-1 overflow-auto border border-zinc-800 bg-zinc-950/80"
+      @wheel="handleWheel"
     >
       <div class="sticky top-0 z-20 flex min-w-full w-max border-b border-zinc-800 bg-zinc-900/95">
         <div
-          class="flex shrink-0 items-center border-r border-zinc-800 px-4 text-[10px] uppercase tracking-[0.3em] text-zinc-500"
+          class="sticky left-0 z-30 flex shrink-0 items-center border-r border-zinc-800 bg-zinc-900 px-4 text-[10px] uppercase tracking-[0.3em] text-zinc-500"
           :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
         >
           Tracks
@@ -39,7 +41,7 @@
             v-for="mark in rulerMarks"
             :key="mark"
             class="absolute inset-y-0 border-l border-zinc-800/80"
-            :style="{ left: `${ticksToPixels(mark)}px` }"
+            :style="{ left: `${ticksToPixels(mark, pixelsPerTick)}px` }"
           >
             <span class="absolute left-2 top-2 text-[10px] text-zinc-500">{{ mark }}</span>
           </div>
@@ -78,7 +80,8 @@ import {
 const AUTO_SCROLL_PADDING = 96
 
 const dawStore = useDawStore()
-const { loopEnabled, loopEnd, loopStart, playing, tickSize, time, tracks } = storeToRefs(dawStore)
+const { loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, tickSize, time, tracks } =
+  storeToRefs(dawStore)
 const scrollContainer = ref(null)
 
 const timelineTicks = computed(() => {
@@ -95,7 +98,52 @@ const timelineTicks = computed(() => {
 
 const samplesPerTick = computed(() => getSamplesPerTick(tickSize.value))
 const rulerMarks = computed(() => Array.from({ length: timelineTicks.value }, (_, index) => index))
-const timelineWidthStyle = computed(() => `${ticksToPixels(timelineTicks.value)}px`)
+const timelineWidthStyle = computed(() => `${ticksToPixels(timelineTicks.value, pixelsPerTick.value)}px`)
+
+function handleWheel(event) {
+  if ((!event.ctrlKey && !event.metaKey) || !scrollContainer.value) {
+    return
+  }
+
+  event.preventDefault()
+
+  const viewportLeft = scrollContainer.value.scrollLeft
+  const viewportRight = viewportLeft + scrollContainer.value.clientWidth
+  const previousPixelsPerTick = pixelsPerTick.value
+  const previousPlayheadOffset = TRACK_LABEL_WIDTH + ticksToPixels(time.value, previousPixelsPerTick)
+  const playheadWasVisible =
+    previousPlayheadOffset >= viewportLeft && previousPlayheadOffset <= viewportRight
+  const containerRect = scrollContainer.value.getBoundingClientRect()
+  const pointerOffsetX = event.clientX - containerRect.left
+  const timelineX = scrollContainer.value.scrollLeft + pointerOffsetX - TRACK_LABEL_WIDTH
+  const anchorTick = Math.max(0, timelineX / previousPixelsPerTick)
+
+  dawStore.adjustZoom(event.deltaY)
+
+  const nextTimelineX = anchorTick * pixelsPerTick.value
+  const nextScrollLeft = nextTimelineX - pointerOffsetX + TRACK_LABEL_WIDTH
+  scrollContainer.value.scrollLeft = Math.max(0, nextScrollLeft)
+
+  if (!playheadWasVisible) {
+    return
+  }
+
+  const nextPlayheadOffset = TRACK_LABEL_WIDTH + ticksToPixels(time.value, pixelsPerTick.value)
+  const nextViewportLeft = scrollContainer.value.scrollLeft
+  const nextViewportRight = nextViewportLeft + scrollContainer.value.clientWidth
+
+  if (nextPlayheadOffset < nextViewportLeft + AUTO_SCROLL_PADDING) {
+    scrollContainer.value.scrollLeft = Math.max(0, nextPlayheadOffset - AUTO_SCROLL_PADDING)
+    return
+  }
+
+  if (nextPlayheadOffset > nextViewportRight - AUTO_SCROLL_PADDING) {
+    scrollContainer.value.scrollLeft = Math.max(
+      0,
+      nextPlayheadOffset - scrollContainer.value.clientWidth + AUTO_SCROLL_PADDING
+    )
+  }
+}
 
 watch(time, (nextTime) => {
   if (!scrollContainer.value) {
@@ -111,7 +159,7 @@ watch(time, (nextTime) => {
     return
   }
 
-  const playheadOffset = TRACK_LABEL_WIDTH + ticksToPixels(nextTime)
+  const playheadOffset = TRACK_LABEL_WIDTH + ticksToPixels(nextTime, pixelsPerTick.value)
   const viewportLeft = scrollContainer.value.scrollLeft
   const viewportRight = viewportLeft + scrollContainer.value.clientWidth
 

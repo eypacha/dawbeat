@@ -1,20 +1,26 @@
-export const TIMELINE_SCALE = 72
+export const BASE_PIXELS_PER_TICK = 48
+export const MIN_ZOOM = 0.25
+export const MAX_ZOOM = 4
 export const TRACK_LABEL_WIDTH = 144
 export const DEFAULT_TIMELINE_TICKS = 32
 export const TIMELINE_SNAP_SUBDIVISIONS = 4
 export const BASE_TICK_SIZE = 1024
 export const TICK_DURATION_MULTIPLIER = 4
 
+export function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max)
+}
+
 export function getSamplesPerTick(tickSize = BASE_TICK_SIZE) {
   return tickSize * TICK_DURATION_MULTIPLIER
 }
 
-export function ticksToPixels(ticks, scale = TIMELINE_SCALE) {
-  return ticks * scale
+export function ticksToPixels(ticks, pixelsPerTick = BASE_PIXELS_PER_TICK) {
+  return ticks * pixelsPerTick
 }
 
-export function pixelsToTicks(pixels, scale = TIMELINE_SCALE) {
-  return pixels / scale
+export function pixelsToTicks(pixels, pixelsPerTick = BASE_PIXELS_PER_TICK) {
+  return pixels / pixelsPerTick
 }
 
 export function snapTicks(ticks, subdivisions = TIMELINE_SNAP_SUBDIVISIONS) {
