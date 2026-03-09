@@ -9,6 +9,36 @@ function sortClipsByStart(clips, excludedClipId) {
     .sort((leftClip, rightClip) => leftClip.start - rightClip.start)
 }
 
+function getClipPlacementIntervals(track, duration, excludedClipId) {
+  const sortedClips = sortClipsByStart(track.clips, excludedClipId)
+  const intervals = []
+  let cursor = 0
+
+  for (const clip of sortedClips) {
+    const maxStart = clip.start - duration
+
+    if (maxStart >= cursor) {
+      intervals.push({
+        minStart: cursor,
+        maxStart
+      })
+    }
+
+    cursor = Math.max(cursor, getClipEnd(clip))
+  }
+
+  intervals.push({
+    minStart: cursor,
+    maxStart: Number.POSITIVE_INFINITY
+  })
+
+  return intervals
+}
+
+function clampStartToInterval(start, interval) {
+  return Math.max(interval.minStart, Math.min(start, interval.maxStart))
+}
+
 function getClipWithSiblings(track, clipId) {
   const clip = track.clips.find((entry) => entry.id === clipId)
 
@@ -108,6 +138,29 @@ export function getClipResizeEndBounds(track, clipId) {
 export function clampClipStart(track, clipId, nextStart) {
   const { minStart, maxStart } = getClipMoveBounds(track, clipId)
   return Math.max(minStart, Math.min(nextStart, maxStart))
+}
+
+export function clampClipPlacementStart(track, nextStart, duration, excludedClipId = null) {
+  const intervals = getClipPlacementIntervals(track, duration, excludedClipId)
+
+  if (!intervals.length) {
+    return Math.max(0, nextStart)
+  }
+
+  let closestStart = clampStartToInterval(nextStart, intervals[0])
+  let closestDistance = Math.abs(closestStart - nextStart)
+
+  for (const interval of intervals.slice(1)) {
+    const clampedStart = clampStartToInterval(nextStart, interval)
+    const distance = Math.abs(clampedStart - nextStart)
+
+    if (distance < closestDistance) {
+      closestStart = clampedStart
+      closestDistance = distance
+    }
+  }
+
+  return Math.max(0, closestStart)
 }
 
 export function clampClipResizeStart(track, clipId, nextStart) {

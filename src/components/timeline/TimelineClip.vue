@@ -58,7 +58,7 @@ const props = defineProps({
 })
 
 const dawStore = useDawStore()
-const { editingClipId, pixelsPerTick, selectedClipId, tickSize } = storeToRefs(dawStore)
+const { editingClipId, pixelsPerTick, selectedClipId, tickSize, tracks } = storeToRefs(dawStore)
 const isDragging = ref(false)
 const resizeMode = ref(null)
 const draftFormula = ref(props.clip.formula)
@@ -66,6 +66,7 @@ const formulaInput = ref(null)
 
 let dragStartX = 0
 let dragStartTick = 0
+let dragTargetTrackId = props.trackId
 let resizeStartTick = 0
 let resizeEndTick = 0
 
@@ -146,6 +147,7 @@ function startInteraction(event) {
 
   event.preventDefault()
   dragStartX = event.clientX
+  dragTargetTrackId = props.trackId
 
   handleSelect()
 
@@ -164,6 +166,7 @@ function handlePointerMove(event) {
   const deltaTicks = (event.clientX - dragStartX) / pixelsPerTick.value
 
   if (isDragging.value) {
+    dragTargetTrackId = getDragTargetTrackId(event)
     dawStore.moveClip(props.trackId, props.clip.id, dragStartTick + deltaTicks)
     return
   }
@@ -181,11 +184,31 @@ function handlePointerUp() {
     return
   }
 
+  if (isDragging.value) {
+    dawStore.moveClipToTrack(props.trackId, dragTargetTrackId, props.clip.id, props.clip.start)
+  }
+
   isDragging.value = false
   resizeMode.value = null
+  dragTargetTrackId = props.trackId
   window.removeEventListener('pointermove', handlePointerMove)
   window.removeEventListener('pointerup', handlePointerUp)
   window.removeEventListener('pointercancel', handlePointerUp)
+}
+
+function getDragTargetTrackId(event) {
+  const targetTrackElement = document
+    .elementFromPoint(event.clientX, event.clientY)
+    ?.closest('[data-track-id]')
+
+  if (!(targetTrackElement instanceof HTMLElement)) {
+    return props.trackId
+  }
+
+  const nextTrackId = targetTrackElement.dataset.trackId
+  const trackExists = tracks.value.some((track) => track.id === nextTrackId)
+
+  return trackExists && nextTrackId ? nextTrackId : props.trackId
 }
 
 function saveFormula() {

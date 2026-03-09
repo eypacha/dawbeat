@@ -1,5 +1,10 @@
 import { defineStore } from 'pinia'
-import { clampClipResizeEnd, clampClipResizeStart, clampClipStart } from '@/services/timelineService'
+import {
+  clampClipPlacementStart,
+  clampClipResizeEnd,
+  clampClipResizeStart,
+  clampClipStart
+} from '@/services/timelineService'
 import {
   BASE_PIXELS_PER_TICK,
   BASE_TICK_SIZE,
@@ -208,6 +213,36 @@ export const useDawStore = defineStore('dawStore', {
 
       const snappedStart = snapTicks(Math.max(0, nextStart))
       clip.start = clampClipStart(track, clipId, snappedStart)
+    },
+
+    moveClipToTrack(sourceTrackId, targetTrackId, clipId, nextStart) {
+      const sourceTrack = this.tracks.find((entry) => entry.id === sourceTrackId)
+      const targetTrack = this.tracks.find((entry) => entry.id === targetTrackId)
+
+      if (!sourceTrack || !targetTrack) {
+        return
+      }
+
+      const clipIndex = sourceTrack.clips.findIndex((entry) => entry.id === clipId)
+
+      if (clipIndex === -1) {
+        return
+      }
+
+      if (sourceTrackId === targetTrackId) {
+        this.moveClip(sourceTrackId, clipId, nextStart)
+        this.selectedTrackId = targetTrackId
+        return
+      }
+
+      const [clip] = sourceTrack.clips.splice(clipIndex, 1)
+      const snappedStart = snapTicks(Math.max(0, nextStart))
+      const clampedStart = clampClipPlacementStart(targetTrack, snappedStart, clip.duration)
+
+      clip.start = clampedStart
+      targetTrack.clips.push(clip)
+      targetTrack.clips.sort((leftClip, rightClip) => leftClip.start - rightClip.start)
+      this.selectedTrackId = targetTrackId
     },
 
     resizeClipStart(trackId, clipId, nextStart) {

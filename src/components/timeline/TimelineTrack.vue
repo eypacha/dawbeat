@@ -1,6 +1,7 @@
 <template>
   <div
     class="flex min-w-full w-max border-b border-zinc-800 last:border-b-0"
+    :data-track-id="track.id"
     @click="dawStore.selectTrack(track.id)"
     @contextmenu="handleContextMenu"
   >
