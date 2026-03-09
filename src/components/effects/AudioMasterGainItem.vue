@@ -1,0 +1,53 @@
+<template>
+  <article class="w-full max-w-full min-w-0 overflow-hidden rounded border border-zinc-700 bg-zinc-900/90 p-3 text-zinc-100">
+    <div class="flex items-center justify-between gap-3">
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-sm font-medium text-zinc-50">Master Gain</p>
+      </div>
+
+      <button
+        class="rounded border border-zinc-700 bg-zinc-950 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-500 hover:text-zinc-100"
+        type="button"
+        @click="emit('reset')"
+      >
+        Reset
+      </button>
+    </div>
+
+    <div class="mt-4 grid gap-2">
+      <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+        <span>Output</span>
+        <span>{{ gainLabel }}</span>
+      </div>
+
+      <input
+        class="accent-amber-300"
+        :value="gain"
+        max="1.5"
+        min="0"
+        step="0.01"
+        type="range"
+        @input="handleInput"
+      />
+    </div>
+  </article>
+</template>
+
+<script setup>
+import { computed } from 'vue'
+
+const props = defineProps({
+  gain: {
+    type: Number,
+    required: true
+  }
+})
+
+const emit = defineEmits(['reset', 'update:gain'])
+
+const gainLabel = computed(() => `${Number(props.gain ?? 0).toFixed(2)}x`)
+
+function handleInput(event) {
+  emit('update:gain', Number(event.target.value))
+}
+</script>

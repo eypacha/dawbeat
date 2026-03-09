@@ -1,4 +1,4 @@
-import { normalizeDecibels, normalizeDelayTime, normalizeMixValue, normalizeUnitValue } from '@/services/audioEffectService'
+import { normalizeDecibels, normalizeDelayTime, normalizeMasterGain, normalizeMixValue, normalizeUnitValue } from '@/services/audioEffectService'
 import { Macro_BitCrusherNode, Macro_DelayNode, Macro_ToneControlNode } from '@/utils/macroNodes'
 
 const BYTEBEAT_SCRIPT_URL = '/vendors/ByteBeat.js'
@@ -14,6 +14,8 @@ let currentExpressionsKey = null
 let desiredSampleRate = 8000
 let sampleOffset = 0
 let currentAudioEffects = []
+let masterGainValue = 1
+let masterGainNode = null
 const audioEffectNodes = new Map()
 
 function safeDisconnect(node) {
@@ -26,6 +28,18 @@ function safeDisconnect(node) {
   } catch {
     // Ignore repeated disconnects; Web Audio nodes throw when not connected.
   }
+}
+
+function ensureMasterGainNode() {
+  if (!audioContext) {
+    return null
+  }
+
+  if (!masterGainNode) {
+    masterGainNode = new GainNode(audioContext, { gain: masterGainValue })
+  }
+
+  return masterGainNode
 }
 
 function createAudioEffectNode(effect) {
@@ -136,10 +150,18 @@ function connectAudioGraph(audioEffects = currentAudioEffects) {
   }
 
   safeDisconnect(byteBeatNode)
+  const outputNode = ensureMasterGainNode()
   const nodes = syncAudioEffectNodes(audioEffects)
 
+  if (!outputNode) {
+    return
+  }
+
+  safeDisconnect(outputNode)
+
   if (!nodes.length) {
-    byteBeatNode.connect(audioContext.destination)
+    byteBeatNode.connect(outputNode)
+    outputNode.connect(audioContext.destination)
     return
   }
 
@@ -154,7 +176,8 @@ function connectAudioGraph(audioEffects = currentAudioEffects) {
     previousNode = node
   }
 
-  previousNode.connect(audioContext.destination)
+  previousNode.connect(outputNode)
+  outputNode.connect(audioContext.destination)
 }
 
 function buildCompiledExpressions(expressions) {
@@ -222,6 +245,7 @@ async function createNode(providedAudioContext) {
   byteBeatNode.setType(ByteBeatNode.Type.byteBeat)
   byteBeatNode.setDesiredSampleRate(desiredSampleRate)
   await byteBeatNode.setExpressions([SILENT_FORMULA], true)
+  ensureMasterGainNode()
   currentExpressionsKey = null
 
   return byteBeatNode
@@ -294,6 +318,17 @@ const bytebeatService = {
     await this.init()
     currentAudioEffects = [...audioEffects]
     connectAudioGraph(audioEffects)
+  },
+
+  async setMasterGain(value) {
+    await this.init()
+    masterGainValue = normalizeMasterGain(value)
+
+    const outputNode = ensureMasterGainNode()
+
+    if (outputNode) {
+      outputNode.gain.value = masterGainValue
+    }
   },
 
   async setExpressions(expressions, resetToZero = false, force = false) {

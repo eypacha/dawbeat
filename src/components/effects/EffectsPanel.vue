@@ -75,9 +75,9 @@
 
           <div class="mt-4 min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-1">
             <div class="grid gap-3">
-              <template v-if="activeSection === 'audio'">
-                <div
-                  v-for="effect in audioEffects"
+	              <template v-if="activeSection === 'audio'">
+	                <div
+	                  v-for="effect in audioEffects"
                   :key="effect.id"
                   class="rounded transition-shadow"
                   :class="dropTargetSection === 'audio' && dropTargetEffectId === effect.id
@@ -96,10 +96,16 @@
                     @reset="handleResetEffect('audio', $event)"
                     @toggle-enabled="handleToggleEnabled('audio', $event)"
                     @toggle-expanded="handleToggleExpanded('audio', $event)"
-                    @update-param="handleUpdateAudioEffectParam"
-                  />
-                </div>
-              </template>
+	                    @update-param="handleUpdateAudioEffectParam"
+	                  />
+	                </div>
+
+	                <AudioMasterGainItem
+	                  :gain="masterGain"
+	                  @reset="dawStore.resetMasterGain()"
+	                  @update:gain="dawStore.setMasterGain($event)"
+	                />
+	              </template>
 
               <template v-else>
                 <div
@@ -136,17 +142,18 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import AudioBitCrusherItem from '@/components/effects/AudioBitCrusherItem.vue'
-import AudioDelayItem from '@/components/effects/AudioDelayItem.vue'
-import AudioEqItem from '@/components/effects/AudioEqItem.vue'
-import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
+	import AudioBitCrusherItem from '@/components/effects/AudioBitCrusherItem.vue'
+	import AudioDelayItem from '@/components/effects/AudioDelayItem.vue'
+	import AudioEqItem from '@/components/effects/AudioEqItem.vue'
+	import AudioMasterGainItem from '@/components/effects/AudioMasterGainItem.vue'
+	import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
 import Divider from '@/components/ui/Divider.vue'
 import Panel from '@/components/ui/Panel.vue'
 import { useDawStore } from '@/stores/dawStore'
 
-const dawStore = useDawStore()
-const { audioEffects, evalEffects } = storeToRefs(dawStore)
+	const dawStore = useDawStore()
+	const { audioEffects, evalEffects, masterGain } = storeToRefs(dawStore)
 const effectId = ref(5)
 const activeSection = ref('formula')
 const activeAddMenu = ref(null)

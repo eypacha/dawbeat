@@ -3,16 +3,17 @@
     class="group w-full max-w-full min-w-0 overflow-hidden rounded border border-zinc-700 bg-zinc-800/90 p-3 transition-colors"
     :class="[
       effect.enabled ? 'text-zinc-100 hover:bg-zinc-700/90' : 'text-zinc-400 hover:bg-zinc-800',
-      dragging ? 'cursor-grabbing opacity-70' : 'cursor-grab'
+      dragging ? 'opacity-70' : ''
     ]"
-    draggable="true"
-    @dragstart="emit('drag-start', effect.id)"
-    @dragend="emit('drag-end')"
   >
     <div class="flex min-w-0 items-start gap-2">
       <div
-        class="-ml-1 mt-0.5 flex h-5 w-4 shrink-0 items-center justify-center text-zinc-500 transition group-hover:text-zinc-300"
+        class="-ml-1 mt-0.5 flex h-5 w-4 shrink-0 cursor-grab items-center justify-center text-zinc-500 transition group-hover:text-zinc-300"
+        :class="dragging ? 'cursor-grabbing' : ''"
+        draggable="true"
         title="Drag effect"
+        @dragstart="emit('drag-start', effect.id)"
+        @dragend="emit('drag-end')"
       >
         <GripVertical class="h-3.5 w-3.5" />
       </div>

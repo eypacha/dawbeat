@@ -1,15 +1,16 @@
 <template>
   <article
     class="w-full max-w-full min-w-0 overflow-hidden rounded border border-zinc-700 bg-zinc-800/90 p-3 text-zinc-100 transition-colors"
-    :class="dragging ? 'cursor-grabbing opacity-70' : 'cursor-grab'"
-    draggable="true"
-    @dragstart="emit('drag-start', effect.id)"
-    @dragend="emit('drag-end')"
+    :class="dragging ? 'opacity-70' : ''"
   >
     <div class="flex min-w-0 items-start gap-2">
       <div
-        class="-ml-1 mt-0.5 flex h-5 w-4 shrink-0 items-center justify-center text-zinc-500"
+        class="-ml-1 mt-0.5 flex h-5 w-4 shrink-0 cursor-grab items-center justify-center text-zinc-500"
+        :class="dragging ? 'cursor-grabbing' : ''"
+        draggable="true"
         title="Drag effect"
+        @dragstart="emit('drag-start', effect.id)"
+        @dragend="emit('drag-end')"
       >
         <GripVertical class="h-3.5 w-3.5" />
       </div>

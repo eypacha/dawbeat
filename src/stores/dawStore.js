@@ -24,6 +24,7 @@ import {
   createEqAudioEffect,
   normalizeDecibels,
   normalizeDelayTime,
+  normalizeMasterGain,
   normalizeMixValue,
   normalizeUnitValue
 } from '@/services/audioEffectService'
@@ -128,6 +129,7 @@ function createInitialState() {
     loopEnabled: project.loopEnabled,
     loopStart: project.loopStart,
     loopEnd: project.loopEnd,
+    masterGain: 1,
     playing: false,
     time: 0,
     zoom: project.zoom,
@@ -168,6 +170,14 @@ export const useDawStore = defineStore('dawStore', {
   actions: {
     setAudioReady(ready) {
       this.audioReady = ready
+    },
+
+    setMasterGain(value) {
+      this.masterGain = normalizeMasterGain(value)
+    },
+
+    resetMasterGain() {
+      this.masterGain = 1
     },
 
     addAudioEffect(effect) {

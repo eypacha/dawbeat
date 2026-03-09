@@ -14,7 +14,7 @@ export function useTransportPlayback() {
   }
 
   const dawStore = useDawStore()
-  const { audioEffects, audioReady, evalEffects, formulas, loopEnabled, loopEnd, loopStart, playing, sampleRate, tickSize, tracks } =
+  const { audioEffects, audioReady, evalEffects, formulas, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks } =
     storeToRefs(dawStore)
 
   let frameId = 0
@@ -76,6 +76,7 @@ export function useTransportPlayback() {
     await bytebeatService.unlock()
     bytebeatService.setDesiredSampleRate(sampleRate.value)
     await bytebeatService.syncAudioEffects(audioEffects.value)
+    await bytebeatService.setMasterGain(masterGain.value)
 
     const initialFormula = getActiveFormula(0, tracks.value, formulas.value)
     const initialExpressions = applyEvalEffects(initialFormula, evalEffects.value)
@@ -93,6 +94,7 @@ export function useTransportPlayback() {
       await enableAudio()
       bytebeatService.setDesiredSampleRate(sampleRate.value)
       await bytebeatService.syncAudioEffects(audioEffects.value)
+      await bytebeatService.setMasterGain(masterGain.value)
 
       const resumeTime = dawStore.time
       const resumeFromPause = resumeTime > 0
@@ -177,6 +179,10 @@ export function useTransportPlayback() {
     },
     { deep: true }
   )
+
+  watch(masterGain, (nextMasterGain) => {
+    void bytebeatService.setMasterGain(nextMasterGain)
+  })
 
   return transportPlayback
 }

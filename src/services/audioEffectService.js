@@ -84,6 +84,16 @@ export function normalizeUnitValue(value) {
   return Math.min(1, Math.max(0, numericValue))
 }
 
+export function normalizeMasterGain(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 1
+  }
+
+  return Math.min(1.5, Math.max(0, numericValue))
+}
+
 export function normalizeDecibels(value) {
   const numericValue = Number(value)
 
