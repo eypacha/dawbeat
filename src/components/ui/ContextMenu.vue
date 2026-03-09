@@ -17,19 +17,19 @@
         @click="handleItemClick(item)"
       >
         <span>{{ item.label }}</span>
-        <span v-if="item.type === 'palette'" class="text-zinc-400">▶</span>
+        <span v-if="hasSubmenu(item)" class="text-zinc-400">▶</span>
       </button>
 
       <div
-        v-if="item.type === 'palette' && activePaletteItem === item.action"
-        ref="activePaletteElement"
+        v-if="hasSubmenu(item) && activeSubmenuItem === item.action"
+        :ref="(element) => setActiveSubmenuElement(item.action, element)"
         class="absolute left-full ml-1"
-        :style="paletteStyle"
+        :style="submenuStyle"
       >
-        <TrackColorPalette
-          :colors="item.colors"
-          :selected-color="item.selectedColor"
-          @select="handlePaletteSelect(item, $event)"
+        <slot
+          name="submenu"
+          :close="closeMenu"
+          :item="item"
         />
       </div>
     </div>
@@ -37,8 +37,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import TrackColorPalette from '@/components/timeline/TrackColorPalette.vue'
+import { computed, nextTick, onBeforeUnmount, ref, useSlots, watch } from 'vue'
 
 const VIEWPORT_PADDING = 8
 
@@ -63,11 +62,12 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'select'])
 
-const activePaletteItem = ref(null)
-const activePaletteElement = ref(null)
+const slots = useSlots()
+const activeSubmenuElementByAction = new Map()
+const activeSubmenuItem = ref(null)
 const menuElement = ref(null)
 const menuPosition = ref({ left: props.x, top: props.y })
-const paletteDirection = ref('down')
+const submenuDirection = ref('down')
 const triggerRefs = new Map()
 
 const menuStyle = computed(() => ({
@@ -75,28 +75,27 @@ const menuStyle = computed(() => ({
   top: `${menuPosition.value.top}px`
 }))
 
-const paletteStyle = computed(() =>
-  paletteDirection.value === 'up' ? { bottom: '0' } : { top: '0' }
+const submenuStyle = computed(() =>
+  submenuDirection.value === 'up' ? { bottom: '0' } : { top: '0' }
 )
 
 function handleSelect(item) {
   emit('select', item.action, item)
-  emit('close')
+  closeMenu()
 }
 
 async function handleItemClick(item) {
-  if (item.type === 'palette') {
-    activePaletteItem.value = activePaletteItem.value === item.action ? null : item.action
+  if (hasSubmenu(item)) {
+    activeSubmenuItem.value = activeSubmenuItem.value === item.action ? null : item.action
     await nextTick()
-    syncPalettePosition(item.action)
+    syncSubmenuPosition(item.action)
     return
   }
 
   handleSelect(item)
 }
 
-function handlePaletteSelect(item, color) {
-  emit('select', item.action, { ...item, color })
+function closeMenu() {
   emit('close')
 }
 
@@ -105,7 +104,7 @@ function handlePointerDown(event) {
     return
   }
 
-  emit('close')
+  closeMenu()
 }
 
 function handleKeydown(event) {
@@ -113,7 +112,7 @@ function handleKeydown(event) {
     return
   }
 
-  emit('close')
+  closeMenu()
 }
 
 function clampToViewport(value, size, viewportSize) {
@@ -127,6 +126,19 @@ function setTriggerRef(action, element) {
   }
 
   triggerRefs.delete(action)
+}
+
+function setActiveSubmenuElement(action, element) {
+  if (element instanceof HTMLElement) {
+    activeSubmenuElementByAction.set(action, element)
+    return
+  }
+
+  activeSubmenuElementByAction.delete(action)
+}
+
+function hasSubmenu(item) {
+  return Boolean(item.type && slots.submenu)
 }
 
 async function syncMenuPosition() {
@@ -148,22 +160,23 @@ async function syncMenuPosition() {
   }
 }
 
-function syncPalettePosition(action) {
-  if (!activePaletteElement.value || !action) {
+function syncSubmenuPosition(action) {
+  if (!action) {
     return
   }
 
+  const submenuElement = activeSubmenuElementByAction.get(action)
   const triggerElement = triggerRefs.get(action)
 
-  if (!triggerElement) {
+  if (!submenuElement || !triggerElement) {
     return
   }
 
   const triggerRect = triggerElement.getBoundingClientRect()
-  const paletteRect = activePaletteElement.value.getBoundingClientRect()
-  const paletteBottom = triggerRect.top + paletteRect.height
+  const submenuRect = submenuElement.getBoundingClientRect()
+  const submenuBottom = triggerRect.top + submenuRect.height
 
-  paletteDirection.value = paletteBottom > window.innerHeight - VIEWPORT_PADDING ? 'up' : 'down'
+  submenuDirection.value = submenuBottom > window.innerHeight - VIEWPORT_PADDING ? 'up' : 'down'
 }
 
 function syncListeners(visible) {
@@ -173,7 +186,7 @@ function syncListeners(visible) {
     return
   }
 
-  activePaletteItem.value = null
+  activeSubmenuItem.value = null
   window.removeEventListener('pointerdown', handlePointerDown)
   window.removeEventListener('keydown', handleKeydown)
 }

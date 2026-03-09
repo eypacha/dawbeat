@@ -1,17 +1,13 @@
 <template>
-  <section class="flex min-h-[320px] flex-col border border-zinc-800 bg-zinc-900/80 p-4 shadow-lg shadow-black/20">
+  <Panel class="flex min-h-[320px] flex-col">
     <div class="mb-4 flex items-start justify-between gap-4">
       <div>
         <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">Library</p>
       </div>
 
-      <button
-        class="shrink-0 border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs uppercase tracking-[0.24em] text-zinc-300 transition-colors hover:border-zinc-500 hover:text-zinc-100"
-        type="button"
-        @click="handleNewFormula"
-      >
+      <Button class="shrink-0" type="button" variant="ghost" @click="handleNewFormula">
         + New Formula
-      </button>
+      </Button>
     </div>
 
     <div class="min-h-0 flex-1 overflow-auto border border-zinc-800 bg-zinc-950/70">
@@ -37,11 +33,13 @@
         <span class="mt-1 truncate text-xs text-zinc-500">{{ formula.code }}</span>
       </button>
     </div>
-  </section>
+  </Panel>
 </template>
 
 <script setup>
 import { storeToRefs } from 'pinia'
+import Button from '@/components/ui/Button.vue'
+import Panel from '@/components/ui/Panel.vue'
 import { getFormulaDisplayName } from '@/services/formulaService'
 import { useDawStore } from '@/stores/dawStore'
 import { ticksToPixels } from '@/utils/timeUtils'

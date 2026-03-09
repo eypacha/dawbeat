@@ -1,7 +1,5 @@
 <template>
-  <section
-    class="flex min-h-[320px] flex-col border border-zinc-800 bg-zinc-900/80 p-4 shadow-lg shadow-black/20"
-  >
+  <Panel class="flex min-h-[320px] flex-col">
     <div class="mb-4 flex items-center justify-between gap-4">
       <div>
         <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">Timeline</p>
@@ -62,12 +60,13 @@
         <TimelineAddTrackRow :timeline-width="timelineWidthStyle" />
       </div>
     </div>
-  </section>
+  </Panel>
 </template>
 
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import Panel from '@/components/ui/Panel.vue'
 import Playhead from '@/components/timeline/Playhead.vue'
 import TimelineAddTrackRow from '@/components/timeline/TimelineAddTrackRow.vue'
 import TimelineLoopRegion from '@/components/timeline/TimelineLoopRegion.vue'

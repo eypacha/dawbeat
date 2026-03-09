@@ -18,7 +18,16 @@
       :visible="contextMenu.state.visible"
       @close="contextMenu.closeContextMenu()"
       @select="handleContextMenuSelect"
-    />
+    >
+      <template #submenu="{ item, close }">
+        <TrackColorPalette
+          v-if="item.action === 'set-track-color'"
+          :colors="item.colors"
+          :selected-color="item.selectedColor"
+          @select="handleTrackColorSelect(item, $event, close)"
+        />
+      </template>
+    </ContextMenu>
 
     <ConfirmDialog
       :message="confirmDialog.message"
@@ -61,6 +70,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import ContextMenu from '@/components/ui/ContextMenu.vue'
 import FormulaInputDialog from '@/components/ui/FormulaInputDialog.vue'
 import TextInputDialog from '@/components/ui/TextInputDialog.vue'
+import TrackColorPalette from '@/components/timeline/TrackColorPalette.vue'
 import { provideContextMenu } from '@/composables/useContextMenu'
 import { getFormulaById, resolveClipFormula, resolveClipFormulaName } from '@/services/formulaService'
 import { findTrackWithClip } from '@/services/dawStoreService'
@@ -194,14 +204,14 @@ function handleContextMenuSelect(action, item) {
     return
   }
 
-  if (action === 'set-track-color') {
-    dawStore.setTrackColor(item.trackId, item.color)
-    return
-  }
-
   if (action === 'add-clip-formula-to-library') {
     dawStore.addClipFormulaToLibrary(item.trackId, item.clipId)
   }
+}
+
+function handleTrackColorSelect(item, color, close) {
+  dawStore.setTrackColor(item.trackId, color)
+  close()
 }
 
 function closeConfirmDialog() {
