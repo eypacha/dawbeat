@@ -52,8 +52,9 @@
         <Playhead :time="time" :offset="TRACK_LABEL_WIDTH" />
 
         <TimelineTrack
-          v-for="track in tracks"
+          v-for="(track, index) in tracks"
           :key="track.id"
+          :track-index="index"
           :track="track"
           :timeline-width="timelineWidthStyle"
         />

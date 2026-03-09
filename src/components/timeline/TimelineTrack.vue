@@ -10,7 +10,7 @@
       :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
       @contextmenu="handleContextMenu"
     >
-      <span class="text-sm">{{ track.name }}</span>
+      <span class="text-sm">{{ displayTrackName }}</span>
       <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">
         {{ track.clips.length }} clips
       </span>
@@ -57,6 +57,10 @@ import { TRACK_LABEL_WIDTH, pixelsToTicks, snapTicks } from '@/utils/timeUtils'
 const DRAG_THRESHOLD_PX = 6
 
 const props = defineProps({
+  trackIndex: {
+    type: Number,
+    required: true
+  },
   track: {
     type: Object,
     required: true
@@ -91,6 +95,14 @@ const dragPreview = computed(() => {
   return clipDragPreview.value
 })
 
+const displayTrackName = computed(() => {
+  if (typeof props.track.name === 'string' && props.track.name.trim()) {
+    return props.track.name
+  }
+
+  return `Track ${props.trackIndex + 1}`
+})
+
 function handleContextMenu(event) {
   event.preventDefault()
   dawStore.selectTrack(props.track.id)
@@ -99,12 +111,18 @@ function handleContextMenu(event) {
     x: event.clientX,
     y: event.clientY,
     items: [
-      { label: 'Add Track', action: 'add-track' },
+      { label: 'Add Track', action: 'add-track', beforeTrackId: props.track.id },
+      {
+        label: 'Rename Track',
+        action: 'rename-track',
+        trackId: props.track.id,
+        trackName: props.track.name ?? ''
+      },
       {
         label: 'Delete Track',
         action: 'delete-track',
         trackId: props.track.id,
-        trackName: props.track.name
+        trackName: displayTrackName.value
       }
     ]
   })

@@ -26,15 +26,20 @@ function createClipId() {
   return `clip-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-function getNextTrackNumber(tracks) {
-  return (
-    tracks.reduce((largestTrackNumber, track) => {
-      const match = track.id.match(/^track(\d+)$/)
-      const trackNumber = match ? Number.parseInt(match[1], 10) : 0
+function createTrackId() {
+  if (globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID()
+  }
 
-      return Math.max(largestTrackNumber, trackNumber)
-    }, 0) + 1
-  )
+  return `track-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
+function createTrack() {
+  return {
+    id: createTrackId(),
+    name: undefined,
+    clips: []
+  }
 }
 
 export const useDawStore = defineStore('dawStore', {
@@ -52,8 +57,8 @@ export const useDawStore = defineStore('dawStore', {
     tickSize: BASE_TICK_SIZE,
     tracks: [
       {
-        id: 'track1',
-        name: 'Track 1',
+        id: 'f2a8b8d6-6b53-4c4c-81df-5f6d9d85a101',
+        name: undefined,
         clips: [
           {
             id: 'clip0',
@@ -76,8 +81,8 @@ export const useDawStore = defineStore('dawStore', {
         ]
       },
       {
-        id: 'track2',
-        name: 'Track 2',
+        id: '81e56bb6-5ca7-4e4e-a7f7-b43df392c202',
+        name: undefined,
         clips: [
           {
             id: 'clip3',
@@ -143,14 +148,22 @@ export const useDawStore = defineStore('dawStore', {
       this.clipDragPreview = null
     },
 
-    addTrack() {
-      const nextTrackNumber = getNextTrackNumber(this.tracks)
+    addTrack(beforeTrackId = null) {
+      const nextTrack = createTrack()
 
-      this.tracks.push({
-        id: `track${nextTrackNumber}`,
-        name: `Track ${nextTrackNumber}`,
-        clips: []
-      })
+      if (!beforeTrackId) {
+        this.tracks.push(nextTrack)
+        return
+      }
+
+      const insertIndex = this.tracks.findIndex((track) => track.id === beforeTrackId)
+
+      if (insertIndex === -1) {
+        this.tracks.push(nextTrack)
+        return
+      }
+
+      this.tracks.splice(insertIndex, 0, nextTrack)
     },
 
     removeTrack(trackId) {
@@ -173,6 +186,17 @@ export const useDawStore = defineStore('dawStore', {
       if (removedTrack.clips.some((clip) => clip.id === this.editingClipId)) {
         this.editingClipId = null
       }
+    },
+
+    renameTrack(trackId, nextName) {
+      const track = this.tracks.find((entry) => entry.id === trackId)
+
+      if (!track) {
+        return
+      }
+
+      const normalizedName = typeof nextName === 'string' ? nextName.trim() : ''
+      track.name = normalizedName || undefined
     },
 
     addClip(trackId, clip) {

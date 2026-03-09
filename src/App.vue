@@ -27,6 +27,15 @@
       @cancel="closeConfirmDialog"
       @confirm="confirmTrackDeletion"
     />
+
+    <TextInputDialog
+      :initial-value="renameDialog.trackName"
+      :visible="renameDialog.visible"
+      label="Track Name"
+      title="Rename Track"
+      @cancel="closeRenameDialog"
+      @confirm="confirmTrackRename"
+    />
   </div>
 </template>
 
@@ -39,6 +48,7 @@ import Timeline from '@/components/timeline/Timeline.vue'
 import TransportBar from '@/components/transport/TransportBar.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import ContextMenu from '@/components/ui/ContextMenu.vue'
+import TextInputDialog from '@/components/ui/TextInputDialog.vue'
 import { provideContextMenu } from '@/composables/useContextMenu'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
@@ -49,6 +59,11 @@ const confirmDialog = reactive({
   visible: false,
   message: '',
   trackId: null
+})
+const renameDialog = reactive({
+  trackId: null,
+  trackName: '',
+  visible: false
 })
 const { enableAudio } = useTransportPlayback()
 const { audioReady, editingClipId, selectedClipId } = storeToRefs(dawStore)
@@ -79,7 +94,7 @@ function handleKeydown(event) {
 
 function handleContextMenuSelect(action, item) {
   if (action === 'add-track') {
-    dawStore.addTrack()
+    dawStore.addTrack(item.beforeTrackId ?? null)
     return
   }
 
@@ -87,6 +102,13 @@ function handleContextMenuSelect(action, item) {
     confirmDialog.trackId = item.trackId
     confirmDialog.message = `Delete ${item.trackName ?? 'this track'}?`
     confirmDialog.visible = true
+    return
+  }
+
+  if (action === 'rename-track') {
+    renameDialog.trackId = item.trackId
+    renameDialog.trackName = item.trackName ?? ''
+    renameDialog.visible = true
   }
 }
 
@@ -102,6 +124,20 @@ function confirmTrackDeletion() {
   }
 
   closeConfirmDialog()
+}
+
+function closeRenameDialog() {
+  renameDialog.trackId = null
+  renameDialog.trackName = ''
+  renameDialog.visible = false
+}
+
+function confirmTrackRename(nextName) {
+  if (renameDialog.trackId) {
+    dawStore.renameTrack(renameDialog.trackId, nextName)
+  }
+
+  closeRenameDialog()
 }
 
 onMounted(() => {
