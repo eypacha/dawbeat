@@ -1,13 +1,19 @@
-import { onBeforeUnmount } from 'vue'
 import { storeToRefs } from 'pinia'
 import { getActiveFormula } from '@/engine/timelineEngine'
 import bytebeatService from '@/services/bytebeatService'
 import { useDawStore } from '@/stores/dawStore'
 import { samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 
+let transportPlayback = null
+
 export function useTransportPlayback() {
+  if (transportPlayback) {
+    return transportPlayback
+  }
+
   const dawStore = useDawStore()
-  const { audioReady, loopEnabled, loopEnd, loopStart, playing, sampleRate, tickSize, tracks } = storeToRefs(dawStore)
+  const { audioReady, loopEnabled, loopEnd, loopStart, playing, sampleRate, tickSize, tracks } =
+    storeToRefs(dawStore)
 
   let frameId = 0
   let loopJumpInProgress = false
@@ -135,14 +141,12 @@ export function useTransportPlayback() {
     }
   }
 
-  onBeforeUnmount(() => {
-    void stop()
-  })
-
-  return {
+  transportPlayback = {
     play,
     enableAudio,
     pause,
     stop
   }
+
+  return transportPlayback
 }

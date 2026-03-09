@@ -65,7 +65,7 @@ const renameDialog = reactive({
   trackName: '',
   visible: false
 })
-const { enableAudio } = useTransportPlayback()
+const { enableAudio, stop } = useTransportPlayback()
 const { audioReady, editingClipId, selectedClipId } = storeToRefs(dawStore)
 
 async function handleStart() {
@@ -151,5 +151,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeydown)
+  void stop()
 })
 </script>
