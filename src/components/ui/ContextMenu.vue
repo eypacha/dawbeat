@@ -11,6 +11,7 @@
       class="relative"
     >
       <button
+        :ref="(element) => setTriggerRef(item.action, element)"
         class="flex w-full items-center justify-between px-3 py-1.5 text-left transition hover:bg-zinc-700"
         type="button"
         @click="handleItemClick(item)"
@@ -21,7 +22,9 @@
 
       <div
         v-if="item.type === 'palette' && activePaletteItem === item.action"
-        class="absolute left-full top-0 ml-1"
+        ref="activePaletteElement"
+        class="absolute left-full ml-1"
+        :style="paletteStyle"
       >
         <TrackColorPalette
           :colors="item.colors"
@@ -34,8 +37,10 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import TrackColorPalette from '@/components/timeline/TrackColorPalette.vue'
+
+const VIEWPORT_PADDING = 8
 
 const props = defineProps({
   x: {
@@ -59,21 +64,31 @@ const props = defineProps({
 const emit = defineEmits(['close', 'select'])
 
 const activePaletteItem = ref(null)
+const activePaletteElement = ref(null)
 const menuElement = ref(null)
+const menuPosition = ref({ left: props.x, top: props.y })
+const paletteDirection = ref('down')
+const triggerRefs = new Map()
 
 const menuStyle = computed(() => ({
-  left: `${props.x}px`,
-  top: `${props.y}px`
+  left: `${menuPosition.value.left}px`,
+  top: `${menuPosition.value.top}px`
 }))
+
+const paletteStyle = computed(() =>
+  paletteDirection.value === 'up' ? { bottom: '0' } : { top: '0' }
+)
 
 function handleSelect(item) {
   emit('select', item.action, item)
   emit('close')
 }
 
-function handleItemClick(item) {
+async function handleItemClick(item) {
   if (item.type === 'palette') {
     activePaletteItem.value = activePaletteItem.value === item.action ? null : item.action
+    await nextTick()
+    syncPalettePosition(item.action)
     return
   }
 
@@ -101,6 +116,56 @@ function handleKeydown(event) {
   emit('close')
 }
 
+function clampToViewport(value, size, viewportSize) {
+  return Math.min(Math.max(VIEWPORT_PADDING, value), Math.max(VIEWPORT_PADDING, viewportSize - size - VIEWPORT_PADDING))
+}
+
+function setTriggerRef(action, element) {
+  if (element instanceof HTMLElement) {
+    triggerRefs.set(action, element)
+    return
+  }
+
+  triggerRefs.delete(action)
+}
+
+async function syncMenuPosition() {
+  if (!props.visible) {
+    return
+  }
+
+  await nextTick()
+
+  if (!menuElement.value) {
+    return
+  }
+
+  const { width, height } = menuElement.value.getBoundingClientRect()
+
+  menuPosition.value = {
+    left: clampToViewport(props.x, width, window.innerWidth),
+    top: clampToViewport(props.y, height, window.innerHeight)
+  }
+}
+
+function syncPalettePosition(action) {
+  if (!activePaletteElement.value || !action) {
+    return
+  }
+
+  const triggerElement = triggerRefs.get(action)
+
+  if (!triggerElement) {
+    return
+  }
+
+  const triggerRect = triggerElement.getBoundingClientRect()
+  const paletteRect = activePaletteElement.value.getBoundingClientRect()
+  const paletteBottom = triggerRect.top + paletteRect.height
+
+  paletteDirection.value = paletteBottom > window.innerHeight - VIEWPORT_PADDING ? 'up' : 'down'
+}
+
 function syncListeners(visible) {
   if (visible) {
     window.addEventListener('pointerdown', handlePointerDown)
@@ -114,9 +179,13 @@ function syncListeners(visible) {
 }
 
 watch(
-  () => props.visible,
-  (visible) => {
+  () => [props.visible, props.x, props.y, props.items],
+  async ([visible]) => {
     syncListeners(visible)
+
+    if (visible) {
+      await syncMenuPosition()
+    }
   },
   { immediate: true }
 )
