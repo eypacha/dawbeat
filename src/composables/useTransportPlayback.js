@@ -184,5 +184,9 @@ export function useTransportPlayback() {
     void bytebeatService.setMasterGain(nextMasterGain)
   })
 
+  watch(sampleRate, (nextSampleRate) => {
+    bytebeatService.setDesiredSampleRate(nextSampleRate)
+  })
+
   return transportPlayback
 }

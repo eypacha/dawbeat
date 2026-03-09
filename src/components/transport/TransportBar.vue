@@ -40,7 +40,20 @@
 
         <Divider />
         <span class="border border-zinc-800 bg-zinc-950 px-3 py-1">{{ transportTime }}</span>
-        <span class="border border-zinc-800 bg-zinc-950 px-3 py-1">{{ sampleRate }} hz</span>
+        <div class="flex items-center gap-2 border border-zinc-800 bg-zinc-950 px-2 py-1">
+          <input
+            v-model="sampleRateDraft"
+            class="w-14 bg-transparent text-right text-xs text-zinc-100 outline-none"
+            max="44100"
+            min="256"
+            step="1"
+            type="number"
+            @blur="commitSampleRate"
+            @keydown.enter.prevent="commitSampleRate"
+            @keydown.esc.prevent="resetSampleRateDraft"
+          >
+          <span class="text-zinc-500">hz</span>
+        </div>
 
         <Divider />
         <IconButton
@@ -80,7 +93,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Download, FolderOpen, Pause, Play, Repeat, Settings2, Square } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
@@ -97,12 +110,26 @@ const dawStore = useDawStore()
 const { play, pause, stop } = useTransportPlayback()
 const { loopEnabled, playing, sampleRate, time } = storeToRefs(dawStore)
 const projectFileInput = ref(null)
+const sampleRateDraft = ref(String(sampleRate.value))
 const settingsVisible = ref(false)
 
 const transportTime = computed(() => `${time.value.toFixed(2)} ticks`)
 
+watch(sampleRate, (nextSampleRate) => {
+  sampleRateDraft.value = String(nextSampleRate)
+})
+
 function triggerProjectOpen() {
   projectFileInput.value?.click()
+}
+
+function commitSampleRate() {
+  dawStore.setSampleRate(sampleRateDraft.value)
+  sampleRateDraft.value = String(sampleRate.value)
+}
+
+function resetSampleRateDraft() {
+  sampleRateDraft.value = String(sampleRate.value)
 }
 
 function handleProjectDownload() {

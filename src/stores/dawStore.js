@@ -41,6 +41,7 @@ import {
   getClipEnd,
   snapTicks
 } from '@/utils/timeUtils'
+import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
 import { TRACK_COLOR_PALETTE, getTrackColor } from '@/utils/colorUtils'
 
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
@@ -62,7 +63,7 @@ function createDefaultProject() {
     loopStart: 0,
     loopEnd: 16,
     masterGain: 1,
-    sampleRate: 8000,
+    sampleRate: DEFAULT_SAMPLE_RATE,
     tickSize: BASE_TICK_SIZE,
     tracks: [
       {
@@ -179,6 +180,10 @@ export const useDawStore = defineStore('dawStore', {
 
     setMasterGain(value) {
       this.masterGain = normalizeMasterGain(value)
+    },
+
+    setSampleRate(value) {
+      this.sampleRate = normalizeSampleRate(value, this.sampleRate)
     },
 
     resetMasterGain() {
