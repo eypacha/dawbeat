@@ -21,6 +21,17 @@ function createClipId() {
   return `clip-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
+function getNextTrackNumber(tracks) {
+  return (
+    tracks.reduce((largestTrackNumber, track) => {
+      const match = track.id.match(/^track(\d+)$/)
+      const trackNumber = match ? Number.parseInt(match[1], 10) : 0
+
+      return Math.max(largestTrackNumber, trackNumber)
+    }, 0) + 1
+  )
+}
+
 export const useDawStore = defineStore('dawStore', {
   state: () => ({
     audioReady: false,
@@ -119,13 +130,35 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     addTrack() {
-      const nextTrackNumber = this.tracks.length + 1
+      const nextTrackNumber = getNextTrackNumber(this.tracks)
 
       this.tracks.push({
         id: `track${nextTrackNumber}`,
         name: `Track ${nextTrackNumber}`,
         clips: []
       })
+    },
+
+    removeTrack(trackId) {
+      const trackIndex = this.tracks.findIndex((track) => track.id === trackId)
+
+      if (trackIndex === -1) {
+        return
+      }
+
+      const [removedTrack] = this.tracks.splice(trackIndex, 1)
+
+      if (this.selectedTrackId === trackId) {
+        this.selectedTrackId = null
+      }
+
+      if (removedTrack.clips.some((clip) => clip.id === this.selectedClipId)) {
+        this.selectedClipId = null
+      }
+
+      if (removedTrack.clips.some((clip) => clip.id === this.editingClipId)) {
+        this.editingClipId = null
+      }
     },
 
     addClip(trackId, clip) {

@@ -1,5 +1,9 @@
 <template>
-  <div class="flex min-w-full w-max border-b border-zinc-800 last:border-b-0" @click="dawStore.selectTrack(track.id)">
+  <div
+    class="flex min-w-full w-max border-b border-zinc-800 last:border-b-0"
+    @click="dawStore.selectTrack(track.id)"
+    @contextmenu="handleContextMenu"
+  >
     <div
       class="sticky left-0 z-10 flex shrink-0 flex-col justify-center border-r border-zinc-800 px-4 py-4"
       :class="track.id === selectedTrackId ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-900 text-zinc-300'"
@@ -39,6 +43,7 @@ import { storeToRefs } from 'pinia'
 import TimelineClip from '@/components/timeline/TimelineClip.vue'
 import TimelineClipPreview from '@/components/timeline/TimelineClipPreview.vue'
 import { buildCreatedClip, getTrackCreateBounds } from '@/services/timelineService'
+import { useContextMenu } from '@/composables/useContextMenu'
 import { useDawStore } from '@/stores/dawStore'
 import { TRACK_LABEL_WIDTH, pixelsToTicks, snapTicks } from '@/utils/timeUtils'
 
@@ -56,6 +61,7 @@ const props = defineProps({
 })
 
 const dawStore = useDawStore()
+const { openContextMenu } = useContextMenu()
 const { pixelsPerTick, selectedTrackId } = storeToRefs(dawStore)
 const laneElement = ref(null)
 const creationPreview = ref(null)
@@ -69,6 +75,20 @@ const laneStyle = computed(() => ({
   backgroundImage: 'linear-gradient(to right, rgba(63, 63, 70, 0.5) 1px, transparent 1px)',
   backgroundSize: `${pixelsPerTick.value}px 100%`
 }))
+
+function handleContextMenu(event) {
+  event.preventDefault()
+  dawStore.selectTrack(props.track.id)
+
+  openContextMenu({
+    x: event.clientX,
+    y: event.clientY,
+    items: [
+      { label: 'Add Track', action: 'add-track' },
+      { label: 'Delete Track', action: 'delete-track', trackId: props.track.id }
+    ]
+  })
+}
 
 function handleLanePointerDown(event) {
   if (event.button !== 0 || !laneElement.value) {

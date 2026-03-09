@@ -10,6 +10,15 @@
         <Timeline />
       </main>
     </div>
+
+    <ContextMenu
+      :x="contextMenu.state.x"
+      :y="contextMenu.state.y"
+      :items="contextMenu.state.items"
+      :visible="contextMenu.state.visible"
+      @close="contextMenu.closeContextMenu()"
+      @select="handleContextMenuSelect"
+    />
   </div>
 </template>
 
@@ -20,10 +29,13 @@ import StartScreen from '@/components/boot/StartScreen.vue'
 import FormulaLibrary from '@/components/library/FormulaLibrary.vue'
 import Timeline from '@/components/timeline/Timeline.vue'
 import TransportBar from '@/components/transport/TransportBar.vue'
+import ContextMenu from '@/components/ui/ContextMenu.vue'
+import { provideContextMenu } from '@/composables/useContextMenu'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
 
 const dawStore = useDawStore()
+const contextMenu = provideContextMenu()
 const { enableAudio } = useTransportPlayback()
 const { audioReady, editingClipId, selectedClipId } = storeToRefs(dawStore)
 
@@ -49,6 +61,17 @@ function handleKeydown(event) {
   }
 
   dawStore.removeClip(selectedClipId.value)
+}
+
+function handleContextMenuSelect(action, item) {
+  if (action === 'add-track') {
+    dawStore.addTrack()
+    return
+  }
+
+  if (action === 'delete-track') {
+    dawStore.removeTrack(item.trackId)
+  }
 }
 
 onMounted(() => {
