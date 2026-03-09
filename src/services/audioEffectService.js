@@ -8,6 +8,9 @@ export function createAudioEffectId() {
 
 export function createAudioEffect(effect = {}) {
   switch (effect.type) {
+    case 'bitcrusher':
+      return createBitCrusherAudioEffect(effect)
+
     case 'eq':
       return createEqAudioEffect(effect)
 
@@ -45,6 +48,18 @@ export function createEqAudioEffect(effect = {}) {
   }
 }
 
+export function createBitCrusherAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'bitcrusher',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      bits: normalizeUnitValue(effect.params?.bits ?? 0.45)
+    }
+  }
+}
+
 export function normalizeDelayTime(value) {
   const numericValue = Number(value)
 
@@ -56,6 +71,10 @@ export function normalizeDelayTime(value) {
 }
 
 export function normalizeMixValue(value) {
+  return normalizeUnitValue(value)
+}
+
+export function normalizeUnitValue(value) {
   const numericValue = Number(value)
 
   if (!Number.isFinite(numericValue)) {

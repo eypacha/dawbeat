@@ -19,11 +19,13 @@ import {
 } from '@/services/dawStoreService'
 import {
   createAudioEffect,
+  createBitCrusherAudioEffect,
   createDelayAudioEffect,
   createEqAudioEffect,
   normalizeDecibels,
   normalizeDelayTime,
-  normalizeMixValue
+  normalizeMixValue,
+  normalizeUnitValue
 } from '@/services/audioEffectService'
 import { createStereoOffsetEvalEffect } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
@@ -220,6 +222,13 @@ export const useDawStore = defineStore('dawStore', {
         const defaults = createEqAudioEffect({ id: effect.id })
         effect.enabled = defaults.enabled
         effect.params = defaults.params
+        return
+      }
+
+      if (effect.type === 'bitcrusher') {
+        const defaults = createBitCrusherAudioEffect({ id: effect.id })
+        effect.enabled = defaults.enabled
+        effect.params = defaults.params
       }
     },
 
@@ -257,6 +266,11 @@ export const useDawStore = defineStore('dawStore', {
         if (typeof params.treble !== 'undefined') {
           effect.params.treble = normalizeDecibels(params.treble)
         }
+        return
+      }
+
+      if (effect.type === 'bitcrusher' && typeof params.bits !== 'undefined') {
+        effect.params.bits = normalizeUnitValue(params.bits)
       }
     },
 

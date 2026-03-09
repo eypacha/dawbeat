@@ -1,5 +1,5 @@
-import { normalizeDecibels, normalizeDelayTime, normalizeMixValue } from '@/services/audioEffectService'
-import { Macro_DelayNode, Macro_ToneControlNode } from '@/utils/macroNodes'
+import { normalizeDecibels, normalizeDelayTime, normalizeMixValue, normalizeUnitValue } from '@/services/audioEffectService'
+import { Macro_BitCrusherNode, Macro_DelayNode, Macro_ToneControlNode } from '@/utils/macroNodes'
 
 const BYTEBEAT_SCRIPT_URL = '/vendors/ByteBeat.js'
 const SILENT_FORMULA = '0'
@@ -34,6 +34,11 @@ function createAudioEffectNode(effect) {
   }
 
   switch (effect.type) {
+    case 'bitcrusher':
+      return new Macro_BitCrusherNode(audioContext, {
+        bits: 0.45
+      })
+
     case 'delay':
       return new Macro_DelayNode(audioContext, {
         delayTime: 0.18,
@@ -91,6 +96,11 @@ function syncAudioEffectNode(effect) {
     node.delayTime.value = normalizeDelayTime(effect.params?.delayTime)
     node.feedback.value = normalizeMixValue(effect.params?.feedback)
     node.mix.value = normalizeMixValue(effect.params?.mix)
+    return node
+  }
+
+  if (effect.type === 'bitcrusher') {
+    node.bits.value = normalizeUnitValue(effect.params?.bits)
     return node
   }
 

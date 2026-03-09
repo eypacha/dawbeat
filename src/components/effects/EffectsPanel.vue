@@ -136,6 +136,7 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import AudioBitCrusherItem from '@/components/effects/AudioBitCrusherItem.vue'
 import AudioDelayItem from '@/components/effects/AudioDelayItem.vue'
 import AudioEqItem from '@/components/effects/AudioEqItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
@@ -162,6 +163,10 @@ const availableFormulaEffects = [
 ]
 const availableAudioEffects = [
   {
+    name: 'BitCrusher',
+    type: 'bitcrusher'
+  },
+  {
     name: 'Delay',
     type: 'delay'
   },
@@ -176,6 +181,10 @@ function getEffectsBySection(section) {
 }
 
 function getAudioEffectComponent(effectType) {
+  if (effectType === 'bitcrusher') {
+    return AudioBitCrusherItem
+  }
+
   if (effectType === 'eq') {
     return AudioEqItem
   }
