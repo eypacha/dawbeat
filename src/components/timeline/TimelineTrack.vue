@@ -68,6 +68,7 @@
 <script setup>
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
 import TimelineClip from '@/components/timeline/TimelineClip.vue'
 import TimelineClipPreview from '@/components/timeline/TimelineClipPreview.vue'
 import { buildCreatedClip, getTrackCreateBounds } from '@/services/timelineService'
@@ -79,7 +80,7 @@ import {
   getTrackColor,
   lightenHex
 } from '@/utils/colorUtils'
-import { TRACK_LABEL_WIDTH, maybeSnapTicks, pixelsToTicks } from '@/utils/timeUtils'
+import { TRACK_LABEL_WIDTH, pixelsToTicks } from '@/utils/timeUtils'
 
 const DRAG_THRESHOLD_PX = 6
 
@@ -260,7 +261,7 @@ function getPointerTick(event) {
   const laneRect = laneElement.value.getBoundingClientRect()
   const relativeX = Math.max(0, event.clientX - laneRect.left)
   const rawTick = pixelsToTicks(relativeX, pixelsPerTick.value)
-  return maybeSnapTicks(rawTick, !event.shiftKey)
+  return getDraggedTick(rawTick, shouldSnapFromPointerEvent(event))
 }
 
 function cleanupCreation() {

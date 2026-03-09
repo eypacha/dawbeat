@@ -1,6 +1,6 @@
 import { ref } from 'vue'
+import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { clampClipPlacementStart } from '@/services/timelineService'
-import { maybeSnapTicks } from '@/utils/timeUtils'
 
 const DUPLICATE_DRAG_THRESHOLD_PX = 6
 
@@ -95,7 +95,7 @@ export function useTimelineClipInteraction({
 
     const dragDistance = Math.hypot(event.clientX - dragStartX, event.clientY - dragStartY)
     const deltaTicks = (event.clientX - dragStartX) / pixelsPerTick.value
-    const shouldSnap = !event.shiftKey
+    const shouldSnap = shouldSnapFromPointerEvent(event)
 
     if (isDragging.value) {
       if (duplicateDrag.value && !duplicateDragActivated) {
@@ -106,7 +106,7 @@ export function useTimelineClipInteraction({
         duplicateDragActivated = true
       }
 
-      dragDesiredStart = maybeSnapTicks(Math.max(0, dragStartTick + deltaTicks), shouldSnap)
+      dragDesiredStart = getDraggedTick(dragStartTick + deltaTicks, shouldSnap)
       dragTargetTrackId = getDragTargetTrackId(event)
 
       if (duplicateDrag.value) {
@@ -133,7 +133,7 @@ export function useTimelineClipInteraction({
     }
 
     const shouldClearDuplicateClickGuard = ignoreNextClick.value
-    const shouldSnap = !event.shiftKey
+    const shouldSnap = shouldSnapFromPointerEvent(event)
 
     if (isDragging.value) {
       if (duplicateDrag.value && duplicateDragActivated) {
@@ -240,7 +240,7 @@ export function useTimelineClipInteraction({
 
     return clampClipPlacementStart(
       targetTrack,
-      maybeSnapTicks(dragDesiredStart, shouldSnap),
+      getDraggedTick(dragDesiredStart, shouldSnap),
       clip.duration
     )
   }
@@ -275,7 +275,7 @@ export function useTimelineClipInteraction({
       sourceTrackId: dragSourceTrackId,
       start: clampClipPlacementStart(
         targetTrack,
-        maybeSnapTicks(dragDesiredStart, shouldSnap),
+        getDraggedTick(dragDesiredStart, shouldSnap),
         clip.duration
       ),
       targetTrackId: dragTargetTrackId
