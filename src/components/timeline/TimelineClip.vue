@@ -47,6 +47,8 @@ import { clampClipPlacementStart } from '@/services/timelineService'
 import { useDawStore } from '@/stores/dawStore'
 import { maybeSnapTicks, ticksToPixels, ticksToSamples } from '@/utils/timeUtils'
 
+const DUPLICATE_DRAG_THRESHOLD_PX = 6
+
 const props = defineProps({
   clip: {
     type: Object,
@@ -66,12 +68,14 @@ const draftFormula = ref(props.clip.formula)
 const formulaInput = ref(null)
 
 let dragStartX = 0
+let dragStartY = 0
 let dragStartTick = 0
 let dragDesiredStart = 0
 let dragTargetTrackId = props.trackId
 let dragClipId = props.clip.id
 let dragSourceTrackId = props.trackId
 let duplicateDrag = false
+let duplicateDragActivated = false
 let ignoreNextClick = false
 let resizeStartTick = 0
 let resizeEndTick = 0
@@ -136,6 +140,7 @@ function handlePointerDown(event) {
   dragSourceTrackId = props.trackId
   dragTargetTrackId = props.trackId
   duplicateDrag = event.altKey === true
+  duplicateDragActivated = false
 
   if (duplicateDrag) {
     ignoreNextClick = true
@@ -144,10 +149,6 @@ function handlePointerDown(event) {
   }
 
   isDragging.value = true
-
-  if (duplicateDrag) {
-    syncDragPreview()
-  }
 }
 
 function handleResizeStartPointerDown(event) {
@@ -178,6 +179,7 @@ function startInteraction(event) {
 
   event.preventDefault()
   dragStartX = event.clientX
+  dragStartY = event.clientY
 
   window.addEventListener('pointermove', handlePointerMove)
   window.addEventListener('pointerup', handlePointerUp)
@@ -191,10 +193,19 @@ function handlePointerMove(event) {
     return
   }
 
+  const dragDistance = Math.hypot(event.clientX - dragStartX, event.clientY - dragStartY)
   const deltaTicks = (event.clientX - dragStartX) / pixelsPerTick.value
   const shouldSnap = !event.shiftKey
 
   if (isDragging.value) {
+    if (duplicateDrag && !duplicateDragActivated) {
+      if (dragDistance <= DUPLICATE_DRAG_THRESHOLD_PX) {
+        return
+      }
+
+      duplicateDragActivated = true
+    }
+
     dragDesiredStart = maybeSnapTicks(Math.max(0, dragStartTick + deltaTicks), shouldSnap)
     dragTargetTrackId = getDragTargetTrackId(event)
 
@@ -225,7 +236,7 @@ function handlePointerUp(event) {
   const shouldSnap = !event.shiftKey
 
   if (isDragging.value) {
-    if (duplicateDrag) {
+    if (duplicateDrag && duplicateDragActivated) {
       const duplicateClipId = dawStore.duplicateClip(dragSourceTrackId, props.clip.id)
 
       if (duplicateClipId) {
@@ -296,6 +307,7 @@ function cleanupInteraction() {
   isDragging.value = false
   resizeMode.value = null
   duplicateDrag = false
+  duplicateDragActivated = false
   dragClipId = props.clip.id
   dragSourceTrackId = props.trackId
   dragDesiredStart = props.clip.start
