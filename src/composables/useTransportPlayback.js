@@ -128,6 +128,15 @@ export function useTransportPlayback() {
     }
   }
 
+  const togglePlay = async () => {
+    if (playing.value) {
+      await pause()
+      return
+    }
+
+    await play()
+  }
+
   const stop = async () => {
     loopJumpInProgress = false
     cancelLoop()
@@ -145,6 +154,7 @@ export function useTransportPlayback() {
     play,
     enableAudio,
     pause,
+    togglePlay,
     stop
   }
 

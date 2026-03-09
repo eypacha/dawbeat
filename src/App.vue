@@ -73,6 +73,7 @@ import TextInputDialog from '@/components/ui/TextInputDialog.vue'
 import TrackColorPalette from '@/components/timeline/TrackColorPalette.vue'
 import { provideContextMenu } from '@/composables/useContextMenu'
 import { getFormulaById, resolveClipFormula, resolveClipFormulaName } from '@/services/formulaService'
+import { initKeyboardShortcuts } from '@/services/keyboardShortcuts'
 import { findTrackWithClip } from '@/services/dawStoreService'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
@@ -89,7 +90,9 @@ const renameDialog = reactive({
   trackName: '',
   visible: false
 })
-const { enableAudio, stop } = useTransportPlayback()
+let disposeKeyboardShortcuts = null
+const transportPlayback = useTransportPlayback()
+const { enableAudio, stop } = transportPlayback
 const { audioReady, editingClipId, editingFormulaId, formulas, selectedClipId, tracks } = storeToRefs(dawStore)
 
 const editingClipFormula = computed(() => {
@@ -279,10 +282,16 @@ function saveFormulaDialog(nextDraft) {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
+  disposeKeyboardShortcuts = initKeyboardShortcuts({
+    dawStore,
+    transport: transportPlayback
+  })
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeydown)
+  disposeKeyboardShortcuts?.()
+  disposeKeyboardShortcuts = null
   void stop()
 })
 </script>
