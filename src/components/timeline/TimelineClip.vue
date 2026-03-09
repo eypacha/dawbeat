@@ -294,7 +294,6 @@ onBeforeUnmount(() => {
   cursor: grab;
 }
 
-.timeline-clip:hover,
 .timeline-clip--default {
   background: color-mix(in srgb, var(--track-color) 84%, transparent);
 }
