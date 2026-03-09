@@ -17,6 +17,7 @@ import {
   findTrackWithClip,
   sortTrackClips
 } from '@/services/dawStoreService'
+import { createDelayAudioEffect, normalizeDelayTime, normalizeMixValue } from '@/services/audioEffectService'
 import { createStereoOffsetEvalEffect } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
 import { loadProject } from '@/services/projectPersistence'
@@ -101,6 +102,11 @@ function createInitialState() {
 
   return {
     audioReady: false,
+    audioEffects: [
+      createDelayAudioEffect({
+        id: 'fx-audio-delay'
+      })
+    ],
     clipDragPreview: null,
     evalEffects: [
       createStereoOffsetEvalEffect({
@@ -135,6 +141,72 @@ export const useDawStore = defineStore('dawStore', {
   actions: {
     setAudioReady(ready) {
       this.audioReady = ready
+    },
+
+    addAudioEffect(effect) {
+      const nextEffect = createDelayAudioEffect(effect)
+      this.audioEffects.push(nextEffect)
+      return nextEffect.id
+    },
+
+    toggleAudioEffect(effectId) {
+      const effect = this.audioEffects.find((entry) => entry.id === effectId)
+
+      if (!effect) {
+        return
+      }
+
+      effect.enabled = !effect.enabled
+    },
+
+    toggleAudioEffectExpanded(effectId) {
+      const effect = this.audioEffects.find((entry) => entry.id === effectId)
+
+      if (!effect) {
+        return
+      }
+
+      effect.expanded = !effect.expanded
+    },
+
+    removeAudioEffect(effectId) {
+      this.audioEffects = this.audioEffects.filter((entry) => entry.id !== effectId)
+    },
+
+    resetAudioEffect(effectId) {
+      const effect = this.audioEffects.find((entry) => entry.id === effectId)
+
+      if (!effect) {
+        return
+      }
+
+      if (effect.type === 'delay') {
+        const defaults = createDelayAudioEffect({ id: effect.id })
+        effect.enabled = defaults.enabled
+        effect.params = defaults.params
+      }
+    },
+
+    updateAudioEffectParams(effectId, params) {
+      const effect = this.audioEffects.find((entry) => entry.id === effectId)
+
+      if (!effect) {
+        return
+      }
+
+      if (effect.type === 'delay') {
+        if (typeof params.delayTime !== 'undefined') {
+          effect.params.delayTime = normalizeDelayTime(params.delayTime)
+        }
+
+        if (typeof params.feedback !== 'undefined') {
+          effect.params.feedback = normalizeMixValue(params.feedback)
+        }
+
+        if (typeof params.mix !== 'undefined') {
+          effect.params.mix = normalizeMixValue(params.mix)
+        }
+      }
     },
 
     toggleLoop() {
@@ -187,10 +259,6 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     addEvalEffect(effect) {
-      if (effect?.type === 'stereoOffset' && this.evalEffects.some((entry) => entry.type === 'stereoOffset')) {
-        return null
-      }
-
       const nextEffect = createStereoOffsetEvalEffect(effect)
       this.evalEffects.push(nextEffect)
       return nextEffect.id
@@ -214,6 +282,24 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       effect.expanded = !effect.expanded
+    },
+
+    removeEvalEffect(effectId) {
+      this.evalEffects = this.evalEffects.filter((entry) => entry.id !== effectId)
+    },
+
+    resetEvalEffect(effectId) {
+      const effect = this.evalEffects.find((entry) => entry.id === effectId)
+
+      if (!effect) {
+        return
+      }
+
+      if (effect.type === 'stereoOffset') {
+        const defaults = createStereoOffsetEvalEffect({ id: effect.id })
+        effect.enabled = defaults.enabled
+        effect.params = defaults.params
+      }
     },
 
     updateEvalEffectParams(effectId, params) {

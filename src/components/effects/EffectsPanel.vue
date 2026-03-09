@@ -49,11 +49,10 @@
           <div class="relative shrink-0" :data-effects-add-menu="activeSection">
             <Button
               block
-              :disabled="activeSection === 'formula' && !canAddFormulaEffect"
               variant="ghost"
               @click="toggleAddMenu(activeSection)"
             >
-              {{ activeSection === 'formula' ? '+ Add Formula Effect' : '+ Add Audio Effect' }}
+              + Add
             </Button>
 
             <div
@@ -69,14 +68,6 @@
                   @click="handleAddEffect(activeSection, effect)"
                 >
                   <span>{{ effect.name }}</span>
-                  <span
-                    class="rounded border px-2 py-0.5 text-[10px] uppercase tracking-[0.2em]"
-                    :class="activeSection === 'formula'
-                      ? 'border-sky-500/30 bg-sky-500/10 text-sky-200'
-                      : 'border-amber-500/30 bg-amber-500/10 text-amber-200'"
-                  >
-                    {{ activeSection }}
-                  </span>
                 </button>
               </div>
             </div>
@@ -85,15 +76,18 @@
           <div class="mt-4 min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-1">
             <div class="grid gap-3">
               <template v-if="activeSection === 'audio'">
-                <EffectItem
+                <AudioDelayItem
                   v-for="effect in audioEffects"
                   :key="effect.id"
                   :dragging="draggingEffectId === effect.id && draggingSection === 'audio'"
                   :effect="effect"
                   @drag-end="handleDragEnd"
                   @drag-start="handleDragStart('audio', $event)"
+                  @remove="handleRemoveEffect('audio', $event)"
+                  @reset="handleResetEffect('audio', $event)"
                   @toggle-enabled="handleToggleEnabled('audio', $event)"
                   @toggle-expanded="handleToggleExpanded('audio', $event)"
+                  @update-param="handleUpdateAudioEffectParam"
                 />
               </template>
 
@@ -105,6 +99,8 @@
                   :effect="effect"
                   @drag-end="handleDragEnd"
                   @drag-start="handleDragStart('formula', $event)"
+                  @remove="handleRemoveEffect('formula', $event)"
+                  @reset="handleResetEffect('formula', $event)"
                   @toggle-enabled="handleToggleEnabled('formula', $event)"
                   @toggle-expanded="handleToggleExpanded('formula', $event)"
                   @update-offset="handleUpdateEvalEffectOffset"
@@ -119,48 +115,22 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import AudioDelayItem from '@/components/effects/AudioDelayItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
 import Divider from '@/components/ui/Divider.vue'
 import Panel from '@/components/ui/Panel.vue'
-import EffectItem from '@/components/effects/EffectItem.vue'
 import { useDawStore } from '@/stores/dawStore'
 
 const dawStore = useDawStore()
-const { evalEffects } = storeToRefs(dawStore)
+const { audioEffects, evalEffects } = storeToRefs(dawStore)
 const effectId = ref(5)
 const activeSection = ref('formula')
 const activeAddMenu = ref(null)
 const draggingEffectId = ref(null)
 const draggingSection = ref(null)
-const audioEffects = ref([
-  {
-    id: 'fx2',
-    name: 'Reverb',
-    type: 'audio',
-    enabled: true,
-    expanded: false,
-    parameters: [
-      { label: 'Room Size', value: '0.72', fill: '72%' },
-      { label: 'Wet', value: '0.30', fill: '30%' },
-      { label: 'Dry', value: '0.84', fill: '84%' }
-    ]
-  },
-  {
-    id: 'fx3',
-    name: 'EQ',
-    type: 'audio',
-    enabled: false,
-    expanded: false,
-    parameters: [
-      { label: 'Low', value: '+2 dB', fill: '58%' },
-      { label: 'Mid', value: '-1 dB', fill: '44%' },
-      { label: 'High', value: '+3 dB', fill: '64%' }
-    ]
-  }
-])
 
 const availableFormulaEffects = [
   {
@@ -170,38 +140,8 @@ const availableFormulaEffects = [
 ]
 const availableAudioEffects = [
   {
-    name: 'Reverb',
-    type: 'audio',
-    parameters: [
-      { label: 'Room Size', value: '0.72', fill: '72%' },
-      { label: 'Wet', value: '0.30', fill: '30%' },
-      { label: 'Dry', value: '0.84', fill: '84%' }
-    ]
-  },
-  {
     name: 'Delay',
-    type: 'audio',
-    parameters: [
-      { label: 'Time', value: '1/8', fill: '52%' },
-      { label: 'Feedback', value: '0.36', fill: '36%' }
-    ]
-  },
-  {
-    name: 'EQ',
-    type: 'audio',
-    parameters: [
-      { label: 'Low', value: '+2 dB', fill: '58%' },
-      { label: 'Mid', value: '-1 dB', fill: '44%' },
-      { label: 'High', value: '+3 dB', fill: '64%' }
-    ]
-  },
-  {
-    name: 'Filter',
-    type: 'audio',
-    parameters: [
-      { label: 'Cutoff', value: '2.4 kHz', fill: '66%' },
-      { label: 'Resonance', value: '0.21', fill: '21%' }
-    ]
+    type: 'delay'
   }
 ]
 
@@ -236,15 +176,9 @@ function handleAddEffect(section, template) {
     return
   }
 
-  getEffectsBySection(section).push({
-    id: `fx${effectId.value}`,
-    name: template.name,
-    type: template.type,
-    enabled: true,
-    expanded: true,
-    parameters: template.parameters.map((parameter) => ({ ...parameter }))
+  dawStore.addAudioEffect({
+    type: template.type
   })
-  effectId.value += 1
   activeAddMenu.value = null
 }
 
@@ -254,13 +188,7 @@ function handleToggleEnabled(section, effectIdToToggle) {
     return
   }
 
-  const effect = getEffectsBySection(section).find((entry) => entry.id === effectIdToToggle)
-
-  if (!effect) {
-    return
-  }
-
-  effect.enabled = !effect.enabled
+  dawStore.toggleAudioEffect(effectIdToToggle)
 }
 
 function handleToggleExpanded(section, effectIdToToggle) {
@@ -269,13 +197,25 @@ function handleToggleExpanded(section, effectIdToToggle) {
     return
   }
 
-  const effect = getEffectsBySection(section).find((entry) => entry.id === effectIdToToggle)
+  dawStore.toggleAudioEffectExpanded(effectIdToToggle)
+}
 
-  if (!effect) {
+function handleRemoveEffect(section, effectIdToRemove) {
+  if (section === 'formula') {
+    dawStore.removeEvalEffect(effectIdToRemove)
     return
   }
 
-  effect.expanded = !effect.expanded
+  dawStore.removeAudioEffect(effectIdToRemove)
+}
+
+function handleResetEffect(section, effectIdToReset) {
+  if (section === 'formula') {
+    dawStore.resetEvalEffect(effectIdToReset)
+    return
+  }
+
+  dawStore.resetAudioEffect(effectIdToReset)
 }
 
 function handleDragStart(section, effectIdToDrag) {
@@ -291,6 +231,12 @@ function handleDragEnd() {
 function handleUpdateEvalEffectOffset(effectIdToUpdate, nextOffset) {
   dawStore.updateEvalEffectParams(effectIdToUpdate, {
     offset: nextOffset
+  })
+}
+
+function handleUpdateAudioEffectParam(effectIdToUpdate, key, value) {
+  dawStore.updateAudioEffectParams(effectIdToUpdate, {
+    [key]: value
   })
 }
 
@@ -314,7 +260,4 @@ onBeforeUnmount(() => {
   window.removeEventListener('pointerdown', handleWindowPointerDown)
 })
 
-const canAddFormulaEffect = computed(
-  () => !evalEffects.value.some((effect) => effect.type === 'stereoOffset')
-)
 </script>

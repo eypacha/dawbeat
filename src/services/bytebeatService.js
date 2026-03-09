@@ -1,3 +1,6 @@
+import { normalizeDelayTime, normalizeMixValue } from '@/services/audioEffectService'
+import { Macro_DelayNode } from '@/utils/macroNodes'
+
 const BYTEBEAT_SCRIPT_URL = '/vendors/ByteBeat.js'
 const SILENT_FORMULA = '0'
 
@@ -10,6 +13,76 @@ let formulaUpdatePromise = Promise.resolve()
 let currentExpressionsKey = null
 let desiredSampleRate = 8000
 let sampleOffset = 0
+let delayNode = null
+
+function safeDisconnect(node) {
+  if (!node) {
+    return
+  }
+
+  try {
+    node.disconnect()
+  } catch {
+    // Ignore repeated disconnects; Web Audio nodes throw when not connected.
+  }
+}
+
+function ensureDelayNode() {
+  if (!audioContext || delayNode) {
+    return delayNode
+  }
+
+  delayNode = new Macro_DelayNode(audioContext, {
+    delayTime: 0.18,
+    feedback: 0.35,
+    mix: 0.5
+  })
+
+  return delayNode
+}
+
+function connectAudioGraph() {
+  if (!byteBeatNode || !audioContext) {
+    return
+  }
+
+  safeDisconnect(byteBeatNode)
+
+  if (!delayNode) {
+    byteBeatNode.connect(audioContext.destination)
+    return
+  }
+
+  safeDisconnect(delayNode)
+  delayNode.connect(audioContext.destination)
+  byteBeatNode.connect(delayNode)
+}
+
+function syncDelayNode(effect) {
+  if (!effect || effect.type !== 'delay') {
+    if (delayNode && delayNode.effect !== false) {
+      delayNode.effect = false
+    }
+
+    return
+  }
+
+  const node = ensureDelayNode()
+
+  if (!node) {
+    return
+  }
+
+  const nextEnabled = Boolean(effect.enabled)
+
+  if (node.effect !== nextEnabled) {
+    node.effect = nextEnabled
+  }
+
+  node.delayTime.value = normalizeDelayTime(effect.params?.delayTime)
+  node.feedback.value = normalizeMixValue(effect.params?.feedback)
+  node.mix.value = normalizeMixValue(effect.params?.mix)
+}
 
 function buildCompiledExpressions(expressions) {
   const nextExpressions = Array.isArray(expressions) && expressions.length
@@ -108,7 +181,7 @@ const bytebeatService = {
       await audioContext.resume()
     }
 
-    node.connect(audioContext.destination)
+    connectAudioGraph()
   },
 
   async unlock() {
@@ -124,7 +197,7 @@ const bytebeatService = {
       return
     }
 
-    byteBeatNode.disconnect()
+    safeDisconnect(byteBeatNode)
   },
 
   async stop() {
@@ -132,10 +205,17 @@ const bytebeatService = {
       return
     }
 
-    byteBeatNode.disconnect()
+    safeDisconnect(byteBeatNode)
     byteBeatNode.reset()
     currentExpressionsKey = null
     sampleOffset = 0
+  },
+
+  async syncAudioEffects(audioEffects = []) {
+    await this.init()
+
+    const delayEffect = audioEffects.find((effect) => effect.type === 'delay') ?? null
+    syncDelayNode(delayEffect)
   },
 
   async setExpressions(expressions, resetToZero = false, force = false) {

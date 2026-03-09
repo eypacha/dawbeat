@@ -1,4 +1,5 @@
 import { storeToRefs } from 'pinia'
+import { watch } from 'vue'
 import { getActiveFormula } from '@/engine/timelineEngine'
 import bytebeatService from '@/services/bytebeatService'
 import { applyEvalEffects } from '@/services/evalEffectService'
@@ -13,7 +14,7 @@ export function useTransportPlayback() {
   }
 
   const dawStore = useDawStore()
-  const { audioReady, evalEffects, formulas, loopEnabled, loopEnd, loopStart, playing, sampleRate, tickSize, tracks } =
+  const { audioEffects, audioReady, evalEffects, formulas, loopEnabled, loopEnd, loopStart, playing, sampleRate, tickSize, tracks } =
     storeToRefs(dawStore)
 
   let frameId = 0
@@ -72,12 +73,13 @@ export function useTransportPlayback() {
     }
 
     await bytebeatService.init()
+    await bytebeatService.unlock()
     bytebeatService.setDesiredSampleRate(sampleRate.value)
+    await bytebeatService.syncAudioEffects(audioEffects.value)
 
     const initialFormula = getActiveFormula(0, tracks.value, formulas.value)
     const initialExpressions = applyEvalEffects(initialFormula, evalEffects.value)
     await bytebeatService.setExpressions(initialExpressions, true)
-    await bytebeatService.unlock()
 
     dawStore.setAudioReady(true)
   }
@@ -90,6 +92,7 @@ export function useTransportPlayback() {
     try {
       await enableAudio()
       bytebeatService.setDesiredSampleRate(sampleRate.value)
+      await bytebeatService.syncAudioEffects(audioEffects.value)
 
       const resumeTime = dawStore.time
       const resumeFromPause = resumeTime > 0
@@ -162,6 +165,14 @@ export function useTransportPlayback() {
     togglePlay,
     stop
   }
+
+  watch(
+    audioEffects,
+    (nextAudioEffects) => {
+      void bytebeatService.syncAudioEffects(nextAudioEffects)
+    },
+    { deep: true }
+  )
 
   return transportPlayback
 }

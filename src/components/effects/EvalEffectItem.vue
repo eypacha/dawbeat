@@ -43,16 +43,36 @@
         </div>
 
         <div v-if="effect.expanded" class="mt-4">
-          <label class="grid gap-2">
-            <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Offset</span>
-            <input
-              class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
-              :value="effect.params.offset"
-              min="0"
-              type="number"
-              @input="handleOffsetInput"
-            />
-          </label>
+          <div class="grid gap-3">
+            <label class="grid gap-2">
+              <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Offset</span>
+              <input
+                class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
+                :value="effect.params.offset"
+                min="0"
+                type="number"
+                @input="handleOffsetInput"
+              />
+            </label>
+
+            <div class="flex items-center gap-2">
+              <button
+                class="rounded border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-500 hover:text-zinc-100"
+                type="button"
+                @click="emit('reset', effect.id)"
+              >
+                Reset
+              </button>
+
+              <button
+                class="rounded border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-400 transition hover:border-red-500/50 hover:text-red-200"
+                type="button"
+                @click="emit('remove', effect.id)"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -73,7 +93,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['drag-end', 'drag-start', 'toggle-enabled', 'toggle-expanded', 'update-offset'])
+const emit = defineEmits(['drag-end', 'drag-start', 'remove', 'reset', 'toggle-enabled', 'toggle-expanded', 'update-offset'])
 
 function handleOffsetInput(event) {
   emit('update-offset', props.effect.id, Number(event.target.value))
