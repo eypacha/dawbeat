@@ -18,6 +18,7 @@ import {
   sortTrackClips
 } from '@/services/dawStoreService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
+import { loadProject } from '@/services/projectPersistence'
 import {
   BASE_PIXELS_PER_TICK,
   BASE_TICK_SIZE,
@@ -32,21 +33,12 @@ import { TRACK_COLOR_PALETTE, getTrackColor } from '@/utils/colorUtils'
 
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
 
-export const useDawStore = defineStore('dawStore', {
-  state: () => ({
-    audioReady: false,
-    clipDragPreview: null,
-    editingClipId: null,
-    editingFormulaId: null,
+function createDefaultProject() {
+  return {
     formulas: [],
     loopEnabled: false,
     loopStart: 0,
     loopEnd: 16,
-    playing: false,
-    time: 0,
-    zoom: 1,
-    sampleRate: 8000,
-    tickSize: BASE_TICK_SIZE,
     tracks: [
       {
         id: 'f2a8b8d6-6b53-4c4c-81df-5f6d9d85a101',
@@ -97,10 +89,38 @@ export const useDawStore = defineStore('dawStore', {
         ]
       }
     ],
+    zoom: 1
+  }
+}
+
+function createInitialState() {
+  const defaultProject = createDefaultProject()
+  const savedProject = loadProject()
+  const project = savedProject ?? defaultProject
+
+  return {
+    audioReady: false,
+    clipDragPreview: null,
+    editingClipId: null,
+    editingFormulaId: null,
+    formulas: project.formulas,
+    loopEnabled: project.loopEnabled,
+    loopStart: project.loopStart,
+    loopEnd: project.loopEnd,
+    playing: false,
+    time: 0,
+    zoom: project.zoom,
+    sampleRate: 8000,
+    tickSize: BASE_TICK_SIZE,
+    tracks: project.tracks,
     selectedFormulaId: null,
     selectedClipId: null,
     selectedTrackId: null
-  }),
+  }
+}
+
+export const useDawStore = defineStore('dawStore', {
+  state: createInitialState,
 
   getters: {
     pixelsPerTick: (state) => BASE_PIXELS_PER_TICK * state.zoom
