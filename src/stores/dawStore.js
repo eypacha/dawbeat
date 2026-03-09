@@ -6,6 +6,17 @@ import {
   clampClipStart
 } from '@/services/timelineService'
 import {
+  createDuplicateClip,
+  createTrack,
+  createTrackClip,
+  findClip,
+  findClipIndex,
+  findTrack,
+  findTrackIndex,
+  findTrackWithClip,
+  sortTrackClips
+} from '@/services/dawStoreService'
+import {
   BASE_PIXELS_PER_TICK,
   BASE_TICK_SIZE,
   MAX_ZOOM,
@@ -16,35 +27,9 @@ import {
   maybeSnapTicks,
   snapTicks
 } from '@/utils/timeUtils'
-import { DEFAULT_TRACK_COLOR, TRACK_COLOR_PALETTE, getTrackColor } from '@/utils/colorUtils'
+import { TRACK_COLOR_PALETTE, getTrackColor } from '@/utils/colorUtils'
 
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
-
-function createClipId() {
-  if (globalThis.crypto?.randomUUID) {
-    return globalThis.crypto.randomUUID()
-  }
-
-  return `clip-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-}
-
-function createTrackId() {
-  if (globalThis.crypto?.randomUUID) {
-    return globalThis.crypto.randomUUID()
-  }
-
-  return `track-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-}
-
-function createTrack() {
-  return {
-    id: createTrackId(),
-    color: DEFAULT_TRACK_COLOR,
-    muted: false,
-    name: undefined,
-    clips: []
-  }
-}
 
 export const useDawStore = defineStore('dawStore', {
   state: () => ({
@@ -164,7 +149,7 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      const insertIndex = this.tracks.findIndex((track) => track.id === beforeTrackId)
+      const insertIndex = findTrackIndex(this.tracks, beforeTrackId)
 
       if (insertIndex === -1) {
         this.tracks.push(nextTrack)
@@ -175,7 +160,7 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     removeTrack(trackId) {
-      const trackIndex = this.tracks.findIndex((track) => track.id === trackId)
+      const trackIndex = findTrackIndex(this.tracks, trackId)
 
       if (trackIndex === -1) {
         return
@@ -197,7 +182,7 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     renameTrack(trackId, nextName) {
-      const track = this.tracks.find((entry) => entry.id === trackId)
+      const track = findTrack(this.tracks, trackId)
 
       if (!track) {
         return
@@ -208,7 +193,7 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     setTrackColor(trackId, color) {
-      const track = this.tracks.find((entry) => entry.id === trackId)
+      const track = findTrack(this.tracks, trackId)
 
       if (!track || !TRACK_COLOR_PALETTE.includes(color)) {
         return
@@ -218,7 +203,7 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     toggleTrackMuted(trackId) {
-      const track = this.tracks.find((entry) => entry.id === trackId)
+      const track = findTrack(this.tracks, trackId)
 
       if (!track) {
         return
@@ -228,29 +213,24 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     addClip(trackId, clip) {
-      const track = this.tracks.find((entry) => entry.id === trackId)
+      const track = findTrack(this.tracks, trackId)
 
       if (!track) {
         return
       }
 
-      track.clips.push({
-        id: clip.id ?? createClipId(),
-        formula: clip.formula ?? 't',
-        ...clip
-      })
-
-      track.clips.sort((leftClip, rightClip) => leftClip.start - rightClip.start)
+      track.clips.push(createTrackClip(clip))
+      sortTrackClips(track)
     },
 
     updateClip(trackId, clipId, updates) {
-      const track = this.tracks.find((entry) => entry.id === trackId)
+      const track = findTrack(this.tracks, trackId)
 
       if (!track) {
         return
       }
 
-      const clip = track.clips.find((entry) => entry.id === clipId)
+      const clip = findClip(track, clipId)
 
       if (!clip) {
         return
@@ -260,13 +240,13 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     moveClip(trackId, clipId, nextStart, shouldSnap = true) {
-      const track = this.tracks.find((entry) => entry.id === trackId)
+      const track = findTrack(this.tracks, trackId)
 
       if (!track) {
         return
       }
 
-      const clip = track.clips.find((entry) => entry.id === clipId)
+      const clip = findClip(track, clipId)
 
       if (!clip) {
         return
@@ -277,13 +257,13 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     placeClip(trackId, clipId, nextStart, shouldSnap = true) {
-      const track = this.tracks.find((entry) => entry.id === trackId)
+      const track = findTrack(this.tracks, trackId)
 
       if (!track) {
         return
       }
 
-      const clip = track.clips.find((entry) => entry.id === clipId)
+      const clip = findClip(track, clipId)
 
       if (!clip) {
         return
@@ -291,18 +271,18 @@ export const useDawStore = defineStore('dawStore', {
 
       const snappedStart = maybeSnapTicks(Math.max(0, nextStart), shouldSnap)
       clip.start = clampClipPlacementStart(track, snappedStart, clip.duration, clipId)
-      track.clips.sort((leftClip, rightClip) => leftClip.start - rightClip.start)
+      sortTrackClips(track)
     },
 
     moveClipToTrack(sourceTrackId, targetTrackId, clipId, nextStart, shouldSnap = true) {
-      const sourceTrack = this.tracks.find((entry) => entry.id === sourceTrackId)
-      const targetTrack = this.tracks.find((entry) => entry.id === targetTrackId)
+      const sourceTrack = findTrack(this.tracks, sourceTrackId)
+      const targetTrack = findTrack(this.tracks, targetTrackId)
 
       if (!sourceTrack || !targetTrack) {
         return
       }
 
-      const clipIndex = sourceTrack.clips.findIndex((entry) => entry.id === clipId)
+      const clipIndex = findClipIndex(sourceTrack, clipId)
 
       if (clipIndex === -1) {
         return
@@ -320,18 +300,18 @@ export const useDawStore = defineStore('dawStore', {
 
       clip.start = clampedStart
       targetTrack.clips.push(clip)
-      targetTrack.clips.sort((leftClip, rightClip) => leftClip.start - rightClip.start)
+      sortTrackClips(targetTrack)
       this.selectedTrackId = targetTrackId
     },
 
     resizeClipStart(trackId, clipId, nextStart, shouldSnap = true) {
-      const track = this.tracks.find((entry) => entry.id === trackId)
+      const track = findTrack(this.tracks, trackId)
 
       if (!track) {
         return
       }
 
-      const clip = track.clips.find((entry) => entry.id === clipId)
+      const clip = findClip(track, clipId)
 
       if (!clip) {
         return
@@ -346,13 +326,13 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     resizeClipEnd(trackId, clipId, nextEnd, shouldSnap = true) {
-      const track = this.tracks.find((entry) => entry.id === trackId)
+      const track = findTrack(this.tracks, trackId)
 
       if (!track) {
         return
       }
 
-      const clip = track.clips.find((entry) => entry.id === clipId)
+      const clip = findClip(track, clipId)
 
       if (!clip) {
         return
@@ -365,26 +345,23 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     duplicateClip(trackId, clipId) {
-      const track = this.tracks.find((entry) => entry.id === trackId)
+      const track = findTrack(this.tracks, trackId)
 
       if (!track) {
         return null
       }
 
-      const sourceClip = track.clips.find((entry) => entry.id === clipId)
+      const sourceClip = findClip(track, clipId)
 
       if (!sourceClip) {
         return null
       }
 
-      const duplicateClipId = createClipId()
-      const duplicateClip = {
-        ...sourceClip,
-        id: duplicateClipId
-      }
+      const duplicateClip = createDuplicateClip(sourceClip)
+      const duplicateClipId = duplicateClip.id
 
       track.clips.push(duplicateClip)
-      track.clips.sort((leftClip, rightClip) => leftClip.start - rightClip.start)
+      sortTrackClips(track)
       this.selectedTrackId = trackId
       this.selectedClipId = duplicateClipId
 
@@ -392,18 +369,15 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     removeClip(clipId) {
-      for (const track of this.tracks) {
-        const clipIndex = track.clips.findIndex((entry) => entry.id === clipId)
+      const result = findTrackWithClip(this.tracks, clipId)
 
-        if (clipIndex === -1) {
-          continue
-        }
-
-        track.clips.splice(clipIndex, 1)
-        this.editingClipId = null
-        this.selectedClipId = null
+      if (!result) {
         return
       }
+
+      result.track.clips.splice(result.clipIndex, 1)
+      this.editingClipId = null
+      this.selectedClipId = null
     },
 
     setEditingClip(clipId) {
