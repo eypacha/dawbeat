@@ -43,8 +43,9 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { clampClipPlacementStart } from '@/services/timelineService'
 import { useDawStore } from '@/stores/dawStore'
-import { ticksToPixels, ticksToSamples } from '@/utils/timeUtils'
+import { snapTicks, ticksToPixels, ticksToSamples } from '@/utils/timeUtils'
 
 const props = defineProps({
   clip: {
@@ -66,6 +67,7 @@ const formulaInput = ref(null)
 
 let dragStartX = 0
 let dragStartTick = 0
+let dragDesiredStart = 0
 let dragTargetTrackId = props.trackId
 let resizeStartTick = 0
 let resizeEndTick = 0
@@ -119,6 +121,7 @@ function handlePointerDown(event) {
   }
 
   dragStartTick = props.clip.start
+  dragDesiredStart = props.clip.start
   isDragging.value = true
 }
 
@@ -147,6 +150,7 @@ function startInteraction(event) {
 
   event.preventDefault()
   dragStartX = event.clientX
+  dragDesiredStart = props.clip.start
   dragTargetTrackId = props.trackId
 
   handleSelect()
@@ -166,8 +170,10 @@ function handlePointerMove(event) {
   const deltaTicks = (event.clientX - dragStartX) / pixelsPerTick.value
 
   if (isDragging.value) {
+    dragDesiredStart = snapTicks(Math.max(0, dragStartTick + deltaTicks))
     dragTargetTrackId = getDragTargetTrackId(event)
-    dawStore.moveClip(props.trackId, props.clip.id, dragStartTick + deltaTicks)
+    syncSourceClipPosition()
+    syncDragPreview()
     return
   }
 
@@ -184,12 +190,14 @@ function handlePointerUp() {
     return
   }
 
-  if (isDragging.value) {
-    dawStore.moveClipToTrack(props.trackId, dragTargetTrackId, props.clip.id, props.clip.start)
+  if (isDragging.value && dragTargetTrackId !== props.trackId) {
+    dawStore.moveClipToTrack(props.trackId, dragTargetTrackId, props.clip.id, dragDesiredStart)
   }
 
+  dawStore.clearClipDragPreview()
   isDragging.value = false
   resizeMode.value = null
+  dragDesiredStart = props.clip.start
   dragTargetTrackId = props.trackId
   window.removeEventListener('pointermove', handlePointerMove)
   window.removeEventListener('pointerup', handlePointerUp)
@@ -209,6 +217,37 @@ function getDragTargetTrackId(event) {
   const trackExists = tracks.value.some((track) => track.id === nextTrackId)
 
   return trackExists && nextTrackId ? nextTrackId : props.trackId
+}
+
+function syncDragPreview() {
+  if (dragTargetTrackId === props.trackId) {
+    dawStore.clearClipDragPreview()
+    return
+  }
+
+  const targetTrack = tracks.value.find((track) => track.id === dragTargetTrackId)
+
+  if (!targetTrack) {
+    dawStore.clearClipDragPreview()
+    return
+  }
+
+  dawStore.setClipDragPreview({
+    clipId: props.clip.id,
+    duration: props.clip.duration,
+    sourceTrackId: props.trackId,
+    start: clampClipPlacementStart(targetTrack, dragDesiredStart, props.clip.duration),
+    targetTrackId: dragTargetTrackId
+  })
+}
+
+function syncSourceClipPosition() {
+  if (dragTargetTrackId === props.trackId) {
+    dawStore.moveClip(props.trackId, props.clip.id, dragDesiredStart)
+    return
+  }
+
+  dawStore.moveClip(props.trackId, props.clip.id, dragStartTick)
 }
 
 function saveFormula() {
@@ -245,6 +284,7 @@ watch(
 )
 
 onBeforeUnmount(() => {
+  dawStore.clearClipDragPreview()
   handlePointerUp()
 })
 </script>

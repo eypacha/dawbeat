@@ -28,6 +28,12 @@
         :duration="creationPreview.duration"
       />
 
+      <TimelineClipPreview
+        v-if="dragPreview"
+        :start="dragPreview.start"
+        :duration="dragPreview.duration"
+      />
+
       <TimelineClip
         v-for="clip in track.clips"
         :key="clip.id"
@@ -63,7 +69,7 @@ const props = defineProps({
 
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
-const { pixelsPerTick, selectedTrackId } = storeToRefs(dawStore)
+const { clipDragPreview, pixelsPerTick, selectedTrackId } = storeToRefs(dawStore)
 const laneElement = ref(null)
 const creationPreview = ref(null)
 
@@ -76,6 +82,14 @@ const laneStyle = computed(() => ({
   backgroundImage: 'linear-gradient(to right, rgba(63, 63, 70, 0.5) 1px, transparent 1px)',
   backgroundSize: `${pixelsPerTick.value}px 100%`
 }))
+
+const dragPreview = computed(() => {
+  if (clipDragPreview.value?.targetTrackId !== props.track.id) {
+    return null
+  }
+
+  return clipDragPreview.value
+})
 
 function handleContextMenu(event) {
   event.preventDefault()

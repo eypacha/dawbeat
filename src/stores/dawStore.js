@@ -40,6 +40,7 @@ function getNextTrackNumber(tracks) {
 export const useDawStore = defineStore('dawStore', {
   state: () => ({
     audioReady: false,
+    clipDragPreview: null,
     editingClipId: null,
     loopEnabled: false,
     loopStart: 0,
@@ -132,6 +133,14 @@ export const useDawStore = defineStore('dawStore', {
 
     adjustZoom(delta) {
       this.setZoom(this.zoom + delta * -0.001)
+    },
+
+    setClipDragPreview(preview) {
+      this.clipDragPreview = preview
+    },
+
+    clearClipDragPreview() {
+      this.clipDragPreview = null
     },
 
     addTrack() {
