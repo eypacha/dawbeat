@@ -1,111 +1,95 @@
 # AGENTS.md
 
-Este documento define **cómo debe trabajar un agente dentro de este repositorio**.
+Este documento define cómo debe trabajar un agente dentro de este repositorio.
 
-El objetivo es garantizar que el desarrollo sea:
+El objetivo es mantener el desarrollo:
 
 - modular
 - mantenible
 - predecible
 - fácil de extender
 
-El agente debe seguir estas reglas estrictamente.
+## Estado real del proyecto
 
----
+El proyecto ya tiene una base funcional, no sólo una maqueta.
 
-# Objetivo actual del proyecto
+Hoy existen:
 
-El proyecto se encuentra en **fase inicial de UI**.
+- reproducción bytebeat real en navegador
+- transport con `play`, `pause`, `stop` y `loop`
+- timeline con tracks y clips
+- creación, movimiento, resize y borrado de clips
+- drag entre tracks
+- duplicado con `Alt/Option + drag`
+- bypass temporal de snap con `Shift + drag`
+- mute por track
+- rename, color y borrado de tracks
+- playhead reactivo al tiempo actual
 
-El objetivo de esta etapa es construir **la interfaz del DAW**, no el motor de audio.
+Todavía no existe una biblioteca/editor lateral completa de fórmulas.
+El componente `FormulaLibrary.vue` sigue siendo un placeholder.
+La edición real de fórmulas hoy se hace inline en cada clip.
 
-La prioridad es implementar un **timeline funcional para fórmulas bytebeat**.
+## Objetivo actual
 
-El sistema debe permitir:
+La prioridad es consolidar el timeline y el flujo de composición.
+
+El sistema debe seguir permitiendo:
 
 - crear clips
-- asignar fórmulas a clips
-- mover clips en el timeline
+- editar la fórmula de cada clip
+- mover clips dentro del track y entre tracks
+- duplicar clips con modificadores
+- cambiar duración de clips
 - reproducir el timeline
-- mover el cursor de tiempo (playhead)
-- cambiar de fórmula según la posición del tiempo
+- mover el playhead con el tiempo de reproducción
+- cambiar la fórmula activa según la posición del tiempo
+- mutear tracks sin romper playback
 
-En esta fase **NO se implementará audio real**.
+## Qué no asumir
 
-El motor bytebeat se integrará en etapas posteriores.
+No asumir que seguimos en una fase “sin audio”.
+Hoy sí hay audio bytebeat funcional y cualquier cambio de timeline puede afectar reproducción.
 
----
+No asumir tampoco que la biblioteca lateral ya existe.
+Si una tarea involucra edición de fórmulas, revisar primero si debe integrarse con el editor inline actual o si realmente corresponde construir la biblioteca.
 
-# Principios de desarrollo
+## Principios de desarrollo
 
-## DRY (Don't Repeat Yourself)
+### DRY
 
 No duplicar lógica.
 
-Si un fragmento de código puede reutilizarse, debe moverse a:
+Si algo se reutiliza, moverlo a:
 
 - `utils`
 - `services`
 - `composables`
 - `stores`
 
-Nunca copiar y pegar lógica entre componentes.
+Nunca copiar y pegar lógica entre componentes del timeline.
 
----
+### Modularidad
 
-## Modularidad
+Preferir módulos pequeños y explícitos.
 
-El sistema debe dividirse en **módulos pequeños y claros**.
+Si un archivo supera aproximadamente 200–300 líneas, considerar dividirlo.
 
-Evitar archivos gigantes.
+Especial cuidado con:
 
-Regla general:
+- `TimelineClip.vue`
+- `TimelineTrack.vue`
+- `dawStore.js`
 
-- si un archivo supera aproximadamente **200–300 líneas**, considerar dividirlo.
+porque concentran mucha interacción y son candidatos naturales a crecer mal.
 
-Ejemplo correcto:
+### Componentes pequeños
 
-```
+Cada componente Vue debe tener una responsabilidad clara.
 
-timeline/
-Timeline.vue
-TimelineTrack.vue
-TimelineClip.vue
-Playhead.vue
+La estructura del timeline debe seguir componiéndose con subcomponentes en lugar de concentrar toda la UI en un solo archivo.
 
-```
-
-Ejemplo incorrecto:
-
-```
-
-Timeline.vue (1000 líneas)
-
-```
-
----
-
-## Componentes pequeños
-
-Cada componente Vue debe tener **una sola responsabilidad**.
-
-Ejemplo correcto:
-
-```
-
-Timeline.vue
-├─ TimelineGrid.vue
-├─ TimelineTrack.vue
-│    └─ TimelineClip.vue
-└─ Playhead.vue
-
-```
-
-El agente debe crear subcomponentes cuando la complejidad crezca.
-
----
-
-# Stack tecnológico
+## Stack
 
 Frontend:
 
@@ -117,11 +101,14 @@ Estado global:
 
 - Pinia
 
+Audio:
+
+- Web Audio API
+- vendor `ByteBeat.js`
+
 No introducir dependencias pesadas sin justificación.
 
----
-
-# Dependencias prohibidas
+## Dependencias prohibidas
 
 No usar:
 
@@ -129,205 +116,180 @@ No usar:
 - librerías de timeline pesadas
 - frameworks UI completos
 
-La UI debe ser **ligera y controlada por el proyecto**.
+La UI debe seguir siendo liviana y controlada por el proyecto.
 
----
+## Arquitectura actual
 
-# Arquitectura del sistema
+Arquitectura vigente:
 
-Arquitectura esperada:
-
-```
-
+```text
 UI
 ↓
 Store
 ↓
-Services
+Services / Composables
 ↓
-Engine (futuro)
-
+Engine
+↓
+Bytebeat Service
+↓
+Web Audio
 ```
 
-Actualmente solo se trabaja en **UI + Store**.
+Regla práctica:
 
----
+- la UI no debe contener lógica compleja de timeline si puede vivir en `services`
+- el store centraliza estado y acciones
+- `timelineEngine` decide fórmula activa
+- `bytebeatService` maneja integración de audio
 
-# Estructura del proyecto
+## Estructura actual
 
-Estructura esperada:
-
-```
-
+```text
 src/
+  components/
+    boot/
+      StartScreen.vue
+    library/
+      FormulaLibrary.vue
+    timeline/
+      Playhead.vue
+      Timeline.vue
+      TimelineAddTrackRow.vue
+      TimelineClip.vue
+      TimelineClipPreview.vue
+      TimelineLoopRegion.vue
+      TimelineTrack.vue
+      TrackColorPalette.vue
+    transport/
+      TransportBar.vue
+    ui/
+      ConfirmDialog.vue
+      ContextMenu.vue
+      TextInputDialog.vue
 
-components/
+  composables/
+    useContextMenu.js
+    useTransportPlayback.js
 
-transport/
-TransportBar.vue
+  engine/
+    timelineEngine.js
 
-library/
-FormulaLibrary.vue
+  services/
+    bytebeatService.js
+    timelineService.js
 
-timeline/
-Timeline.vue
-TimelineGrid.vue
-TimelineTrack.vue
-TimelineClip.vue
-Playhead.vue
+  stores/
+    dawStore.js
 
-stores/
-dawStore.js
-
-services/
-timelineService.js
-
-composables/
-useTimeline.js
-
-utils/
-timeUtils.js
-
+  utils/
+    colorUtils.js
+    timeUtils.js
 ```
 
-El agente debe respetar esta estructura.
+El agente debe respetar esta estructura y extenderla sin mezclar responsabilidades.
 
----
+## Store central
 
-# Store central
+El estado global principal vive en `dawStore`.
 
-El estado global del DAW debe manejarse con **Pinia**.
+Campos relevantes hoy:
 
-Store principal:
-
-```
-
-dawStore
-
-```
-
-Estado esperado:
-
-```
-
+```js
 {
-playing: false,
-time: 0,
-zoom: 1,
-
-clips: [],
-
-selectedClipId: null
+  audioReady: false,
+  playing: false,
+  time: 0,
+  zoom: 1,
+  sampleRate: 8000,
+  tickSize: 1024,
+  loopEnabled: false,
+  loopStart: 0,
+  loopEnd: 16,
+  tracks: [],
+  selectedClipId: null,
+  selectedTrackId: null,
+  editingClipId: null,
+  clipDragPreview: null
 }
-
 ```
 
-Ejemplo de clip:
+Cada track debe modelarse así:
 
-```
-
+```js
 {
-id: "clip1",
-formula: "t*(t>>5|t>>8)",
-start: 0,
-duration: 4
+  id: "track-id",
+  color: "#6366f1",
+  muted: false,
+  name: undefined,
+  clips: []
 }
-
 ```
 
----
+Cada clip debe modelarse así:
 
-# Timeline
-
-El timeline es el **núcleo de la interfaz**.
-
-Debe permitir:
-
-- mostrar una grilla temporal
-- mostrar clips
-- mover clips
-- cambiar duración de clips
-- seleccionar clips
-- mostrar playhead
-
-El timeline debe diseñarse para ser **extensible**, ya que en el futuro controlará el motor de audio.
-
----
-
-# Playhead
-
-El playhead representa el tiempo actual.
-
-Debe moverse cuando:
-
-- el usuario presiona play
-- el tiempo avanza
-
-El movimiento puede implementarse con:
-
+```js
+{
+  id: "clip-id",
+  formula: "t*(t>>5|t>>8)",
+  start: 0,
+  duration: 4
+}
 ```
 
-requestAnimationFrame
+## Timeline
 
-```
+El timeline es el núcleo de la app.
 
-El playhead debe ser **reactivo al estado del store**.
+Debe seguir soportando:
 
----
+- grilla temporal
+- clips por track
+- selección de clip
+- drag dentro del track
+- drag entre tracks
+- resize de inicio y fin
+- preview de drag entre tracks
+- creación de clips por drag
+- loop region
+- playhead
 
-# Biblioteca de fórmulas
+### Interacciones que ya existen y no deben romperse
 
-La biblioteca de fórmulas debe ser simple.
+- drag normal con snap activo
+- `Shift + drag` para bypass temporal de snap
+- `Alt/Option + drag` para duplicar al soltar
+- mute por track
+- borrado con `Delete` o `Backspace`
 
-No usar Monaco.
+Si se modifica una interacción del timeline, verificar siempre estos casos.
 
-Debe incluir:
+## Playback
 
-- textarea
-- resaltado de sintaxis ligero
+El playback actual usa bytebeat real.
 
-Las fórmulas solo utilizan la variable:
+Reglas:
 
-```
+- no eliminar ni degradar la integración con `bytebeatService`
+- cualquier cambio en clips, tracks o mute debe mantener consistente la fórmula activa
+- los tracks muteados no deben contribuir a `getActiveFormula`
 
-t
+## Biblioteca de fórmulas
 
-```
+Estado actual:
 
-Ejemplo:
+- `FormulaLibrary.vue` es placeholder
+- la edición real de la fórmula ocurre inline en `TimelineClip.vue`
 
-```
+Por ahora no introducir Monaco ni editores pesados.
 
-t*(t>>5|t>>8)
+Si se implementa la biblioteca lateral:
 
-```
+- debe reflejar el clip seleccionado
+- debe escribir en el store
+- no debe duplicar la lógica de edición inline sin una refactorización clara
 
----
-
-# Interacción entre biblioteca y timeline
-
-Cuando se selecciona un clip:
-
-- la biblioteca debe mostrar su fórmula
-- editar la fórmula debe modificar el clip seleccionado
-
-Flujo esperado:
-
-```
-
-Seleccionar clip
-↓
-Biblioteca muestra fórmula
-↓
-Usuario modifica fórmula
-↓
-Store actualiza clip
-
-```
-
----
-
-# Responsabilidades del agente
+## Responsabilidades del agente
 
 Cuando el agente implemente una funcionalidad:
 
@@ -335,38 +297,35 @@ Cuando el agente implemente una funcionalidad:
 2. evitar duplicación de lógica
 3. dividir componentes complejos
 4. mantener la arquitectura clara
-5. escribir código legible
+5. verificar impacto en playback además de la UI
 
----
+## Qué NO hacer
 
-# Qué NO hacer
-
-El agente NO debe:
+El agente no debe:
 
 - crear archivos monolíticos
-- duplicar lógica
+- duplicar lógica de drag o resize
 - introducir dependencias innecesarias
-- mezclar UI con lógica compleja
-- implementar audio en esta etapa
+- mezclar UI con lógica compleja de timeline
+- romper playback bytebeat actual
+- documentar features como implementadas si siguen siendo placeholders
 
----
+## Prioridades actuales
 
-# Prioridades actuales
+Orden recomendado:
 
-Orden recomendado de desarrollo:
+1. consolidar timeline y transport existentes
+2. mejorar editor/biblioteca de fórmulas
+3. mantener integridad de playback
+4. extender edición y organización de tracks
+5. preparar futuras integraciones sin reescribir la base
 
-1. estructura base del proyecto
-2. store del DAW
-3. biblioteca de fórmulas
-4. timeline base
-5. clips
-6. playhead
-7. interacción editor + timeline
+## Objetivo de esta etapa
 
----
+Construir una base sólida para componer con fórmulas en el tiempo, manteniendo alineadas:
 
-# Objetivo de esta etapa
+- interacción de timeline
+- estado global
+- playback bytebeat
 
-Construir una **UI sólida para componer con fórmulas en el tiempo**.
-
-El motor bytebeat se integrará posteriormente sin requerir cambios estructurales en la interfaz.
+Las próximas iteraciones deben apoyarse en esta estructura, no reemplazarla sin necesidad.

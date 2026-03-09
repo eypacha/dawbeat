@@ -1,313 +1,145 @@
-# Bytebeat DAW
+# DawBeat
 
-Un **DAW (Digital Audio Workstation)** diseñado específicamente para componer música utilizando **fórmulas bytebeat**.
+DAW experimental para componer con fórmulas bytebeat sobre un timeline.
 
-En lugar de trabajar con clips de audio o MIDI, este sistema genera sonido **directamente a partir de expresiones matemáticas** evaluadas en tiempo real.
+La app ya no está sólo en fase de mock UI: hoy incluye timeline editable, reproducción bytebeat real en navegador y un flujo base de composición por clips.
 
-Cada sonido se define mediante una fórmula que produce muestras de audio a partir de la variable de tiempo `t`.
+## Estado actual
 
-El objetivo del proyecto es crear un entorno simple y ligero para **explorar composición algorítmica y síntesis sonora minimalista**.
+Implementado hoy:
 
----
+- timeline con tracks y clips
+- reproducción real con Web Audio + `ByteBeat.js`
+- play, pause, stop y loop
+- playhead sincronizado con el tiempo actual
+- creación de clips por drag sobre un track vacío
+- edición inline de fórmula por clip
+- mover clips dentro del track y entre tracks
+- resize de inicio y fin de clip
+- duplicado con `Alt/Option + drag`
+- bypass temporal de snap con `Shift + drag`
+- mute por track
+- rename, color y borrado de tracks por menú contextual
 
-# Concepto
+Todavía pendiente:
 
-Los DAW tradicionales manipulan:
+- biblioteca de fórmulas real
+- presets e historial
+- automatizaciones
+- visualizaciones
+- edición avanzada de fórmulas fuera del clip
 
-- clips de audio
-- notas MIDI
-- instrumentos virtuales
-
-Bytebeat DAW manipula **código**.
-
-Cada sonido es una expresión matemática.
-
-Ejemplo:
-
-```
-
-t * (t >> 5 | t >> 8)
-
-```
-
-Esta fórmula genera una estructura rítmica completa.
-
-El sistema permite reproducir, experimentar y organizar estas fórmulas dentro de un entorno musical.
-
----
-
-# Primera decisión de diseño
-
-En la **primera versión del proyecto** las fórmulas:
-
-- **no tendrán parámetros externos**
-- solo utilizarán la variable `t`
-
-Esto simplifica mucho:
-
-- el motor de audio
-- el compilador
-- la interfaz
-- la ejecución en tiempo real
-
-Ejemplo de fórmula válida:
-
-```
-
-t >> 4 | t >> 5
-
-```
-
-Ejemplo de fórmula que **NO se usará en esta etapa**:
-
-```
-
-t * a & (t >> b)
-
-```
-
-La introducción de parámetros automatizables podrá evaluarse en versiones futuras.
-
----
-
-# Objetivos del proyecto
-
-- Crear una herramienta dedicada a **música bytebeat**
-- Permitir **exploración sonora rápida**
-- Mantener el sistema **extremadamente ligero**
-- Ofrecer **visualización del sonido**
-- Facilitar el descubrimiento de nuevas fórmulas
-
-El sistema debe sentirse más como **un instrumento creativo** que como un DAW tradicional.
-
----
-
-# Stack tecnológico
-
-Frontend:
+## Stack
 
 - Vue 3
 - Vite
-- TailwindCSS
+- Tailwind CSS
 - Pinia
-
-Audio:
-
 - Web Audio API
-- AudioWorklet (para estabilidad en tiempo real)
+- `public/vendors/ByteBeat.js` como backend bytebeat actual
 
-Motor bytebeat:
+## Cómo correrlo
 
-Basado en:
-
-https://github.com/greggman/html5bytebeat
-
-Biblioteca de fórmulas:
-
-- biblioteca simple
-- sin Monaco
-- resaltado de sintaxis básico
-
----
-
-# Idea central
-
-El sonido se genera evaluando una fórmula miles de veces por segundo.
-
-Conceptualmente:
-
+```bash
+pnpm install
+pnpm dev
 ```
 
-sample = formula(t)
+Build de producción:
 
+```bash
+pnpm build
 ```
 
-Donde:
+## Interacciones actuales
 
-- `t` = índice de muestra
-- `sample` = valor de audio generado
+- `Click` sobre clip: selecciona
+- `Double click` sobre clip: edita fórmula inline
+- `Drag` sobre clip: mueve con snap activo
+- `Shift + drag` sobre clip: mueve sin snap
+- `Alt/Option + drag` sobre clip: muestra fantasma y duplica al soltar
+- `Drag` entre tracks: mueve el clip al track destino
+- `Drag` sobre handles laterales: resize
+- `Shift + drag` durante resize: resize sin snap
+- `Drag` en espacio vacío del track: crea clip
+- `Shift + drag` al crear: creación sin snap
+- `Delete` o `Backspace`: borra clip seleccionado
 
-Luego el motor convierte ese valor en señal de audio reproducible.
+## Reglas del timeline
 
----
+- El snap a grid está activo por defecto.
+- `Shift` desactiva el snap sólo mientras se mantiene presionado durante el gesto.
+- `Alt/Option` no duplica al hacer `pointerdown`; la copia se confirma en `pointerup`.
+- Los tracks muteados se ven con menor opacidad y no participan en la fórmula activa.
+- La fórmula activa del timeline se compone uniendo las fórmulas de los clips activos de tracks no muteados.
 
-# Características planeadas
+## Estructura actual
 
-## Biblioteca de fórmulas
-
-Una biblioteca simple optimizada para fórmulas bytebeat.
-
-Funciones:
-
-- resaltado de sintaxis
-- preview inmediato
-- presets
-- historial
-
----
-
-## Reproducción en tiempo real
-
-El usuario escribe una fórmula y el sistema la ejecuta inmediatamente.
-
-Esto permite un flujo de trabajo de **exploración directa**.
-
----
-
-## Visualización
-
-El sistema incluirá visualizaciones básicas del audio:
-
-- osciloscopio
-- amplitud
-
-Las visualizaciones ayudan a entender el comportamiento de las fórmulas.
-
----
-
-## Biblioteca de fórmulas
-
-El sistema incluirá una pequeña colección de fórmulas conocidas para experimentar.
-
-Ejemplos:
-
-```
-
-t * (t >> 5 | t >> 8)
-
-```
-```
-
-t >> 6 & t >> 8
-
-```
-```
-
-t * (t >> 11 & t >> 8)
-
-```
-
-Estas fórmulas sirven como punto de partida.
-
----
-
-# Estructura del proyecto
-
-Estructura inicial prevista:
-
-```
-
+```text
 src/
-engine/
-bytebeatEngine.js
-compiler.js
-audioWorklet.js
-
-components/
-FormulaLibrary.vue
-Transport.vue
-Oscilloscope.vue
-
-stores/
-dawStore.js
-
-utils/
-syntaxHighlight.js
-
+  components/
+    boot/
+    library/
+    timeline/
+    transport/
+    ui/
+  composables/
+    useContextMenu.js
+    useTransportPlayback.js
+  engine/
+    timelineEngine.js
+  services/
+    bytebeatService.js
+    timelineService.js
+  stores/
+    dawStore.js
+  utils/
+    colorUtils.js
+    timeUtils.js
 ```
 
----
+## Arquitectura actual
 
-# Bytebeat
+La app hoy trabaja con esta cadena:
 
-Bytebeat es una técnica para generar música usando expresiones extremadamente pequeñas.
-
-El principio básico es:
-
-- usar la variable `t`
-- combinar operadores bitwise
-- producir patrones rítmicos y melódicos
-
-Operadores comunes:
-
-- `>>`
-- `<<`
-- `&`
-- `|`
-- `^`
-- `+`
-- `-`
-- `*`
-
-Ejemplo:
-
+```text
+UI
+↓
+Pinia Store
+↓
+Services / Composables
+↓
+Timeline Engine
+↓
+Bytebeat Service
+↓
+Web Audio
 ```
 
-t * (t >> 8)
+`timelineEngine` decide qué fórmula está activa para el tiempo actual.
 
+`bytebeatService` inicializa `ByteBeatNode`, actualiza expresiones y controla reproducción, pausa, stop y seek.
+
+## Estado del editor de fórmulas
+
+La columna izquierda todavía es un placeholder visual. La edición real de fórmulas hoy vive dentro de cada clip.
+
+Si se implementa un editor lateral, debe sincronizarse con `selectedClipId` y actualizar el store sin duplicar lógica.
+
+## Objetivo inmediato
+
+Consolidar la experiencia de composición en timeline:
+
+- mejorar la biblioteca/editor de fórmulas
+- mantener el timeline modular
+- seguir agregando interacción sin romper drag, resize, loop ni playback
+
+## Referencia bytebeat
+
+Ejemplo de fórmula válida:
+
+```js
+t * (t >> 5 | t >> 8)
 ```
 
----
-
-# Filosofía de diseño
-
-## Simplicidad
-
-La herramienta debe ser simple.
-
-La complejidad está en las fórmulas, no en la interfaz.
-
----
-
-## Experimentación
-
-La edición debe tener respuesta inmediata.
-
-Explorar nuevas fórmulas es el objetivo principal.
-
----
-
-## Ligereza
-
-El sistema debe ser pequeño y rápido.
-
-Se evitarán dependencias pesadas.
-
----
-
-## Descubrimiento
-
-El sistema debe facilitar encontrar sonidos inesperados.
-
-La exploración es parte fundamental de la experiencia.
-
----
-
-# Estado del proyecto
-
-Etapa inicial.
-
-Prioridades actuales:
-
-1. integrar motor bytebeat
-2. implementar pipeline de audio
-3. crear biblioteca de fórmulas
-4. reproducción en tiempo real
-5. visualización básica
-
-El sistema de timeline y secuenciación podrá evaluarse en fases posteriores.
-
----
-
-# Inspiración
-
-- experimentos clásicos de bytebeat
-- live coding
-- trackers musicales
-- herramientas de composición algorítmica
-
----
-
-# Licencia
-
-Por definir.
+La variable esperada por el sistema es `t`.
