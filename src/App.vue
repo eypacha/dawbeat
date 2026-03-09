@@ -19,16 +19,25 @@
       @close="contextMenu.closeContextMenu()"
       @select="handleContextMenuSelect"
     />
+
+    <ConfirmDialog
+      :message="confirmDialog.message"
+      :visible="confirmDialog.visible"
+      title="Delete Track"
+      @cancel="closeConfirmDialog"
+      @confirm="confirmTrackDeletion"
+    />
   </div>
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted } from 'vue'
+import { reactive, onBeforeUnmount, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import StartScreen from '@/components/boot/StartScreen.vue'
 import FormulaLibrary from '@/components/library/FormulaLibrary.vue'
 import Timeline from '@/components/timeline/Timeline.vue'
 import TransportBar from '@/components/transport/TransportBar.vue'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import ContextMenu from '@/components/ui/ContextMenu.vue'
 import { provideContextMenu } from '@/composables/useContextMenu'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
@@ -36,6 +45,11 @@ import { useDawStore } from '@/stores/dawStore'
 
 const dawStore = useDawStore()
 const contextMenu = provideContextMenu()
+const confirmDialog = reactive({
+  visible: false,
+  message: '',
+  trackId: null
+})
 const { enableAudio } = useTransportPlayback()
 const { audioReady, editingClipId, selectedClipId } = storeToRefs(dawStore)
 
@@ -70,8 +84,24 @@ function handleContextMenuSelect(action, item) {
   }
 
   if (action === 'delete-track') {
-    dawStore.removeTrack(item.trackId)
+    confirmDialog.trackId = item.trackId
+    confirmDialog.message = `Delete ${item.trackName ?? 'this track'}?`
+    confirmDialog.visible = true
   }
+}
+
+function closeConfirmDialog() {
+  confirmDialog.visible = false
+  confirmDialog.message = ''
+  confirmDialog.trackId = null
+}
+
+function confirmTrackDeletion() {
+  if (confirmDialog.trackId) {
+    dawStore.removeTrack(confirmDialog.trackId)
+  }
+
+  closeConfirmDialog()
 }
 
 onMounted(() => {

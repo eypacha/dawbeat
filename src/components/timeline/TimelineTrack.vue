@@ -85,7 +85,12 @@ function handleContextMenu(event) {
     y: event.clientY,
     items: [
       { label: 'Add Track', action: 'add-track' },
-      { label: 'Delete Track', action: 'delete-track', trackId: props.track.id }
+      {
+        label: 'Delete Track',
+        action: 'delete-track',
+        trackId: props.track.id,
+        trackName: props.track.name
+      }
     ]
   })
 }
