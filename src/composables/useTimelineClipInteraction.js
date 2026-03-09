@@ -1,0 +1,310 @@
+import { ref } from 'vue'
+import { clampClipPlacementStart } from '@/services/timelineService'
+import { maybeSnapTicks } from '@/utils/timeUtils'
+
+const DUPLICATE_DRAG_THRESHOLD_PX = 6
+
+export function useTimelineClipInteraction({
+  clip,
+  trackId,
+  dawStore,
+  editingClipId,
+  pixelsPerTick,
+  tracks,
+  onSelect
+}) {
+  const isDragging = ref(false)
+  const resizeMode = ref(null)
+  const duplicateDrag = ref(false)
+  const ignoreNextClick = ref(false)
+
+  let dragStartX = 0
+  let dragStartY = 0
+  let dragStartTick = 0
+  let dragDesiredStart = 0
+  let dragTargetTrackId = trackId
+  let dragClipId = clip.id
+  let dragSourceTrackId = trackId
+  let duplicateDragActivated = false
+  let resizeStartTick = 0
+  let resizeEndTick = 0
+
+  function handlePointerDown(event) {
+    if (!startInteraction(event)) {
+      return
+    }
+
+    dragClipId = clip.id
+    dragStartTick = clip.start
+    dragDesiredStart = clip.start
+    dragSourceTrackId = trackId
+    dragTargetTrackId = trackId
+    duplicateDrag.value = event.altKey === true
+    duplicateDragActivated = false
+
+    if (duplicateDrag.value) {
+      ignoreNextClick.value = true
+    } else {
+      onSelect()
+    }
+
+    isDragging.value = true
+  }
+
+  function handleResizeStartPointerDown(event) {
+    if (!startInteraction(event)) {
+      return
+    }
+
+    onSelect()
+    resizeMode.value = 'start'
+    resizeStartTick = clip.start
+    resizeEndTick = clip.start + clip.duration
+  }
+
+  function handleResizeEndPointerDown(event) {
+    if (!startInteraction(event)) {
+      return
+    }
+
+    onSelect()
+    resizeMode.value = 'end'
+    resizeEndTick = clip.start + clip.duration
+  }
+
+  function startInteraction(event) {
+    if (event.button !== 0 || editingClipId.value) {
+      return false
+    }
+
+    event.preventDefault()
+    dragStartX = event.clientX
+    dragStartY = event.clientY
+
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerup', handlePointerUp)
+    window.addEventListener('pointercancel', handlePointerCancel)
+
+    return true
+  }
+
+  function handlePointerMove(event) {
+    if (!isDragging.value && !resizeMode.value) {
+      return
+    }
+
+    const dragDistance = Math.hypot(event.clientX - dragStartX, event.clientY - dragStartY)
+    const deltaTicks = (event.clientX - dragStartX) / pixelsPerTick.value
+    const shouldSnap = !event.shiftKey
+
+    if (isDragging.value) {
+      if (duplicateDrag.value && !duplicateDragActivated) {
+        if (dragDistance <= DUPLICATE_DRAG_THRESHOLD_PX) {
+          return
+        }
+
+        duplicateDragActivated = true
+      }
+
+      dragDesiredStart = maybeSnapTicks(Math.max(0, dragStartTick + deltaTicks), shouldSnap)
+      dragTargetTrackId = getDragTargetTrackId(event)
+
+      if (duplicateDrag.value) {
+        syncDragPreview(shouldSnap)
+        return
+      }
+
+      syncSourceClipPosition(shouldSnap)
+      syncDragPreview(shouldSnap)
+      return
+    }
+
+    if (resizeMode.value === 'start') {
+      dawStore.resizeClipStart(trackId, clip.id, resizeStartTick + deltaTicks, shouldSnap)
+      return
+    }
+
+    dawStore.resizeClipEnd(trackId, clip.id, resizeEndTick + deltaTicks, shouldSnap)
+  }
+
+  function handlePointerUp(event) {
+    if (!isDragging.value && !resizeMode.value) {
+      return
+    }
+
+    const shouldClearDuplicateClickGuard = ignoreNextClick.value
+    const shouldSnap = !event.shiftKey
+
+    if (isDragging.value) {
+      if (duplicateDrag.value && duplicateDragActivated) {
+        const duplicateClipId = dawStore.duplicateClip(dragSourceTrackId, clip.id)
+
+        if (duplicateClipId) {
+          const previewStart = getDuplicatePreviewStart(dragTargetTrackId, shouldSnap)
+
+          if (dragTargetTrackId === dragSourceTrackId) {
+            dawStore.placeClip(dragSourceTrackId, duplicateClipId, previewStart, shouldSnap)
+          } else {
+            dawStore.moveClipToTrack(
+              dragSourceTrackId,
+              dragTargetTrackId,
+              duplicateClipId,
+              previewStart,
+              shouldSnap
+            )
+          }
+        }
+      } else if (!duplicateDrag.value && dragTargetTrackId !== dragSourceTrackId) {
+        dawStore.moveClipToTrack(
+          dragSourceTrackId,
+          dragTargetTrackId,
+          dragClipId,
+          dragDesiredStart,
+          shouldSnap
+        )
+      }
+    }
+
+    dawStore.clearClipDragPreview()
+    cleanupInteraction()
+
+    if (shouldClearDuplicateClickGuard) {
+      requestAnimationFrame(() => {
+        ignoreNextClick.value = false
+      })
+    }
+  }
+
+  function handlePointerCancel() {
+    if (!isDragging.value && !resizeMode.value) {
+      return
+    }
+
+    if (resizeMode.value === 'start') {
+      dawStore.updateClip(trackId, clip.id, {
+        start: resizeStartTick,
+        duration: resizeEndTick - resizeStartTick
+      })
+    } else if (resizeMode.value === 'end') {
+      dawStore.updateClip(trackId, clip.id, {
+        duration: resizeEndTick - clip.start
+      })
+    } else if (isDragging.value && !duplicateDrag.value) {
+      dawStore.moveClip(dragSourceTrackId, dragClipId, dragStartTick, false)
+    }
+
+    dawStore.clearClipDragPreview()
+    cleanupInteraction()
+
+    if (ignoreNextClick.value) {
+      requestAnimationFrame(() => {
+        ignoreNextClick.value = false
+      })
+    }
+  }
+
+  function cleanupInteraction() {
+    isDragging.value = false
+    resizeMode.value = null
+    duplicateDrag.value = false
+    duplicateDragActivated = false
+    dragClipId = clip.id
+    dragSourceTrackId = trackId
+    dragDesiredStart = clip.start
+    dragStartTick = clip.start
+    dragTargetTrackId = trackId
+    removeInteractionListeners()
+  }
+
+  function getDragTargetTrackId(event) {
+    const targetTrackElement = document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest('[data-track-id]')
+
+    if (!(targetTrackElement instanceof HTMLElement)) {
+      return trackId
+    }
+
+    const nextTrackId = targetTrackElement.dataset.trackId
+    const trackExists = tracks.value.some((trackEntry) => trackEntry.id === nextTrackId)
+
+    return trackExists && nextTrackId ? nextTrackId : trackId
+  }
+
+  function getDuplicatePreviewStart(targetTrackId, shouldSnap = true) {
+    const targetTrack = tracks.value.find((trackEntry) => trackEntry.id === targetTrackId)
+
+    if (!targetTrack) {
+      return dragDesiredStart
+    }
+
+    return clampClipPlacementStart(
+      targetTrack,
+      maybeSnapTicks(dragDesiredStart, shouldSnap),
+      clip.duration
+    )
+  }
+
+  function syncDragPreview(shouldSnap = true) {
+    if (duplicateDrag.value) {
+      dawStore.setClipDragPreview({
+        clipId: `duplicate-preview-${clip.id}`,
+        duration: clip.duration,
+        sourceTrackId: dragSourceTrackId,
+        start: getDuplicatePreviewStart(dragTargetTrackId, shouldSnap),
+        targetTrackId: dragTargetTrackId
+      })
+      return
+    }
+
+    if (dragTargetTrackId === dragSourceTrackId) {
+      dawStore.clearClipDragPreview()
+      return
+    }
+
+    const targetTrack = tracks.value.find((trackEntry) => trackEntry.id === dragTargetTrackId)
+
+    if (!targetTrack) {
+      dawStore.clearClipDragPreview()
+      return
+    }
+
+    dawStore.setClipDragPreview({
+      clipId: dragClipId,
+      duration: clip.duration,
+      sourceTrackId: dragSourceTrackId,
+      start: clampClipPlacementStart(
+        targetTrack,
+        maybeSnapTicks(dragDesiredStart, shouldSnap),
+        clip.duration
+      ),
+      targetTrackId: dragTargetTrackId
+    })
+  }
+
+  function syncSourceClipPosition(shouldSnap = true) {
+    if (dragTargetTrackId === dragSourceTrackId) {
+      dawStore.moveClip(dragSourceTrackId, dragClipId, dragDesiredStart, shouldSnap)
+      return
+    }
+
+    dawStore.moveClip(dragSourceTrackId, dragClipId, dragStartTick, shouldSnap)
+  }
+
+  function removeInteractionListeners() {
+    window.removeEventListener('pointermove', handlePointerMove)
+    window.removeEventListener('pointerup', handlePointerUp)
+    window.removeEventListener('pointercancel', handlePointerCancel)
+  }
+
+  return {
+    duplicateDrag,
+    ignoreNextClick,
+    isDragging,
+    resizeMode,
+    cleanupInteraction,
+    handlePointerDown,
+    handleResizeEndPointerDown,
+    handleResizeStartPointerDown
+  }
+}
