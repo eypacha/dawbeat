@@ -795,6 +795,33 @@ export const useDawStore = defineStore('dawStore', {
       this.selectedFormulaId = formula.id
     },
 
+    detachClipFormula(trackId, clipId) {
+      const track = findTrack(this.tracks, trackId)
+
+      if (!track) {
+        return
+      }
+
+      const clip = findClip(track, clipId)
+
+      if (!clip || !clip.formulaId) {
+        return
+      }
+
+      const formula = getFormulaById(this.formulas, clip.formulaId)
+
+      if (!formula) {
+        return
+      }
+
+      clip.formula = formula.code
+      clip.formulaName = formula.name
+      clip.formulaId = null
+      this.selectedClipId = clip.id
+      this.selectedTrackId = trackId
+      this.selectedFormulaId = null
+    },
+
     removeClip(clipId) {
       const result = findTrackWithClip(this.tracks, clipId)
 

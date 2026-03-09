@@ -13,6 +13,12 @@
     @dblclick.stop="handleEditStart"
     @pointerdown.stop="handlePointerDown"
   >
+    <Link2
+      v-if="isReferenceClip"
+      class="pointer-events-none absolute top-1 right-1 h-3 w-3 opacity-80"
+      :stroke-width="2.25"
+    />
+
     <span
       v-if="isSelected && !isEditing"
       class="timeline-clip-handle absolute inset-y-0 left-0 w-2 cursor-ew-resize border-r"
@@ -38,6 +44,7 @@
 <script setup>
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import { Link2 } from 'lucide-vue-next'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineClipInteraction } from '@/composables/useTimelineClipInteraction'
 import { resolveClipFormula, resolveClipFormulaName } from '@/services/formulaService'
@@ -146,17 +153,28 @@ function handleEditStart() {
 function handleContextMenu(event) {
   handleSelect()
 
+  const items = [
+    {
+      action: 'add-clip-formula-to-library',
+      clipId: props.clip.id,
+      label: props.clip.formulaId ? 'Show In Library' : 'Add To Library...',
+      trackId: props.trackId
+    }
+  ]
+
+  if (props.clip.formulaId) {
+    items.push({
+      action: 'detach-clip-formula',
+      clipId: props.clip.id,
+      label: 'Detach From Library',
+      trackId: props.trackId
+    })
+  }
+
   openContextMenu({
     x: event.clientX,
     y: event.clientY,
-    items: [
-      {
-        action: 'add-clip-formula-to-library',
-        clipId: props.clip.id,
-        label: props.clip.formulaId ? 'Show In Library' : 'Add To Library...',
-        trackId: props.trackId
-      }
-    ]
+    items
   })
 }
 

@@ -1,4 +1,5 @@
 import { normalizeDecibels, normalizeDelayTime, normalizeMasterGain, normalizeMixValue, normalizeUnitValue } from '@/services/audioEffectService'
+import { validateFormula } from '@/utils/formulaValidation'
 import { Macro_BitCrusherNode, Macro_DelayNode, Macro_ToneControlNode } from '@/utils/macroNodes'
 
 const BYTEBEAT_SCRIPT_URL = '/vendors/ByteBeat.js'
@@ -192,6 +193,24 @@ function buildCompiledExpressions(expressions) {
   return nextExpressions.map((expression) => `((t) => (${expression}))(t + ${sampleOffset})`)
 }
 
+function sanitizeCompiledExpressions(compiledExpressions = []) {
+  let replacedInvalidExpression = false
+
+  const nextExpressions = compiledExpressions.map((expression) => {
+    if (validateFormula(expression)) {
+      return expression
+    }
+
+    replacedInvalidExpression = true
+    return SILENT_FORMULA
+  })
+
+  return {
+    expressions: nextExpressions,
+    replacedInvalidExpression
+  }
+}
+
 function getAudioContextConstructor() {
   return window.AudioContext || window.webkitAudioContext
 }
@@ -333,7 +352,11 @@ const bytebeatService = {
 
   async setExpressions(expressions, resetToZero = false, force = false) {
     const compiledExpressions = buildCompiledExpressions(expressions)
-    const nextExpressionsKey = JSON.stringify(compiledExpressions)
+    const {
+      expressions: playableExpressions,
+      replacedInvalidExpression
+    } = sanitizeCompiledExpressions(compiledExpressions)
+    const nextExpressionsKey = JSON.stringify(playableExpressions)
 
     await this.init()
 
@@ -346,7 +369,11 @@ const bytebeatService = {
         return
       }
 
-      await byteBeatNode.setExpressions(compiledExpressions, resetToZero)
+      if (replacedInvalidExpression) {
+        console.warn('Se reemplazo una formula invalida por silencio para evitar cortar el playback')
+      }
+
+      await byteBeatNode.setExpressions(playableExpressions, resetToZero)
       currentExpressionsKey = nextExpressionsKey
     })
 

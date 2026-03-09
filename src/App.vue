@@ -214,6 +214,11 @@ function handleContextMenuSelect(action, item) {
 
   if (action === 'add-clip-formula-to-library') {
     dawStore.addClipFormulaToLibrary(item.trackId, item.clipId)
+    return
+  }
+
+  if (action === 'detach-clip-formula') {
+    dawStore.detachClipFormula(item.trackId, item.clipId)
   }
 }
 
