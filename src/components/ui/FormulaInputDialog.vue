@@ -4,8 +4,17 @@
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
     @click.self="emit('close')"
   >
-    <div class="w-full max-w-lg rounded border border-zinc-700 bg-zinc-900 p-4 shadow-lg shadow-black/40">
-      <p class="text-sm uppercase tracking-[0.24em] text-zinc-500">{{ title }}</p>
+    <div class="relative w-full max-w-lg rounded border border-zinc-700 bg-zinc-900 p-4 shadow-lg shadow-black/40">
+      <button
+        aria-label="Close"
+        class="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded border border-zinc-700 text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100"
+        type="button"
+        @click="emit('close')"
+      >
+        x
+      </button>
+
+      <p class="pr-10 text-sm uppercase tracking-[0.24em] text-zinc-500">{{ title }}</p>
 
       <label class="mt-4 block text-xs uppercase tracking-[0.18em] text-zinc-500">
         Name
@@ -34,13 +43,6 @@
       />
 
       <div class="mt-4 flex justify-end gap-2">
-        <button
-          class="rounded border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 transition hover:border-zinc-600 hover:text-zinc-100"
-          type="button"
-          @click="emit('close')"
-        >
-          Close
-        </button>
         <button
           class="rounded border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-700"
           type="button"
