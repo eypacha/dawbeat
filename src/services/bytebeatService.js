@@ -7,18 +7,20 @@ let byteBeatNodeClass = null
 let loadPromise = null
 let initPromise = null
 let formulaUpdatePromise = Promise.resolve()
-let currentFormula = null
+let currentExpressionsKey = null
 let desiredSampleRate = 8000
 let sampleOffset = 0
 
-function buildCompiledFormula(formula) {
-  const nextFormula = formula ?? SILENT_FORMULA
+function buildCompiledExpressions(expressions) {
+  const nextExpressions = Array.isArray(expressions) && expressions.length
+    ? expressions.map((expression) => expression ?? SILENT_FORMULA)
+    : [SILENT_FORMULA]
 
   if (sampleOffset === 0) {
-    return nextFormula
+    return nextExpressions
   }
 
-  return `((t) => (${nextFormula}))(t + ${sampleOffset})`
+  return nextExpressions.map((expression) => `((t) => (${expression}))(t + ${sampleOffset})`)
 }
 
 function getAudioContextConstructor() {
@@ -74,7 +76,7 @@ async function createNode(providedAudioContext) {
   byteBeatNode.setType(ByteBeatNode.Type.byteBeat)
   byteBeatNode.setDesiredSampleRate(desiredSampleRate)
   await byteBeatNode.setExpressions([SILENT_FORMULA], true)
-  currentFormula = null
+  currentExpressionsKey = null
 
   return byteBeatNode
 }
@@ -132,29 +134,34 @@ const bytebeatService = {
 
     byteBeatNode.disconnect()
     byteBeatNode.reset()
-    currentFormula = null
+    currentExpressionsKey = null
     sampleOffset = 0
   },
 
-  async setFormula(formula, resetToZero = false, force = false) {
-    const compiledFormula = buildCompiledFormula(formula)
+  async setExpressions(expressions, resetToZero = false, force = false) {
+    const compiledExpressions = buildCompiledExpressions(expressions)
+    const nextExpressionsKey = JSON.stringify(compiledExpressions)
 
     await this.init()
 
-    if (!force && compiledFormula === currentFormula) {
+    if (!force && nextExpressionsKey === currentExpressionsKey) {
       return
     }
 
     formulaUpdatePromise = formulaUpdatePromise.catch(() => {}).then(async () => {
-      if (!force && compiledFormula === currentFormula) {
+      if (!force && nextExpressionsKey === currentExpressionsKey) {
         return
       }
 
-      await byteBeatNode.setExpressions([compiledFormula], resetToZero)
-      currentFormula = compiledFormula
+      await byteBeatNode.setExpressions(compiledExpressions, resetToZero)
+      currentExpressionsKey = nextExpressionsKey
     })
 
     return formulaUpdatePromise
+  },
+
+  async setFormula(formula, resetToZero = false, force = false) {
+    return this.setExpressions([formula], resetToZero, force)
   },
 
   getCurrentSample() {
@@ -165,14 +172,14 @@ const bytebeatService = {
     return sampleOffset + byteBeatNode.getTime()
   },
 
-  async seekToSample(sample, formula) {
+  async seekToSample(sample, expressions) {
     await this.init()
 
     sampleOffset = Math.max(0, Math.floor(sample))
     byteBeatNode.reset()
-    currentFormula = null
+    currentExpressionsKey = null
 
-    await this.setFormula(formula, true, true)
+    await this.setExpressions(expressions, true, true)
   },
 
   setDesiredSampleRate(sampleRate) {

@@ -1,6 +1,7 @@
 import { storeToRefs } from 'pinia'
 import { getActiveFormula } from '@/engine/timelineEngine'
 import bytebeatService from '@/services/bytebeatService'
+import { applyEvalEffects } from '@/services/evalEffectService'
 import { useDawStore } from '@/stores/dawStore'
 import { samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 
@@ -12,7 +13,7 @@ export function useTransportPlayback() {
   }
 
   const dawStore = useDawStore()
-  const { audioReady, formulas, loopEnabled, loopEnd, loopStart, playing, sampleRate, tickSize, tracks } =
+  const { audioReady, evalEffects, formulas, loopEnabled, loopEnd, loopStart, playing, sampleRate, tickSize, tracks } =
     storeToRefs(dawStore)
 
   let frameId = 0
@@ -37,8 +38,9 @@ export function useTransportPlayback() {
       try {
         const loopStartSample = ticksToSamples(loopStart.value, tickSize.value)
         const loopFormula = getActiveFormula(loopStart.value, tracks.value, formulas.value)
+        const loopExpressions = applyEvalEffects(loopFormula, evalEffects.value)
 
-        await bytebeatService.seekToSample(loopStartSample, loopFormula)
+        await bytebeatService.seekToSample(loopStartSample, loopExpressions)
         dawStore.setTime(loopStart.value)
       } catch (error) {
         console.error('No se pudo reiniciar el loop', error)
@@ -54,9 +56,10 @@ export function useTransportPlayback() {
     }
 
     const activeFormula = getActiveFormula(timeTicks, tracks.value, formulas.value)
+    const activeExpressions = applyEvalEffects(activeFormula, evalEffects.value)
 
     dawStore.setTime(timeTicks)
-    void bytebeatService.setFormula(activeFormula)
+    void bytebeatService.setExpressions(activeExpressions)
 
     if (playing.value) {
       frameId = requestAnimationFrame(syncPlaybackFrame)
@@ -72,7 +75,8 @@ export function useTransportPlayback() {
     bytebeatService.setDesiredSampleRate(sampleRate.value)
 
     const initialFormula = getActiveFormula(0, tracks.value, formulas.value)
-    await bytebeatService.setFormula(initialFormula, true)
+    const initialExpressions = applyEvalEffects(initialFormula, evalEffects.value)
+    await bytebeatService.setExpressions(initialExpressions, true)
     await bytebeatService.unlock()
 
     dawStore.setAudioReady(true)
@@ -90,12 +94,13 @@ export function useTransportPlayback() {
       const resumeTime = dawStore.time
       const resumeFromPause = resumeTime > 0
       const initialFormula = getActiveFormula(resumeTime, tracks.value, formulas.value)
+      const initialExpressions = applyEvalEffects(initialFormula, evalEffects.value)
 
       if (!resumeFromPause) {
         bytebeatService.setSampleOffset(0)
       }
 
-      await bytebeatService.setFormula(initialFormula, !resumeFromPause, !resumeFromPause)
+      await bytebeatService.setExpressions(initialExpressions, !resumeFromPause, !resumeFromPause)
       await bytebeatService.play({ resetTime: !resumeFromPause })
 
       if (!resumeFromPause) {

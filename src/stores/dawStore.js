@@ -17,6 +17,7 @@ import {
   findTrackWithClip,
   sortTrackClips
 } from '@/services/dawStoreService'
+import { createStereoOffsetEvalEffect } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
 import { loadProject } from '@/services/projectPersistence'
 import {
@@ -101,6 +102,11 @@ function createInitialState() {
   return {
     audioReady: false,
     clipDragPreview: null,
+    evalEffects: [
+      createStereoOffsetEvalEffect({
+        id: 'fx1'
+      })
+    ],
     editingClipId: null,
     editingFormulaId: null,
     formulas: project.formulas,
@@ -178,6 +184,39 @@ export const useDawStore = defineStore('dawStore', {
       this.formulas.push(nextFormula)
       this.selectedFormulaId = nextFormula.id
       return nextFormula.id
+    },
+
+    addEvalEffect(effect) {
+      if (effect?.type === 'stereoOffset' && this.evalEffects.some((entry) => entry.type === 'stereoOffset')) {
+        return null
+      }
+
+      const nextEffect = createStereoOffsetEvalEffect(effect)
+      this.evalEffects.push(nextEffect)
+      return nextEffect.id
+    },
+
+    toggleEvalEffect(effectId) {
+      const effect = this.evalEffects.find((entry) => entry.id === effectId)
+
+      if (!effect) {
+        return
+      }
+
+      effect.enabled = !effect.enabled
+    },
+
+    updateEvalEffectParams(effectId, params) {
+      const effect = this.evalEffects.find((entry) => entry.id === effectId)
+
+      if (!effect) {
+        return
+      }
+
+      if (effect.type === 'stereoOffset' && typeof params.offset !== 'undefined') {
+        const offset = Number(params.offset)
+        effect.params.offset = Number.isFinite(offset) ? offset : 0
+      }
     },
 
     updateFormula(formulaId, updates) {

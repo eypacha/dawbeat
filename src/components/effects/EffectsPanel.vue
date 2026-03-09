@@ -17,7 +17,7 @@
           @click="setActiveSection('formula')"
         >
           <span class="text-xs uppercase tracking-[0.24em]">Formula</span>
-          <span class="text-[10px] uppercase tracking-[0.2em]">{{ formulaEffects.length }}</span>
+          <span class="text-[10px] uppercase tracking-[0.2em]">{{ evalEffects.length }}</span>
         </button>
 
         <button
@@ -39,7 +39,7 @@
             {{ activeSection === 'formula' ? 'Formula Effects' : 'Audio Effects' }}
           </p>
           <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-600">
-            {{ activeSection === 'formula' ? formulaEffects.length : audioEffects.length }} total
+            {{ activeSection === 'formula' ? evalEffects.length : audioEffects.length }} total
           </span>
         </div>
 
@@ -47,7 +47,12 @@
 
         <div class="flex min-h-0 flex-1 flex-col p-4 pt-4">
           <div class="relative shrink-0" :data-effects-add-menu="activeSection">
-            <Button block variant="ghost" @click="toggleAddMenu(activeSection)">
+            <Button
+              block
+              :disabled="activeSection === 'formula' && !canAddFormulaEffect"
+              variant="ghost"
+              @click="toggleAddMenu(activeSection)"
+            >
               {{ activeSection === 'formula' ? '+ Add Formula Effect' : '+ Add Audio Effect' }}
             </Button>
 
@@ -79,16 +84,31 @@
 
           <div class="mt-4 min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-1">
             <div class="grid gap-3">
-              <EffectItem
-                v-for="effect in activeSection === 'formula' ? formulaEffects : audioEffects"
-                :key="effect.id"
-                :dragging="draggingEffectId === effect.id && draggingSection === activeSection"
-                :effect="effect"
-                @drag-end="handleDragEnd"
-                @drag-start="handleDragStart(activeSection, $event)"
-                @toggle-enabled="handleToggleEnabled(activeSection, $event)"
-                @toggle-expanded="handleToggleExpanded(activeSection, $event)"
-              />
+              <template v-if="activeSection === 'audio'">
+                <EffectItem
+                  v-for="effect in audioEffects"
+                  :key="effect.id"
+                  :dragging="draggingEffectId === effect.id && draggingSection === 'audio'"
+                  :effect="effect"
+                  @drag-end="handleDragEnd"
+                  @drag-start="handleDragStart('audio', $event)"
+                  @toggle-enabled="handleToggleEnabled('audio', $event)"
+                  @toggle-expanded="handleToggleExpanded('audio', $event)"
+                />
+              </template>
+
+              <template v-else>
+                <EvalEffectItem
+                  v-for="effect in evalEffects"
+                  :key="effect.id"
+                  :dragging="draggingEffectId === effect.id && draggingSection === 'formula'"
+                  :effect="effect"
+                  @drag-end="handleDragEnd"
+                  @drag-start="handleDragStart('formula', $event)"
+                  @toggle-enabled="handleToggleEnabled('formula', $event)"
+                  @update-offset="handleUpdateEvalEffectOffset"
+                />
+              </template>
             </div>
           </div>
         </div>
@@ -98,41 +118,22 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
 import Divider from '@/components/ui/Divider.vue'
 import Panel from '@/components/ui/Panel.vue'
 import EffectItem from '@/components/effects/EffectItem.vue'
+import { useDawStore } from '@/stores/dawStore'
 
+const dawStore = useDawStore()
+const { evalEffects } = storeToRefs(dawStore)
 const effectId = ref(5)
 const activeSection = ref('formula')
 const activeAddMenu = ref(null)
 const draggingEffectId = ref(null)
 const draggingSection = ref(null)
-const formulaEffects = ref([
-  {
-    id: 'fx1',
-    name: 'Stereo Delay',
-    type: 'formula',
-    enabled: true,
-    expanded: true,
-    parameters: [
-      { label: 'Delay', value: '32', fill: '42%' },
-      { label: 'Feedback', value: '0.48', fill: '48%' }
-    ]
-  },
-  {
-    id: 'fx4',
-    name: 'Time Shift',
-    type: 'formula',
-    enabled: true,
-    expanded: false,
-    parameters: [
-      { label: 'Shift', value: '12', fill: '24%' },
-      { label: 'Mix', value: '0.60', fill: '60%' }
-    ]
-  }
-])
 const audioEffects = ref([
   {
     id: 'fx2',
@@ -162,20 +163,8 @@ const audioEffects = ref([
 
 const availableFormulaEffects = [
   {
-    name: 'Stereo Delay',
-    type: 'formula',
-    parameters: [
-      { label: 'Delay', value: '32', fill: '42%' },
-      { label: 'Feedback', value: '0.48', fill: '48%' }
-    ]
-  },
-  {
-    name: 'Time Shift',
-    type: 'formula',
-    parameters: [
-      { label: 'Shift', value: '12', fill: '24%' },
-      { label: 'Mix', value: '0.60', fill: '60%' }
-    ]
+    name: 'Stereo Offset',
+    type: 'stereoOffset'
   }
 ]
 const availableAudioEffects = [
@@ -216,7 +205,7 @@ const availableAudioEffects = [
 ]
 
 function getEffectsBySection(section) {
-  return section === 'formula' ? formulaEffects.value : audioEffects.value
+  return section === 'formula' ? evalEffects.value : audioEffects.value
 }
 
 function setActiveSection(section) {
@@ -232,6 +221,20 @@ function toggleAddMenu(section) {
 }
 
 function handleAddEffect(section, template) {
+  if (section === 'formula') {
+    const nextEffectId = dawStore.addEvalEffect({
+      id: `fx${effectId.value}`,
+      type: template.type
+    })
+
+    if (nextEffectId) {
+      effectId.value += 1
+    }
+
+    activeAddMenu.value = null
+    return
+  }
+
   getEffectsBySection(section).push({
     id: `fx${effectId.value}`,
     name: template.name,
@@ -245,6 +248,11 @@ function handleAddEffect(section, template) {
 }
 
 function handleToggleEnabled(section, effectIdToToggle) {
+  if (section === 'formula') {
+    dawStore.toggleEvalEffect(effectIdToToggle)
+    return
+  }
+
   const effect = getEffectsBySection(section).find((entry) => entry.id === effectIdToToggle)
 
   if (!effect) {
@@ -255,6 +263,10 @@ function handleToggleEnabled(section, effectIdToToggle) {
 }
 
 function handleToggleExpanded(section, effectIdToToggle) {
+  if (section === 'formula') {
+    return
+  }
+
   const effect = getEffectsBySection(section).find((entry) => entry.id === effectIdToToggle)
 
   if (!effect) {
@@ -272,6 +284,12 @@ function handleDragStart(section, effectIdToDrag) {
 function handleDragEnd() {
   draggingSection.value = null
   draggingEffectId.value = null
+}
+
+function handleUpdateEvalEffectOffset(effectIdToUpdate, nextOffset) {
+  dawStore.updateEvalEffectParams(effectIdToUpdate, {
+    offset: nextOffset
+  })
 }
 
 function handleWindowPointerDown(event) {
@@ -293,4 +311,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('pointerdown', handleWindowPointerDown)
 })
+
+const canAddFormulaEffect = computed(
+  () => !evalEffects.value.some((effect) => effect.type === 'stereoOffset')
+)
 </script>
