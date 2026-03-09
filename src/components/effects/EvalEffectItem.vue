@@ -6,9 +6,9 @@
     @dragstart="emit('drag-start', effect.id)"
     @dragend="emit('drag-end')"
   >
-    <div class="flex min-w-0 items-start gap-3">
+    <div class="flex min-w-0 items-start gap-2">
       <div
-        class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded border border-zinc-700 bg-zinc-900 text-zinc-500"
+        class="-ml-1 mt-0.5 flex h-5 w-4 shrink-0 items-center justify-center text-zinc-500"
         title="Drag effect"
       >
         <GripVertical class="h-3.5 w-3.5" />
