@@ -1,9 +1,8 @@
 <template>
-  <header class="border border-zinc-800 bg-zinc-900/80 px-4 py-3 shadow-lg shadow-black/20">
+  <header class="border border-zinc-800 bg-zinc-900/80 px-4 py-2 shadow-lg shadow-black/20">
     <div class="flex items-center justify-between gap-4">
       <div>
-        <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">Transport</p>
-        <h1 class="text-sm text-zinc-100">TransportBar</h1>
+        <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">DawBeat</p>
       </div>
 
       <div class="flex items-center gap-2 text-xs text-zinc-400">
