@@ -38,11 +38,21 @@
           >
             <span class="absolute left-2 top-2 text-[10px] text-zinc-500">{{ mark }}</span>
           </div>
+
+          <button
+            class="absolute inset-0 z-10 cursor-grab"
+            type="button"
+            @pointerdown="handleScrubPointerDown"
+          />
         </div>
       </div>
 
       <div class="relative">
-        <Playhead :time="time" :offset="TRACK_LABEL_WIDTH" />
+        <Playhead
+          :time="time"
+          :offset="TRACK_LABEL_WIDTH"
+          @pointerdown="handleScrubPointerDown"
+        />
 
         <TimelineTrack
           v-for="(track, index) in tracks"
@@ -59,17 +69,19 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import Panel from '@/components/ui/Panel.vue'
 import Playhead from '@/components/timeline/Playhead.vue'
 import TimelineAddTrackRow from '@/components/timeline/TimelineAddTrackRow.vue'
 import TimelineLoopRegion from '@/components/timeline/TimelineLoopRegion.vue'
 import TimelineTrack from '@/components/timeline/TimelineTrack.vue'
+import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
 import {
   TRACK_LABEL_WIDTH,
   getSamplesPerTick,
+  pixelsToTicks,
   ticksToPixels
 } from '@/utils/timeUtils'
 
@@ -77,9 +89,11 @@ const AUTO_SCROLL_PADDING = 96
 const FIXED_TIMELINE_TICKS = 256
 
 const dawStore = useDawStore()
+const { seekToTime } = useTransportPlayback()
 const { loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, tickSize, time, tracks } =
   storeToRefs(dawStore)
 const scrollContainer = ref(null)
+let scrubPointerId = null
 
 const samplesPerTick = computed(() => getSamplesPerTick(tickSize.value))
 const rulerMarks = computed(() => Array.from({ length: FIXED_TIMELINE_TICKS }, (_, index) => index))
@@ -130,6 +144,52 @@ function handleWheel(event) {
   }
 }
 
+function handleScrubPointerDown(event) {
+  if (!scrollContainer.value || event.button !== 0) {
+    return
+  }
+
+  scrubPointerId = event.pointerId
+  void scrubToClientX(event.clientX)
+  window.addEventListener('pointermove', handleScrubPointerMove)
+  window.addEventListener('pointerup', handleScrubPointerEnd)
+  window.addEventListener('pointercancel', handleScrubPointerEnd)
+}
+
+function handleScrubPointerMove(event) {
+  if (scrubPointerId !== event.pointerId) {
+    return
+  }
+
+  void scrubToClientX(event.clientX)
+}
+
+function handleScrubPointerEnd(event) {
+  if (scrubPointerId !== event.pointerId) {
+    return
+  }
+
+  scrubPointerId = null
+  window.removeEventListener('pointermove', handleScrubPointerMove)
+  window.removeEventListener('pointerup', handleScrubPointerEnd)
+  window.removeEventListener('pointercancel', handleScrubPointerEnd)
+}
+
+async function scrubToClientX(clientX) {
+  if (!scrollContainer.value) {
+    return
+  }
+
+  const containerRect = scrollContainer.value.getBoundingClientRect()
+  const timelineX = scrollContainer.value.scrollLeft + clientX - containerRect.left - TRACK_LABEL_WIDTH
+  const nextTime = Math.min(
+    FIXED_TIMELINE_TICKS,
+    Math.max(0, pixelsToTicks(timelineX, pixelsPerTick.value))
+  )
+
+  await seekToTime(nextTime)
+}
+
 watch(time, (nextTime) => {
   if (!scrollContainer.value) {
     return
@@ -156,5 +216,12 @@ watch(time, (nextTime) => {
   if (playheadOffset > viewportRight - AUTO_SCROLL_PADDING) {
     scrollContainer.value.scrollLeft = playheadOffset - scrollContainer.value.clientWidth + AUTO_SCROLL_PADDING
   }
+})
+
+onBeforeUnmount(() => {
+  scrubPointerId = null
+  window.removeEventListener('pointermove', handleScrubPointerMove)
+  window.removeEventListener('pointerup', handleScrubPointerEnd)
+  window.removeEventListener('pointercancel', handleScrubPointerEnd)
 })
 </script>

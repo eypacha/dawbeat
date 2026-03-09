@@ -163,10 +163,37 @@ export function useTransportPlayback() {
     }
   }
 
+  const seekToTime = async (nextTime) => {
+    const normalizedTime = Math.max(0, Number(nextTime) || 0)
+    dawStore.setTime(normalizedTime)
+
+    if (!audioReady.value) {
+      return
+    }
+
+    const targetSample = ticksToSamples(normalizedTime, tickSize.value)
+
+    if (playing.value) {
+      const activeFormula = getActiveFormula(normalizedTime, tracks.value, formulas.value)
+      const activeExpressions = applyEvalEffects(activeFormula, evalEffects.value)
+
+      try {
+        await bytebeatService.seekToSample(targetSample, activeExpressions)
+      } catch (error) {
+        console.error('No se pudo mover el playhead', error)
+      }
+
+      return
+    }
+
+    bytebeatService.holdSample(targetSample)
+  }
+
   transportPlayback = {
     play,
     enableAudio,
     pause,
+    seekToTime,
     togglePlay,
     stop
   }

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="absolute bottom-1 h-3 rounded-sm border transition-opacity"
+    class="absolute bottom-1 z-20 h-3 rounded-sm border transition-opacity"
     :class="loopEnabled ? 'border-emerald-300/70 bg-emerald-400/20' : 'border-zinc-600/80 bg-zinc-700/20 opacity-50'"
     :style="loopStyle"
   >

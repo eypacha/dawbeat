@@ -1,10 +1,11 @@
 <template>
   <div
-    class="pointer-events-none absolute inset-y-0 z-10"
+    class="absolute inset-y-0 z-10 w-4 -translate-x-1/2 cursor-grab"
     :style="{ left: `${offset + ticksToPixels(time, pixelsPerTick)}px` }"
+    @pointerdown.stop="emit('pointerdown', $event)"
   >
-    <div class="absolute inset-y-0 w-px bg-amber-300 shadow-[0_0_12px_rgba(252,211,77,0.45)]" />
-    <div class="absolute -left-1 top-0 h-3 w-3 border border-amber-200 bg-amber-300" />
+    <div class="absolute left-1/2 inset-y-0 w-px -translate-x-1/2 bg-amber-300 shadow-[0_0_12px_rgba(252,211,77,0.45)]" />
+    <div class="absolute left-1/2 top-0 h-3 w-3 -translate-x-1/2 border border-amber-200 bg-amber-300" />
   </div>
 </template>
 
@@ -23,6 +24,8 @@ defineProps({
     required: true
   }
 })
+
+const emit = defineEmits(['pointerdown'])
 
 const dawStore = useDawStore()
 const { pixelsPerTick } = storeToRefs(dawStore)

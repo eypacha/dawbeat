@@ -430,6 +430,10 @@ const bytebeatService = {
     heldSample = null
   },
 
+  holdSample(sample) {
+    heldSample = Math.max(0, Math.floor(sample))
+  },
+
   setSampleOffset(sample) {
     heldSample = null
     setSampleOffsetValue(Math.max(0, sample))
