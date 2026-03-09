@@ -214,7 +214,7 @@ function handleLanePointerDown(event) {
 
   window.addEventListener('pointermove', handleCreationPointerMove)
   window.addEventListener('pointerup', handleCreationPointerUp)
-  window.addEventListener('pointercancel', handleCreationPointerUp)
+  window.addEventListener('pointercancel', handleCreationPointerCancel)
 }
 
 function handleCreationPointerMove(event) {
@@ -252,6 +252,10 @@ function handleCreationPointerUp() {
   cleanupCreation()
 }
 
+function handleCreationPointerCancel() {
+  cleanupCreation()
+}
+
 function getPointerTick(event) {
   const laneRect = laneElement.value.getBoundingClientRect()
   const relativeX = Math.max(0, event.clientX - laneRect.left)
@@ -265,7 +269,7 @@ function cleanupCreation() {
   creationStartX = 0
   window.removeEventListener('pointermove', handleCreationPointerMove)
   window.removeEventListener('pointerup', handleCreationPointerUp)
-  window.removeEventListener('pointercancel', handleCreationPointerUp)
+  window.removeEventListener('pointercancel', handleCreationPointerCancel)
 }
 
 onBeforeUnmount(() => {

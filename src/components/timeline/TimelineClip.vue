@@ -158,6 +158,7 @@ function handleResizeStartPointerDown(event) {
   handleSelect()
   resizeMode.value = 'start'
   resizeStartTick = props.clip.start
+  resizeEndTick = props.clip.start + props.clip.duration
 }
 
 function handleResizeEndPointerDown(event) {
@@ -180,7 +181,7 @@ function startInteraction(event) {
 
   window.addEventListener('pointermove', handlePointerMove)
   window.addEventListener('pointerup', handlePointerUp)
-  window.addEventListener('pointercancel', handlePointerUp)
+  window.addEventListener('pointercancel', handlePointerCancel)
 
   return true
 }
@@ -257,6 +258,34 @@ function handlePointerUp(event) {
   cleanupInteraction()
 
   if (shouldClearDuplicateClickGuard) {
+    requestAnimationFrame(() => {
+      ignoreNextClick = false
+    })
+  }
+}
+
+function handlePointerCancel() {
+  if (!isDragging.value && !resizeMode.value) {
+    return
+  }
+
+  if (resizeMode.value === 'start') {
+    dawStore.updateClip(props.trackId, props.clip.id, {
+      start: resizeStartTick,
+      duration: resizeEndTick - resizeStartTick
+    })
+  } else if (resizeMode.value === 'end') {
+    dawStore.updateClip(props.trackId, props.clip.id, {
+      duration: resizeEndTick - props.clip.start
+    })
+  } else if (isDragging.value && !duplicateDrag) {
+    dawStore.moveClip(dragSourceTrackId, dragClipId, dragStartTick, false)
+  }
+
+  dawStore.clearClipDragPreview()
+  cleanupInteraction()
+
+  if (ignoreNextClick) {
     requestAnimationFrame(() => {
       ignoreNextClick = false
     })
@@ -353,7 +382,7 @@ function syncSourceClipPosition(shouldSnap = true) {
 function removeInteractionListeners() {
   window.removeEventListener('pointermove', handlePointerMove)
   window.removeEventListener('pointerup', handlePointerUp)
-  window.removeEventListener('pointercancel', handlePointerUp)
+  window.removeEventListener('pointercancel', handlePointerCancel)
 }
 
 function saveFormula() {
