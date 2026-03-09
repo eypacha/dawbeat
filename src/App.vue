@@ -1,13 +1,14 @@
 <template>
   <StartScreen v-if="!audioReady" @start="handleStart" />
 
-  <div v-else class="min-h-screen bg-zinc-950 text-zinc-200 font-mono">
-    <div class="flex min-h-screen w-full flex-col gap-4 p-4">
+  <div v-else class="h-screen overflow-hidden bg-zinc-950 text-zinc-200 font-mono">
+    <div class="flex h-full w-full flex-col gap-4 overflow-hidden p-4">
       <TransportBar />
 
-      <main class="grid flex-1 gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+      <main class="grid min-h-0 flex-1 gap-4 overflow-hidden lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)_304px]">
         <FormulaLibrary />
         <Timeline />
+        <EffectsPanel />
       </main>
     </div>
 
@@ -63,6 +64,7 @@
 import { computed, reactive, onBeforeUnmount, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import StartScreen from '@/components/boot/StartScreen.vue'
+import EffectsPanel from '@/components/effects/EffectsPanel.vue'
 import FormulaLibrary from '@/components/library/FormulaLibrary.vue'
 import Timeline from '@/components/timeline/Timeline.vue'
 import TransportBar from '@/components/transport/TransportBar.vue'
