@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath, URL } from 'node:url'
 
-const BASE_PATH = '/'
+const BASE_PATH = '/dawbeat/'
 
 export default defineConfig({
   base: BASE_PATH,
