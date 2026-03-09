@@ -76,35 +76,54 @@
           <div class="mt-4 min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-1">
             <div class="grid gap-3">
               <template v-if="activeSection === 'audio'">
-                <AudioDelayItem
+                <div
                   v-for="effect in audioEffects"
                   :key="effect.id"
-                  :dragging="draggingEffectId === effect.id && draggingSection === 'audio'"
-                  :effect="effect"
-                  @drag-end="handleDragEnd"
-                  @drag-start="handleDragStart('audio', $event)"
-                  @remove="handleRemoveEffect('audio', $event)"
-                  @reset="handleResetEffect('audio', $event)"
-                  @toggle-enabled="handleToggleEnabled('audio', $event)"
-                  @toggle-expanded="handleToggleExpanded('audio', $event)"
-                  @update-param="handleUpdateAudioEffectParam"
-                />
+                  class="rounded transition-shadow"
+                  :class="dropTargetSection === 'audio' && dropTargetEffectId === effect.id
+                    ? 'shadow-[0_0_0_1px_rgba(251,191,36,0.55)]'
+                    : ''"
+                  @dragover.prevent="handleDragOver('audio', effect.id)"
+                  @drop.prevent="handleDrop('audio', effect.id)"
+                >
+                  <component
+                    :is="getAudioEffectComponent(effect.type)"
+                    :dragging="draggingEffectId === effect.id && draggingSection === 'audio'"
+                    :effect="effect"
+                    @drag-end="handleDragEnd"
+                    @drag-start="handleDragStart('audio', $event)"
+                    @remove="handleRemoveEffect('audio', $event)"
+                    @reset="handleResetEffect('audio', $event)"
+                    @toggle-enabled="handleToggleEnabled('audio', $event)"
+                    @toggle-expanded="handleToggleExpanded('audio', $event)"
+                    @update-param="handleUpdateAudioEffectParam"
+                  />
+                </div>
               </template>
 
               <template v-else>
-                <EvalEffectItem
+                <div
                   v-for="effect in evalEffects"
                   :key="effect.id"
-                  :dragging="draggingEffectId === effect.id && draggingSection === 'formula'"
-                  :effect="effect"
-                  @drag-end="handleDragEnd"
-                  @drag-start="handleDragStart('formula', $event)"
-                  @remove="handleRemoveEffect('formula', $event)"
-                  @reset="handleResetEffect('formula', $event)"
-                  @toggle-enabled="handleToggleEnabled('formula', $event)"
-                  @toggle-expanded="handleToggleExpanded('formula', $event)"
-                  @update-offset="handleUpdateEvalEffectOffset"
-                />
+                  class="rounded transition-shadow"
+                  :class="dropTargetSection === 'formula' && dropTargetEffectId === effect.id
+                    ? 'shadow-[0_0_0_1px_rgba(56,189,248,0.55)]'
+                    : ''"
+                  @dragover.prevent="handleDragOver('formula', effect.id)"
+                  @drop.prevent="handleDrop('formula', effect.id)"
+                >
+                  <EvalEffectItem
+                    :dragging="draggingEffectId === effect.id && draggingSection === 'formula'"
+                    :effect="effect"
+                    @drag-end="handleDragEnd"
+                    @drag-start="handleDragStart('formula', $event)"
+                    @remove="handleRemoveEffect('formula', $event)"
+                    @reset="handleResetEffect('formula', $event)"
+                    @toggle-enabled="handleToggleEnabled('formula', $event)"
+                    @toggle-expanded="handleToggleExpanded('formula', $event)"
+                    @update-offset="handleUpdateEvalEffectOffset"
+                  />
+                </div>
               </template>
             </div>
           </div>
@@ -118,6 +137,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import AudioDelayItem from '@/components/effects/AudioDelayItem.vue'
+import AudioEqItem from '@/components/effects/AudioEqItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
 import Divider from '@/components/ui/Divider.vue'
@@ -131,6 +151,8 @@ const activeSection = ref('formula')
 const activeAddMenu = ref(null)
 const draggingEffectId = ref(null)
 const draggingSection = ref(null)
+const dropTargetEffectId = ref(null)
+const dropTargetSection = ref(null)
 
 const availableFormulaEffects = [
   {
@@ -142,11 +164,23 @@ const availableAudioEffects = [
   {
     name: 'Delay',
     type: 'delay'
+  },
+  {
+    name: 'EQ',
+    type: 'eq'
   }
 ]
 
 function getEffectsBySection(section) {
   return section === 'formula' ? evalEffects.value : audioEffects.value
+}
+
+function getAudioEffectComponent(effectType) {
+  if (effectType === 'eq') {
+    return AudioEqItem
+  }
+
+  return AudioDelayItem
 }
 
 function setActiveSection(section) {
@@ -223,9 +257,40 @@ function handleDragStart(section, effectIdToDrag) {
   draggingEffectId.value = effectIdToDrag
 }
 
+function handleDragOver(section, effectIdToTarget) {
+  if (!draggingEffectId.value || draggingSection.value !== section) {
+    return
+  }
+
+  if (draggingEffectId.value === effectIdToTarget) {
+    dropTargetEffectId.value = null
+    dropTargetSection.value = null
+    return
+  }
+
+  dropTargetSection.value = section
+  dropTargetEffectId.value = effectIdToTarget
+}
+
+function handleDrop(section, effectIdToTarget) {
+  if (!draggingEffectId.value || draggingSection.value !== section) {
+    return
+  }
+
+  if (section === 'formula') {
+    dawStore.reorderEvalEffect(draggingEffectId.value, effectIdToTarget)
+  } else {
+    dawStore.reorderAudioEffect(draggingEffectId.value, effectIdToTarget)
+  }
+
+  handleDragEnd()
+}
+
 function handleDragEnd() {
   draggingSection.value = null
   draggingEffectId.value = null
+  dropTargetSection.value = null
+  dropTargetEffectId.value = null
 }
 
 function handleUpdateEvalEffectOffset(effectIdToUpdate, nextOffset) {

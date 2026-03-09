@@ -17,7 +17,14 @@ import {
   findTrackWithClip,
   sortTrackClips
 } from '@/services/dawStoreService'
-import { createDelayAudioEffect, normalizeDelayTime, normalizeMixValue } from '@/services/audioEffectService'
+import {
+  createAudioEffect,
+  createDelayAudioEffect,
+  createEqAudioEffect,
+  normalizeDecibels,
+  normalizeDelayTime,
+  normalizeMixValue
+} from '@/services/audioEffectService'
 import { createStereoOffsetEvalEffect } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
 import { loadProject } from '@/services/projectPersistence'
@@ -131,6 +138,24 @@ function createInitialState() {
   }
 }
 
+function reorderEntries(entries, draggedId, targetId) {
+  if (!draggedId || !targetId || draggedId === targetId) {
+    return entries
+  }
+
+  const sourceIndex = entries.findIndex((entry) => entry.id === draggedId)
+  const targetIndex = entries.findIndex((entry) => entry.id === targetId)
+
+  if (sourceIndex === -1 || targetIndex === -1) {
+    return entries
+  }
+
+  const nextEntries = [...entries]
+  const [draggedEntry] = nextEntries.splice(sourceIndex, 1)
+  nextEntries.splice(targetIndex, 0, draggedEntry)
+  return nextEntries
+}
+
 export const useDawStore = defineStore('dawStore', {
   state: createInitialState,
 
@@ -144,7 +169,7 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     addAudioEffect(effect) {
-      const nextEffect = createDelayAudioEffect(effect)
+      const nextEffect = createAudioEffect(effect)
       this.audioEffects.push(nextEffect)
       return nextEffect.id
     },
@@ -173,6 +198,10 @@ export const useDawStore = defineStore('dawStore', {
       this.audioEffects = this.audioEffects.filter((entry) => entry.id !== effectId)
     },
 
+    reorderAudioEffect(effectId, targetEffectId) {
+      this.audioEffects = reorderEntries(this.audioEffects, effectId, targetEffectId)
+    },
+
     resetAudioEffect(effectId) {
       const effect = this.audioEffects.find((entry) => entry.id === effectId)
 
@@ -182,6 +211,13 @@ export const useDawStore = defineStore('dawStore', {
 
       if (effect.type === 'delay') {
         const defaults = createDelayAudioEffect({ id: effect.id })
+        effect.enabled = defaults.enabled
+        effect.params = defaults.params
+        return
+      }
+
+      if (effect.type === 'eq') {
+        const defaults = createEqAudioEffect({ id: effect.id })
         effect.enabled = defaults.enabled
         effect.params = defaults.params
       }
@@ -205,6 +241,21 @@ export const useDawStore = defineStore('dawStore', {
 
         if (typeof params.mix !== 'undefined') {
           effect.params.mix = normalizeMixValue(params.mix)
+        }
+        return
+      }
+
+      if (effect.type === 'eq') {
+        if (typeof params.bass !== 'undefined') {
+          effect.params.bass = normalizeDecibels(params.bass)
+        }
+
+        if (typeof params.mid !== 'undefined') {
+          effect.params.mid = normalizeDecibels(params.mid)
+        }
+
+        if (typeof params.treble !== 'undefined') {
+          effect.params.treble = normalizeDecibels(params.treble)
         }
       }
     },
@@ -286,6 +337,10 @@ export const useDawStore = defineStore('dawStore', {
 
     removeEvalEffect(effectId) {
       this.evalEffects = this.evalEffects.filter((entry) => entry.id !== effectId)
+    },
+
+    reorderEvalEffect(effectId, targetEffectId) {
+      this.evalEffects = reorderEntries(this.evalEffects, effectId, targetEffectId)
     },
 
     resetEvalEffect(effectId) {

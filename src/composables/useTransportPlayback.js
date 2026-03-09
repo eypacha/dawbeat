@@ -170,6 +170,10 @@ export function useTransportPlayback() {
     audioEffects,
     (nextAudioEffects) => {
       void bytebeatService.syncAudioEffects(nextAudioEffects)
+
+      if (playing.value) {
+        void bytebeatService.reconnectAudioGraph(nextAudioEffects)
+      }
     },
     { deep: true }
   )
