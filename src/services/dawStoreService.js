@@ -74,6 +74,7 @@ export function createTrackClip(clip) {
     id: clip.id ?? createClipId(),
     formula: clip.formula ?? null,
     formulaId: clip.formulaId ?? null,
+    formulaName: clip.formulaName ?? null,
     ...clip
   }
 }

@@ -36,11 +36,22 @@
       @cancel="closeRenameDialog"
       @confirm="confirmTrackRename"
     />
+
+    <FormulaInputDialog
+      :initial-name="editingFormulaName"
+      :initial-value="editingFormulaValue"
+      :visible="isFormulaDialogVisible"
+      label="Formula"
+      :title="formulaDialogTitle"
+      @close="closeFormulaDialog"
+      @eval="evaluateFormulaDialog"
+      @save="saveFormulaDialog"
+    />
   </div>
 </template>
 
 <script setup>
-import { reactive, onBeforeUnmount, onMounted } from 'vue'
+import { computed, reactive, onBeforeUnmount, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import StartScreen from '@/components/boot/StartScreen.vue'
 import FormulaLibrary from '@/components/library/FormulaLibrary.vue'
@@ -48,8 +59,11 @@ import Timeline from '@/components/timeline/Timeline.vue'
 import TransportBar from '@/components/transport/TransportBar.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import ContextMenu from '@/components/ui/ContextMenu.vue'
+import FormulaInputDialog from '@/components/ui/FormulaInputDialog.vue'
 import TextInputDialog from '@/components/ui/TextInputDialog.vue'
 import { provideContextMenu } from '@/composables/useContextMenu'
+import { getFormulaById, resolveClipFormula, resolveClipFormulaName } from '@/services/formulaService'
+import { findTrackWithClip } from '@/services/dawStoreService'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
 
@@ -66,7 +80,75 @@ const renameDialog = reactive({
   visible: false
 })
 const { enableAudio, stop } = useTransportPlayback()
-const { audioReady, editingClipId, selectedClipId } = storeToRefs(dawStore)
+const { audioReady, editingClipId, editingFormulaId, formulas, selectedClipId, tracks } = storeToRefs(dawStore)
+
+const editingClipFormula = computed(() => {
+  if (!editingClipId.value) {
+    return ''
+  }
+
+  const result = findTrackWithClip(tracks.value, editingClipId.value)
+
+  if (!result) {
+    return ''
+  }
+
+  const clip = result.track.clips[result.clipIndex]
+  return clip ? resolveClipFormula(clip, formulas.value) : ''
+})
+
+const editingClipFormulaName = computed(() => {
+  if (!editingClipId.value) {
+    return ''
+  }
+
+  const result = findTrackWithClip(tracks.value, editingClipId.value)
+
+  if (!result) {
+    return ''
+  }
+
+  const clip = result.track.clips[result.clipIndex]
+  return clip ? resolveClipFormulaName(clip, formulas.value) : ''
+})
+
+const editingLibraryFormula = computed(() => {
+  if (!editingFormulaId.value) {
+    return ''
+  }
+
+  return getFormulaById(formulas.value, editingFormulaId.value)?.code ?? ''
+})
+
+const editingLibraryFormulaName = computed(() => {
+  if (!editingFormulaId.value) {
+    return ''
+  }
+
+  return getFormulaById(formulas.value, editingFormulaId.value)?.name ?? ''
+})
+
+const isFormulaDialogVisible = computed(() => Boolean(editingClipId.value || editingFormulaId.value))
+
+const editingFormulaValue = computed(() => {
+  if (editingClipId.value) {
+    return editingClipFormula.value
+  }
+
+  return editingLibraryFormula.value
+})
+
+const editingFormulaName = computed(() => {
+  if (editingClipId.value) {
+    return editingClipFormulaName.value
+  }
+
+  return editingLibraryFormulaName.value
+})
+
+const formulaDialogTitle = computed(() =>
+  editingClipId.value ? 'Edit Clip Formula' : 'Edit Library Formula'
+)
 
 async function handleStart() {
   await enableAudio()
@@ -148,6 +230,41 @@ function confirmTrackRename(nextName) {
   }
 
   closeRenameDialog()
+}
+
+function closeFormulaDialog() {
+  dawStore.setEditingClip(null)
+  dawStore.setEditingFormula(null)
+}
+
+function evaluateFormulaDialog(nextDraft) {
+  if (editingClipId.value) {
+    dawStore.saveClipFormulaDraft(editingClipId.value, nextDraft)
+    return
+  }
+
+  if (editingFormulaId.value) {
+    dawStore.updateFormula(editingFormulaId.value, {
+      code: nextDraft.code,
+      name: nextDraft.name
+    })
+  }
+}
+
+function saveFormulaDialog(nextDraft) {
+  if (editingClipId.value) {
+    dawStore.saveClipFormulaDraftAndName(editingClipId.value, nextDraft)
+    closeFormulaDialog()
+    return
+  }
+
+  if (editingFormulaId.value) {
+    dawStore.updateFormula(editingFormulaId.value, {
+      code: nextDraft.code,
+      name: nextDraft.name
+    })
+    closeFormulaDialog()
+  }
 }
 
 onMounted(() => {

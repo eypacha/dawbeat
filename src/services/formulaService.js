@@ -34,3 +34,11 @@ export function resolveClipFormula(clip, formulas, fallback = '') {
 
   return clip.formula ?? fallback
 }
+
+export function resolveClipFormulaName(clip, formulas, fallback = '') {
+  if (typeof clip.formulaId === 'string' && clip.formulaId) {
+    return getFormulaById(formulas, clip.formulaId)?.name?.trim() ?? fallback
+  }
+
+  return clip.formulaName?.trim() ?? fallback
+}

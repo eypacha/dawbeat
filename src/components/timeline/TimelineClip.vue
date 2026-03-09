@@ -26,19 +26,8 @@
       @pointerdown.stop="handleResizeEndPointerDown"
     />
 
-    <input
-      v-if="isEditing"
-      ref="formulaInput"
-      v-model="draftFormula"
-      class="timeline-clip-input h-full w-full border px-2 text-xs text-zinc-50 outline-none"
-      type="text"
-      @blur="saveFormula"
-      @keydown.enter.prevent="saveFormula"
-      @keydown.esc.prevent="cancelEdit"
-    />
-
-    <template v-else-if="showReferenceName">
-      <span class="block truncate font-medium">{{ referenceName }}</span>
+    <template v-if="showFormulaName">
+      <span class="block truncate font-medium">{{ resolvedFormulaName }}</span>
       <span class="mt-1 block truncate text-[10px] opacity-70">{{ resolvedFormula }}</span>
     </template>
 
@@ -47,11 +36,11 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineClipInteraction } from '@/composables/useTimelineClipInteraction'
-import { getFormulaById, resolveClipFormula } from '@/services/formulaService'
+import { resolveClipFormula, resolveClipFormulaName } from '@/services/formulaService'
 import { useDawStore } from '@/stores/dawStore'
 import { ticksToPixels, ticksToSamples } from '@/utils/timeUtils'
 
@@ -69,15 +58,12 @@ const props = defineProps({
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
 const { editingClipId, formulas, pixelsPerTick, selectedClipId, tickSize, tracks } = storeToRefs(dawStore)
-const draftFormula = ref('')
-const formulaInput = ref(null)
 const isFormulaDropTarget = ref(false)
 
-const referencedFormula = computed(() => getFormulaById(formulas.value, props.clip.formulaId))
 const resolvedFormula = computed(() => resolveClipFormula(props.clip, formulas.value))
 const isReferenceClip = computed(() => Boolean(props.clip.formulaId))
-const referenceName = computed(() => referencedFormula.value?.name.trim() ?? '')
-const showReferenceName = computed(() => isReferenceClip.value && Boolean(referenceName.value))
+const resolvedFormulaName = computed(() => resolveClipFormulaName(props.clip, formulas.value))
+const showFormulaName = computed(() => Boolean(resolvedFormulaName.value))
 
 const clipStyle = computed(() => ({
   left: `${ticksToPixels(props.clip.start, pixelsPerTick.value)}px`,
@@ -153,29 +139,6 @@ function handleEditStart() {
   dawStore.setEditingClip(props.clip.id)
 }
 
-function saveFormula() {
-  if (!isEditing.value) {
-    return
-  }
-
-  if (props.clip.formulaId) {
-    dawStore.updateFormula(props.clip.formulaId, { code: draftFormula.value })
-  } else {
-    dawStore.updateClip(props.trackId, props.clip.id, { formula: draftFormula.value })
-  }
-
-  dawStore.setEditingClip(null)
-}
-
-function cancelEdit() {
-  if (!isEditing.value) {
-    return
-  }
-
-  draftFormula.value = resolvedFormula.value
-  dawStore.setEditingClip(null)
-}
-
 function handleContextMenu(event) {
   handleSelect()
 
@@ -226,27 +189,6 @@ function getDroppedFormulaId(event) {
   return event.dataTransfer?.getData('text/plain') || ''
 }
 
-watch(
-  isEditing,
-  async (editing) => {
-    if (!editing) {
-      draftFormula.value = resolvedFormula.value
-      return
-    }
-
-    draftFormula.value = resolvedFormula.value
-    await nextTick()
-    formulaInput.value?.focus()
-    formulaInput.value?.select()
-  }
-)
-
-watch(resolvedFormula, (nextFormula) => {
-  if (!isEditing.value) {
-    draftFormula.value = nextFormula
-  }
-})
-
 onBeforeUnmount(() => {
   dawStore.clearClipDragPreview()
   cleanupInteraction()
@@ -283,11 +225,6 @@ onBeforeUnmount(() => {
 
 .timeline-clip-handle {
   background: color-mix(in srgb, var(--track-color-light) 18%, transparent);
-  border-color: color-mix(in srgb, var(--track-color-border) 55%, white 45%);
-}
-
-.timeline-clip-input {
-  background: color-mix(in srgb, black 72%, var(--track-color) 28%);
   border-color: color-mix(in srgb, var(--track-color-border) 55%, white 45%);
 }
 </style>
