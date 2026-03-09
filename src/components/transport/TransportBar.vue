@@ -70,6 +70,15 @@
           @click="handleProjectDownload"
         />
 
+        <button
+          class="border border-zinc-800 bg-zinc-950 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-700 hover:text-zinc-100 disabled:cursor-default disabled:opacity-40"
+          :disabled="exportingWav"
+          type="button"
+          @click="handleWavExport"
+        >
+          {{ exportingWav ? 'Exporting...' : 'Export WAV' }}
+        </button>
+
         <IconButton
           :icon="Settings2"
           label="Settings"
@@ -98,6 +107,7 @@ import { storeToRefs } from 'pinia'
 import { Download, FolderOpen, Pause, Play, Repeat, Settings2, Square } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
+import { downloadProjectWav } from '@/services/exportService'
 import { downloadProjectFile, importProjectFile } from '@/services/projectPersistence'
 import { enqueueSnackbar } from '@/services/notifications'
 import Divider from '@/components/ui/Divider.vue'
@@ -112,6 +122,7 @@ const { loopEnabled, playing, sampleRate, time } = storeToRefs(dawStore)
 const projectFileInput = ref(null)
 const sampleRateDraft = ref(String(sampleRate.value))
 const settingsVisible = ref(false)
+const exportingWav = ref(false)
 
 const transportTime = computed(() => `${time.value.toFixed(2)} ticks`)
 
@@ -134,6 +145,26 @@ function resetSampleRateDraft() {
 
 function handleProjectDownload() {
   downloadProjectFile(dawStore.$state)
+}
+
+async function handleWavExport() {
+  if (exportingWav.value) {
+    return
+  }
+
+  exportingWav.value = true
+
+  try {
+    await downloadProjectWav(dawStore.$state)
+    enqueueSnackbar('WAV exported', { variant: 'success' })
+  } catch (error) {
+    enqueueSnackbar(
+      error instanceof Error ? error.message : 'WAV export failed',
+      { variant: 'error' }
+    )
+  } finally {
+    exportingWav.value = false
+  }
 }
 
 async function handleProjectFileChange(event) {

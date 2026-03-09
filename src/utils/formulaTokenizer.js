@@ -36,12 +36,6 @@ export function tokenizeFormula(expression = '') {
       continue
     }
 
-    if (currentChar === 't') {
-      tokens.push({ type: 'var', value: currentChar })
-      index += 1
-      continue
-    }
-
     if (/\d/.test(currentChar)) {
       let endIndex = index + 1
 
@@ -66,6 +60,15 @@ export function tokenizeFormula(expression = '') {
 
       const identifier = source.slice(index, endIndex)
       let lookaheadIndex = endIndex
+
+      if (identifier === 't') {
+        tokens.push({
+          type: 'var',
+          value: identifier
+        })
+        index = endIndex
+        continue
+      }
 
       while (lookaheadIndex < source.length && /\s/.test(source[lookaheadIndex])) {
         lookaheadIndex += 1
