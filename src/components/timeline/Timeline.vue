@@ -57,6 +57,8 @@
           :track="track"
           :timeline-width="timelineWidthStyle"
         />
+
+        <TimelineAddTrackRow :timeline-width="timelineWidthStyle" />
       </div>
     </div>
   </section>
@@ -66,6 +68,7 @@
 import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import Playhead from '@/components/timeline/Playhead.vue'
+import TimelineAddTrackRow from '@/components/timeline/TimelineAddTrackRow.vue'
 import TimelineLoopRegion from '@/components/timeline/TimelineLoopRegion.vue'
 import TimelineTrack from '@/components/timeline/TimelineTrack.vue'
 import { useDawStore } from '@/stores/dawStore'
