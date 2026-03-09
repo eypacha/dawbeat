@@ -11,15 +11,35 @@
       :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
       @contextmenu="handleContextMenu"
     >
-      <span class="text-sm">{{ displayTrackName }}</span>
-      <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+      <div class="flex items-center justify-between gap-3">
+        <span class="text-sm transition-opacity" :class="isMuted ? 'opacity-55' : ''">
+          {{ displayTrackName }}
+        </span>
+
+        <button
+          class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors"
+          :class="muteButtonClassName"
+          :title="isMuted ? 'Unmute track' : 'Mute track'"
+          :aria-pressed="isMuted"
+          type="button"
+          @click.stop="handleToggleMuted"
+        >
+          <span
+            class="h-2 w-2 rounded-full transition-opacity"
+            :class="isMuted ? 'bg-transparent opacity-0' : 'bg-current opacity-100'"
+          />
+        </button>
+      </div>
+
+      <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500 transition-opacity" :class="isMuted ? 'opacity-50' : ''">
         {{ track.clips.length }} clips
       </span>
     </div>
 
     <div
       ref="laneElement"
-      class="relative h-20 shrink-0"
+      class="relative h-20 shrink-0 transition-opacity"
+      :class="isMuted ? 'opacity-35' : 'opacity-100'"
       :style="laneStyle"
       @pointerdown="handleLanePointerDown"
     >
@@ -110,6 +130,8 @@ const displayTrackName = computed(() => {
   return `Track ${props.trackIndex + 1}`
 })
 
+const isMuted = computed(() => Boolean(props.track.muted))
+
 const trackColor = computed(() => getTrackColor(props.track.color))
 
 const trackColorStyle = computed(() => ({
@@ -117,6 +139,14 @@ const trackColorStyle = computed(() => ({
   '--track-color-border': darkenHex(trackColor.value, 15),
   '--track-color-light': lightenHex(trackColor.value, 15)
 }))
+
+const muteButtonClassName = computed(() => {
+  if (isMuted.value) {
+    return 'border-zinc-600 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300'
+  }
+
+  return 'border-[var(--track-color-border)] bg-[color:color-mix(in_srgb,var(--track-color)_16%,transparent)] text-[var(--track-color-light)] hover:border-[var(--track-color-light)]'
+})
 
 function handleContextMenu(event) {
   event.preventDefault()
@@ -149,6 +179,10 @@ function handleContextMenu(event) {
       }
     ]
   })
+}
+
+function handleToggleMuted() {
+  dawStore.toggleTrackMuted(props.track.id)
 }
 
 function handleLanePointerDown(event) {

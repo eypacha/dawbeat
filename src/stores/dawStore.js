@@ -39,6 +39,7 @@ function createTrack() {
   return {
     id: createTrackId(),
     color: DEFAULT_TRACK_COLOR,
+    muted: false,
     name: undefined,
     clips: []
   }
@@ -61,6 +62,7 @@ export const useDawStore = defineStore('dawStore', {
       {
         id: 'f2a8b8d6-6b53-4c4c-81df-5f6d9d85a101',
         color: TRACK_COLOR_PALETTE[0],
+        muted: false,
         name: undefined,
         clips: [
           {
@@ -86,6 +88,7 @@ export const useDawStore = defineStore('dawStore', {
       {
         id: '81e56bb6-5ca7-4e4e-a7f7-b43df392c202',
         color: TRACK_COLOR_PALETTE[1],
+        muted: false,
         name: undefined,
         clips: [
           {
@@ -211,6 +214,16 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       track.color = getTrackColor(color)
+    },
+
+    toggleTrackMuted(trackId) {
+      const track = this.tracks.find((entry) => entry.id === trackId)
+
+      if (!track) {
+        return
+      }
+
+      track.muted = !track.muted
     },
 
     addClip(trackId, clip) {
