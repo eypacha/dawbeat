@@ -59,6 +59,14 @@ export function loadProject() {
   return parseProjectJson(rawProject)
 }
 
+export function clearProjectStorage() {
+  if (typeof localStorage === 'undefined') {
+    return
+  }
+
+  localStorage.removeItem(PROJECT_STORAGE_KEY)
+}
+
 export function parseProjectJson(rawProject) {
   try {
     const project = JSON.parse(rawProject)

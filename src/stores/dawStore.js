@@ -341,6 +341,10 @@ export const useDawStore = defineStore('dawStore', {
       this.selectedTrackId = null
     },
 
+    resetProject() {
+      this.applyProject(createDefaultProject())
+    },
+
     adjustZoom(delta) {
       this.setZoom(this.zoom + delta * -0.001)
     },

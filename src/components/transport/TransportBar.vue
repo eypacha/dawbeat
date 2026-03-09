@@ -57,6 +57,13 @@
           @click="handleProjectDownload"
         />
 
+        <IconButton
+          :icon="Settings2"
+          label="Settings"
+          size="sm"
+          @click="settingsVisible = true"
+        />
+
       </div>
     </Toolbar>
 
@@ -67,13 +74,15 @@
       type="file"
       @change="handleProjectFileChange"
     >
+
+    <SettingsModal :visible="settingsVisible" @close="settingsVisible = false" />
   </Panel>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Download, FolderOpen, Pause, Play, Repeat, Square } from 'lucide-vue-next'
+import { Download, FolderOpen, Pause, Play, Repeat, Settings2, Square } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
 import { downloadProjectFile, importProjectFile } from '@/services/projectPersistence'
@@ -81,12 +90,14 @@ import { enqueueSnackbar } from '@/services/notifications'
 import Divider from '@/components/ui/Divider.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import Panel from '@/components/ui/Panel.vue'
+import SettingsModal from '@/components/ui/SettingsModal.vue'
 import Toolbar from '@/components/ui/Toolbar.vue'
 
 const dawStore = useDawStore()
 const { play, pause, stop } = useTransportPlayback()
 const { loopEnabled, playing, sampleRate, time } = storeToRefs(dawStore)
 const projectFileInput = ref(null)
+const settingsVisible = ref(false)
 
 const transportTime = computed(() => `${time.value.toFixed(2)} ticks`)
 
