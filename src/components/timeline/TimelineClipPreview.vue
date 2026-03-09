@@ -24,10 +24,14 @@ const props = defineProps({
 
 const dawStore = useDawStore()
 const { pixelsPerTick } = storeToRefs(dawStore)
+const MIN_CLIP_RENDER_TICKS = 0.5
 
 const previewStyle = computed(() => ({
   left: `${ticksToPixels(props.start, pixelsPerTick.value)}px`,
-  width: `${Math.max(ticksToPixels(props.duration, pixelsPerTick.value), 56)}px`
+  width: `${Math.max(
+    ticksToPixels(props.duration, pixelsPerTick.value),
+    ticksToPixels(MIN_CLIP_RENDER_TICKS, pixelsPerTick.value)
+  )}px`
 }))
 </script>
 

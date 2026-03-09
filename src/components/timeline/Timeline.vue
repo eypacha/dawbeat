@@ -74,35 +74,22 @@ import TimelineLoopRegion from '@/components/timeline/TimelineLoopRegion.vue'
 import TimelineTrack from '@/components/timeline/TimelineTrack.vue'
 import { useDawStore } from '@/stores/dawStore'
 import {
-  DEFAULT_TIMELINE_TICKS,
   TRACK_LABEL_WIDTH,
-  getClipEnd,
   getSamplesPerTick,
   ticksToPixels
 } from '@/utils/timeUtils'
 
 const AUTO_SCROLL_PADDING = 96
+const FIXED_TIMELINE_TICKS = 256
 
 const dawStore = useDawStore()
 const { loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, tickSize, time, tracks } =
   storeToRefs(dawStore)
 const scrollContainer = ref(null)
 
-const timelineTicks = computed(() => {
-  const maxClipEnd = tracks.value.reduce((largestEnd, track) => {
-    const trackEnd = track.clips.reduce((trackLargestEnd, clip) => {
-      return Math.max(trackLargestEnd, getClipEnd(clip))
-    }, 0)
-
-    return Math.max(largestEnd, trackEnd)
-  }, 0)
-
-  return Math.max(DEFAULT_TIMELINE_TICKS, Math.ceil(maxClipEnd + 1), Math.ceil(loopEnd.value + 1))
-})
-
 const samplesPerTick = computed(() => getSamplesPerTick(tickSize.value))
-const rulerMarks = computed(() => Array.from({ length: timelineTicks.value }, (_, index) => index))
-const timelineWidthStyle = computed(() => `${ticksToPixels(timelineTicks.value, pixelsPerTick.value)}px`)
+const rulerMarks = computed(() => Array.from({ length: FIXED_TIMELINE_TICKS }, (_, index) => index))
+const timelineWidthStyle = computed(() => `${ticksToPixels(FIXED_TIMELINE_TICKS, pixelsPerTick.value)}px`)
 
 function handleWheel(event) {
   if ((!event.ctrlKey && !event.metaKey) || !scrollContainer.value) {

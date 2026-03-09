@@ -255,7 +255,12 @@ function handleLaneDrop(event) {
     return
   }
 
-  const start = clampClipPlacementStart(props.track, getPointerTick(event), FORMULA_DROP_DURATION)
+  const dragOffsetPx = getDroppedFormulaOffsetPx(event)
+  const start = clampClipPlacementStart(
+    props.track,
+    getPointerTick(event, dragOffsetPx),
+    FORMULA_DROP_DURATION
+  )
 
   dawStore.addClip(props.track.id, {
     duration: FORMULA_DROP_DURATION,
@@ -305,9 +310,9 @@ function handleCreationPointerCancel() {
   cleanupCreation()
 }
 
-function getPointerTick(event) {
+function getPointerTick(event, offsetPx = 0) {
   const laneRect = laneElement.value.getBoundingClientRect()
-  const relativeX = Math.max(0, event.clientX - laneRect.left)
+  const relativeX = Math.max(0, event.clientX - laneRect.left - offsetPx)
   const rawTick = pixelsToTicks(relativeX, pixelsPerTick.value)
   return getDraggedTick(rawTick, shouldSnapFromPointerEvent(event))
 }
@@ -330,6 +335,13 @@ function getDroppedFormulaId(event) {
   }
 
   return event.dataTransfer?.getData('text/plain') || ''
+}
+
+function getDroppedFormulaOffsetPx(event) {
+  const rawOffset = event.dataTransfer?.getData('formulaDragOffsetPx')
+  const offset = Number(rawOffset)
+
+  return Number.isFinite(offset) ? offset : 0
 }
 
 onBeforeUnmount(() => {

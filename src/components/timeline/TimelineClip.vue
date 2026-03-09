@@ -59,6 +59,7 @@ const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
 const { editingClipId, formulas, pixelsPerTick, selectedClipId, tickSize, tracks } = storeToRefs(dawStore)
 const isFormulaDropTarget = ref(false)
+const MIN_CLIP_RENDER_TICKS = 0.5
 
 const resolvedFormula = computed(() => resolveClipFormula(props.clip, formulas.value))
 const isReferenceClip = computed(() => Boolean(props.clip.formulaId))
@@ -67,7 +68,10 @@ const showFormulaName = computed(() => Boolean(resolvedFormulaName.value))
 
 const clipStyle = computed(() => ({
   left: `${ticksToPixels(props.clip.start, pixelsPerTick.value)}px`,
-  width: `${Math.max(ticksToPixels(props.clip.duration, pixelsPerTick.value), 56)}px`
+  width: `${Math.max(
+    ticksToPixels(props.clip.duration, pixelsPerTick.value),
+    ticksToPixels(MIN_CLIP_RENDER_TICKS, pixelsPerTick.value)
+  )}px`
 }))
 
 const isEditing = computed(() => editingClipId.value === props.clip.id)
