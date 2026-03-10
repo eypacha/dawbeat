@@ -138,11 +138,7 @@ const buttonClassName = computed(() => {
 })
 
 const clipTitle = computed(() => {
-  const startSamples = ticksToSamples(props.clip.start, tickSize.value)
-  const durationSamples = ticksToSamples(props.clip.duration, tickSize.value)
-  const clipKind = isReferenceClip.value ? 'reference' : 'inline'
-
-  return `${resolvedFormula.value} | ${clipKind} | start ${props.clip.start} ticks (${startSamples} samples) | duration ${props.clip.duration} ticks (${durationSamples} samples)`
+  return resolvedFormula.value
 })
 
 function handleEditStart() {
