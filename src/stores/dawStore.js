@@ -256,6 +256,14 @@ export const useDawStore = defineStore('dawStore', {
       this.loopEnd = Math.max(snappedTick, this.loopStart + MIN_LOOP_DURATION)
     },
 
+    setLoopRange(startTick, endTick) {
+      const snappedStart = snapTicks(Math.max(0, startTick))
+      const snappedEnd = snapTicks(Math.max(0, endTick))
+
+      this.loopStart = snappedStart
+      this.loopEnd = Math.max(snappedEnd, snappedStart + MIN_LOOP_DURATION)
+    },
+
     startPlayback() {
       this.playing = true
     },

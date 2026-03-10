@@ -1,8 +1,9 @@
 <template>
   <div
     class="absolute bottom-1 z-20 h-3 rounded-sm border transition-opacity"
-    :class="loopEnabled ? 'border-emerald-300/70 bg-emerald-400/20' : 'border-zinc-600/80 bg-zinc-700/20 opacity-50'"
+    :class="loopRegionClassName"
     :style="loopStyle"
+    @pointerdown="handleMovePointerDown"
   >
     <span
       class="absolute inset-y-0 left-0 w-2 -translate-x-1/2 cursor-ew-resize rounded-sm border border-emerald-200/70 bg-emerald-300"
@@ -38,32 +39,52 @@ const props = defineProps({
 
 const dawStore = useDawStore()
 const { pixelsPerTick } = storeToRefs(dawStore)
-const resizeMode = ref(null)
+const interactionMode = ref(null)
 const startPointerX = ref(0)
-const initialTick = ref(0)
+const initialStartTick = ref(0)
+const initialEndTick = ref(0)
 
 const loopStyle = computed(() => ({
   left: `${ticksToPixels(props.loopStart, pixelsPerTick.value)}px`,
   width: `${Math.max(ticksToPixels(props.loopEnd - props.loopStart, pixelsPerTick.value), 12)}px`
 }))
 
+const loopRegionClassName = computed(() => {
+  const toneClassName = props.loopEnabled
+    ? 'border-emerald-300/70 bg-emerald-400/20'
+    : 'border-zinc-600/80 bg-zinc-700/20 opacity-50'
+
+  const cursorClassName = interactionMode.value === 'move' ? 'cursor-grabbing' : 'cursor-grab'
+
+  return `${toneClassName} ${cursorClassName}`
+})
+
 function handleStartPointerDown(event) {
-  startResize(event, 'start', props.loopStart)
+  startInteraction(event, 'start')
 }
 
 function handleEndPointerDown(event) {
-  startResize(event, 'end', props.loopEnd)
+  startInteraction(event, 'end')
 }
 
-function startResize(event, mode, tick) {
+function handleMovePointerDown(event) {
+  if (event.target !== event.currentTarget) {
+    return
+  }
+
+  startInteraction(event, 'move')
+}
+
+function startInteraction(event, mode) {
   if (event.button !== 0) {
     return
   }
 
   event.preventDefault()
-  resizeMode.value = mode
+  interactionMode.value = mode
   startPointerX.value = event.clientX
-  initialTick.value = tick
+  initialStartTick.value = props.loopStart
+  initialEndTick.value = props.loopEnd
 
   window.addEventListener('pointermove', handlePointerMove)
   window.addEventListener('pointerup', handlePointerUp)
@@ -71,22 +92,29 @@ function startResize(event, mode, tick) {
 }
 
 function handlePointerMove(event) {
-  if (!resizeMode.value) {
+  if (!interactionMode.value) {
     return
   }
 
   const deltaTicks = (event.clientX - startPointerX.value) / pixelsPerTick.value
 
-  if (resizeMode.value === 'start') {
-    dawStore.setLoopStart(initialTick.value + deltaTicks)
+  if (interactionMode.value === 'start') {
+    dawStore.setLoopStart(initialStartTick.value + deltaTicks)
     return
   }
 
-  dawStore.setLoopEnd(initialTick.value + deltaTicks)
+  if (interactionMode.value === 'end') {
+    dawStore.setLoopEnd(initialEndTick.value + deltaTicks)
+    return
+  }
+
+  const duration = initialEndTick.value - initialStartTick.value
+  const nextStart = Math.max(0, initialStartTick.value + deltaTicks)
+  dawStore.setLoopRange(nextStart, nextStart + duration)
 }
 
 function handlePointerUp() {
-  resizeMode.value = null
+  interactionMode.value = null
   window.removeEventListener('pointermove', handlePointerMove)
   window.removeEventListener('pointerup', handlePointerUp)
   window.removeEventListener('pointercancel', handlePointerUp)
