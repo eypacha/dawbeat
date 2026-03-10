@@ -67,7 +67,7 @@
                   <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Mode</span>
                   <div class="grid grid-cols-2 gap-2">
                     <button
-                      class="rounded border px-3 py-2 text-xs uppercase tracking-[0.18em] transition"
+                      class="rounded border px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] transition"
                       :class="!effect.params.stereo
                         ? 'border-sky-500/40 bg-sky-500/10 text-sky-100'
                         : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-100'"
@@ -78,7 +78,7 @@
                     </button>
 
                     <button
-                      class="rounded border px-3 py-2 text-xs uppercase tracking-[0.18em] transition"
+                      class="rounded border px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] transition"
                       :class="effect.params.stereo
                         ? 'border-sky-500/40 bg-sky-500/10 text-sky-100'
                         : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-100'"
