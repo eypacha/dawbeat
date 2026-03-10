@@ -3,14 +3,32 @@ import { getClipEnd, TIMELINE_SNAP_SUBDIVISIONS } from '@/utils/timeUtils'
 const MIN_CLIP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
 const MIN_NEW_CLIP_DURATION = 1
 
-function sortClipsByStart(clips, excludedClipId) {
+function normalizeExcludedClipIds(excludedClipIds) {
+  if (excludedClipIds instanceof Set) {
+    return excludedClipIds
+  }
+
+  if (Array.isArray(excludedClipIds)) {
+    return new Set(excludedClipIds)
+  }
+
+  if (typeof excludedClipIds === 'string' && excludedClipIds) {
+    return new Set([excludedClipIds])
+  }
+
+  return new Set()
+}
+
+function sortClipsByStart(clips, excludedClipIds) {
+  const excludedIdSet = normalizeExcludedClipIds(excludedClipIds)
+
   return clips
-    .filter((clip) => clip.id !== excludedClipId)
+    .filter((clip) => !excludedIdSet.has(clip.id))
     .sort((leftClip, rightClip) => leftClip.start - rightClip.start)
 }
 
-function getClipPlacementIntervals(track, duration, excludedClipId) {
-  const sortedClips = sortClipsByStart(track.clips, excludedClipId)
+function getClipPlacementIntervals(track, duration, excludedClipIds) {
+  const sortedClips = sortClipsByStart(track.clips, excludedClipIds)
   const intervals = []
   let cursor = 0
 
@@ -39,7 +57,7 @@ function clampStartToInterval(start, interval) {
   return Math.max(interval.minStart, Math.min(start, interval.maxStart))
 }
 
-function getClipWithSiblings(track, clipId) {
+function getClipWithSiblings(track, clipId, excludedClipIds = clipId) {
   const clip = track.clips.find((entry) => entry.id === clipId)
 
   if (!clip) {
@@ -48,12 +66,12 @@ function getClipWithSiblings(track, clipId) {
 
   return {
     clip,
-    sortedClips: sortClipsByStart(track.clips, clipId)
+    sortedClips: sortClipsByStart(track.clips, excludedClipIds)
   }
 }
 
-export function getClipMoveBounds(track, clipId) {
-  const result = getClipWithSiblings(track, clipId)
+export function getClipMoveBounds(track, clipId, excludedClipIds = clipId) {
+  const result = getClipWithSiblings(track, clipId, excludedClipIds)
 
   if (!result) {
     return {
@@ -81,6 +99,46 @@ export function getClipMoveBounds(track, clipId) {
   return {
     minStart,
     maxStart
+  }
+}
+
+export function getClipGroupMoveBounds(track, clipIds) {
+  const normalizedClipIds = [...new Set(Array.isArray(clipIds) ? clipIds.filter(Boolean) : [])]
+
+  if (!normalizedClipIds.length) {
+    return {
+      minDelta: 0,
+      maxDelta: 0
+    }
+  }
+
+  let hasMatchingClip = false
+  let minDelta = Number.NEGATIVE_INFINITY
+  let maxDelta = Number.POSITIVE_INFINITY
+
+  for (const clipId of normalizedClipIds) {
+    const clip = track.clips.find((entry) => entry.id === clipId)
+
+    if (!clip) {
+      continue
+    }
+
+    hasMatchingClip = true
+    const bounds = getClipMoveBounds(track, clipId, normalizedClipIds)
+    minDelta = Math.max(minDelta, bounds.minStart - clip.start)
+    maxDelta = Math.min(maxDelta, bounds.maxStart - clip.start)
+  }
+
+  if (!hasMatchingClip) {
+    return {
+      minDelta: 0,
+      maxDelta: 0
+    }
+  }
+
+  return {
+    minDelta,
+    maxDelta
   }
 }
 

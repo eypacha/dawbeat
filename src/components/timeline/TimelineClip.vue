@@ -4,6 +4,7 @@
     :class="buttonClassName"
     :style="clipStyle"
     :title="clipTitle"
+    :data-clip-id="clip.id"
     data-timeline-clip="true"
     @click.stop="handleSelect"
     @contextmenu.stop.prevent="handleContextMenu"
@@ -64,7 +65,7 @@ const props = defineProps({
 
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
-const { editingClipId, formulas, pixelsPerTick, selectedClipId, tickSize, tracks } = storeToRefs(dawStore)
+const { editingClipId, formulas, pixelsPerTick, selectedClipIds, tickSize, tracks } = storeToRefs(dawStore)
 const isFormulaDropTarget = ref(false)
 const MIN_CLIP_RENDER_TICKS = 0.5
 
@@ -82,15 +83,20 @@ const clipStyle = computed(() => ({
 }))
 
 const isEditing = computed(() => editingClipId.value === props.clip.id)
-const isSelected = computed(() => selectedClipId.value === props.clip.id)
+const isSelected = computed(() => selectedClipIds.value.includes(props.clip.id))
+const isPartOfMultipleSelection = computed(() => isSelected.value && selectedClipIds.value.length > 1)
 
-function handleSelect() {
+function handleSelect({ preserveMultiSelection = false } = {}) {
   if (ignoreNextClick.value) {
     return
   }
 
   dawStore.selectTrack(props.trackId)
-  dawStore.selectClip(props.clip.id)
+
+  if (!preserveMultiSelection || !isPartOfMultipleSelection.value) {
+    dawStore.selectClip(props.clip.id)
+  }
+
   dawStore.selectFormula(props.clip.formulaId ?? null)
 }
 
@@ -109,6 +115,7 @@ const {
   dawStore,
   editingClipId,
   pixelsPerTick,
+  selectedClipIds,
   tracks,
   onSelect: handleSelect
 })

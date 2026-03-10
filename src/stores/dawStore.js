@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import {
   clampClipPlacementStart,
+  getClipGroupMoveBounds,
   clampClipResizeEnd,
   clampClipResizeStart,
   clampClipStart
@@ -91,6 +92,7 @@ function createInitialState() {
     sampleRate: project.sampleRate,
     tickSize: project.tickSize,
     tracks: project.tracks,
+    selectedClipIds: [],
     selectedFormulaId: null,
     selectedClipId: null,
     selectedTrackId: null
@@ -113,6 +115,48 @@ function reorderEntries(entries, draggedId, targetId) {
   const [draggedEntry] = nextEntries.splice(sourceIndex, 1)
   nextEntries.splice(targetIndex, 0, draggedEntry)
   return nextEntries
+}
+
+function normalizeSelectedClipIds(clipIds) {
+  if (!Array.isArray(clipIds)) {
+    return []
+  }
+
+  return [...new Set(clipIds.filter((clipId) => typeof clipId === 'string' && clipId))]
+}
+
+function syncSelectedClipState(store, clipIds) {
+  const nextSelectedClipIds = normalizeSelectedClipIds(clipIds)
+  store.selectedClipIds = nextSelectedClipIds
+  store.selectedClipId = nextSelectedClipIds[0] ?? null
+}
+
+function collectSelectedClipEntries(tracks, clipIds) {
+  const selectedClipIds = normalizeSelectedClipIds(clipIds)
+  const entries = []
+
+  for (const clipId of selectedClipIds) {
+    const result = findTrackWithClip(tracks, clipId)
+
+    if (!result) {
+      continue
+    }
+
+    const clip = result.track.clips[result.clipIndex]
+
+    if (!clip) {
+      continue
+    }
+
+    entries.push({
+      clip,
+      clipId,
+      track: result.track,
+      trackId: result.track.id
+    })
+  }
+
+  return entries
 }
 
 export const useDawStore = defineStore('dawStore', {
@@ -298,6 +342,7 @@ export const useDawStore = defineStore('dawStore', {
       this.sampleRate = project.sampleRate
       this.tickSize = project.tickSize
       this.tracks = project.tracks
+      this.selectedClipIds = []
       this.selectedFormulaId = null
       this.selectedClipId = null
       this.selectedTrackId = null
@@ -321,6 +366,25 @@ export const useDawStore = defineStore('dawStore', {
 
     clearClipDragPreview() {
       this.clipDragPreview = null
+    },
+
+    setSelectedClips(clipIds) {
+      syncSelectedClipState(this, clipIds)
+    },
+
+    addSelectedClip(clipId) {
+      syncSelectedClipState(this, [...this.selectedClipIds, clipId])
+    },
+
+    removeSelectedClip(clipId) {
+      syncSelectedClipState(
+        this,
+        this.selectedClipIds.filter((selectedClipId) => selectedClipId !== clipId)
+      )
+    },
+
+    clearClipSelection() {
+      syncSelectedClipState(this, [])
     },
 
     addFormula(formula = {}) {
@@ -494,9 +558,10 @@ export const useDawStore = defineStore('dawStore', {
         this.selectedTrackId = null
       }
 
-      if (removedTrack.clips.some((clip) => clip.id === this.selectedClipId)) {
-        this.selectedClipId = null
-      }
+      const removedClipIds = new Set(removedTrack.clips.map((clip) => clip.id))
+      this.setSelectedClips(
+        this.selectedClipIds.filter((selectedClipId) => !removedClipIds.has(selectedClipId))
+      )
 
       if (removedTrack.clips.some((clip) => clip.id === this.editingClipId)) {
         this.editingClipId = null
@@ -570,7 +635,7 @@ export const useDawStore = defineStore('dawStore', {
 
       track.clips.push(nextClip)
       sortTrackClips(track)
-      this.selectedClipId = nextClip.id
+      this.setSelectedClips([nextClip.id])
       this.selectedTrackId = trackId
 
       if (nextClip.formulaId) {
@@ -663,6 +728,63 @@ export const useDawStore = defineStore('dawStore', {
 
       const snappedStart = getDraggedTick(nextStart, shouldSnap)
       clip.start = clampClipStart(track, clipId, snappedStart)
+    },
+
+    moveSelectedClips(anchorClipId, nextStart, shouldSnap = true) {
+      const selectedClipEntries = collectSelectedClipEntries(this.tracks, this.selectedClipIds)
+
+      if (!selectedClipEntries.length) {
+        return
+      }
+
+      const anchorEntry = selectedClipEntries.find((entry) => entry.clipId === anchorClipId)
+
+      if (!anchorEntry) {
+        return
+      }
+
+      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      const desiredDelta = snappedStart - anchorEntry.clip.start
+      const clipIdsByTrackId = new Map()
+
+      for (const entry of selectedClipEntries) {
+        const existingClipIds = clipIdsByTrackId.get(entry.trackId) ?? []
+        existingClipIds.push(entry.clipId)
+        clipIdsByTrackId.set(entry.trackId, existingClipIds)
+      }
+
+      let minDelta = Number.NEGATIVE_INFINITY
+      let maxDelta = Number.POSITIVE_INFINITY
+
+      for (const [trackId, clipIds] of clipIdsByTrackId) {
+        const track = findTrack(this.tracks, trackId)
+
+        if (!track) {
+          continue
+        }
+
+        const bounds = getClipGroupMoveBounds(track, clipIds)
+        minDelta = Math.max(minDelta, bounds.minDelta)
+        maxDelta = Math.min(maxDelta, bounds.maxDelta)
+      }
+
+      const clampedDelta = Math.max(minDelta, Math.min(desiredDelta, maxDelta))
+      const touchedTrackIds = new Set()
+
+      for (const entry of selectedClipEntries) {
+        entry.clip.start += clampedDelta
+        touchedTrackIds.add(entry.trackId)
+      }
+
+      for (const trackId of touchedTrackIds) {
+        const track = findTrack(this.tracks, trackId)
+
+        if (track) {
+          sortTrackClips(track)
+        }
+      }
+
+      this.selectedTrackId = anchorEntry.trackId
     },
 
     placeClip(trackId, clipId, nextStart, shouldSnap = true) {
@@ -772,13 +894,58 @@ export const useDawStore = defineStore('dawStore', {
       track.clips.push(duplicateClip)
       sortTrackClips(track)
       this.selectedTrackId = trackId
-      this.selectedClipId = duplicateClipId
+      this.setSelectedClips([duplicateClipId])
 
       if (duplicateClip.formulaId) {
         this.selectedFormulaId = duplicateClip.formulaId
       }
 
       return duplicateClipId
+    },
+
+    duplicateSelectedClips(anchorClipId) {
+      const selectedClipEntries = collectSelectedClipEntries(this.tracks, this.selectedClipIds)
+
+      if (!selectedClipEntries.length) {
+        return []
+      }
+
+      const duplicatedClipIds = []
+      const trackIdsToSort = new Set()
+      const duplicatedClipIdBySourceId = new Map()
+
+      for (const entry of selectedClipEntries) {
+        const duplicateClip = createDuplicateClip(entry.clip)
+        entry.track.clips.push(duplicateClip)
+        duplicatedClipIds.push(duplicateClip.id)
+        duplicatedClipIdBySourceId.set(entry.clipId, duplicateClip.id)
+        trackIdsToSort.add(entry.trackId)
+      }
+
+      for (const trackId of trackIdsToSort) {
+        const track = findTrack(this.tracks, trackId)
+
+        if (track) {
+          sortTrackClips(track)
+        }
+      }
+
+      this.setSelectedClips(duplicatedClipIds)
+
+      const duplicatedAnchorClipId = duplicatedClipIdBySourceId.get(anchorClipId) ?? duplicatedClipIds[0] ?? null
+      const anchorEntry = duplicatedAnchorClipId
+        ? collectSelectedClipEntries(this.tracks, [duplicatedAnchorClipId])[0]
+        : null
+
+      if (anchorEntry) {
+        this.selectedTrackId = anchorEntry.trackId
+
+        if (anchorEntry.clip.formulaId) {
+          this.selectedFormulaId = anchorEntry.clip.formulaId
+        }
+      }
+
+      return duplicatedClipIds
     },
 
     addClipFormulaToLibrary(trackId, clipId) {
@@ -827,7 +994,7 @@ export const useDawStore = defineStore('dawStore', {
       clip.formulaId = formula.id
       clip.formula = null
       clip.formulaName = null
-      this.selectedClipId = clip.id
+      this.setSelectedClips([clip.id])
       this.selectedTrackId = trackId
       this.selectedFormulaId = formula.id
     },
@@ -854,7 +1021,7 @@ export const useDawStore = defineStore('dawStore', {
       clip.formula = formula.code
       clip.formulaName = formula.name
       clip.formulaId = null
-      this.selectedClipId = clip.id
+      this.setSelectedClips([clip.id])
       this.selectedTrackId = trackId
       this.selectedFormulaId = null
     },
@@ -868,7 +1035,31 @@ export const useDawStore = defineStore('dawStore', {
 
       result.track.clips.splice(result.clipIndex, 1)
       this.editingClipId = null
-      this.selectedClipId = null
+      this.removeSelectedClip(clipId)
+    },
+
+    removeSelectedClips(clipIds = this.selectedClipIds) {
+      const selectedClipIds = normalizeSelectedClipIds(clipIds)
+
+      if (!selectedClipIds.length) {
+        return
+      }
+
+      for (const clipId of selectedClipIds) {
+        const result = findTrackWithClip(this.tracks, clipId)
+
+        if (!result) {
+          continue
+        }
+
+        result.track.clips.splice(result.clipIndex, 1)
+      }
+
+      if (selectedClipIds.includes(this.editingClipId)) {
+        this.editingClipId = null
+      }
+
+      this.clearClipSelection()
     },
 
     setEditingClip(clipId) {
@@ -876,7 +1067,7 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     selectClip(clipId) {
-      this.selectedClipId = clipId
+      this.setSelectedClips(clipId ? [clipId] : [])
     },
 
     selectFormula(formulaId) {

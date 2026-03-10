@@ -47,11 +47,21 @@
         </div>
       </div>
 
-      <div class="relative">
+      <div
+        ref="timelineSurfaceElement"
+        class="relative"
+        @pointerdown.capture="handleTimelineSurfacePointerDownCapture"
+      >
         <Playhead
           :time="time"
           :offset="TRACK_LABEL_WIDTH"
           @pointerdown="handleScrubPointerDown"
+        />
+
+        <div
+          v-if="marqueeSelectionActive && marqueeSelectionStyle"
+          class="pointer-events-none absolute z-20"
+          :style="marqueeSelectionStyle"
         />
 
         <TimelineTrack
@@ -76,6 +86,7 @@ import Playhead from '@/components/timeline/Playhead.vue'
 import TimelineAddTrackRow from '@/components/timeline/TimelineAddTrackRow.vue'
 import TimelineLoopRegion from '@/components/timeline/TimelineLoopRegion.vue'
 import TimelineTrack from '@/components/timeline/TimelineTrack.vue'
+import { useTimelineMarqueeSelection } from '@/composables/useTimelineMarqueeSelection'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
 import {
@@ -90,10 +101,21 @@ const FIXED_TIMELINE_TICKS = 256
 
 const dawStore = useDawStore()
 const { seekToTime } = useTransportPlayback()
-const { loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, tickSize, time, tracks } =
+const { editingClipId, loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, tickSize, time, tracks } =
   storeToRefs(dawStore)
 const scrollContainer = ref(null)
+const timelineSurfaceElement = ref(null)
 let scrubPointerId = null
+
+const {
+  active: marqueeSelectionActive,
+  handleSurfacePointerDown,
+  marqueeStyle: marqueeSelectionStyle
+} = useTimelineMarqueeSelection({
+  dawStore,
+  editingClipId,
+  timelineSurfaceElement
+})
 
 const samplesPerTick = computed(() => getSamplesPerTick(tickSize.value))
 const rulerMarks = computed(() => Array.from({ length: FIXED_TIMELINE_TICKS }, (_, index) => index))
@@ -142,6 +164,10 @@ function handleWheel(event) {
       nextPlayheadOffset - scrollContainer.value.clientWidth + AUTO_SCROLL_PADDING
     )
   }
+}
+
+function handleTimelineSurfacePointerDownCapture(event) {
+  handleSurfacePointerDown(event)
 }
 
 function handleScrubPointerDown(event) {

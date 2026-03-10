@@ -57,6 +57,7 @@
     <div
       ref="laneElement"
       class="relative h-20 shrink-0 transition-opacity"
+      data-timeline-track-lane="true"
       :class="laneClassName"
       :style="laneStyle"
       @dragover.prevent="handleLaneDragOver"
@@ -250,6 +251,8 @@ function handleLanePointerDown(event) {
   if (event.target instanceof Element && event.target.closest('[data-timeline-clip="true"]')) {
     return
   }
+
+  dawStore.clearClipSelection()
 
   const pointerTick = getPointerTick(event)
   const nextBounds = getTrackCreateBounds(props.track, pointerTick)

@@ -107,7 +107,7 @@ const renameDialog = reactive({
 let disposeKeyboardShortcuts = null
 const transportPlayback = useTransportPlayback()
 const { enableAudio, stop } = transportPlayback
-const { audioReady, editingClipId, editingFormulaId, formulas, selectedClipId, tracks } = storeToRefs(dawStore)
+const { audioReady, editingClipId, editingFormulaId, formulas, selectedClipId, selectedClipIds, tracks } = storeToRefs(dawStore)
 
 const editingClipFormula = computed(() => {
   if (!editingClipId.value) {
@@ -182,11 +182,19 @@ async function handleStart() {
 }
 
 function handleKeydown(event) {
+  if (event.key === 'Escape') {
+    if (!editingClipId.value) {
+      dawStore.clearClipSelection()
+    }
+
+    return
+  }
+
   if (event.key !== 'Delete' && event.key !== 'Backspace') {
     return
   }
 
-  if (!selectedClipId.value) {
+  if (!selectedClipIds.value.length && !selectedClipId.value) {
     return
   }
 
@@ -198,7 +206,14 @@ function handleKeydown(event) {
     return
   }
 
-  dawStore.removeClip(selectedClipId.value)
+  if (selectedClipIds.value.length > 1) {
+    dawStore.removeSelectedClips(selectedClipIds.value)
+    return
+  }
+
+  if (selectedClipId.value) {
+    dawStore.removeClip(selectedClipId.value)
+  }
 }
 
 function handleContextMenuSelect(action, item) {

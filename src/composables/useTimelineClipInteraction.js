@@ -10,6 +10,7 @@ export function useTimelineClipInteraction({
   dawStore,
   editingClipId,
   pixelsPerTick,
+  selectedClipIds,
   tracks,
   onSelect
 }) {
@@ -24,6 +25,7 @@ export function useTimelineClipInteraction({
   let dragDesiredStart = 0
   let dragTargetTrackId = trackId
   let dragClipId = clip.id
+  let dragSelectedClipIds = [clip.id]
   let dragSourceTrackId = trackId
   let duplicateDragActivated = false
   let resizeStartTick = 0
@@ -35,6 +37,7 @@ export function useTimelineClipInteraction({
     }
 
     dragClipId = clip.id
+    dragSelectedClipIds = selectedClipIds.value.includes(clip.id) ? [...selectedClipIds.value] : [clip.id]
     dragStartTick = clip.start
     dragDesiredStart = clip.start
     dragSourceTrackId = trackId
@@ -45,7 +48,7 @@ export function useTimelineClipInteraction({
     if (duplicateDrag.value) {
       ignoreNextClick.value = true
     } else {
-      onSelect()
+      onSelect({ preserveMultiSelection: dragSelectedClipIds.length > 1 })
     }
 
     isDragging.value = true
@@ -107,7 +110,16 @@ export function useTimelineClipInteraction({
       }
 
       dragDesiredStart = getDraggedTick(dragStartTick + deltaTicks, shouldSnap)
-      dragTargetTrackId = getDragTargetTrackId(event)
+      dragTargetTrackId = dragSelectedClipIds.length > 1 ? dragSourceTrackId : getDragTargetTrackId(event)
+
+      if (dragSelectedClipIds.length > 1) {
+        if (!duplicateDrag.value) {
+          dawStore.moveSelectedClips(dragClipId, dragDesiredStart, shouldSnap)
+        }
+
+        dawStore.clearClipDragPreview()
+        return
+      }
 
       if (duplicateDrag.value) {
         syncDragPreview(shouldSnap)
@@ -136,7 +148,18 @@ export function useTimelineClipInteraction({
     const shouldSnap = shouldSnapFromPointerEvent(event)
 
     if (isDragging.value) {
-      if (duplicateDrag.value && duplicateDragActivated) {
+      if (dragSelectedClipIds.length > 1) {
+        if (duplicateDrag.value && duplicateDragActivated) {
+          const duplicatedClipIds = dawStore.duplicateSelectedClips(dragClipId)
+          const dragClipIndex = dragSelectedClipIds.indexOf(dragClipId)
+          const duplicatedAnchorClipId =
+            duplicatedClipIds[dragClipIndex] ?? duplicatedClipIds[0] ?? null
+
+          if (duplicatedAnchorClipId) {
+            dawStore.moveSelectedClips(duplicatedAnchorClipId, dragDesiredStart, shouldSnap)
+          }
+        }
+      } else if (duplicateDrag.value && duplicateDragActivated) {
         const duplicateClipId = dawStore.duplicateClip(dragSourceTrackId, clip.id)
 
         if (duplicateClipId) {
@@ -189,6 +212,8 @@ export function useTimelineClipInteraction({
       dawStore.updateClip(trackId, clip.id, {
         duration: resizeEndTick - clip.start
       })
+    } else if (isDragging.value && dragSelectedClipIds.length > 1 && !duplicateDrag.value) {
+      dawStore.moveSelectedClips(dragClipId, dragStartTick, false)
     } else if (isDragging.value && !duplicateDrag.value) {
       dawStore.moveClip(dragSourceTrackId, dragClipId, dragStartTick, false)
     }
@@ -209,6 +234,7 @@ export function useTimelineClipInteraction({
     duplicateDrag.value = false
     duplicateDragActivated = false
     dragClipId = clip.id
+    dragSelectedClipIds = [clip.id]
     dragSourceTrackId = trackId
     dragDesiredStart = clip.start
     dragStartTick = clip.start
