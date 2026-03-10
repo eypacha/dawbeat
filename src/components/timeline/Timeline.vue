@@ -19,21 +19,21 @@
           Tracks
         </div>
 
-        <div class="relative h-11 shrink-0" :style="{ width: timelineWidthStyle }">
+        <div class="relative h-11 shrink-0" :style="rulerStyle">
           <TimelineLoopRegion
             :loop-enabled="loopEnabled"
             :loop-start="loopStart"
             :loop-end="loopEnd"
           />
 
-          <div
+          <span
             v-for="mark in rulerMarks"
             :key="mark"
-            class="absolute inset-y-0 border-l border-zinc-800/80"
-            :style="{ left: `${ticksToPixels(mark, pixelsPerTick)}px` }"
+            class="absolute top-2 text-[10px] text-zinc-500"
+            :style="{ left: `${ticksToPixels(mark, pixelsPerTick)}px`, transform: 'translateX(8px)' }"
           >
-            <span class="absolute left-2 top-2 text-[10px] text-zinc-500">{{ mark }}</span>
-          </div>
+            {{ mark }}
+          </span>
 
           <button
             class="absolute inset-0 z-10 cursor-grab"
@@ -116,6 +116,11 @@ const {
 const samplesPerTick = computed(() => getSamplesPerTick(tickSize.value))
 const rulerMarks = computed(() => Array.from({ length: FIXED_TIMELINE_TICKS }, (_, index) => index))
 const timelineWidthStyle = computed(() => `${ticksToPixels(FIXED_TIMELINE_TICKS, pixelsPerTick.value)}px`)
+const rulerStyle = computed(() => ({
+  width: timelineWidthStyle.value,
+  backgroundImage: 'linear-gradient(to right, rgba(63, 63, 70, 0.5) 1px, transparent 1px)',
+  backgroundSize: `${pixelsPerTick.value}px 100%`
+}))
 
 function handleWheel(event) {
   if ((!event.ctrlKey && !event.metaKey) || !scrollContainer.value) {
