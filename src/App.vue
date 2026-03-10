@@ -222,6 +222,11 @@ function handleContextMenuSelect(action, item) {
     return
   }
 
+  if (action === 'edit-clip') {
+    dawStore.setEditingClip(item.clipId)
+    return
+  }
+
   if (action === 'delete-track') {
     confirmDialog.trackId = item.trackId
     confirmDialog.message = `Delete ${item.trackName ?? 'this track'}?`
@@ -238,6 +243,11 @@ function handleContextMenuSelect(action, item) {
 
   if (action === 'add-clip-formula-to-library') {
     dawStore.addClipFormulaToLibrary(item.trackId, item.clipId)
+    return
+  }
+
+  if (action === 'delete-clip') {
+    dawStore.removeClip(item.clipId)
     return
   }
 

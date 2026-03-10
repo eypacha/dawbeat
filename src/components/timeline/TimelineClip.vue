@@ -158,10 +158,20 @@ function handleContextMenu(event) {
 
   const items = [
     {
+      action: 'edit-clip',
+      clipId: props.clip.id,
+      label: 'Edit Clip'
+    },
+    {
       action: 'add-clip-formula-to-library',
       clipId: props.clip.id,
       label: props.clip.formulaId ? 'Show In Library' : 'Add To Library...',
       trackId: props.trackId
+    },
+    {
+      action: 'delete-clip',
+      clipId: props.clip.id,
+      label: 'Delete Clip'
     }
   ]
 
