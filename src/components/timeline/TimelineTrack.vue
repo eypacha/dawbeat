@@ -168,7 +168,7 @@ const muteButtonClassName = computed(() => {
     return 'border-rose-500 bg-rose-500 text-white hover:border-rose-400 hover:bg-rose-400'
   }
 
-  return 'border-zinc-700 bg-zinc-900/70 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200'
+  return 'border-[var(--track-color-border)] bg-zinc-900/70 text-zinc-400 hover:border-[var(--track-color-light)] hover:text-zinc-200'
 })
 
 const soloButtonClassName = computed(() => {
@@ -176,7 +176,7 @@ const soloButtonClassName = computed(() => {
     return 'border-[var(--track-color)] bg-[var(--track-color)] text-white hover:border-[var(--track-color-light)] hover:bg-[var(--track-color-light)]'
   }
 
-  return 'border-zinc-700 bg-zinc-900/70 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200'
+  return 'border-[var(--track-color-border)] bg-zinc-900/70 text-zinc-400 hover:border-[var(--track-color-light)] hover:text-zinc-200'
 })
 
 function handleContextMenu(event) {
