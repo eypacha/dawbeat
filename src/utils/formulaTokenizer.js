@@ -37,11 +37,7 @@ export function tokenizeFormula(expression = '') {
     }
 
     if (/\d/.test(currentChar)) {
-      let endIndex = index + 1
-
-      while (endIndex < source.length && /\d/.test(source[endIndex])) {
-        endIndex += 1
-      }
+      const endIndex = getNumberEndIndex(source, index)
 
       tokens.push({
         type: 'number',
@@ -122,6 +118,31 @@ export function tokenizeFormula(expression = '') {
   }
 
   return tokens
+}
+
+function getNumberEndIndex(source, startIndex) {
+  if (
+    source[startIndex] === '0' &&
+    (source[startIndex + 1] === 'x' || source[startIndex + 1] === 'X')
+  ) {
+    let endIndex = startIndex + 2
+
+    while (endIndex < source.length && /[0-9a-fA-F]/.test(source[endIndex])) {
+      endIndex += 1
+    }
+
+    if (endIndex > startIndex + 2) {
+      return endIndex
+    }
+  }
+
+  let endIndex = startIndex + 1
+
+  while (endIndex < source.length && /\d/.test(source[endIndex])) {
+    endIndex += 1
+  }
+
+  return endIndex
 }
 
 export function renderFormulaTokensToHtml(expression = '') {
