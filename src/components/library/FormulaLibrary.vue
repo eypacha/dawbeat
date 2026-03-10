@@ -18,26 +18,60 @@
         Library is empty.
       </div>
 
-      <button
+      <article
         v-for="formula in formulas"
         :key="formula.id"
-        class="flex w-full cursor-grab flex-col border-b border-zinc-800 px-4 py-2 text-left transition-colors last:border-b-0"
+        class="group flex w-full items-start gap-2 border-b border-zinc-800 px-4 py-2 transition-colors"
         :class="formula.id === selectedFormulaId ? 'bg-zinc-900 text-zinc-100' : 'bg-transparent text-zinc-300 hover:bg-zinc-900/70'"
-        draggable="true"
-        type="button"
-        @click="handleSelectFormula(formula.id)"
-        @dblclick="handleEditFormula(formula.id)"
-        @dragstart="handleDragStart($event, formula.id)"
       >
-        <span class="truncate text-sm text-white">{{ getFormulaDisplayName(formula) }}</span>
-        <span class="mt-1 truncate text-xs text-zinc-500">{{ formula.code }}</span>
-      </button>
+        <div
+          class="-ml-1 mt-0.5 flex h-5 w-4 shrink-0 cursor-grab items-center justify-center text-zinc-500 transition group-hover:text-zinc-300"
+          title="Drag formula"
+          draggable="true"
+          @dragstart="handleDragStart($event, formula.id)"
+        >
+          <GripVertical class="h-3.5 w-3.5" />
+        </div>
+
+        <div class="flex min-w-0 flex-1 items-start gap-2">
+          <button
+            class="min-w-0 flex-1 text-left"
+            type="button"
+            @click="handleSelectFormula(formula.id)"
+            @dblclick="handleEditFormula(formula.id)"
+          >
+            <span class="block truncate text-sm text-white">{{ getFormulaDisplayName(formula) }}</span>
+            <span class="mt-1 block truncate text-xs text-zinc-500">{{ formula.code }}</span>
+          </button>
+
+          <div class="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <button
+              class="flex h-6 w-6 items-center justify-center rounded border border-zinc-700 bg-zinc-950/80 text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100"
+              type="button"
+              title="Edit formula"
+              @click.stop="handleEditFormula(formula.id)"
+            >
+              <Pencil class="h-3.5 w-3.5" />
+            </button>
+
+            <button
+              class="flex h-6 w-6 items-center justify-center rounded border border-zinc-700 bg-zinc-950/80 text-zinc-400 transition hover:border-red-500/50 hover:text-red-200"
+              type="button"
+              title="Delete formula"
+              @click.stop="handleRemoveFormula(formula.id)"
+            >
+              <Trash2 class="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      </article>
     </div>
   </Panel>
 </template>
 
 <script setup>
 import { storeToRefs } from 'pinia'
+import { GripVertical, Pencil, Trash2 } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Panel from '@/components/ui/Panel.vue'
 import { getFormulaDisplayName } from '@/services/formulaService'
@@ -61,6 +95,10 @@ function handleSelectFormula(formulaId) {
 function handleEditFormula(formulaId) {
   dawStore.selectFormula(formulaId)
   dawStore.setEditingFormula(formulaId)
+}
+
+function handleRemoveFormula(formulaId) {
+  dawStore.removeFormula(formulaId)
 }
 
 function handleDragStart(event, formulaId) {

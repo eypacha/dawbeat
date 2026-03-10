@@ -398,6 +398,36 @@ export const useDawStore = defineStore('dawStore', {
       }
     },
 
+    removeFormula(formulaId) {
+      const formula = getFormulaById(this.formulas, formulaId)
+
+      if (!formula) {
+        return
+      }
+
+      for (const track of this.tracks) {
+        for (const clip of track.clips) {
+          if (clip.formulaId !== formulaId) {
+            continue
+          }
+
+          clip.formula = formula.code
+          clip.formulaName = formula.name
+          clip.formulaId = null
+        }
+      }
+
+      this.formulas = this.formulas.filter((entry) => entry.id !== formulaId)
+
+      if (this.selectedFormulaId === formulaId) {
+        this.selectedFormulaId = null
+      }
+
+      if (this.editingFormulaId === formulaId) {
+        this.editingFormulaId = null
+      }
+    },
+
     addTrack(beforeTrackId = null) {
       const nextTrack = createTrack()
 
