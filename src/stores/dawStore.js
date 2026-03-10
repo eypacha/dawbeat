@@ -33,7 +33,7 @@ import { createEvalEffect, createStereoOffsetEvalEffect } from '@/services/evalE
 import { createFormula, getFormulaById } from '@/services/formulaService'
 import { normalizeTrackUnionOperator } from '@/services/trackUnionOperatorService'
 import demoProject from '@/data/demo.json'
-import { loadProject, normalizeProject } from '@/services/projectPersistence'
+import { loadProject, normalizeProject, serializeProject } from '@/services/projectPersistence'
 import {
   BASE_PIXELS_PER_TICK,
   BASE_TICK_SIZE,
@@ -45,9 +45,10 @@ import {
   snapTicks
 } from '@/utils/timeUtils'
 import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
-import { getTrackColor } from '@/utils/colorUtils'
+import { TRACK_COLOR_PALETTE, getTrackColor } from '@/utils/colorUtils'
 
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
+const MAX_HISTORY_ENTRIES = 100
 
 function createDefaultProject() {
   return normalizeProject(demoProject) ?? createEmptyProject()
@@ -92,11 +93,56 @@ function createInitialState() {
     sampleRate: project.sampleRate,
     tickSize: project.tickSize,
     tracks: project.tracks,
+    historyApplying: false,
+    historyFuture: [],
+    historyPast: [],
+    historyRecording: false,
+    historyTransaction: null,
     selectedClipIds: [],
     selectedFormulaId: null,
     selectedClipId: null,
     selectedTrackId: null
   }
+}
+
+function getSnapshotKey(snapshot) {
+  return JSON.stringify(snapshot)
+}
+
+function clearTransientSelectionState(store) {
+  store.clipDragPreview = null
+  store.editingClipId = null
+  store.editingFormulaId = null
+  store.selectedFormulaId = null
+  store.selectedTrackId = null
+  syncSelectedClipState(store, [])
+}
+
+function applyProjectState(store, project, { preservePlaybackState = false } = {}) {
+  const normalizedProject = normalizeProject(project)
+
+  if (!normalizedProject) {
+    return false
+  }
+
+  const nextPlaying = preservePlaybackState ? store.playing : false
+  const nextTime = preservePlaybackState ? store.time : 0
+
+  store.audioEffects = normalizedProject.audioEffects
+  store.evalEffects = normalizedProject.evalEffects
+  store.formulas = normalizedProject.formulas
+  store.loopEnabled = normalizedProject.loopEnabled
+  store.loopStart = normalizedProject.loopStart
+  store.loopEnd = normalizedProject.loopEnd
+  store.masterGain = normalizedProject.masterGain
+  store.zoom = normalizedProject.zoom
+  store.sampleRate = normalizedProject.sampleRate
+  store.tickSize = normalizedProject.tickSize
+  store.tracks = normalizedProject.tracks
+  clearTransientSelectionState(store)
+  store.playing = nextPlaying
+  store.time = nextTime
+  return true
 }
 
 function reorderEntries(entries, draggedId, targetId) {
@@ -163,10 +209,172 @@ export const useDawStore = defineStore('dawStore', {
   state: createInitialState,
 
   getters: {
-    pixelsPerTick: (state) => BASE_PIXELS_PER_TICK * state.zoom
+    pixelsPerTick: (state) => BASE_PIXELS_PER_TICK * state.zoom,
+    canRedo: (state) => !state.playing && state.historyFuture.length > 0,
+    canUndo: (state) => !state.playing && state.historyPast.length > 0
   },
 
   actions: {
+    createProjectSnapshot() {
+      return serializeProject(this.$state)
+    },
+
+    pushHistoryEntry(beforeSnapshot, afterSnapshot) {
+      if (!beforeSnapshot || !afterSnapshot) {
+        return false
+      }
+
+      if (getSnapshotKey(beforeSnapshot) === getSnapshotKey(afterSnapshot)) {
+        return false
+      }
+
+      this.historyPast = [...this.historyPast, beforeSnapshot].slice(-MAX_HISTORY_ENTRIES)
+      this.historyFuture = []
+      return true
+    },
+
+    applyHistorySnapshot(snapshot) {
+      if (!snapshot) {
+        return false
+      }
+
+      return applyProjectState(this, snapshot, { preservePlaybackState: true })
+    },
+
+    clearHistory() {
+      this.historyApplying = false
+      this.historyFuture = []
+      this.historyPast = []
+      this.historyRecording = false
+      this.historyTransaction = null
+    },
+
+    beginHistoryTransaction(label = '') {
+      if (this.historyApplying || this.historyRecording || this.historyTransaction) {
+        return
+      }
+
+      const before = this.createProjectSnapshot()
+
+      if (!before) {
+        return
+      }
+
+      this.historyTransaction = {
+        before,
+        label
+      }
+    },
+
+    commitHistoryTransaction() {
+      if (!this.historyTransaction) {
+        return false
+      }
+
+      const { before } = this.historyTransaction
+      this.historyTransaction = null
+
+      const after = this.createProjectSnapshot()
+
+      if (!after) {
+        return false
+      }
+
+      return this.pushHistoryEntry(before, after)
+    },
+
+    cancelHistoryTransaction() {
+      this.historyTransaction = null
+    },
+
+    recordHistoryStep(_label, fn) {
+      if (typeof fn !== 'function') {
+        return undefined
+      }
+
+      if (this.historyApplying || this.historyRecording || this.historyTransaction) {
+        return fn()
+      }
+
+      const before = this.createProjectSnapshot()
+
+      if (!before) {
+        return fn()
+      }
+
+      let failed = false
+      this.historyRecording = true
+
+      try {
+        return fn()
+      } catch (error) {
+        failed = true
+        throw error
+      } finally {
+        this.historyRecording = false
+
+        if (!failed) {
+          const after = this.createProjectSnapshot()
+
+          if (after) {
+            this.pushHistoryEntry(before, after)
+          }
+        }
+      }
+    },
+
+    undo() {
+      if (this.playing || !this.historyPast.length) {
+        return
+      }
+
+      const previousSnapshot = this.historyPast[this.historyPast.length - 1]
+      const currentSnapshot = this.createProjectSnapshot()
+
+      if (!previousSnapshot || !currentSnapshot) {
+        return
+      }
+
+      this.historyApplying = true
+
+      try {
+        if (!this.applyHistorySnapshot(previousSnapshot)) {
+          return
+        }
+
+        this.historyPast = this.historyPast.slice(0, -1)
+        this.historyFuture = [...this.historyFuture, currentSnapshot].slice(-MAX_HISTORY_ENTRIES)
+      } finally {
+        this.historyApplying = false
+      }
+    },
+
+    redo() {
+      if (this.playing || !this.historyFuture.length) {
+        return
+      }
+
+      const nextSnapshot = this.historyFuture[this.historyFuture.length - 1]
+      const currentSnapshot = this.createProjectSnapshot()
+
+      if (!nextSnapshot || !currentSnapshot) {
+        return
+      }
+
+      this.historyApplying = true
+
+      try {
+        if (!this.applyHistorySnapshot(nextSnapshot)) {
+          return
+        }
+
+        this.historyFuture = this.historyFuture.slice(0, -1)
+        this.historyPast = [...this.historyPast, currentSnapshot].slice(-MAX_HISTORY_ENTRIES)
+      } finally {
+        this.historyApplying = false
+      }
+    },
+
     setAudioReady(ready) {
       this.audioReady = ready
     },
@@ -176,73 +384,89 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     setSampleRate(value) {
-      this.sampleRate = normalizeSampleRate(value, this.sampleRate)
+      return this.recordHistoryStep('set-sample-rate', () => {
+        this.sampleRate = normalizeSampleRate(value, this.sampleRate)
+      })
     },
 
     resetMasterGain() {
-      this.masterGain = 1
+      return this.recordHistoryStep('reset-master-gain', () => {
+        this.masterGain = 1
+      })
     },
 
     addAudioEffect(effect) {
-      const nextEffect = createAudioEffect(effect)
-      this.audioEffects.push(nextEffect)
-      return nextEffect.id
+      return this.recordHistoryStep('add-audio-effect', () => {
+        const nextEffect = createAudioEffect(effect)
+        this.audioEffects.push(nextEffect)
+        return nextEffect.id
+      })
     },
 
     toggleAudioEffect(effectId) {
-      const effect = this.audioEffects.find((entry) => entry.id === effectId)
+      return this.recordHistoryStep('toggle-audio-effect', () => {
+        const effect = this.audioEffects.find((entry) => entry.id === effectId)
 
-      if (!effect) {
-        return
-      }
+        if (!effect) {
+          return
+        }
 
-      effect.enabled = !effect.enabled
+        effect.enabled = !effect.enabled
+      })
     },
 
     toggleAudioEffectExpanded(effectId) {
-      const effect = this.audioEffects.find((entry) => entry.id === effectId)
+      return this.recordHistoryStep('toggle-audio-effect-expanded', () => {
+        const effect = this.audioEffects.find((entry) => entry.id === effectId)
 
-      if (!effect) {
-        return
-      }
+        if (!effect) {
+          return
+        }
 
-      effect.expanded = !effect.expanded
+        effect.expanded = !effect.expanded
+      })
     },
 
     removeAudioEffect(effectId) {
-      this.audioEffects = this.audioEffects.filter((entry) => entry.id !== effectId)
+      return this.recordHistoryStep('remove-audio-effect', () => {
+        this.audioEffects = this.audioEffects.filter((entry) => entry.id !== effectId)
+      })
     },
 
     reorderAudioEffect(effectId, targetEffectId) {
-      this.audioEffects = reorderEntries(this.audioEffects, effectId, targetEffectId)
+      return this.recordHistoryStep('reorder-audio-effect', () => {
+        this.audioEffects = reorderEntries(this.audioEffects, effectId, targetEffectId)
+      })
     },
 
     resetAudioEffect(effectId) {
-      const effect = this.audioEffects.find((entry) => entry.id === effectId)
+      return this.recordHistoryStep('reset-audio-effect', () => {
+        const effect = this.audioEffects.find((entry) => entry.id === effectId)
 
-      if (!effect) {
-        return
-      }
+        if (!effect) {
+          return
+        }
 
-      if (effect.type === 'delay') {
-        const defaults = createDelayAudioEffect({ id: effect.id })
-        effect.enabled = defaults.enabled
-        effect.params = defaults.params
-        return
-      }
+        if (effect.type === 'delay') {
+          const defaults = createDelayAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+          return
+        }
 
-      if (effect.type === 'eq') {
-        const defaults = createEqAudioEffect({ id: effect.id })
-        effect.enabled = defaults.enabled
-        effect.params = defaults.params
-        return
-      }
+        if (effect.type === 'eq') {
+          const defaults = createEqAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+          return
+        }
 
-      if (effect.type === 'bitcrusher') {
-        const defaults = createBitCrusherAudioEffect({ id: effect.id })
-        effect.enabled = defaults.enabled
-        effect.params = defaults.params
-      }
+        if (effect.type === 'bitcrusher') {
+          const defaults = createBitCrusherAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+        }
+      })
     },
 
     updateAudioEffectParams(effectId, params) {
@@ -326,26 +550,11 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     applyProject(project) {
-      this.audioEffects = project.audioEffects
-      this.clipDragPreview = null
-      this.evalEffects = project.evalEffects
-      this.editingClipId = null
-      this.editingFormulaId = null
-      this.formulas = project.formulas
-      this.loopEnabled = project.loopEnabled
-      this.loopStart = project.loopStart
-      this.loopEnd = project.loopEnd
-      this.masterGain = project.masterGain
-      this.playing = false
-      this.time = 0
-      this.zoom = project.zoom
-      this.sampleRate = project.sampleRate
-      this.tickSize = project.tickSize
-      this.tracks = project.tracks
-      this.selectedClipIds = []
-      this.selectedFormulaId = null
-      this.selectedClipId = null
-      this.selectedTrackId = null
+      if (!applyProjectState(this, project)) {
+        return
+      }
+
+      this.clearHistory()
     },
 
     resetProject() {
@@ -388,65 +597,79 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     addFormula(formula = {}) {
-      const nextFormula = createFormula(formula)
-      this.formulas.push(nextFormula)
-      this.selectedFormulaId = nextFormula.id
-      return nextFormula.id
+      return this.recordHistoryStep('add-formula', () => {
+        const nextFormula = createFormula(formula)
+        this.formulas.push(nextFormula)
+        this.selectedFormulaId = nextFormula.id
+        return nextFormula.id
+      })
     },
 
     addEvalEffect(effect) {
-      const nextEffect = createEvalEffect(effect)
-      this.evalEffects.push(nextEffect)
-      return nextEffect.id
+      return this.recordHistoryStep('add-eval-effect', () => {
+        const nextEffect = createEvalEffect(effect)
+        this.evalEffects.push(nextEffect)
+        return nextEffect.id
+      })
     },
 
     toggleEvalEffect(effectId) {
-      const effect = this.evalEffects.find((entry) => entry.id === effectId)
+      return this.recordHistoryStep('toggle-eval-effect', () => {
+        const effect = this.evalEffects.find((entry) => entry.id === effectId)
 
-      if (!effect) {
-        return
-      }
+        if (!effect) {
+          return
+        }
 
-      effect.enabled = !effect.enabled
+        effect.enabled = !effect.enabled
+      })
     },
 
     toggleEvalEffectExpanded(effectId) {
-      const effect = this.evalEffects.find((entry) => entry.id === effectId)
+      return this.recordHistoryStep('toggle-eval-effect-expanded', () => {
+        const effect = this.evalEffects.find((entry) => entry.id === effectId)
 
-      if (!effect) {
-        return
-      }
+        if (!effect) {
+          return
+        }
 
-      effect.expanded = !effect.expanded
+        effect.expanded = !effect.expanded
+      })
     },
 
     removeEvalEffect(effectId) {
-      this.evalEffects = this.evalEffects.filter((entry) => entry.id !== effectId)
+      return this.recordHistoryStep('remove-eval-effect', () => {
+        this.evalEffects = this.evalEffects.filter((entry) => entry.id !== effectId)
+      })
     },
 
     reorderEvalEffect(effectId, targetEffectId) {
-      this.evalEffects = reorderEntries(this.evalEffects, effectId, targetEffectId)
+      return this.recordHistoryStep('reorder-eval-effect', () => {
+        this.evalEffects = reorderEntries(this.evalEffects, effectId, targetEffectId)
+      })
     },
 
     resetEvalEffect(effectId) {
-      const effect = this.evalEffects.find((entry) => entry.id === effectId)
+      return this.recordHistoryStep('reset-eval-effect', () => {
+        const effect = this.evalEffects.find((entry) => entry.id === effectId)
 
-      if (!effect) {
-        return
-      }
+        if (!effect) {
+          return
+        }
 
-      if (effect.type === 'stereoOffset') {
-        const defaults = createStereoOffsetEvalEffect({ id: effect.id })
-        effect.enabled = defaults.enabled
-        effect.params = defaults.params
-        return
-      }
+        if (effect.type === 'stereoOffset') {
+          const defaults = createStereoOffsetEvalEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+          return
+        }
 
-      if (effect.type === 'tReplacement') {
-        const defaults = createEvalEffect({ id: effect.id, type: 'tReplacement' })
-        effect.enabled = defaults.enabled
-        effect.params = defaults.params
-      }
+        if (effect.type === 'tReplacement') {
+          const defaults = createEvalEffect({ id: effect.id, type: 'tReplacement' })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+        }
+      })
     },
 
     updateEvalEffectParams(effectId, params) {
@@ -498,125 +721,142 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     removeFormula(formulaId) {
-      const formula = getFormulaById(this.formulas, formulaId)
+      return this.recordHistoryStep('remove-formula', () => {
+        const formula = getFormulaById(this.formulas, formulaId)
 
-      if (!formula) {
-        return
-      }
-
-      for (const track of this.tracks) {
-        for (const clip of track.clips) {
-          if (clip.formulaId !== formulaId) {
-            continue
-          }
-
-          clip.formula = formula.code
-          clip.formulaName = formula.name
-          clip.formulaId = null
+        if (!formula) {
+          return
         }
-      }
 
-      this.formulas = this.formulas.filter((entry) => entry.id !== formulaId)
+        for (const track of this.tracks) {
+          for (const clip of track.clips) {
+            if (clip.formulaId !== formulaId) {
+              continue
+            }
 
-      if (this.selectedFormulaId === formulaId) {
-        this.selectedFormulaId = null
-      }
+            clip.formula = formula.code
+            clip.formulaName = formula.name
+            clip.formulaId = null
+          }
+        }
 
-      if (this.editingFormulaId === formulaId) {
-        this.editingFormulaId = null
-      }
+        this.formulas = this.formulas.filter((entry) => entry.id !== formulaId)
+
+        if (this.selectedFormulaId === formulaId) {
+          this.selectedFormulaId = null
+        }
+
+        if (this.editingFormulaId === formulaId) {
+          this.editingFormulaId = null
+        }
+      })
     },
 
     addTrack(beforeTrackId = null) {
-      const nextTrack = createTrack()
+      return this.recordHistoryStep('add-track', () => {
+        const nextTrack = createTrack()
 
-      if (!beforeTrackId) {
-        this.tracks.push(nextTrack)
-        return
-      }
+        if (!beforeTrackId) {
+          this.tracks.push(nextTrack)
+          return nextTrack.id
+        }
 
-      const insertIndex = findTrackIndex(this.tracks, beforeTrackId)
+        const insertIndex = findTrackIndex(this.tracks, beforeTrackId)
 
-      if (insertIndex === -1) {
-        this.tracks.push(nextTrack)
-        return
-      }
+        if (insertIndex === -1) {
+          this.tracks.push(nextTrack)
+          return nextTrack.id
+        }
 
-      this.tracks.splice(insertIndex, 0, nextTrack)
+        this.tracks.splice(insertIndex, 0, nextTrack)
+        return nextTrack.id
+      })
     },
 
     removeTrack(trackId) {
-      const trackIndex = findTrackIndex(this.tracks, trackId)
+      return this.recordHistoryStep('remove-track', () => {
+        const trackIndex = findTrackIndex(this.tracks, trackId)
 
-      if (trackIndex === -1) {
-        return
-      }
+        if (trackIndex === -1) {
+          return
+        }
 
-      const [removedTrack] = this.tracks.splice(trackIndex, 1)
+        const [removedTrack] = this.tracks.splice(trackIndex, 1)
 
-      if (this.selectedTrackId === trackId) {
-        this.selectedTrackId = null
-      }
+        if (this.selectedTrackId === trackId) {
+          this.selectedTrackId = null
+        }
 
-      const removedClipIds = new Set(removedTrack.clips.map((clip) => clip.id))
-      this.setSelectedClips(
-        this.selectedClipIds.filter((selectedClipId) => !removedClipIds.has(selectedClipId))
-      )
+        const removedClipIds = new Set(removedTrack.clips.map((clip) => clip.id))
+        this.setSelectedClips(
+          this.selectedClipIds.filter((selectedClipId) => !removedClipIds.has(selectedClipId))
+        )
 
-      if (removedTrack.clips.some((clip) => clip.id === this.editingClipId)) {
-        this.editingClipId = null
-      }
+        if (removedTrack.clips.some((clip) => clip.id === this.editingClipId)) {
+          this.editingClipId = null
+        }
+      })
     },
 
     renameTrack(trackId, nextName) {
-      const track = findTrack(this.tracks, trackId)
+      return this.recordHistoryStep('rename-track', () => {
+        const track = findTrack(this.tracks, trackId)
 
-      if (!track) {
-        return
-      }
+        if (!track) {
+          return
+        }
 
-      const normalizedName = typeof nextName === 'string' ? nextName.trim() : ''
-      track.name = normalizedName || undefined
+        const normalizedName = typeof nextName === 'string' ? nextName.trim() : ''
+        track.name = normalizedName || undefined
+      })
     },
 
     setTrackColor(trackId, color) {
-      const track = findTrack(this.tracks, trackId)
+      return this.recordHistoryStep('set-track-color', () => {
+        const track = findTrack(this.tracks, trackId)
 
-      if (!track || !TRACK_COLOR_PALETTE.includes(color)) {
-        return
-      }
+        if (!track || !TRACK_COLOR_PALETTE.includes(color)) {
+          return
+        }
 
-      track.color = getTrackColor(color)
+        track.color = getTrackColor(color)
+      })
     },
 
     setTrackUnionOperator(trackId, unionOperator) {
-      const track = findTrack(this.tracks, trackId)
+      return this.recordHistoryStep('set-track-union-operator', () => {
+        const track = findTrack(this.tracks, trackId)
 
-      if (!track) {
-        return
-      }
+        if (!track) {
+          return
+        }
 
-      track.unionOperator = normalizeTrackUnionOperator(unionOperator)
+        track.unionOperator = normalizeTrackUnionOperator(unionOperator)
+      })
     },
 
     toggleTrackMuted(trackId) {
-      const track = findTrack(this.tracks, trackId)
+      return this.recordHistoryStep('toggle-track-muted', () => {
+        const track = findTrack(this.tracks, trackId)
 
-      if (!track) {
-        return
-      }
+        if (!track) {
+          return
+        }
 
-      track.muted = !track.muted
+        track.muted = !track.muted
+      })
     },
 
     toggleTrackSoloed(trackId) {
-      const track = findTrack(this.tracks, trackId)
+      return this.recordHistoryStep('toggle-track-soloed', () => {
+        const track = findTrack(this.tracks, trackId)
 
-      if (!track) {
-        return
-      }
+        if (!track) {
+          return
+        }
 
-      track.soloed = !track.soloed
+        track.soloed = !track.soloed
+      })
     },
 
     addClip(trackId, clip) {
@@ -949,117 +1189,127 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     addClipFormulaToLibrary(trackId, clipId) {
-      const track = findTrack(this.tracks, trackId)
+      return this.recordHistoryStep('add-clip-formula-to-library', () => {
+        const track = findTrack(this.tracks, trackId)
 
-      if (!track) {
-        return null
-      }
+        if (!track) {
+          return null
+        }
 
-      const clip = findClip(track, clipId)
+        const clip = findClip(track, clipId)
 
-      if (!clip) {
-        return null
-      }
+        if (!clip) {
+          return null
+        }
 
-      if (clip.formulaId) {
-        this.selectedFormulaId = clip.formulaId
-        return clip.formulaId
-      }
+        if (clip.formulaId) {
+          this.selectedFormulaId = clip.formulaId
+          return clip.formulaId
+        }
 
-      const formulaId = this.addFormula({
-        name: clip.formulaName ?? '',
-        code: clip.formula ?? '',
+        const formulaId = this.addFormula({
+          name: clip.formulaName ?? '',
+          code: clip.formula ?? ''
+        })
+
+        clip.formulaId = formulaId
+        clip.formula = null
+        clip.formulaName = null
+        return formulaId
       })
-
-      clip.formulaId = formulaId
-      clip.formula = null
-      clip.formulaName = null
-      return formulaId
     },
 
     assignFormulaToClip(trackId, clipId, formulaId) {
-      const track = findTrack(this.tracks, trackId)
-      const formula = getFormulaById(this.formulas, formulaId)
+      return this.recordHistoryStep('assign-formula-to-clip', () => {
+        const track = findTrack(this.tracks, trackId)
+        const formula = getFormulaById(this.formulas, formulaId)
 
-      if (!track || !formula) {
-        return
-      }
+        if (!track || !formula) {
+          return
+        }
 
-      const clip = findClip(track, clipId)
+        const clip = findClip(track, clipId)
 
-      if (!clip) {
-        return
-      }
+        if (!clip) {
+          return
+        }
 
-      clip.formulaId = formula.id
-      clip.formula = null
-      clip.formulaName = null
-      this.setSelectedClips([clip.id])
-      this.selectedTrackId = trackId
-      this.selectedFormulaId = formula.id
+        clip.formulaId = formula.id
+        clip.formula = null
+        clip.formulaName = null
+        this.setSelectedClips([clip.id])
+        this.selectedTrackId = trackId
+        this.selectedFormulaId = formula.id
+      })
     },
 
     detachClipFormula(trackId, clipId) {
-      const track = findTrack(this.tracks, trackId)
+      return this.recordHistoryStep('detach-clip-formula', () => {
+        const track = findTrack(this.tracks, trackId)
 
-      if (!track) {
-        return
-      }
+        if (!track) {
+          return
+        }
 
-      const clip = findClip(track, clipId)
+        const clip = findClip(track, clipId)
 
-      if (!clip || !clip.formulaId) {
-        return
-      }
+        if (!clip || !clip.formulaId) {
+          return
+        }
 
-      const formula = getFormulaById(this.formulas, clip.formulaId)
+        const formula = getFormulaById(this.formulas, clip.formulaId)
 
-      if (!formula) {
-        return
-      }
+        if (!formula) {
+          return
+        }
 
-      clip.formula = formula.code
-      clip.formulaName = formula.name
-      clip.formulaId = null
-      this.setSelectedClips([clip.id])
-      this.selectedTrackId = trackId
-      this.selectedFormulaId = null
+        clip.formula = formula.code
+        clip.formulaName = formula.name
+        clip.formulaId = null
+        this.setSelectedClips([clip.id])
+        this.selectedTrackId = trackId
+        this.selectedFormulaId = null
+      })
     },
 
     removeClip(clipId) {
-      const result = findTrackWithClip(this.tracks, clipId)
-
-      if (!result) {
-        return
-      }
-
-      result.track.clips.splice(result.clipIndex, 1)
-      this.editingClipId = null
-      this.removeSelectedClip(clipId)
-    },
-
-    removeSelectedClips(clipIds = this.selectedClipIds) {
-      const selectedClipIds = normalizeSelectedClipIds(clipIds)
-
-      if (!selectedClipIds.length) {
-        return
-      }
-
-      for (const clipId of selectedClipIds) {
+      return this.recordHistoryStep('remove-clip', () => {
         const result = findTrackWithClip(this.tracks, clipId)
 
         if (!result) {
-          continue
+          return
         }
 
         result.track.clips.splice(result.clipIndex, 1)
-      }
-
-      if (selectedClipIds.includes(this.editingClipId)) {
         this.editingClipId = null
-      }
+        this.removeSelectedClip(clipId)
+      })
+    },
 
-      this.clearClipSelection()
+    removeSelectedClips(clipIds = this.selectedClipIds) {
+      return this.recordHistoryStep('remove-selected-clips', () => {
+        const selectedClipIds = normalizeSelectedClipIds(clipIds)
+
+        if (!selectedClipIds.length) {
+          return
+        }
+
+        for (const clipId of selectedClipIds) {
+          const result = findTrackWithClip(this.tracks, clipId)
+
+          if (!result) {
+            continue
+          }
+
+          result.track.clips.splice(result.clipIndex, 1)
+        }
+
+        if (selectedClipIds.includes(this.editingClipId)) {
+          this.editingClipId = null
+        }
+
+        this.clearClipSelection()
+      })
     },
 
     setEditingClip(clipId) {

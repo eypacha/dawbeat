@@ -29,6 +29,24 @@ export function initKeyboardShortcuts({ dawStore, transport }) {
       return
     }
 
+    const isUndoShortcut = (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'z'
+    const isRedoShortcut =
+      (event.metaKey || event.ctrlKey) &&
+      !event.altKey &&
+      ((event.shiftKey && event.key.toLowerCase() === 'z') || (!event.metaKey && event.key.toLowerCase() === 'y'))
+
+    if (!dawStore.playing && isUndoShortcut && dawStore.canUndo) {
+      event.preventDefault()
+      dawStore.undo()
+      return
+    }
+
+    if (!dawStore.playing && isRedoShortcut && dawStore.canRedo) {
+      event.preventDefault()
+      dawStore.redo()
+      return
+    }
+
     const action = shortcuts[event.code]
 
     if (!action) {

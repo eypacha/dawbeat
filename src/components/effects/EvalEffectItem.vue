@@ -50,10 +50,12 @@
                 <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Offset</span>
                 <input
                   class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
-                  :value="effect.params.offset"
+                  v-model="offsetDraft"
                   min="0"
                   type="number"
-                  @input="handleOffsetInput"
+                  @blur="commitOffsetDraft"
+                  @keydown.enter.prevent="commitOffsetDraft"
+                  @keydown.esc.prevent="resetOffsetDraft"
                 />
               </label>
             </template>
@@ -91,9 +93,11 @@
                   <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Left</span>
                   <input
                     class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
-                    :value="effect.params.leftExpression"
+                    v-model="leftExpressionDraft"
                     type="text"
-                    @input="handleExpressionInput('leftExpression', $event)"
+                    @blur="commitExpressionDraft('leftExpression')"
+                    @keydown.enter.prevent="commitExpressionDraft('leftExpression')"
+                    @keydown.esc.prevent="resetExpressionDraft('leftExpression')"
                   />
                 </label>
 
@@ -101,9 +105,11 @@
                   <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Right</span>
                   <input
                     class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
-                    :value="effect.params.rightExpression"
+                    v-model="rightExpressionDraft"
                     type="text"
-                    @input="handleExpressionInput('rightExpression', $event)"
+                    @blur="commitExpressionDraft('rightExpression')"
+                    @keydown.enter.prevent="commitExpressionDraft('rightExpression')"
+                    @keydown.esc.prevent="resetExpressionDraft('rightExpression')"
                   />
                 </label>
               </template>
@@ -112,9 +118,11 @@
                 <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Replacement</span>
                 <input
                   class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
-                  :value="effect.params.expression"
+                  v-model="expressionDraft"
                   type="text"
-                  @input="handleExpressionInput('expression', $event)"
+                  @blur="commitExpressionDraft('expression')"
+                  @keydown.enter.prevent="commitExpressionDraft('expression')"
+                  @keydown.esc.prevent="resetExpressionDraft('expression')"
                 />
               </label>
             </template>
@@ -144,7 +152,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { GripVertical, Power, SlidersHorizontal } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -176,15 +184,83 @@ const effectTitle = computed(() => {
   return 'Stereo Offset'
 })
 
-function handleOffsetInput(event) {
-  emit('update-param', props.effect.id, 'offset', Number(event.target.value))
-}
+const offsetDraft = ref('0')
+const expressionDraft = ref('')
+const leftExpressionDraft = ref('')
+const rightExpressionDraft = ref('')
+
+watch(
+  () => [
+    props.effect.type,
+    props.effect.params.offset,
+    props.effect.params.expression,
+    props.effect.params.leftExpression,
+    props.effect.params.rightExpression
+  ],
+  () => {
+    offsetDraft.value = String(props.effect.params.offset ?? 0)
+    expressionDraft.value = props.effect.params.expression ?? ''
+    leftExpressionDraft.value = props.effect.params.leftExpression ?? ''
+    rightExpressionDraft.value = props.effect.params.rightExpression ?? ''
+  },
+  { immediate: true }
+)
 
 function handleStereoToggle(nextStereo) {
   emit('update-param', props.effect.id, 'stereo', nextStereo)
 }
 
-function handleExpressionInput(key, event) {
-  emit('update-param', props.effect.id, key, event.target.value)
+function commitOffsetDraft() {
+  const nextOffset = Number(offsetDraft.value)
+  const normalizedOffset = Number.isFinite(nextOffset) ? nextOffset : 0
+
+  if (normalizedOffset === Number(props.effect.params.offset ?? 0)) {
+    offsetDraft.value = String(props.effect.params.offset ?? 0)
+    return
+  }
+
+  emit('update-param', props.effect.id, 'offset', normalizedOffset)
+}
+
+function resetOffsetDraft() {
+  offsetDraft.value = String(props.effect.params.offset ?? 0)
+}
+
+function commitExpressionDraft(key) {
+  const nextValue = getExpressionDraftValue(key)
+
+  if (nextValue === String(props.effect.params[key] ?? '')) {
+    return
+  }
+
+  emit('update-param', props.effect.id, key, nextValue)
+}
+
+function resetExpressionDraft(key) {
+  const currentValue = String(props.effect.params[key] ?? '')
+
+  if (key === 'leftExpression') {
+    leftExpressionDraft.value = currentValue
+    return
+  }
+
+  if (key === 'rightExpression') {
+    rightExpressionDraft.value = currentValue
+    return
+  }
+
+  expressionDraft.value = currentValue
+}
+
+function getExpressionDraftValue(key) {
+  if (key === 'leftExpression') {
+    return leftExpressionDraft.value
+  }
+
+  if (key === 'rightExpression') {
+    return rightExpressionDraft.value
+  }
+
+  return expressionDraft.value
 }
 </script>

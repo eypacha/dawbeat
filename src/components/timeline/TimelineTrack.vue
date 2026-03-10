@@ -132,6 +132,7 @@ const isFormulaDropTarget = ref(false)
 
 let creationAnchorTick = 0
 let creationBounds = null
+let creationHistoryActive = false
 let creationStartX = 0
 const FORMULA_DROP_DURATION = 1
 
@@ -267,6 +268,8 @@ function handleLanePointerDown(event) {
 
   event.preventDefault()
   dawStore.selectTrack(props.track.id)
+  dawStore.beginHistoryTransaction('create-clip')
+  creationHistoryActive = Boolean(dawStore.historyTransaction)
 
   creationStartX = event.clientX
   creationAnchorTick = pointerTick
@@ -308,10 +311,12 @@ function handleLaneDrop(event) {
     FORMULA_DROP_DURATION
   )
 
-  dawStore.addClip(props.track.id, {
-    duration: FORMULA_DROP_DURATION,
-    formulaId,
-    start
+  dawStore.recordHistoryStep('drop-formula-to-track', () => {
+    dawStore.addClip(props.track.id, {
+      duration: FORMULA_DROP_DURATION,
+      formulaId,
+      start
+    })
   })
 }
 
@@ -337,6 +342,9 @@ function handleCreationPointerMove(event) {
 
 function handleCreationPointerUp() {
   if (!creationPreview.value) {
+    if (creationHistoryActive) {
+      dawStore.cancelHistoryTransaction()
+    }
     cleanupCreation()
     return
   }
@@ -349,10 +357,19 @@ function handleCreationPointerUp() {
   }
 
   dawStore.addClip(props.track.id, nextClip)
+
+  if (creationHistoryActive) {
+    dawStore.commitHistoryTransaction()
+  }
+
   cleanupCreation()
 }
 
 function handleCreationPointerCancel() {
+  if (creationHistoryActive) {
+    dawStore.cancelHistoryTransaction()
+  }
+
   cleanupCreation()
 }
 
@@ -367,6 +384,7 @@ function cleanupCreation() {
   isFormulaDropTarget.value = false
   creationPreview.value = null
   creationBounds = null
+  creationHistoryActive = false
   creationStartX = 0
   window.removeEventListener('pointermove', handleCreationPointerMove)
   window.removeEventListener('pointerup', handleCreationPointerUp)

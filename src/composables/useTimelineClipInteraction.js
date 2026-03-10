@@ -28,6 +28,7 @@ export function useTimelineClipInteraction({
   let dragSelectedClipIds = [clip.id]
   let dragSourceTrackId = trackId
   let duplicateDragActivated = false
+  let hasActiveHistoryTransaction = false
   let resizeStartTick = 0
   let resizeEndTick = 0
 
@@ -44,6 +45,16 @@ export function useTimelineClipInteraction({
     dragTargetTrackId = trackId
     duplicateDrag.value = event.altKey === true
     duplicateDragActivated = false
+
+    beginHistoryTransaction(
+      duplicateDrag.value
+        ? dragSelectedClipIds.length > 1
+          ? 'duplicate-selected-clips'
+          : 'duplicate-clip'
+        : dragSelectedClipIds.length > 1
+          ? 'move-selected-clips'
+          : 'move-clip'
+    )
 
     if (duplicateDrag.value) {
       ignoreNextClick.value = true
@@ -63,6 +74,7 @@ export function useTimelineClipInteraction({
     resizeMode.value = 'start'
     resizeStartTick = clip.start
     resizeEndTick = clip.start + clip.duration
+    beginHistoryTransaction('resize-clip-start')
   }
 
   function handleResizeEndPointerDown(event) {
@@ -73,6 +85,7 @@ export function useTimelineClipInteraction({
     onSelect()
     resizeMode.value = 'end'
     resizeEndTick = clip.start + clip.duration
+    beginHistoryTransaction('resize-clip-end')
   }
 
   function startInteraction(event) {
@@ -189,6 +202,7 @@ export function useTimelineClipInteraction({
     }
 
     dawStore.clearClipDragPreview()
+    commitHistoryTransaction()
     cleanupInteraction()
 
     if (shouldClearDuplicateClickGuard) {
@@ -219,6 +233,7 @@ export function useTimelineClipInteraction({
     }
 
     dawStore.clearClipDragPreview()
+    cancelHistoryTransaction()
     cleanupInteraction()
 
     if (ignoreNextClick.value) {
@@ -239,6 +254,7 @@ export function useTimelineClipInteraction({
     dragDesiredStart = clip.start
     dragStartTick = clip.start
     dragTargetTrackId = trackId
+    hasActiveHistoryTransaction = false
     removeInteractionListeners()
   }
 
@@ -321,6 +337,33 @@ export function useTimelineClipInteraction({
     window.removeEventListener('pointermove', handlePointerMove)
     window.removeEventListener('pointerup', handlePointerUp)
     window.removeEventListener('pointercancel', handlePointerCancel)
+  }
+
+  function beginHistoryTransaction(label) {
+    if (hasActiveHistoryTransaction) {
+      return
+    }
+
+    dawStore.beginHistoryTransaction(label)
+    hasActiveHistoryTransaction = Boolean(dawStore.historyTransaction)
+  }
+
+  function commitHistoryTransaction() {
+    if (!hasActiveHistoryTransaction) {
+      return
+    }
+
+    dawStore.commitHistoryTransaction()
+    hasActiveHistoryTransaction = false
+  }
+
+  function cancelHistoryTransaction() {
+    if (!hasActiveHistoryTransaction) {
+      return
+    }
+
+    dawStore.cancelHistoryTransaction()
+    hasActiveHistoryTransaction = false
   }
 
   return {

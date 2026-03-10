@@ -59,7 +59,13 @@
               min="-24"
               step="1"
               type="range"
+              @blur="emit('interaction-end')"
               @input="handleParamInput('bass', $event)"
+              @keydown="handleInteractionKeydown"
+              @keyup="emit('interaction-end')"
+              @pointercancel="emit('interaction-end')"
+              @pointerdown="emit('interaction-start')"
+              @pointerup="emit('interaction-end')"
             />
           </label>
 
@@ -75,7 +81,13 @@
               min="-24"
               step="1"
               type="range"
+              @blur="emit('interaction-end')"
               @input="handleParamInput('mid', $event)"
+              @keydown="handleInteractionKeydown"
+              @keyup="emit('interaction-end')"
+              @pointercancel="emit('interaction-end')"
+              @pointerdown="emit('interaction-start')"
+              @pointerup="emit('interaction-end')"
             />
           </label>
 
@@ -91,7 +103,13 @@
               min="-24"
               step="1"
               type="range"
+              @blur="emit('interaction-end')"
               @input="handleParamInput('treble', $event)"
+              @keydown="handleInteractionKeydown"
+              @keyup="emit('interaction-end')"
+              @pointercancel="emit('interaction-end')"
+              @pointerdown="emit('interaction-start')"
+              @pointerup="emit('interaction-end')"
             />
           </label>
 
@@ -133,7 +151,17 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['drag-end', 'drag-start', 'remove', 'reset', 'toggle-enabled', 'toggle-expanded', 'update-param'])
+const emit = defineEmits([
+  'drag-end',
+  'drag-start',
+  'interaction-end',
+  'interaction-start',
+  'remove',
+  'reset',
+  'toggle-enabled',
+  'toggle-expanded',
+  'update-param'
+])
 
 const bassLabel = computed(() => `${Number(props.effect.params.bass ?? 0).toFixed(0)} dB`)
 const midLabel = computed(() => `${Number(props.effect.params.mid ?? 0).toFixed(0)} dB`)
@@ -141,5 +169,11 @@ const trebleLabel = computed(() => `${Number(props.effect.params.treble ?? 0).to
 
 function handleParamInput(key, event) {
   emit('update-param', props.effect.id, key, Number(event.target.value))
+}
+
+function handleInteractionKeydown(event) {
+  if (event.key.startsWith('Arrow') || event.key === 'Home' || event.key === 'End' || event.key === 'PageUp' || event.key === 'PageDown') {
+    emit('interaction-start')
+  }
 }
 </script>

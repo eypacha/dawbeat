@@ -305,15 +305,19 @@ function evaluateFormulaDialog(nextDraft) {
 
 function saveFormulaDialog(nextDraft) {
   if (editingClipId.value) {
-    dawStore.saveClipFormulaDraftAndName(editingClipId.value, nextDraft)
+    dawStore.recordHistoryStep('save-clip-formula', () => {
+      dawStore.saveClipFormulaDraftAndName(editingClipId.value, nextDraft)
+    })
     closeFormulaDialog()
     return
   }
 
   if (editingFormulaId.value) {
-    dawStore.updateFormula(editingFormulaId.value, {
-      code: nextDraft.code,
-      name: nextDraft.name
+    dawStore.recordHistoryStep('save-library-formula', () => {
+      dawStore.updateFormula(editingFormulaId.value, {
+        code: nextDraft.code,
+        name: nextDraft.name
+      })
     })
     closeFormulaDialog()
   }

@@ -60,7 +60,13 @@
               min="0"
               step="0.01"
               type="range"
+              @blur="emit('interaction-end')"
               @input="handleDelayTimeInput"
+              @keydown="handleInteractionKeydown"
+              @keyup="emit('interaction-end')"
+              @pointercancel="emit('interaction-end')"
+              @pointerdown="emit('interaction-start')"
+              @pointerup="emit('interaction-end')"
             />
           </label>
 
@@ -77,7 +83,13 @@
               min="0"
               step="0.01"
               type="range"
+              @blur="emit('interaction-end')"
               @input="handleFeedbackInput"
+              @keydown="handleInteractionKeydown"
+              @keyup="emit('interaction-end')"
+              @pointercancel="emit('interaction-end')"
+              @pointerdown="emit('interaction-start')"
+              @pointerup="emit('interaction-end')"
             />
           </label>
 
@@ -94,7 +106,13 @@
               min="0"
               step="0.01"
               type="range"
+              @blur="emit('interaction-end')"
               @input="handleMixInput"
+              @keydown="handleInteractionKeydown"
+              @keyup="emit('interaction-end')"
+              @pointercancel="emit('interaction-end')"
+              @pointerdown="emit('interaction-start')"
+              @pointerup="emit('interaction-end')"
             />
           </label>
 
@@ -136,7 +154,17 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['drag-end', 'drag-start', 'remove', 'reset', 'toggle-enabled', 'toggle-expanded', 'update-param'])
+const emit = defineEmits([
+  'drag-end',
+  'drag-start',
+  'interaction-end',
+  'interaction-start',
+  'remove',
+  'reset',
+  'toggle-enabled',
+  'toggle-expanded',
+  'update-param'
+])
 
 const delayTimeLabel = computed(() => `${Number(props.effect.params.delayTime ?? 0).toFixed(2)} s`)
 const feedbackLabel = computed(() => Number(props.effect.params.feedback ?? 0).toFixed(2))
@@ -152,5 +180,11 @@ function handleFeedbackInput(event) {
 
 function handleMixInput(event) {
   emit('update-param', props.effect.id, 'mix', Number(event.target.value))
+}
+
+function handleInteractionKeydown(event) {
+  if (event.key.startsWith('Arrow') || event.key === 'Home' || event.key === 'End' || event.key === 'PageUp' || event.key === 'PageDown') {
+    emit('interaction-start')
+  }
 }
 </script>

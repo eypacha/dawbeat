@@ -60,7 +60,13 @@
               min="0"
               step="0.01"
               type="range"
+              @blur="emit('interaction-end')"
               @input="handleBitsInput"
+              @keydown="handleInteractionKeydown"
+              @keyup="emit('interaction-end')"
+              @pointercancel="emit('interaction-end')"
+              @pointerdown="emit('interaction-start')"
+              @pointerup="emit('interaction-end')"
             />
           </label>
 
@@ -102,11 +108,27 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['drag-end', 'drag-start', 'remove', 'reset', 'toggle-enabled', 'toggle-expanded', 'update-param'])
+const emit = defineEmits([
+  'drag-end',
+  'drag-start',
+  'interaction-end',
+  'interaction-start',
+  'remove',
+  'reset',
+  'toggle-enabled',
+  'toggle-expanded',
+  'update-param'
+])
 
 const bitsLabel = computed(() => Number(props.effect.params.bits ?? 0).toFixed(2))
 
 function handleBitsInput(event) {
   emit('update-param', props.effect.id, 'bits', Number(event.target.value))
+}
+
+function handleInteractionKeydown(event) {
+  if (event.key.startsWith('Arrow') || event.key === 'Home' || event.key === 'End' || event.key === 'PageUp' || event.key === 'PageDown') {
+    emit('interaction-start')
+  }
 }
 </script>

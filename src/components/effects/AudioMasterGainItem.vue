@@ -27,7 +27,13 @@
         min="0"
         step="0.01"
         type="range"
+        @blur="emit('interaction-end')"
         @input="handleInput"
+        @keydown="handleInteractionKeydown"
+        @keyup="emit('interaction-end')"
+        @pointercancel="emit('interaction-end')"
+        @pointerdown="emit('interaction-start')"
+        @pointerup="emit('interaction-end')"
       />
     </div>
   </article>
@@ -43,11 +49,17 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['reset', 'update:gain'])
+const emit = defineEmits(['interaction-end', 'interaction-start', 'reset', 'update:gain'])
 
 const gainLabel = computed(() => `${Number(props.gain ?? 0).toFixed(2)}x`)
 
 function handleInput(event) {
   emit('update:gain', Number(event.target.value))
+}
+
+function handleInteractionKeydown(event) {
+  if (event.key.startsWith('Arrow') || event.key === 'Home' || event.key === 'End' || event.key === 'PageUp' || event.key === 'PageDown') {
+    emit('interaction-start')
+  }
 }
 </script>

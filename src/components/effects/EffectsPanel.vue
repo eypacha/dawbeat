@@ -92,20 +92,24 @@
                     :effect="effect"
                     @drag-end="handleDragEnd"
                     @drag-start="handleDragStart('audio', $event)"
+                    @interaction-end="handleContinuousInteractionEnd"
+                    @interaction-start="handleAudioEffectInteractionStart(effect.id)"
                     @remove="handleRemoveEffect('audio', $event)"
                     @reset="handleResetEffect('audio', $event)"
                     @toggle-enabled="handleToggleEnabled('audio', $event)"
                     @toggle-expanded="handleToggleExpanded('audio', $event)"
-	                    @update-param="handleUpdateAudioEffectParam"
-	                  />
-	                </div>
+                    @update-param="handleUpdateAudioEffectParam"
+                  />
+                </div>
 
-	                <AudioMasterGainItem
-	                  :gain="masterGain"
-	                  @reset="dawStore.resetMasterGain()"
-	                  @update:gain="dawStore.setMasterGain($event)"
-	                />
-	              </template>
+                <AudioMasterGainItem
+                  :gain="masterGain"
+                  @interaction-end="handleContinuousInteractionEnd"
+                  @interaction-start="handleMasterGainInteractionStart"
+                  @reset="dawStore.resetMasterGain()"
+                  @update:gain="dawStore.setMasterGain($event)"
+                />
+              </template>
 
               <template v-else>
                 <div
@@ -142,18 +146,18 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-	import AudioBitCrusherItem from '@/components/effects/AudioBitCrusherItem.vue'
-	import AudioDelayItem from '@/components/effects/AudioDelayItem.vue'
-	import AudioEqItem from '@/components/effects/AudioEqItem.vue'
-	import AudioMasterGainItem from '@/components/effects/AudioMasterGainItem.vue'
-	import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
+import AudioBitCrusherItem from '@/components/effects/AudioBitCrusherItem.vue'
+import AudioDelayItem from '@/components/effects/AudioDelayItem.vue'
+import AudioEqItem from '@/components/effects/AudioEqItem.vue'
+import AudioMasterGainItem from '@/components/effects/AudioMasterGainItem.vue'
+import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
 import Divider from '@/components/ui/Divider.vue'
 import Panel from '@/components/ui/Panel.vue'
 import { useDawStore } from '@/stores/dawStore'
 
-	const dawStore = useDawStore()
-	const { audioEffects, evalEffects, masterGain } = storeToRefs(dawStore)
+const dawStore = useDawStore()
+const { audioEffects, evalEffects, masterGain } = storeToRefs(dawStore)
 const effectId = ref(5)
 const activeSection = ref('formula')
 const activeAddMenu = ref(null)
@@ -161,6 +165,8 @@ const draggingEffectId = ref(null)
 const draggingSection = ref(null)
 const dropTargetEffectId = ref(null)
 const dropTargetSection = ref(null)
+const activeContinuousInteractionLabel = ref(null)
+const reorderTransactionActive = ref(false)
 
 const availableFormulaEffects = [
   {
@@ -273,6 +279,8 @@ function handleResetEffect(section, effectIdToReset) {
 }
 
 function handleDragStart(section, effectIdToDrag) {
+  dawStore.beginHistoryTransaction(`reorder-${section}-effect`)
+  reorderTransactionActive.value = Boolean(dawStore.historyTransaction)
   draggingSection.value = section
   draggingEffectId.value = effectIdToDrag
 }
@@ -303,10 +311,20 @@ function handleDrop(section, effectIdToTarget) {
     dawStore.reorderAudioEffect(draggingEffectId.value, effectIdToTarget)
   }
 
+  if (reorderTransactionActive.value) {
+    dawStore.commitHistoryTransaction()
+    reorderTransactionActive.value = false
+  }
+
   handleDragEnd()
 }
 
 function handleDragEnd() {
+  if (reorderTransactionActive.value) {
+    dawStore.cancelHistoryTransaction()
+    reorderTransactionActive.value = false
+  }
+
   draggingSection.value = null
   draggingEffectId.value = null
   dropTargetSection.value = null
@@ -314,8 +332,10 @@ function handleDragEnd() {
 }
 
 function handleUpdateEvalEffectParam(effectIdToUpdate, key, value) {
-  dawStore.updateEvalEffectParams(effectIdToUpdate, {
-    [key]: value
+  dawStore.recordHistoryStep('update-eval-effect-param', () => {
+    dawStore.updateEvalEffectParams(effectIdToUpdate, {
+      [key]: value
+    })
   })
 }
 
@@ -323,6 +343,48 @@ function handleUpdateAudioEffectParam(effectIdToUpdate, key, value) {
   dawStore.updateAudioEffectParams(effectIdToUpdate, {
     [key]: value
   })
+}
+
+function handleAudioEffectInteractionStart(effectIdToStart) {
+  beginContinuousInteraction(`update-audio-effect-${effectIdToStart}`)
+}
+
+function handleMasterGainInteractionStart() {
+  beginContinuousInteraction('update-master-gain')
+}
+
+function beginContinuousInteraction(label) {
+  if (activeContinuousInteractionLabel.value) {
+    return
+  }
+
+  dawStore.beginHistoryTransaction(label)
+  if (!dawStore.historyTransaction) {
+    return
+  }
+
+  activeContinuousInteractionLabel.value = label
+  window.addEventListener('pointerup', handleContinuousInteractionWindowEnd)
+  window.addEventListener('pointercancel', handleContinuousInteractionWindowEnd)
+}
+
+function handleContinuousInteractionEnd() {
+  if (!activeContinuousInteractionLabel.value) {
+    return
+  }
+
+  dawStore.commitHistoryTransaction()
+  cleanupContinuousInteraction()
+}
+
+function handleContinuousInteractionWindowEnd() {
+  handleContinuousInteractionEnd()
+}
+
+function cleanupContinuousInteraction() {
+  activeContinuousInteractionLabel.value = null
+  window.removeEventListener('pointerup', handleContinuousInteractionWindowEnd)
+  window.removeEventListener('pointercancel', handleContinuousInteractionWindowEnd)
 }
 
 function handleWindowPointerDown(event) {
@@ -343,6 +405,8 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('pointerdown', handleWindowPointerDown)
+  cleanupContinuousInteraction()
+  handleDragEnd()
 })
 
 </script>

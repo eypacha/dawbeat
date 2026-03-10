@@ -7,6 +7,22 @@
 
       <div class="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
         <IconButton
+          :icon="Undo2"
+          :class="canUndo ? 'border-zinc-700 bg-zinc-950 text-zinc-200 hover:border-zinc-600' : 'border-zinc-800 bg-zinc-950 text-zinc-600'"
+          :disabled="!canUndo"
+          label="Undo"
+          @click="dawStore.undo()"
+        />
+
+        <IconButton
+          :icon="Redo2"
+          :class="canRedo ? 'border-zinc-700 bg-zinc-950 text-zinc-200 hover:border-zinc-600' : 'border-zinc-800 bg-zinc-950 text-zinc-600'"
+          :disabled="!canRedo"
+          label="Redo"
+          @click="dawStore.redo()"
+        />
+
+        <IconButton
           :icon="Play"
           :class="playing ? 'border-zinc-800 bg-zinc-950 text-zinc-600' : 'border-emerald-500/60 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'"
           :disabled="playing"
@@ -120,7 +136,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Download, FilePlus, FolderOpen, Pause, Play, Repeat, Settings2, Square } from 'lucide-vue-next'
+import { Download, FilePlus, FolderOpen, Pause, Play, Redo2, Repeat, Settings2, Square, Undo2 } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
 import { downloadProjectWav } from '@/services/exportService'
@@ -135,7 +151,7 @@ import Toolbar from '@/components/ui/Toolbar.vue'
 
 const dawStore = useDawStore()
 const { play, pause, stop } = useTransportPlayback()
-const { loopEnabled, playing, sampleRate, time } = storeToRefs(dawStore)
+const { canRedo, canUndo, loopEnabled, playing, sampleRate, time } = storeToRefs(dawStore)
 const projectFileInput = ref(null)
 const sampleRateDraft = ref(String(sampleRate.value))
 const settingsVisible = ref(false)
