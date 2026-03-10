@@ -1,10 +1,11 @@
 {
-  "version": 2,
+  "version": 3,
   "tracks": [
     {
       "id": "f2a8b8d6-6b53-4c4c-81df-5f6d9d85a101",
       "color": "#6366f1",
       "muted": false,
+      "unionOperator": "|",
       "clips": [
         {
           "id": "a68e1769-4d51-4e9f-8363-d238d787002e",
@@ -68,6 +69,7 @@
       "id": "81e56bb6-5ca7-4e4e-a7f7-b43df392c202",
       "color": "#3b82f6",
       "muted": false,
+      "unionOperator": "|",
       "clips": [
         {
           "id": "5a1c1be4-287b-456f-8c3e-7d46d467d3c6",
@@ -91,6 +93,7 @@
       "id": "ae16605a-98dc-4e4d-87af-e28edae9092c",
       "color": "#06b6d4",
       "muted": false,
+      "unionOperator": "|",
       "clips": [
         {
           "id": "952426ec-b05b-440f-8b18-a45a9ea98c0a",
@@ -106,6 +109,7 @@
       "id": "6370c3e7-5cb2-40bf-8843-91b1ffbaedbe",
       "color": "#10b981",
       "muted": false,
+      "unionOperator": "|",
       "clips": [
         {
           "id": "d8109533-98eb-4592-b828-0cfa5441fa21",
@@ -129,6 +133,7 @@
       "id": "7b5c2260-c582-4ed3-9ea8-20e42f2c5b1b",
       "color": "#eab308",
       "muted": false,
+      "unionOperator": "|",
       "clips": [
         {
           "id": "f26e75e1-5a1c-47d9-9ef2-e1f685ba62af",
@@ -152,12 +157,14 @@
       "id": "296bb249-c817-4f9e-bffe-d8a7b47708e1",
       "color": "#f97316",
       "muted": false,
+      "unionOperator": "|",
       "clips": []
     },
     {
       "id": "0e41c022-88bc-463d-b83b-4b9cc0286796",
       "color": "#ef4444",
       "muted": false,
+      "unionOperator": "|",
       "clips": []
     }
   ],

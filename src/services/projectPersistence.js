@@ -2,17 +2,18 @@ import { createAudioEffect, createDelayAudioEffect, normalizeMasterGain } from '
 import { createTrackClip, createTrackId, sortTrackClips } from '@/services/dawStoreService'
 import { createEvalEffect, createStereoOffsetEvalEffect } from '@/services/evalEffectService'
 import { createFormula } from '@/services/formulaService'
+import { normalizeTrackUnionOperator } from '@/services/trackUnionOperatorService'
 import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
 import { DEFAULT_TRACK_COLOR, getTrackColor } from '@/utils/colorUtils'
 import { BASE_TICK_SIZE, MAX_ZOOM, MIN_ZOOM, TIMELINE_SNAP_SUBDIVISIONS, clamp } from '@/utils/timeUtils'
 
 const PROJECT_STORAGE_KEY = 'dawbeat-project'
-const PROJECT_VERSION = 2
+const PROJECT_VERSION = 3
 const SAVE_DEBOUNCE_MS = 400
 const DEFAULT_LOOP_START = 0
 const DEFAULT_LOOP_END = 16
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
-const SUPPORTED_PROJECT_VERSIONS = new Set([1, PROJECT_VERSION])
+const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, PROJECT_VERSION])
 
 export function serializeProject(state) {
   return normalizeProjectPayload({
@@ -194,6 +195,7 @@ function normalizeTrack(track, formulaIds) {
     color: typeof track.color === 'string' ? getTrackColor(track.color) : DEFAULT_TRACK_COLOR,
     muted: Boolean(track.muted),
     soloed: Boolean(track.soloed),
+    unionOperator: normalizeTrackUnionOperator(track.unionOperator),
     name: typeof track.name === 'string' && track.name.trim() ? track.name.trim() : undefined,
     clips: Array.isArray(track.clips)
       ? track.clips.map((clip) => normalizeClip(clip, formulaIds)).filter(Boolean)

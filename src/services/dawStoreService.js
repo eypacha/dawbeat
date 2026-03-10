@@ -1,4 +1,5 @@
 import { DEFAULT_TRACK_COLOR } from '@/utils/colorUtils'
+import { DEFAULT_TRACK_UNION_OPERATOR } from '@/services/trackUnionOperatorService'
 
 export function createClipId() {
   if (globalThis.crypto?.randomUUID) {
@@ -22,6 +23,7 @@ export function createTrack() {
     color: DEFAULT_TRACK_COLOR,
     muted: false,
     soloed: false,
+    unionOperator: DEFAULT_TRACK_UNION_OPERATOR,
     name: undefined,
     clips: []
   }

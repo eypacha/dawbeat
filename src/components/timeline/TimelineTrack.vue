@@ -12,33 +12,45 @@
       @contextmenu="handleContextMenu"
     >
       <div class="min-w-0">
-        <span class="block truncate text-sm transition-opacity" :class="isAudible ? '' : 'opacity-55'">
+        <span class="block min-w-0 truncate text-sm transition-opacity" :class="isAudible ? '' : 'opacity-55'">
           {{ displayTrackName }}
         </span>
       </div>
 
-      <div class="mt-2 flex items-center gap-1.5">
-        <button
-          class="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-md border px-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors"
-          :class="muteButtonClassName"
-          :title="isMuted ? 'Unmute track' : 'Mute track'"
-          :aria-pressed="isMuted"
-          type="button"
-          @click.stop="handleToggleMuted"
-        >
-          M
-        </button>
+      <div class="mt-2 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-1.5">
+          <button
+            class="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-md border px-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors"
+            :class="muteButtonClassName"
+            :title="isMuted ? 'Unmute track' : 'Mute track'"
+            :aria-pressed="isMuted"
+            type="button"
+            @click.stop="handleToggleMuted"
+          >
+            M
+          </button>
 
-        <button
-          class="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-md border px-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors"
-          :class="soloButtonClassName"
-          :title="isSoloed ? 'Disable solo' : 'Solo track'"
-          :aria-pressed="isSoloed"
-          type="button"
-          @click.stop="handleToggleSoloed"
-        >
-          S
-        </button>
+          <button
+            class="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-md border px-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors"
+            :class="soloButtonClassName"
+            :title="isSoloed ? 'Disable solo' : 'Solo track'"
+            :aria-pressed="isSoloed"
+            type="button"
+            @click.stop="handleToggleSoloed"
+          >
+            S
+          </button>
+        </div>
+
+        <div class="flex justify-end">
+          <span
+            class="shrink-0 text-sm font-bold"
+            :style="{ color: 'var(--track-color)' }"
+            :title="`Track union operator: ${currentUnionOperatorOption.label}`"
+          >
+            {{ currentUnionOperatorOption.value }}
+          </span>
+        </div>
       </div>
     </div>
 
@@ -79,6 +91,7 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { isTrackAudible } from '@/services/trackPlaybackState'
+import { getTrackUnionOperatorOption, TRACK_UNION_OPERATOR_OPTIONS } from '@/services/trackUnionOperatorService'
 import TimelineClip from '@/components/timeline/TimelineClip.vue'
 import TimelineClipPreview from '@/components/timeline/TimelineClipPreview.vue'
 import { buildCreatedClip, clampClipPlacementStart, getTrackCreateBounds } from '@/services/timelineService'
@@ -154,6 +167,7 @@ const displayTrackName = computed(() => {
 const isMuted = computed(() => Boolean(props.track.muted))
 const isSoloed = computed(() => Boolean(props.track.soloed))
 const isAudible = computed(() => isTrackAudible(props.track, tracks.value))
+const currentUnionOperatorOption = computed(() => getTrackUnionOperatorOption(props.track.unionOperator))
 
 const trackColor = computed(() => getTrackColor(props.track.color))
 
@@ -201,6 +215,14 @@ function handleContextMenu(event) {
         selectedColor: trackColor.value,
         trackId: props.track.id,
         type: 'palette'
+      },
+      {
+        action: 'set-track-union-operator',
+        label: 'Operator',
+        options: TRACK_UNION_OPERATOR_OPTIONS,
+        selectedOperator: currentUnionOperatorOption.value.value,
+        trackId: props.track.id,
+        type: 'track-union-operator'
       },
       {
         label: 'Delete Track',

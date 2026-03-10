@@ -27,6 +27,13 @@
           :selected-color="item.selectedColor"
           @select="handleTrackColorSelect(item, $event, close)"
         />
+
+        <TrackUnionOperatorMenu
+          v-else-if="item.action === 'set-track-union-operator'"
+          :options="item.options"
+          :selected-operator="item.selectedOperator"
+          @select="handleTrackUnionOperatorSelect(item, $event, close)"
+        />
       </template>
     </ContextMenu>
 
@@ -70,6 +77,7 @@ import StartScreen from '@/components/boot/StartScreen.vue'
 import EffectsPanel from '@/components/effects/EffectsPanel.vue'
 import FormulaLibrary from '@/components/library/FormulaLibrary.vue'
 import Timeline from '@/components/timeline/Timeline.vue'
+import TrackUnionOperatorMenu from '@/components/timeline/TrackUnionOperatorMenu.vue'
 import TransportBar from '@/components/transport/TransportBar.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import ContextMenu from '@/components/ui/ContextMenu.vue'
@@ -225,6 +233,11 @@ function handleContextMenuSelect(action, item) {
 
 function handleTrackColorSelect(item, color, close) {
   dawStore.setTrackColor(item.trackId, color)
+  close()
+}
+
+function handleTrackUnionOperatorSelect(item, operator, close) {
+  dawStore.setTrackUnionOperator(item.trackId, operator)
   close()
 }
 

@@ -1,8 +1,9 @@
 import { resolveClipFormula } from '@/services/formulaService'
 import { isTrackAudible } from '@/services/trackPlaybackState'
+import { normalizeTrackUnionOperator } from '@/services/trackUnionOperatorService'
 
 export function getActiveFormula(timeTicks, tracks, formulas) {
-  const activeFormulas = []
+  const activeTracks = []
 
   for (const track of tracks) {
     if (!isTrackAudible(track, tracks)) {
@@ -17,14 +18,21 @@ export function getActiveFormula(timeTicks, tracks, formulas) {
           continue
         }
 
-        activeFormulas.push(`(${resolvedFormula})`)
+        activeTracks.push({
+          formula: `(${resolvedFormula})`,
+          unionOperator: normalizeTrackUnionOperator(track.unionOperator)
+        })
       }
     }
   }
 
-  if (!activeFormulas.length) {
+  if (!activeTracks.length) {
     return null
   }
 
-  return activeFormulas.join(' | ')
+  return activeTracks.slice(1).reduce(
+    (expression, trackEntry, index) =>
+      `(${expression} ${activeTracks[index].unionOperator} ${trackEntry.formula})`,
+    activeTracks[0].formula
+  )
 }

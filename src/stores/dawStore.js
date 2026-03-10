@@ -30,6 +30,7 @@ import {
 } from '@/services/audioEffectService'
 import { createEvalEffect, createStereoOffsetEvalEffect } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
+import { normalizeTrackUnionOperator } from '@/services/trackUnionOperatorService'
 import demoProject from '@/data/demo.json'
 import { loadProject, normalizeProject } from '@/services/projectPersistence'
 import {
@@ -521,6 +522,16 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       track.color = getTrackColor(color)
+    },
+
+    setTrackUnionOperator(trackId, unionOperator) {
+      const track = findTrack(this.tracks, trackId)
+
+      if (!track) {
+        return
+      }
+
+      track.unionOperator = normalizeTrackUnionOperator(unionOperator)
     },
 
     toggleTrackMuted(trackId) {
