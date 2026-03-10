@@ -128,7 +128,7 @@ const props = defineProps({
 
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
-const { clipDragPreview, pixelsPerTick, selectedTrackId, tracks } = storeToRefs(dawStore)
+const { canPasteClipsAtPlayhead, clipDragPreview, pixelsPerTick, selectedTrackId, tracks } = storeToRefs(dawStore)
 const laneElement = ref(null)
 const creationPreview = ref(null)
 const isFormulaDropTarget = ref(false)
@@ -208,6 +208,11 @@ function handleContextMenu(event) {
     items: [
       { label: 'Add Track', action: 'add-track', beforeTrackId: props.track.id },
       {
+        label: 'Duplicate Track',
+        action: 'duplicate-track',
+        trackId: props.track.id
+      },
+      {
         label: 'Rename Track',
         action: 'rename-track',
         trackId: props.track.id,
@@ -260,19 +265,27 @@ function handleLaneContextMenu(event) {
 
   const start = clampClipPlacementStart(props.track, getPointerTick(event), 1)
   dawStore.selectTrack(props.track.id)
+  const items = [
+    {
+      action: 'create-clip-at-position',
+      duration: 1,
+      label: 'New Clip',
+      start,
+      trackId: props.track.id
+    }
+  ]
+
+  if (canPasteClipsAtPlayhead.value) {
+    items.push({
+      action: 'paste-clips',
+      label: 'Paste'
+    })
+  }
 
   openContextMenu({
     x: event.clientX,
     y: event.clientY,
-    items: [
-      {
-        action: 'create-clip-at-position',
-        duration: 1,
-        label: 'New Clip',
-        start,
-        trackId: props.track.id
-      }
-    ]
+    items
   })
 }
 

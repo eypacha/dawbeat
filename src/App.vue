@@ -239,8 +239,18 @@ function handleContextMenuSelect(action, item) {
     return
   }
 
+  if (action === 'duplicate-track') {
+    dawStore.duplicateTrack(item.trackId)
+    return
+  }
+
   if (action === 'edit-clip') {
     dawStore.setEditingClip(item.clipId)
+    return
+  }
+
+  if (action === 'copy-clip') {
+    dawStore.copyClip(item.clipId)
     return
   }
 
@@ -254,6 +264,11 @@ function handleContextMenuSelect(action, item) {
         start: item.start ?? 0
       })
     })
+    return
+  }
+
+  if (action === 'paste-clips') {
+    dawStore.pasteClipboardAtPlayhead()
     return
   }
 

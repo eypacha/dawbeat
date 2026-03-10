@@ -10,6 +10,7 @@ import { getDraggedTick } from '@/services/snapService'
 import {
   createDuplicateClip,
   createTrack,
+  createTrackId,
   createTrackClip,
   findClip,
   findClipIndex,
@@ -79,6 +80,7 @@ function createInitialState() {
     audioReady: false,
     audioEffects: project.audioEffects,
     clipDragPreview: null,
+    clipClipboard: null,
     evalEffects: project.evalEffects,
     editingClipId: null,
     editingFormulaId: null,
@@ -205,10 +207,72 @@ function collectSelectedClipEntries(tracks, clipIds) {
   return entries
 }
 
+function sortClipEntriesForClipboard(tracks, clipEntries) {
+  const trackIndexById = new Map(tracks.map((track, index) => [track.id, index]))
+
+  return [...clipEntries].sort((leftEntry, rightEntry) => {
+    const startDelta = leftEntry.clip.start - rightEntry.clip.start
+
+    if (startDelta !== 0) {
+      return startDelta
+    }
+
+    return (
+      (trackIndexById.get(leftEntry.trackId) ?? Number.MAX_SAFE_INTEGER) -
+      (trackIndexById.get(rightEntry.trackId) ?? Number.MAX_SAFE_INTEGER)
+    )
+  })
+}
+
+function buildClipClipboard(entries, tracks, formulas) {
+  if (!entries.length) {
+    return null
+  }
+
+  const sortedEntries = sortClipEntriesForClipboard(tracks, entries)
+  const anchorStart = sortedEntries[0]?.clip.start ?? 0
+
+  return {
+    anchorStart,
+    clips: sortedEntries.map((entry) => {
+      const referencedFormula = entry.clip.formulaId
+        ? getFormulaById(formulas, entry.clip.formulaId)
+        : null
+
+      return {
+        duration: entry.clip.duration,
+        formula: referencedFormula?.code ?? entry.clip.formula ?? null,
+        formulaId: referencedFormula?.id ?? null,
+        formulaName: referencedFormula?.name ?? entry.clip.formulaName ?? null,
+        sourceTrackId: entry.trackId,
+        startOffset: entry.clip.start - anchorStart
+      }
+    }),
+    sourceTrackIds: [...new Set(sortedEntries.map((entry) => entry.trackId))]
+  }
+}
+
+function resolvePasteTargetTrack(store, sourceTrackId) {
+  const sourceTrack = findTrack(store.tracks, sourceTrackId)
+
+  if (sourceTrack) {
+    return sourceTrack
+  }
+
+  const selectedTrack = findTrack(store.tracks, store.selectedTrackId)
+
+  if (selectedTrack) {
+    return selectedTrack
+  }
+
+  return store.tracks[0] ?? null
+}
+
 export const useDawStore = defineStore('dawStore', {
   state: createInitialState,
 
   getters: {
+    canPasteClipsAtPlayhead: (state) => Boolean(state.clipClipboard?.clips?.length && state.tracks.length),
     pixelsPerTick: (state) => BASE_PIXELS_PER_TICK * state.zoom,
     canRedo: (state) => !state.playing && state.historyFuture.length > 0,
     canUndo: (state) => !state.playing && state.historyPast.length > 0
@@ -554,6 +618,7 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
+      this.clipClipboard = null
       this.clearHistory()
     },
 
@@ -577,6 +642,10 @@ export const useDawStore = defineStore('dawStore', {
       this.clipDragPreview = null
     },
 
+    clearClipClipboard() {
+      this.clipClipboard = null
+    },
+
     setSelectedClips(clipIds) {
       syncSelectedClipState(this, clipIds)
     },
@@ -594,6 +663,103 @@ export const useDawStore = defineStore('dawStore', {
 
     clearClipSelection() {
       syncSelectedClipState(this, [])
+    },
+
+    copySelectedClips() {
+      const selectedClipEntries = collectSelectedClipEntries(this.tracks, this.selectedClipIds)
+      const nextClipboard = buildClipClipboard(selectedClipEntries, this.tracks, this.formulas)
+
+      if (!nextClipboard) {
+        return false
+      }
+
+      this.clipClipboard = nextClipboard
+      return true
+    },
+
+    copyClip(clipId) {
+      if (this.selectedClipIds.length > 1 && this.selectedClipIds.includes(clipId)) {
+        return this.copySelectedClips()
+      }
+
+      const selectedClipEntries = collectSelectedClipEntries(this.tracks, [clipId])
+      const nextClipboard = buildClipClipboard(selectedClipEntries, this.tracks, this.formulas)
+
+      if (!nextClipboard) {
+        return false
+      }
+
+      this.clipClipboard = nextClipboard
+      return true
+    },
+
+    pasteClipboardAtPlayhead() {
+      if (!this.canPasteClipsAtPlayhead) {
+        return []
+      }
+
+      return this.recordHistoryStep('paste-clips', () => {
+        const clipboard = this.clipClipboard
+
+        if (!clipboard?.clips?.length || !this.tracks.length) {
+          return []
+        }
+
+        const pastedClipIds = []
+        const touchedTrackIds = new Set()
+        let pastedAnchorTrackId = null
+        let pastedAnchorFormulaId = null
+
+        this.editingClipId = null
+
+        for (const clipboardClip of clipboard.clips) {
+          const targetTrack = resolvePasteTargetTrack(this, clipboardClip.sourceTrackId)
+
+          if (!targetTrack) {
+            continue
+          }
+
+          const desiredStart = this.time + clipboardClip.startOffset
+          const nextStart = clampClipPlacementStart(targetTrack, desiredStart, clipboardClip.duration)
+          const referencedFormula = clipboardClip.formulaId
+            ? getFormulaById(this.formulas, clipboardClip.formulaId)
+            : null
+
+          const nextClip = createTrackClip({
+            duration: clipboardClip.duration,
+            formula: referencedFormula ? null : clipboardClip.formula ?? null,
+            formulaId: referencedFormula?.id ?? null,
+            formulaName: referencedFormula?.name ?? clipboardClip.formulaName ?? null,
+            start: nextStart
+          })
+
+          targetTrack.clips.push(nextClip)
+          pastedClipIds.push(nextClip.id)
+          touchedTrackIds.add(targetTrack.id)
+
+          if (pastedAnchorTrackId === null) {
+            pastedAnchorTrackId = targetTrack.id
+            pastedAnchorFormulaId = nextClip.formulaId ?? null
+          }
+        }
+
+        if (!pastedClipIds.length) {
+          return []
+        }
+
+        for (const trackId of touchedTrackIds) {
+          const track = findTrack(this.tracks, trackId)
+
+          if (track) {
+            sortTrackClips(track)
+          }
+        }
+
+        this.setSelectedClips(pastedClipIds)
+        this.selectedTrackId = pastedAnchorTrackId
+        this.selectedFormulaId = pastedAnchorFormulaId
+        return pastedClipIds
+      })
     },
 
     addFormula(formula = {}) {
@@ -770,6 +936,35 @@ export const useDawStore = defineStore('dawStore', {
 
         this.tracks.splice(insertIndex, 0, nextTrack)
         return nextTrack.id
+      })
+    },
+
+    duplicateTrack(trackId) {
+      return this.recordHistoryStep('duplicate-track', () => {
+        const trackIndex = findTrackIndex(this.tracks, trackId)
+
+        if (trackIndex === -1) {
+          return null
+        }
+
+        const sourceTrack = this.tracks[trackIndex]
+
+        if (!sourceTrack) {
+          return null
+        }
+
+        const duplicatedTrack = {
+          ...sourceTrack,
+          id: createTrackId(),
+          name: sourceTrack.name ? `${sourceTrack.name} Copy` : undefined,
+          clips: sourceTrack.clips.map((clip) => createDuplicateClip(clip))
+        }
+
+        this.tracks.splice(trackIndex + 1, 0, duplicatedTrack)
+        this.clearClipSelection()
+        this.selectedFormulaId = null
+        this.selectedTrackId = duplicatedTrack.id
+        return duplicatedTrack.id
       })
     },
 

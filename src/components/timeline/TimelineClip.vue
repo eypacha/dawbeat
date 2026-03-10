@@ -155,9 +155,14 @@ function handleEditStart() {
 }
 
 function handleContextMenu(event) {
-  handleSelect()
+  handleSelect({ preserveMultiSelection: true })
 
   const items = [
+    {
+      action: 'copy-clip',
+      clipId: props.clip.id,
+      label: 'Copy'
+    },
     {
       action: 'edit-clip',
       clipId: props.clip.id,

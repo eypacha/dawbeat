@@ -29,11 +29,25 @@ export function initKeyboardShortcuts({ dawStore, transport }) {
       return
     }
 
+    const isCopyShortcut = (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'c'
+    const isPasteShortcut = (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'v'
     const isUndoShortcut = (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'z'
     const isRedoShortcut =
       (event.metaKey || event.ctrlKey) &&
       !event.altKey &&
       ((event.shiftKey && event.key.toLowerCase() === 'z') || (!event.metaKey && event.key.toLowerCase() === 'y'))
+
+    if (isCopyShortcut && dawStore.selectedClipIds.length) {
+      event.preventDefault()
+      dawStore.copySelectedClips()
+      return
+    }
+
+    if (isPasteShortcut && dawStore.canPasteClipsAtPlayhead) {
+      event.preventDefault()
+      dawStore.pasteClipboardAtPlayhead()
+      return
+    }
 
     if (!dawStore.playing && isUndoShortcut && dawStore.canUndo) {
       event.preventDefault()
