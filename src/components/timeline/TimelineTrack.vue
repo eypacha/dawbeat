@@ -7,6 +7,7 @@
   >
     <div
       class="sticky left-0 z-10 flex shrink-0 flex-col justify-center border-r border-zinc-800 px-4 py-0"
+      data-context-menu-enabled="true"
       :class="track.id === selectedTrackId ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-900 text-zinc-300'"
       :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
       @contextmenu="handleContextMenu"
@@ -57,9 +58,11 @@
     <div
       ref="laneElement"
       class="relative h-20 shrink-0 transition-opacity"
+      data-context-menu-enabled="true"
       data-timeline-track-lane="true"
       :class="laneClassName"
       :style="laneStyle"
+      @contextmenu="handleLaneContextMenu"
       @dragover.prevent="handleLaneDragOver"
       @dragleave="handleLaneDragLeave"
       @drop.prevent="handleLaneDrop"
@@ -242,6 +245,35 @@ function handleToggleMuted() {
 
 function handleToggleSoloed() {
   dawStore.toggleTrackSoloed(props.track.id)
+}
+
+function handleLaneContextMenu(event) {
+  if (!laneElement.value) {
+    return
+  }
+
+  if (event.target instanceof Element && event.target.closest('[data-timeline-clip="true"]')) {
+    return
+  }
+
+  event.preventDefault()
+
+  const start = clampClipPlacementStart(props.track, getPointerTick(event), 1)
+  dawStore.selectTrack(props.track.id)
+
+  openContextMenu({
+    x: event.clientX,
+    y: event.clientY,
+    items: [
+      {
+        action: 'create-clip-at-position',
+        duration: 1,
+        label: 'New Clip',
+        start,
+        trackId: props.track.id
+      }
+    ]
+  })
 }
 
 function handleLanePointerDown(event) {

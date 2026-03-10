@@ -5,6 +5,7 @@
     :style="clipStyle"
     :title="clipTitle"
     :data-clip-id="clip.id"
+    data-context-menu-enabled="true"
     data-timeline-clip="true"
     @click.stop="handleSelect"
     @contextmenu.stop.prevent="handleContextMenu"

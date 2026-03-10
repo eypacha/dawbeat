@@ -216,6 +216,23 @@ function handleKeydown(event) {
   }
 }
 
+function handleGlobalContextMenu(event) {
+  if (!(event.target instanceof Element)) {
+    event.preventDefault()
+    return
+  }
+
+  if (event.target.closest('input, textarea, [contenteditable="true"]')) {
+    return
+  }
+
+  if (event.target.closest('[data-context-menu-enabled="true"]')) {
+    return
+  }
+
+  event.preventDefault()
+}
+
 function handleContextMenuSelect(action, item) {
   if (action === 'add-track') {
     dawStore.addTrack(item.beforeTrackId ?? null)
@@ -224,6 +241,19 @@ function handleContextMenuSelect(action, item) {
 
   if (action === 'edit-clip') {
     dawStore.setEditingClip(item.clipId)
+    return
+  }
+
+  if (action === 'create-clip-at-position') {
+    dawStore.recordHistoryStep('create-clip-at-position', () => {
+      dawStore.addClip(item.trackId, {
+        duration: item.duration ?? 1,
+        formula: '',
+        formulaId: null,
+        formulaName: null,
+        start: item.start ?? 0
+      })
+    })
     return
   }
 
@@ -335,6 +365,7 @@ function saveFormulaDialog(nextDraft) {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
+  window.addEventListener('contextmenu', handleGlobalContextMenu)
   disposeKeyboardShortcuts = initKeyboardShortcuts({
     dawStore,
     transport: transportPlayback
@@ -343,6 +374,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeydown)
+  window.removeEventListener('contextmenu', handleGlobalContextMenu)
   disposeKeyboardShortcuts?.()
   disposeKeyboardShortcuts = null
   void stop()
