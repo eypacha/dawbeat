@@ -3,7 +3,7 @@
 
   <div v-else class="h-screen overflow-hidden bg-zinc-950 text-zinc-200 font-mono">
     <div class="flex h-full w-full flex-col gap-4 overflow-hidden p-4">
-      <TransportBar />
+      <Toolbar />
 
       <main class="grid min-h-0 flex-1 gap-4 overflow-hidden lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)_304px]">
         <FormulaLibrary />
@@ -78,7 +78,7 @@ import EffectsPanel from '@/components/effects/EffectsPanel.vue'
 import FormulaLibrary from '@/components/library/FormulaLibrary.vue'
 import Timeline from '@/components/timeline/Timeline.vue'
 import TrackUnionOperatorMenu from '@/components/timeline/TrackUnionOperatorMenu.vue'
-import TransportBar from '@/components/transport/TransportBar.vue'
+import Toolbar from '@/components/transport/Toolbar.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import ContextMenu from '@/components/ui/ContextMenu.vue'
 import FormulaInputDialog from '@/components/ui/FormulaInputDialog.vue'

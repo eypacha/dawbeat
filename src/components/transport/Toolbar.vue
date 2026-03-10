@@ -1,27 +1,58 @@
 <template>
-  <Panel as="header" class="px-4 py-2" padding="none">
-    <Toolbar gap="lg" wrap>
-      <div>
-        <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">DawBeat</p>
+  <Panel as="header" padding="none">
+    <div class="flex items-center justify-between gap-4 px-4 py-1">
+      <div class="flex min-w-0 flex-1 items-center gap-4">
+        <div class="shrink-0">
+          <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">DawBeat</p>
+        </div>
+
+        <Divider />
+
+        <div class="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+          <IconButton
+            :icon="FilePlus"
+            label="New Project"
+            size="sm"
+            @click="newProjectConfirmVisible = true"
+          />
+
+          <IconButton
+            :icon="FolderOpen"
+            label="Open JSON"
+            size="sm"
+            @click="triggerProjectOpen"
+          />
+
+          <IconButton
+            :icon="Download"
+            label="Save JSON"
+            size="sm"
+            @click="handleProjectDownload"
+          />
+        </div>
+
+        <Divider />
+
+        <div class="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+          <IconButton
+            :icon="Undo2"
+            :class="canUndo ? 'border-zinc-700 bg-zinc-950 text-zinc-200 hover:border-zinc-600' : 'border-zinc-800 bg-zinc-950 text-zinc-600'"
+            :disabled="!canUndo"
+            label="Undo"
+            @click="dawStore.undo()"
+          />
+
+          <IconButton
+            :icon="Redo2"
+            :class="canRedo ? 'border-zinc-700 bg-zinc-950 text-zinc-200 hover:border-zinc-600' : 'border-zinc-800 bg-zinc-950 text-zinc-600'"
+            :disabled="!canRedo"
+            label="Redo"
+            @click="dawStore.redo()"
+          />
+        </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
-        <IconButton
-          :icon="Undo2"
-          :class="canUndo ? 'border-zinc-700 bg-zinc-950 text-zinc-200 hover:border-zinc-600' : 'border-zinc-800 bg-zinc-950 text-zinc-600'"
-          :disabled="!canUndo"
-          label="Undo"
-          @click="dawStore.undo()"
-        />
-
-        <IconButton
-          :icon="Redo2"
-          :class="canRedo ? 'border-zinc-700 bg-zinc-950 text-zinc-200 hover:border-zinc-600' : 'border-zinc-800 bg-zinc-950 text-zinc-600'"
-          :disabled="!canRedo"
-          label="Redo"
-          @click="dawStore.redo()"
-        />
-
+      <div class="flex shrink-0 items-center gap-2 text-xs text-zinc-400">
         <IconButton
           :icon="Play"
           :class="playing ? 'border-zinc-800 bg-zinc-950 text-zinc-600' : 'border-emerald-500/60 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'"
@@ -53,64 +84,48 @@
           label="Loop"
           @click="dawStore.toggleLoop()"
         />
+      </div>
 
-        <Divider />
-        <span class="border border-zinc-800 bg-zinc-950 px-3 py-1">{{ transportTime }}</span>
-        <div class="flex items-center gap-2 border border-zinc-800 bg-zinc-950 px-2 py-1">
-          <input
-            v-model="sampleRateDraft"
-            class="w-14 bg-transparent text-right text-xs text-zinc-100 outline-none"
-            max="44100"
-            min="256"
-            step="1"
-            type="number"
-            @blur="commitSampleRate"
-            @keydown.enter.prevent="commitSampleRate"
-            @keydown.esc.prevent="resetSampleRateDraft"
-          >
-          <span class="text-zinc-500">hz</span>
+      <div class="flex min-w-0 flex-1 items-center justify-end gap-4">
+        <div class="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+          <span class="border border-zinc-800 bg-zinc-950 px-3 py-1">{{ transportTime }}</span>
+          <div class="flex items-center gap-2 border border-zinc-800 bg-zinc-950 px-2 py-1">
+            <input
+              v-model="sampleRateDraft"
+              class="w-14 bg-transparent text-right text-xs text-zinc-100 outline-none"
+              max="44100"
+              min="256"
+              step="1"
+              type="number"
+              @blur="commitSampleRate"
+              @keydown.enter.prevent="commitSampleRate"
+              @keydown.esc.prevent="resetSampleRateDraft"
+            >
+            <span class="text-zinc-500">hz</span>
+          </div>
         </div>
 
         <Divider />
-        <IconButton
-          :icon="FilePlus"
-          label="New Project"
-          size="sm"
-          @click="newProjectConfirmVisible = true"
-        />
 
-        <IconButton
-          :icon="FolderOpen"
-          label="Open JSON"
-          size="sm"
-          @click="triggerProjectOpen"
-        />
+        <div class="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+          <button
+            class="border border-zinc-800 bg-zinc-950 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-700 hover:text-zinc-100 disabled:cursor-default disabled:opacity-40"
+            :disabled="exportingWav"
+            type="button"
+            @click="handleWavExport"
+          >
+            {{ exportingWav ? 'Exporting...' : 'Export WAV' }}
+          </button>
 
-        <IconButton
-          :icon="Download"
-          label="Save JSON"
-          size="sm"
-          @click="handleProjectDownload"
-        />
-
-        <button
-          class="border border-zinc-800 bg-zinc-950 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-700 hover:text-zinc-100 disabled:cursor-default disabled:opacity-40"
-          :disabled="exportingWav"
-          type="button"
-          @click="handleWavExport"
-        >
-          {{ exportingWav ? 'Exporting...' : 'Export WAV' }}
-        </button>
-
-        <IconButton
-          :icon="Settings2"
-          label="Settings"
-          size="sm"
-          @click="settingsVisible = true"
-        />
-
+          <IconButton
+            :icon="Settings2"
+            label="Settings"
+            size="sm"
+            @click="settingsVisible = true"
+          />
+        </div>
       </div>
-    </Toolbar>
+    </div>
 
     <input
       ref="projectFileInput"
@@ -147,7 +162,6 @@ import Divider from '@/components/ui/Divider.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import Panel from '@/components/ui/Panel.vue'
 import SettingsModal from '@/components/ui/SettingsModal.vue'
-import Toolbar from '@/components/ui/Toolbar.vue'
 
 const dawStore = useDawStore()
 const { play, pause, stop } = useTransportPlayback()
