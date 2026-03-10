@@ -43,109 +43,111 @@
           </div>
         </div>
 
-        <div v-if="effect.expanded" class="mt-4">
-          <div class="grid gap-3">
-            <template v-if="effect.type === 'stereoOffset'">
-              <label class="grid gap-2">
-                <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Offset</span>
-                <input
-                  class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
-                  v-model="offsetDraft"
-                  min="0"
-                  type="number"
-                  @blur="commitOffsetDraft"
-                  @keydown.enter.prevent="commitOffsetDraft"
-                  @keydown.esc.prevent="resetOffsetDraft"
-                />
-              </label>
-            </template>
-
-            <template v-else-if="effect.type === 'tReplacement'">
-              <div class="grid gap-2">
-                <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Mode</span>
-                <div class="grid grid-cols-2 gap-2">
-                  <button
-                    class="rounded border px-3 py-2 text-xs uppercase tracking-[0.18em] transition"
-                    :class="!effect.params.stereo
-                      ? 'border-sky-500/40 bg-sky-500/10 text-sky-100'
-                      : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-100'"
-                    type="button"
-                    @click="handleStereoToggle(false)"
-                  >
-                    Mono
-                  </button>
-
-                  <button
-                    class="rounded border px-3 py-2 text-xs uppercase tracking-[0.18em] transition"
-                    :class="effect.params.stereo
-                      ? 'border-sky-500/40 bg-sky-500/10 text-sky-100'
-                      : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-100'"
-                    type="button"
-                    @click="handleStereoToggle(true)"
-                  >
-                    Stereo
-                  </button>
-                </div>
-              </div>
-
-              <template v-if="effect.params.stereo">
+        <CollapseTransition>
+          <div v-if="effect.expanded">
+            <div class="grid gap-3 pt-4">
+              <template v-if="effect.type === 'stereoOffset'">
                 <label class="grid gap-2">
-                  <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Left</span>
+                  <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Offset</span>
                   <input
-                    class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
-                    v-model="leftExpressionDraft"
-                    type="text"
-                    @blur="commitExpressionDraft('leftExpression')"
-                    @keydown.enter.prevent="commitExpressionDraft('leftExpression')"
-                    @keydown.esc.prevent="resetExpressionDraft('leftExpression')"
-                  />
-                </label>
-
-                <label class="grid gap-2">
-                  <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Right</span>
-                  <input
-                    class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
-                    v-model="rightExpressionDraft"
-                    type="text"
-                    @blur="commitExpressionDraft('rightExpression')"
-                    @keydown.enter.prevent="commitExpressionDraft('rightExpression')"
-                    @keydown.esc.prevent="resetExpressionDraft('rightExpression')"
+                    class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
+                    v-model="offsetDraft"
+                    min="0"
+                    type="number"
+                    @blur="commitOffsetDraft"
+                    @keydown.enter.prevent="commitOffsetDraft"
+                    @keydown.esc.prevent="resetOffsetDraft"
                   />
                 </label>
               </template>
 
-              <label v-else class="grid gap-2">
-                <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Replacement</span>
-                <input
-                  class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
-                  v-model="expressionDraft"
-                  type="text"
-                  @blur="commitExpressionDraft('expression')"
-                  @keydown.enter.prevent="commitExpressionDraft('expression')"
-                  @keydown.esc.prevent="resetExpressionDraft('expression')"
-                />
-              </label>
-            </template>
+              <template v-else-if="effect.type === 'tReplacement'">
+                <div class="grid gap-2">
+                  <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Mode</span>
+                  <div class="grid grid-cols-2 gap-2">
+                    <button
+                      class="rounded border px-3 py-2 text-xs uppercase tracking-[0.18em] transition"
+                      :class="!effect.params.stereo
+                        ? 'border-sky-500/40 bg-sky-500/10 text-sky-100'
+                        : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-100'"
+                      type="button"
+                      @click="handleStereoToggle(false)"
+                    >
+                      Mono
+                    </button>
 
-            <div class="flex items-center gap-2">
-              <button
-                class="rounded border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-500 hover:text-zinc-100"
-                type="button"
-                @click="emit('reset', effect.id)"
-              >
-                Reset
-              </button>
+                    <button
+                      class="rounded border px-3 py-2 text-xs uppercase tracking-[0.18em] transition"
+                      :class="effect.params.stereo
+                        ? 'border-sky-500/40 bg-sky-500/10 text-sky-100'
+                        : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-100'"
+                      type="button"
+                      @click="handleStereoToggle(true)"
+                    >
+                      Stereo
+                    </button>
+                  </div>
+                </div>
 
-              <button
-                class="rounded border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-400 transition hover:border-red-500/50 hover:text-red-200"
-                type="button"
-                @click="emit('remove', effect.id)"
-              >
-                Delete
-              </button>
+                <template v-if="effect.params.stereo">
+                  <label class="grid gap-2">
+                    <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Left</span>
+                    <input
+                      class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
+                      v-model="leftExpressionDraft"
+                      type="text"
+                      @blur="commitExpressionDraft('leftExpression')"
+                      @keydown.enter.prevent="commitExpressionDraft('leftExpression')"
+                      @keydown.esc.prevent="resetExpressionDraft('leftExpression')"
+                    />
+                  </label>
+
+                  <label class="grid gap-2">
+                    <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Right</span>
+                    <input
+                      class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
+                      v-model="rightExpressionDraft"
+                      type="text"
+                      @blur="commitExpressionDraft('rightExpression')"
+                      @keydown.enter.prevent="commitExpressionDraft('rightExpression')"
+                      @keydown.esc.prevent="resetExpressionDraft('rightExpression')"
+                    />
+                  </label>
+                </template>
+
+                <label v-else class="grid gap-2">
+                  <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Replacement</span>
+                  <input
+                    class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
+                    v-model="expressionDraft"
+                    type="text"
+                    @blur="commitExpressionDraft('expression')"
+                    @keydown.enter.prevent="commitExpressionDraft('expression')"
+                    @keydown.esc.prevent="resetExpressionDraft('expression')"
+                  />
+                </label>
+              </template>
+
+              <div class="flex items-center gap-2">
+                <button
+                  class="rounded border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-500 hover:text-zinc-100"
+                  type="button"
+                  @click="emit('reset', effect.id)"
+                >
+                  Reset
+                </button>
+
+                <button
+                  class="rounded border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-400 transition hover:border-red-500/50 hover:text-red-200"
+                  type="button"
+                  @click="emit('remove', effect.id)"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </CollapseTransition>
       </div>
     </div>
   </article>
@@ -154,6 +156,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { GripVertical, Power, SlidersHorizontal } from 'lucide-vue-next'
+import CollapseTransition from '../ui/CollapseTransition.vue'
 
 const props = defineProps({
   dragging: {

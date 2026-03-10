@@ -66,6 +66,10 @@ const variantClassName = computed(() => {
     return 'border-zinc-800 bg-zinc-950 text-zinc-300 hover:border-zinc-700 hover:text-zinc-100'
   }
 
+  if (props.variant === 'plain') {
+    return 'border-transparent bg-transparent text-zinc-500 hover:border-transparent hover:bg-transparent hover:text-zinc-200'
+  }
+
   return 'border-zinc-700 bg-zinc-800 text-zinc-100 hover:border-zinc-500 hover:bg-zinc-700'
 })
 </script>

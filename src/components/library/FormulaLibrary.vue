@@ -8,6 +8,7 @@
       :icon="ChevronRight"
       label="Expand Library"
       size="sm"
+      variant="plain"
       @click="emit('toggle-collapse')"
     />
 
@@ -27,9 +28,9 @@
     <div class="mb-4 flex items-center gap-3">
       <IconButton
         :icon="ChevronLeft"
-        class="border-transparent bg-transparent text-zinc-500 hover:border-transparent hover:bg-transparent hover:text-zinc-200"
         label="Collapse Library"
         size="sm"
+        variant="plain"
         @click="emit('toggle-collapse')"
       />
 

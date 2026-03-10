@@ -46,91 +46,95 @@
           </div>
         </div>
 
-        <div v-if="effect.expanded" class="mt-4 grid gap-3">
-          <label class="grid gap-2">
-            <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-              <span>Bass</span>
-              <span>{{ bassLabel }}</span>
+        <CollapseTransition>
+          <div v-if="effect.expanded">
+            <div class="grid gap-3 pt-4">
+              <label class="grid gap-2">
+                <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+                  <span>Bass</span>
+                  <span>{{ bassLabel }}</span>
+                </div>
+                <input
+                  class="accent-amber-300"
+                  :value="effect.params.bass"
+                  max="24"
+                  min="-24"
+                  step="1"
+                  type="range"
+                  @blur="emit('interaction-end')"
+                  @input="handleParamInput('bass', $event)"
+                  @keydown="handleInteractionKeydown"
+                  @keyup="emit('interaction-end')"
+                  @pointercancel="emit('interaction-end')"
+                  @pointerdown="emit('interaction-start')"
+                  @pointerup="emit('interaction-end')"
+                />
+              </label>
+
+              <label class="grid gap-2">
+                <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+                  <span>Mid</span>
+                  <span>{{ midLabel }}</span>
+                </div>
+                <input
+                  class="accent-amber-300"
+                  :value="effect.params.mid"
+                  max="24"
+                  min="-24"
+                  step="1"
+                  type="range"
+                  @blur="emit('interaction-end')"
+                  @input="handleParamInput('mid', $event)"
+                  @keydown="handleInteractionKeydown"
+                  @keyup="emit('interaction-end')"
+                  @pointercancel="emit('interaction-end')"
+                  @pointerdown="emit('interaction-start')"
+                  @pointerup="emit('interaction-end')"
+                />
+              </label>
+
+              <label class="grid gap-2">
+                <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+                  <span>Treble</span>
+                  <span>{{ trebleLabel }}</span>
+                </div>
+                <input
+                  class="accent-amber-300"
+                  :value="effect.params.treble"
+                  max="24"
+                  min="-24"
+                  step="1"
+                  type="range"
+                  @blur="emit('interaction-end')"
+                  @input="handleParamInput('treble', $event)"
+                  @keydown="handleInteractionKeydown"
+                  @keyup="emit('interaction-end')"
+                  @pointercancel="emit('interaction-end')"
+                  @pointerdown="emit('interaction-start')"
+                  @pointerup="emit('interaction-end')"
+                />
+              </label>
+
+              <div class="flex items-center gap-2">
+                <button
+                  class="rounded border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-500 hover:text-zinc-100"
+                  type="button"
+                  @click="emit('reset', effect.id)"
+                >
+                  Reset
+                </button>
+
+                <button
+                  class="rounded border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-400 transition hover:border-red-500/50 hover:text-red-200"
+                  type="button"
+                  @click="emit('remove', effect.id)"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
-            <input
-              class="accent-amber-300"
-              :value="effect.params.bass"
-              max="24"
-              min="-24"
-              step="1"
-              type="range"
-              @blur="emit('interaction-end')"
-              @input="handleParamInput('bass', $event)"
-              @keydown="handleInteractionKeydown"
-              @keyup="emit('interaction-end')"
-              @pointercancel="emit('interaction-end')"
-              @pointerdown="emit('interaction-start')"
-              @pointerup="emit('interaction-end')"
-            />
-          </label>
-
-          <label class="grid gap-2">
-            <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-              <span>Mid</span>
-              <span>{{ midLabel }}</span>
-            </div>
-            <input
-              class="accent-amber-300"
-              :value="effect.params.mid"
-              max="24"
-              min="-24"
-              step="1"
-              type="range"
-              @blur="emit('interaction-end')"
-              @input="handleParamInput('mid', $event)"
-              @keydown="handleInteractionKeydown"
-              @keyup="emit('interaction-end')"
-              @pointercancel="emit('interaction-end')"
-              @pointerdown="emit('interaction-start')"
-              @pointerup="emit('interaction-end')"
-            />
-          </label>
-
-          <label class="grid gap-2">
-            <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-              <span>Treble</span>
-              <span>{{ trebleLabel }}</span>
-            </div>
-            <input
-              class="accent-amber-300"
-              :value="effect.params.treble"
-              max="24"
-              min="-24"
-              step="1"
-              type="range"
-              @blur="emit('interaction-end')"
-              @input="handleParamInput('treble', $event)"
-              @keydown="handleInteractionKeydown"
-              @keyup="emit('interaction-end')"
-              @pointercancel="emit('interaction-end')"
-              @pointerdown="emit('interaction-start')"
-              @pointerup="emit('interaction-end')"
-            />
-          </label>
-
-          <div class="flex items-center gap-2">
-            <button
-              class="rounded border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-500 hover:text-zinc-100"
-              type="button"
-              @click="emit('reset', effect.id)"
-            >
-              Reset
-            </button>
-
-            <button
-              class="rounded border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-400 transition hover:border-red-500/50 hover:text-red-200"
-              type="button"
-              @click="emit('remove', effect.id)"
-            >
-              Delete
-            </button>
           </div>
-        </div>
+        </CollapseTransition>
       </div>
     </div>
   </article>
@@ -139,6 +143,7 @@
 <script setup>
 import { computed } from 'vue'
 import { GripVertical, Power, SlidersHorizontal } from 'lucide-vue-next'
+import CollapseTransition from '../ui/CollapseTransition.vue'
 
 const props = defineProps({
   dragging: {

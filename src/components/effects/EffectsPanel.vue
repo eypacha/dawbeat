@@ -8,6 +8,7 @@
       :icon="ChevronLeft"
       label="Expand Effects"
       size="sm"
+      variant="plain"
       @click="emit('toggle-collapse')"
     />
 
@@ -33,6 +34,7 @@
         :icon="ChevronRight"
         label="Collapse Effects"
         size="sm"
+        variant="plain"
         @click="emit('toggle-collapse')"
       />
     </div>
