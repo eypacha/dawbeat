@@ -127,7 +127,7 @@
                     @reset="handleResetEffect('formula', $event)"
                     @toggle-enabled="handleToggleEnabled('formula', $event)"
                     @toggle-expanded="handleToggleExpanded('formula', $event)"
-                    @update-offset="handleUpdateEvalEffectOffset"
+                    @update-param="handleUpdateEvalEffectParam"
                   />
                 </div>
               </template>
@@ -166,6 +166,10 @@ const availableFormulaEffects = [
   {
     name: 'Stereo Offset',
     type: 'stereoOffset'
+  },
+  {
+    name: 'T Replacement',
+    type: 'tReplacement'
   }
 ]
 const availableAudioEffects = [
@@ -309,9 +313,9 @@ function handleDragEnd() {
   dropTargetEffectId.value = null
 }
 
-function handleUpdateEvalEffectOffset(effectIdToUpdate, nextOffset) {
+function handleUpdateEvalEffectParam(effectIdToUpdate, key, value) {
   dawStore.updateEvalEffectParams(effectIdToUpdate, {
-    offset: nextOffset
+    [key]: value
   })
 }
 

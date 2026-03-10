@@ -1,6 +1,6 @@
 import { createAudioEffect, createDelayAudioEffect, normalizeMasterGain } from '@/services/audioEffectService'
 import { createTrackClip, createTrackId, sortTrackClips } from '@/services/dawStoreService'
-import { createStereoOffsetEvalEffect } from '@/services/evalEffectService'
+import { createEvalEffect, createStereoOffsetEvalEffect } from '@/services/evalEffectService'
 import { createFormula } from '@/services/formulaService'
 import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
 import { DEFAULT_TRACK_COLOR, getTrackColor } from '@/utils/colorUtils'
@@ -236,7 +236,7 @@ function normalizeEvalEffects(evalEffects) {
     return []
   }
 
-  return evalEffects.filter(isRecord).map((effect) => createStereoOffsetEvalEffect(effect))
+  return evalEffects.filter(isRecord).map((effect) => createEvalEffect(effect))
 }
 
 function normalizeNumber(value, fallback) {

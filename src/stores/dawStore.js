@@ -28,7 +28,7 @@ import {
   normalizeMixValue,
   normalizeUnitValue
 } from '@/services/audioEffectService'
-import { createStereoOffsetEvalEffect } from '@/services/evalEffectService'
+import { createEvalEffect, createStereoOffsetEvalEffect } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
 import demoProject from '@/data/demo.json'
 import { loadProject, normalizeProject } from '@/services/projectPersistence'
@@ -330,7 +330,7 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     addEvalEffect(effect) {
-      const nextEffect = createStereoOffsetEvalEffect(effect)
+      const nextEffect = createEvalEffect(effect)
       this.evalEffects.push(nextEffect)
       return nextEffect.id
     },
@@ -374,6 +374,13 @@ export const useDawStore = defineStore('dawStore', {
         const defaults = createStereoOffsetEvalEffect({ id: effect.id })
         effect.enabled = defaults.enabled
         effect.params = defaults.params
+        return
+      }
+
+      if (effect.type === 'tReplacement') {
+        const defaults = createEvalEffect({ id: effect.id, type: 'tReplacement' })
+        effect.enabled = defaults.enabled
+        effect.params = defaults.params
       }
     },
 
@@ -387,6 +394,25 @@ export const useDawStore = defineStore('dawStore', {
       if (effect.type === 'stereoOffset' && typeof params.offset !== 'undefined') {
         const offset = Number(params.offset)
         effect.params.offset = Number.isFinite(offset) ? offset : 0
+        return
+      }
+
+      if (effect.type === 'tReplacement') {
+        if (typeof params.stereo !== 'undefined') {
+          effect.params.stereo = Boolean(params.stereo)
+        }
+
+        if (typeof params.expression === 'string') {
+          effect.params.expression = params.expression
+        }
+
+        if (typeof params.leftExpression === 'string') {
+          effect.params.leftExpression = params.leftExpression
+        }
+
+        if (typeof params.rightExpression === 'string') {
+          effect.params.rightExpression = params.rightExpression
+        }
       }
     },
 

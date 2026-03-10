@@ -18,7 +18,7 @@
       <div class="min-w-0 flex-1">
         <div class="flex items-center justify-between gap-3">
           <div class="min-w-0 flex-1">
-            <p class="truncate text-sm font-medium text-zinc-50">Stereo Offset</p>
+            <p class="truncate text-sm font-medium text-zinc-50">{{ effectTitle }}</p>
           </div>
 
           <div class="flex shrink-0 items-center gap-1.5">
@@ -45,16 +45,79 @@
 
         <div v-if="effect.expanded" class="mt-4">
           <div class="grid gap-3">
-            <label class="grid gap-2">
-              <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Offset</span>
-              <input
-                class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
-                :value="effect.params.offset"
-                min="0"
-                type="number"
-                @input="handleOffsetInput"
-              />
-            </label>
+            <template v-if="effect.type === 'stereoOffset'">
+              <label class="grid gap-2">
+                <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Offset</span>
+                <input
+                  class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
+                  :value="effect.params.offset"
+                  min="0"
+                  type="number"
+                  @input="handleOffsetInput"
+                />
+              </label>
+            </template>
+
+            <template v-else-if="effect.type === 'tReplacement'">
+              <div class="grid gap-2">
+                <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Mode</span>
+                <div class="grid grid-cols-2 gap-2">
+                  <button
+                    class="rounded border px-3 py-2 text-xs uppercase tracking-[0.18em] transition"
+                    :class="!effect.params.stereo
+                      ? 'border-sky-500/40 bg-sky-500/10 text-sky-100'
+                      : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-100'"
+                    type="button"
+                    @click="handleStereoToggle(false)"
+                  >
+                    Mono
+                  </button>
+
+                  <button
+                    class="rounded border px-3 py-2 text-xs uppercase tracking-[0.18em] transition"
+                    :class="effect.params.stereo
+                      ? 'border-sky-500/40 bg-sky-500/10 text-sky-100'
+                      : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-100'"
+                    type="button"
+                    @click="handleStereoToggle(true)"
+                  >
+                    Stereo
+                  </button>
+                </div>
+              </div>
+
+              <template v-if="effect.params.stereo">
+                <label class="grid gap-2">
+                  <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Left</span>
+                  <input
+                    class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
+                    :value="effect.params.leftExpression"
+                    type="text"
+                    @input="handleExpressionInput('leftExpression', $event)"
+                  />
+                </label>
+
+                <label class="grid gap-2">
+                  <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Right</span>
+                  <input
+                    class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
+                    :value="effect.params.rightExpression"
+                    type="text"
+                    @input="handleExpressionInput('rightExpression', $event)"
+                  />
+                </label>
+              </template>
+
+              <label v-else class="grid gap-2">
+                <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Replacement</span>
+                <input
+                  class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
+                  :value="effect.params.expression"
+                  type="text"
+                  @input="handleExpressionInput('expression', $event)"
+                />
+              </label>
+            </template>
 
             <div class="flex items-center gap-2">
               <button
@@ -81,6 +144,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { GripVertical, Power, SlidersHorizontal } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -94,9 +158,33 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['drag-end', 'drag-start', 'remove', 'reset', 'toggle-enabled', 'toggle-expanded', 'update-offset'])
+const emit = defineEmits([
+  'drag-end',
+  'drag-start',
+  'remove',
+  'reset',
+  'toggle-enabled',
+  'toggle-expanded',
+  'update-param'
+])
+
+const effectTitle = computed(() => {
+  if (props.effect.type === 'tReplacement') {
+    return 'T Replacement'
+  }
+
+  return 'Stereo Offset'
+})
 
 function handleOffsetInput(event) {
-  emit('update-offset', props.effect.id, Number(event.target.value))
+  emit('update-param', props.effect.id, 'offset', Number(event.target.value))
+}
+
+function handleStereoToggle(nextStereo) {
+  emit('update-param', props.effect.id, 'stereo', nextStereo)
+}
+
+function handleExpressionInput(key, event) {
+  emit('update-param', props.effect.id, key, event.target.value)
 }
 </script>

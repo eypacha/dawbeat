@@ -8,6 +8,17 @@ export function createEvalEffectId() {
   return `fx-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
+export function createEvalEffect(effect = {}) {
+  switch (effect.type) {
+    case 'tReplacement':
+      return createTReplacementEvalEffect(effect)
+
+    case 'stereoOffset':
+    default:
+      return createStereoOffsetEvalEffect(effect)
+  }
+}
+
 export function createStereoOffsetEvalEffect(effect = {}) {
   return {
     id: effect.id ?? createEvalEffectId(),
@@ -16,6 +27,23 @@ export function createStereoOffsetEvalEffect(effect = {}) {
     expanded: effect.expanded ?? false,
     params: {
       offset: effect.params?.offset ?? 128
+    }
+  }
+}
+
+export function createTReplacementEvalEffect(effect = {}) {
+  return {
+    id: effect.id ?? createEvalEffectId(),
+    type: 'tReplacement',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      stereo: Boolean(effect.params?.stereo),
+      expression: typeof effect.params?.expression === 'string' ? effect.params.expression : 't',
+      leftExpression:
+        typeof effect.params?.leftExpression === 'string' ? effect.params.leftExpression : 't',
+      rightExpression:
+        typeof effect.params?.rightExpression === 'string' ? effect.params.rightExpression : 't'
     }
   }
 }
@@ -39,6 +67,9 @@ export function applyEvalEffect(expressions, effect) {
     case 'stereoOffset':
       return stereoOffsetEffect(expressions, effect.params)
 
+    case 'tReplacement':
+      return tReplacementEffect(expressions, effect.params)
+
     default:
       return expressions
   }
@@ -54,7 +85,7 @@ export function stereoOffsetEffect(expressions, params = {}) {
 
   if (sourceExpressions.length >= 2) {
     const nextExpressions = [...sourceExpressions]
-    nextExpressions[1] = offsetFormulaTime(nextExpressions[1], offset)
+    nextExpressions[1] = replaceFormulaTime(nextExpressions[1], `t+${offset}`)
     return nextExpressions
   }
 
@@ -62,7 +93,38 @@ export function stereoOffsetEffect(expressions, params = {}) {
 
   return [
     leftExpression,
-    offsetFormulaTime(leftExpression, offset)
+    replaceFormulaTime(leftExpression, `t+${offset}`)
+  ]
+}
+
+export function tReplacementEffect(expressions, params = {}) {
+  const sourceExpressions = Array.isArray(expressions) ? expressions : []
+
+  if (!sourceExpressions.length || !sourceExpressions[0]) {
+    return sourceExpressions
+  }
+
+  const replacement = normalizeReplacementExpression(params.expression)
+
+  if (!params.stereo) {
+    return sourceExpressions.map((expression) => replaceFormulaTime(expression, replacement))
+  }
+
+  const leftReplacement = normalizeReplacementExpression(params.leftExpression, replacement)
+  const rightReplacement = normalizeReplacementExpression(params.rightExpression, replacement)
+
+  if (sourceExpressions.length >= 2) {
+    return [
+      replaceFormulaTime(sourceExpressions[0], leftReplacement),
+      replaceFormulaTime(sourceExpressions[1], rightReplacement)
+    ]
+  }
+
+  const sourceExpression = sourceExpressions[0]
+
+  return [
+    replaceFormulaTime(sourceExpression, leftReplacement),
+    replaceFormulaTime(sourceExpression, rightReplacement)
   ]
 }
 
@@ -71,15 +133,26 @@ function normalizeOffset(offset) {
   return Number.isFinite(numericOffset) ? numericOffset : 0
 }
 
-function offsetFormulaTime(formula, offset) {
+function normalizeReplacementExpression(expression, fallback = 't') {
+  if (typeof expression !== 'string') {
+    return fallback
+  }
+
+  const trimmedExpression = expression.trim()
+  return trimmedExpression || fallback
+}
+
+function replaceFormulaTime(formula, nextTimeExpression) {
   if (typeof formula !== 'string' || !formula.trim()) {
     return formula
   }
 
+  const replacementExpression = normalizeReplacementExpression(nextTimeExpression)
+
   return tokenizeFormula(formula)
     .map((token) => {
       if (token.type === 'var' && token.value === 't') {
-        return `(t+${offset})`
+        return `(${replacementExpression})`
       }
 
       return token.value
