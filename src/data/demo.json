@@ -5,6 +5,7 @@
       "id": "f2a8b8d6-6b53-4c4c-81df-5f6d9d85a101",
       "color": "#6366f1",
       "muted": false,
+      "soloed": false,
       "unionOperator": "|",
       "clips": [
         {
@@ -13,14 +14,46 @@
           "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
           "formulaName": null,
           "start": 0,
-          "duration": 4
+          "duration": 3
+        },
+        {
+          "id": "cbc2fea9-92bb-4d5c-96ad-e0860867016b",
+          "formula": null,
+          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
+          "formulaName": null,
+          "start": 0,
+          "duration": 3
+        },
+        {
+          "id": "86da4c6d-7539-40a4-b998-5f7dfa748167",
+          "formula": null,
+          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
+          "formulaName": null,
+          "start": 0,
+          "duration": 3
         },
         {
           "id": "18aea82a-e7ab-48e1-aad2-eeb712361543",
-          "formula": "t >> 3",
-          "formulaId": null,
-          "formulaName": "Kick",
-          "start": 4,
+          "formula": null,
+          "formulaId": "02ce47ed-7e13-4c54-8c88-f1a3d44562a5",
+          "formulaName": null,
+          "start": 3,
+          "duration": 1
+        },
+        {
+          "id": "70884d0d-991f-424e-bf05-7bf6d24e55fd",
+          "formula": null,
+          "formulaId": "02ce47ed-7e13-4c54-8c88-f1a3d44562a5",
+          "formulaName": null,
+          "start": 3,
+          "duration": 1
+        },
+        {
+          "id": "37d5f76b-954c-48cc-bfd9-dc72f30aaf2b",
+          "formula": null,
+          "formulaId": "02ce47ed-7e13-4c54-8c88-f1a3d44562a5",
+          "formulaName": null,
+          "start": 3,
           "duration": 1
         },
         {
@@ -28,40 +61,112 @@
           "formula": null,
           "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
           "formulaName": null,
-          "start": 5,
+          "start": 4,
           "duration": 3
         },
         {
-          "id": "d773d70c-f3e2-4378-923c-0f937ceccd79",
-          "formula": "",
-          "formulaId": null,
+          "id": "5d74ef2c-4515-4677-9a0f-42e481fc331c",
+          "formula": null,
+          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
           "formulaName": null,
-          "start": 8,
+          "start": 4,
+          "duration": 3
+        },
+        {
+          "id": "c65a762b-57cc-4ea4-b80c-979545ace92c",
+          "formula": null,
+          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
+          "formulaName": null,
+          "start": 4,
+          "duration": 3
+        },
+        {
+          "id": "4941ee8c-5065-4af8-9339-53a5424957c0",
+          "formula": "t >> 3",
+          "formulaId": null,
+          "formulaName": "Kick",
+          "start": 7,
           "duration": 1
         },
         {
-          "id": "46417796-af0f-430f-a521-89190099a85e",
+          "id": "091f1df8-a38d-49fb-a9af-bd00238279f9",
           "formula": null,
           "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
           "formulaName": null,
-          "start": 9,
+          "start": 8,
           "duration": 3
         },
         {
-          "id": "213beab9-cdba-4c43-99e6-b9c9c59ebe12",
+          "id": "e06be694-46c5-43c7-9797-5e0b750e7010",
+          "formula": null,
+          "formulaId": "02ce47ed-7e13-4c54-8c88-f1a3d44562a5",
+          "formulaName": null,
+          "start": 11,
+          "duration": 1
+        },
+        {
+          "id": "885bf4e4-fbb5-4fd4-b6db-52f6aa8b49cc",
           "formula": null,
           "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
           "formulaName": null,
-          "start": 13,
+          "start": 12,
+          "duration": 2
+        },
+        {
+          "id": "aee16381-bf52-439f-b7ca-1b30b268258d",
+          "formula": null,
+          "formulaId": "02ce47ed-7e13-4c54-8c88-f1a3d44562a5",
+          "formulaName": null,
+          "start": 14,
+          "duration": 2
+        },
+        {
+          "id": "efc28358-7e73-4a14-a51e-a7899feada15",
+          "formula": null,
+          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
+          "formulaName": null,
+          "start": 16,
+          "duration": 6
+        },
+        {
+          "id": "dd157504-70ad-4af8-bd3c-88da78855077",
+          "formula": null,
+          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
+          "formulaName": null,
+          "start": 23,
           "duration": 3
         },
         {
-          "id": "8c114e7f-2308-469a-9fd3-b14ade0a4373",
+          "id": "55e0892a-4f32-4bef-92b5-5dc2bd1b5fbc",
           "formula": null,
           "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
           "formulaName": null,
-          "start": 17,
-          "duration": 10
+          "start": 27,
+          "duration": 3
+        },
+        {
+          "id": "296d616b-a961-4608-b1e1-c3471d848735",
+          "formula": null,
+          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
+          "formulaName": null,
+          "start": 31,
+          "duration": 3
+        },
+        {
+          "id": "bc2c7dab-4979-4c74-bac9-baa7c75d6715",
+          "formula": null,
+          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
+          "formulaName": null,
+          "start": 35,
+          "duration": 3
+        },
+        {
+          "id": "27a90285-87a6-4006-a606-085862289a43",
+          "formula": null,
+          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
+          "formulaName": null,
+          "start": 39,
+          "duration": 26
         }
       ]
     },
@@ -69,6 +174,7 @@
       "id": "81e56bb6-5ca7-4e4e-a7f7-b43df392c202",
       "color": "#3b82f6",
       "muted": false,
+      "soloed": false,
       "unionOperator": "|",
       "clips": [
         {
@@ -76,16 +182,8 @@
           "formula": null,
           "formulaId": "5ffcef45-ac88-4271-86a3-98419c24153e",
           "formulaName": null,
-          "start": 5,
-          "duration": 8
-        },
-        {
-          "id": "2a0ebaf7-ebc5-4baf-9989-f3c31a6579cc",
-          "formula": null,
-          "formulaId": "5ffcef45-ac88-4271-86a3-98419c24153e",
-          "formulaName": null,
-          "start": 13,
-          "duration": 14
+          "start": 16,
+          "duration": 42
         }
       ]
     },
@@ -93,15 +191,16 @@
       "id": "ae16605a-98dc-4e4d-87af-e28edae9092c",
       "color": "#06b6d4",
       "muted": false,
+      "soloed": false,
       "unionOperator": "|",
       "clips": [
         {
           "id": "952426ec-b05b-440f-8b18-a45a9ea98c0a",
-          "formula": "t & 32",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 8,
-          "duration": 19
+          "formula": null,
+          "formulaId": "a0498f48-de82-417f-b0ff-e8949c58d9c0",
+          "formulaName": null,
+          "start": 20,
+          "duration": 38
         }
       ]
     },
@@ -109,23 +208,16 @@
       "id": "6370c3e7-5cb2-40bf-8843-91b1ffbaedbe",
       "color": "#10b981",
       "muted": false,
-      "unionOperator": "|",
+      "soloed": false,
+      "unionOperator": "&",
       "clips": [
-        {
-          "id": "d8109533-98eb-4592-b828-0cfa5441fa21",
-          "formula": "t & 16",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 10,
-          "duration": 3
-        },
         {
           "id": "72a78288-6fdb-4da2-8d2a-260ac9455ffb",
           "formula": "(t>>4|t>>3|t*3) & 64 *.999",
           "formulaId": null,
           "formulaName": "",
-          "start": 14.75,
-          "duration": 7.25
+          "start": 24,
+          "duration": 34
         }
       ]
     },
@@ -133,23 +225,24 @@
       "id": "7b5c2260-c582-4ed3-9ea8-20e42f2c5b1b",
       "color": "#eab308",
       "muted": false,
+      "soloed": false,
       "unionOperator": "|",
       "clips": [
         {
-          "id": "f26e75e1-5a1c-47d9-9ef2-e1f685ba62af",
-          "formula": "t & 8",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 11,
-          "duration": 5
+          "id": "d80d9e00-c850-4a68-ba8c-e99c46be9648",
+          "formula": null,
+          "formulaId": "983a46da-5748-428a-8c8b-00e165e09e3a",
+          "formulaName": null,
+          "start": 31,
+          "duration": 4
         },
         {
-          "id": "d80d9e00-c850-4a68-ba8c-e99c46be9648",
-          "formula": "t & 0x256 ? t >> 4 : t >> 10",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 16,
-          "duration": 11
+          "id": "2636f3ea-f89f-44d2-aa2f-606bb76cc32f",
+          "formula": null,
+          "formulaId": "983a46da-5748-428a-8c8b-00e165e09e3a",
+          "formulaName": null,
+          "start": 42,
+          "duration": 16
         }
       ]
     },
@@ -157,21 +250,81 @@
       "id": "296bb249-c817-4f9e-bffe-d8a7b47708e1",
       "color": "#f97316",
       "muted": false,
+      "soloed": false,
       "unionOperator": "|",
-      "clips": []
+      "clips": [
+        {
+          "id": "223f743f-b230-4486-bc05-c8e7b98633e8",
+          "formula": null,
+          "formulaId": "dc30d968-7497-49f9-b79e-d3608279eddf",
+          "formulaName": null,
+          "start": 7,
+          "duration": 0.25
+        },
+        {
+          "id": "34c1f3f0-fdc2-40ea-9d7f-2c399002929d",
+          "formula": null,
+          "formulaId": "dc30d968-7497-49f9-b79e-d3608279eddf",
+          "formulaName": null,
+          "start": 8,
+          "duration": 0.25
+        },
+        {
+          "id": "968e7ccf-5b25-49cc-ade2-77bdcb4043ab",
+          "formula": null,
+          "formulaId": "dc30d968-7497-49f9-b79e-d3608279eddf",
+          "formulaName": null,
+          "start": 15,
+          "duration": 0.25
+        },
+        {
+          "id": "25b71b4e-194a-4efd-bdae-7d30f1ba5f27",
+          "formula": null,
+          "formulaId": "dc30d968-7497-49f9-b79e-d3608279eddf",
+          "formulaName": null,
+          "start": 16,
+          "duration": 0.25
+        },
+        {
+          "id": "16363daf-cdc7-4908-9ac2-f7b2ac3e042f",
+          "formula": null,
+          "formulaId": "dc30d968-7497-49f9-b79e-d3608279eddf",
+          "formulaName": null,
+          "start": 23,
+          "duration": 0.25
+        },
+        {
+          "id": "3165bd49-d93f-4b21-8145-f0c2b33285fa",
+          "formula": null,
+          "formulaId": "dc30d968-7497-49f9-b79e-d3608279eddf",
+          "formulaName": null,
+          "start": 24,
+          "duration": 0.25
+        }
+      ]
     },
     {
       "id": "0e41c022-88bc-463d-b83b-4b9cc0286796",
       "color": "#ef4444",
       "muted": false,
+      "soloed": false,
       "unionOperator": "|",
-      "clips": []
+      "clips": [
+        {
+          "id": "fbd82c71-b55a-42d5-a450-e1733ca9adc5",
+          "formula": "(t * t) >> 5 & 63",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 58,
+          "duration": 7
+        }
+      ]
     }
   ],
   "formulas": [
     {
       "id": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
-      "name": "Kick",
+      "name": "Kick 4",
       "code": "t >> 4"
     },
     {
@@ -180,14 +333,29 @@
       "code": "t & 64"
     },
     {
-      "id": "71973991-13a5-49c3-9bf4-116d24a199b6",
+      "id": "983a46da-5748-428a-8c8b-00e165e09e3a",
       "name": "",
-      "code": ""
+      "code": "t & 0x256 ? t >> 4 : t >> 10"
+    },
+    {
+      "id": "02ce47ed-7e13-4c54-8c88-f1a3d44562a5",
+      "name": "Kick 3",
+      "code": "t >> 3"
+    },
+    {
+      "id": "a0498f48-de82-417f-b0ff-e8949c58d9c0",
+      "name": "",
+      "code": "t & 32"
+    },
+    {
+      "id": "dc30d968-7497-49f9-b79e-d3608279eddf",
+      "name": "pow",
+      "code": "t * t"
     }
   ],
-  "zoom": 1.15,
-  "loopStart": 17,
-  "loopEnd": 27,
+  "zoom": 0.5227272668160685,
+  "loopStart": 42,
+  "loopEnd": 65,
   "loopEnabled": true,
   "audioEffects": [
     {
@@ -196,7 +364,7 @@
       "enabled": true,
       "expanded": true,
       "params": {
-        "bass": 5,
+        "bass": 7,
         "mid": 0,
         "treble": -5
       }
@@ -206,10 +374,22 @@
     {
       "id": "fx1",
       "type": "stereoOffset",
-      "enabled": false,
+      "enabled": true,
       "expanded": true,
       "params": {
         "offset": 128
+      }
+    },
+    {
+      "id": "fx5",
+      "type": "tReplacement",
+      "enabled": true,
+      "expanded": true,
+      "params": {
+        "stereo": false,
+        "expression": "t + t % 5",
+        "leftExpression": "t",
+        "rightExpression": "t"
       }
     }
   ],
