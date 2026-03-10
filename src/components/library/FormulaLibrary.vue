@@ -1,9 +1,43 @@
 <template>
-  <Panel class="flex min-h-[320px] flex-col">
-    <div class="mb-4 flex items-start justify-between gap-4">
-      <div>
+  <Panel
+    v-if="collapsed"
+    class="flex min-h-[320px] w-[56px] max-w-[56px] min-w-[56px] flex-col items-center gap-2 py-2"
+    padding="none"
+  >
+    <IconButton
+      :icon="ChevronRight"
+      label="Expand Library"
+      size="sm"
+      @click="emit('toggle-collapse')"
+    />
+
+    <div class="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 text-zinc-500">
+      <BookOpen class="h-4 w-4" />
+      <span
+        class="text-[10px] uppercase tracking-[0.3em]"
+        style="writing-mode: vertical-rl; transform: rotate(180deg);"
+      >
+        Library
+      </span>
+      <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-600">{{ formulas.length }}</span>
+    </div>
+  </Panel>
+
+  <Panel v-else class="flex min-h-[320px] flex-col">
+    <div class="mb-4 flex items-center gap-3">
+      <IconButton
+        :icon="ChevronLeft"
+        class="border-transparent bg-transparent text-zinc-500 hover:border-transparent hover:bg-transparent hover:text-zinc-200"
+        label="Collapse Library"
+        size="sm"
+        @click="emit('toggle-collapse')"
+      />
+
+      <div class="min-w-0">
         <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">Library</p>
       </div>
+
+      <div class="min-w-0 flex-1" />
 
       <Button class="shrink-0" type="button" variant="ghost" @click="handleNewFormula">
         + New Formula
@@ -71,12 +105,22 @@
 
 <script setup>
 import { storeToRefs } from 'pinia'
-import { GripVertical, Pencil, Trash2 } from 'lucide-vue-next'
+import { BookOpen, ChevronLeft, ChevronRight, GripVertical, Pencil, Trash2 } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
+import IconButton from '@/components/ui/IconButton.vue'
 import Panel from '@/components/ui/Panel.vue'
 import { getFormulaDisplayName } from '@/services/formulaService'
 import { useDawStore } from '@/stores/dawStore'
 import { ticksToPixels } from '@/utils/timeUtils'
+
+defineProps({
+  collapsed: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const emit = defineEmits(['toggle-collapse'])
 
 const dawStore = useDawStore()
 const { formulas, pixelsPerTick, selectedFormulaId } = storeToRefs(dawStore)

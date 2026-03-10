@@ -1,9 +1,40 @@
 <template>
-  <Panel class="flex min-h-0 flex-col overflow-hidden">
+  <Panel
+    v-if="collapsed"
+    class="flex min-h-0 w-[56px] max-w-[56px] min-w-[56px] flex-col items-center gap-2 overflow-hidden py-2"
+    padding="none"
+  >
+    <IconButton
+      :icon="ChevronLeft"
+      label="Expand Effects"
+      size="sm"
+      @click="emit('toggle-collapse')"
+    />
+
+    <div class="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 text-zinc-500">
+      <SlidersHorizontal class="h-4 w-4" />
+      <span
+        class="text-[10px] uppercase tracking-[0.3em]"
+        style="writing-mode: vertical-rl; transform: rotate(180deg);"
+      >
+        Effects
+      </span>
+      <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-600">{{ totalEffects }}</span>
+    </div>
+  </Panel>
+
+  <Panel v-else class="flex min-h-0 flex-col overflow-hidden">
     <div class="flex items-start justify-between gap-4">
       <div>
         <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">Effects</p>
       </div>
+
+      <IconButton
+        :icon="ChevronRight"
+        label="Collapse Effects"
+        size="sm"
+        @click="emit('toggle-collapse')"
+      />
     </div>
 
     <div class="mt-4 flex min-h-0 flex-1 flex-col">
@@ -144,8 +175,9 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import { ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-vue-next'
 import AudioBitCrusherItem from '@/components/effects/AudioBitCrusherItem.vue'
 import AudioDelayItem from '@/components/effects/AudioDelayItem.vue'
 import AudioEqItem from '@/components/effects/AudioEqItem.vue'
@@ -153,8 +185,18 @@ import AudioMasterGainItem from '@/components/effects/AudioMasterGainItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
 import Divider from '@/components/ui/Divider.vue'
+import IconButton from '@/components/ui/IconButton.vue'
 import Panel from '@/components/ui/Panel.vue'
 import { useDawStore } from '@/stores/dawStore'
+
+defineProps({
+  collapsed: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const emit = defineEmits(['toggle-collapse'])
 
 const dawStore = useDawStore()
 const { audioEffects, evalEffects, masterGain } = storeToRefs(dawStore)
@@ -192,6 +234,7 @@ const availableAudioEffects = [
     type: 'eq'
   }
 ]
+const totalEffects = computed(() => audioEffects.value.length + evalEffects.value.length)
 
 function getEffectsBySection(section) {
   return section === 'formula' ? evalEffects.value : audioEffects.value

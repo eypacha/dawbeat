@@ -5,10 +5,10 @@
     <div class="flex h-full w-full flex-col gap-4 overflow-hidden p-4">
       <Toolbar />
 
-      <main class="grid min-h-0 flex-1 gap-4 overflow-hidden lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)_304px]">
-        <FormulaLibrary />
+      <main class="app-main-layout min-h-0 flex-1 gap-4 overflow-hidden" :style="mainLayoutStyle">
+        <FormulaLibrary :collapsed="libraryCollapsed" @toggle-collapse="toggleLibraryCollapsed" />
         <Timeline />
-        <EffectsPanel />
+        <EffectsPanel :collapsed="effectsCollapsed" @toggle-collapse="toggleEffectsCollapsed" />
       </main>
     </div>
 
@@ -71,7 +71,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, onBeforeUnmount, onMounted } from 'vue'
+import { computed, reactive, ref, onBeforeUnmount, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import StartScreen from '@/components/boot/StartScreen.vue'
 import EffectsPanel from '@/components/effects/EffectsPanel.vue'
@@ -107,6 +107,8 @@ const renameDialog = reactive({
 let disposeKeyboardShortcuts = null
 const transportPlayback = useTransportPlayback()
 const { enableAudio, stop } = transportPlayback
+const effectsCollapsed = ref(false)
+const libraryCollapsed = ref(false)
 const { audioReady, editingClipId, editingFormulaId, formulas, selectedClipId, selectedClipIds, tracks } = storeToRefs(dawStore)
 
 const editingClipFormula = computed(() => {
@@ -176,9 +178,21 @@ const editingFormulaName = computed(() => {
 const formulaDialogTitle = computed(() =>
   editingClipId.value ? 'Edit Clip Formula' : 'Edit Library Formula'
 )
+const mainLayoutStyle = computed(() => ({
+  '--effects-width': effectsCollapsed.value ? '56px' : '304px',
+  '--library-width': libraryCollapsed.value ? '56px' : '320px'
+}))
 
 async function handleStart() {
   await enableAudio()
+}
+
+function toggleLibraryCollapsed() {
+  libraryCollapsed.value = !libraryCollapsed.value
+}
+
+function toggleEffectsCollapsed() {
+  effectsCollapsed.value = !effectsCollapsed.value
 }
 
 function handleKeydown(event) {
@@ -395,3 +409,23 @@ onBeforeUnmount(() => {
   void stop()
 })
 </script>
+
+<style>
+.app-main-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  transition: grid-template-columns 220ms ease;
+}
+
+@media (min-width: 1024px) {
+  .app-main-layout {
+    grid-template-columns: var(--library-width, 320px) minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .app-main-layout {
+    grid-template-columns: var(--library-width, 320px) minmax(0, 1fr) var(--effects-width, 304px);
+  }
+}
+</style>
