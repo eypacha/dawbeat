@@ -15,8 +15,16 @@ body {
 
 body {
   min-width: 320px;
+  user-select: none;
 }
 
 #app {
   min-height: 100vh;
+}
+
+input,
+textarea,
+[contenteditable="true"],
+[contenteditable="plaintext-only"] {
+  user-select: text;
 }
