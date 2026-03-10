@@ -30,7 +30,8 @@ import {
 } from '@/services/audioEffectService'
 import { createStereoOffsetEvalEffect } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
-import { loadProject } from '@/services/projectPersistence'
+import demoProject from '@/data/demo.json'
+import { loadProject, normalizeProject } from '@/services/projectPersistence'
 import {
   BASE_PIXELS_PER_TICK,
   BASE_TICK_SIZE,
@@ -42,22 +43,18 @@ import {
   snapTicks
 } from '@/utils/timeUtils'
 import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
-import { TRACK_COLOR_PALETTE, getTrackColor } from '@/utils/colorUtils'
+import { getTrackColor } from '@/utils/colorUtils'
 
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
 
 function createDefaultProject() {
+  return normalizeProject(demoProject) ?? createEmptyProject()
+}
+
+function createEmptyProject() {
   return {
-    audioEffects: [
-      createDelayAudioEffect({
-        id: 'fx-audio-delay'
-      })
-    ],
-    evalEffects: [
-      createStereoOffsetEvalEffect({
-        id: 'fx1'
-      })
-    ],
+    audioEffects: [],
+    evalEffects: [],
     formulas: [],
     loopEnabled: false,
     loopStart: 0,
@@ -65,56 +62,7 @@ function createDefaultProject() {
     masterGain: 1,
     sampleRate: DEFAULT_SAMPLE_RATE,
     tickSize: BASE_TICK_SIZE,
-    tracks: [
-      {
-        id: 'f2a8b8d6-6b53-4c4c-81df-5f6d9d85a101',
-        color: TRACK_COLOR_PALETTE[0],
-        muted: false,
-        name: undefined,
-        clips: [
-          {
-            id: 'clip0',
-            formula: 't & 64 | t >> 4',
-            formulaId: null,
-            formulaName: null,
-            start: 0,
-            duration: 4
-          },
-          {
-            id: 'clip1',
-            formula: 't & 32 | t >> 4',
-            formulaId: null,
-            formulaName: null,
-            start: 4,
-            duration: 4
-          },
-          {
-            id: 'clip2',
-            formula: 't>>4',
-            formulaId: null,
-            formulaName: null,
-            start: 8,
-            duration: 4
-          }
-        ]
-      },
-      {
-        id: '81e56bb6-5ca7-4e4e-a7f7-b43df392c202',
-        color: TRACK_COLOR_PALETTE[1],
-        muted: false,
-        name: undefined,
-        clips: [
-          {
-            id: 'clip3',
-            formula: 't*(t>>8) & 64 % 128',
-            formulaId: null,
-            formulaName: null,
-            start: 8,
-            duration: 20
-          }
-        ]
-      }
-    ],
+    tracks: [],
     zoom: 1
   }
 }
@@ -350,6 +298,10 @@ export const useDawStore = defineStore('dawStore', {
       this.applyProject(createDefaultProject())
     },
 
+    resetToEmptyProject() {
+      this.applyProject(createEmptyProject())
+    },
+
     adjustZoom(delta) {
       this.setZoom(this.zoom + delta * -0.001)
     },
@@ -515,6 +467,16 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       track.muted = !track.muted
+    },
+
+    toggleTrackSoloed(trackId) {
+      const track = findTrack(this.tracks, trackId)
+
+      if (!track) {
+        return
+      }
+
+      track.soloed = !track.soloed
     },
 
     addClip(trackId, clip) {

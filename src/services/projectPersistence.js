@@ -70,10 +70,14 @@ export function clearProjectStorage() {
 export function parseProjectJson(rawProject) {
   try {
     const project = JSON.parse(rawProject)
-    return normalizeProjectPayload(project)
+    return normalizeProject(project)
   } catch {
     return null
   }
+}
+
+export function normalizeProject(project) {
+  return normalizeProjectPayload(project)
 }
 
 export async function importProjectFile(file) {
@@ -189,6 +193,7 @@ function normalizeTrack(track, formulaIds) {
     id: typeof track.id === 'string' && track.id ? track.id : createTrackId(),
     color: typeof track.color === 'string' ? getTrackColor(track.color) : DEFAULT_TRACK_COLOR,
     muted: Boolean(track.muted),
+    soloed: Boolean(track.soloed),
     name: typeof track.name === 'string' && track.name.trim() ? track.name.trim() : undefined,
     clips: Array.isArray(track.clips)
       ? track.clips.map((clip) => normalizeClip(clip, formulaIds)).filter(Boolean)

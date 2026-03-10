@@ -1,10 +1,11 @@
 import { resolveClipFormula } from '@/services/formulaService'
+import { isTrackAudible } from '@/services/trackPlaybackState'
 
 export function getActiveFormula(timeTicks, tracks, formulas) {
   const activeFormulas = []
 
   for (const track of tracks) {
-    if (track.muted) {
+    if (!isTrackAudible(track, tracks)) {
       continue
     }
 

@@ -14,7 +14,7 @@
       </button>
     </div>
 
-    <div class="h-[60px] shrink-0" :style="{ width: timelineWidth }" />
+    <div class="h-20 shrink-0" :style="{ width: timelineWidth }" />
   </div>
 </template>
 

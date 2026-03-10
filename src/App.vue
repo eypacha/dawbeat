@@ -31,6 +31,7 @@
     </ContextMenu>
 
     <ConfirmDialog
+      confirm-label="Delete Track"
       :message="confirmDialog.message"
       :visible="confirmDialog.visible"
       title="Delete Track"

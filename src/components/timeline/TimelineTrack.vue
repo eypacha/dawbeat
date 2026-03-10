@@ -6,34 +6,40 @@
     @click="dawStore.selectTrack(track.id)"
   >
     <div
-      class="sticky left-0 z-10 flex shrink-0 flex-col justify-center border-r border-zinc-800 px-4 py-4"
+      class="sticky left-0 z-10 flex shrink-0 flex-col justify-center border-r border-zinc-800 px-4 py-0"
       :class="track.id === selectedTrackId ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-900 text-zinc-300'"
       :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
       @contextmenu="handleContextMenu"
     >
-      <div class="flex items-center justify-between gap-3">
-        <span class="text-sm transition-opacity" :class="isMuted ? 'opacity-55' : ''">
+      <div class="min-w-0">
+        <span class="block truncate text-sm transition-opacity" :class="isAudible ? '' : 'opacity-55'">
           {{ displayTrackName }}
         </span>
+      </div>
 
+      <div class="mt-2 flex items-center gap-1.5">
         <button
-          class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors"
+          class="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-md border px-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors"
           :class="muteButtonClassName"
           :title="isMuted ? 'Unmute track' : 'Mute track'"
           :aria-pressed="isMuted"
           type="button"
           @click.stop="handleToggleMuted"
         >
-          <span
-            class="h-2 w-2 rounded-full transition-opacity"
-            :class="isMuted ? 'bg-transparent opacity-0' : 'bg-current opacity-100'"
-          />
+          M
+        </button>
+
+        <button
+          class="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-md border px-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors"
+          :class="soloButtonClassName"
+          :title="isSoloed ? 'Disable solo' : 'Solo track'"
+          :aria-pressed="isSoloed"
+          type="button"
+          @click.stop="handleToggleSoloed"
+        >
+          S
         </button>
       </div>
-
-      <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500 transition-opacity" :class="isMuted ? 'opacity-50' : ''">
-        {{ track.clips.length }} clips
-      </span>
     </div>
 
     <div
@@ -72,6 +78,7 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
+import { isTrackAudible } from '@/services/trackPlaybackState'
 import TimelineClip from '@/components/timeline/TimelineClip.vue'
 import TimelineClipPreview from '@/components/timeline/TimelineClipPreview.vue'
 import { buildCreatedClip, clampClipPlacementStart, getTrackCreateBounds } from '@/services/timelineService'
@@ -104,7 +111,7 @@ const props = defineProps({
 
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
-const { clipDragPreview, pixelsPerTick, selectedTrackId } = storeToRefs(dawStore)
+const { clipDragPreview, pixelsPerTick, selectedTrackId, tracks } = storeToRefs(dawStore)
 const laneElement = ref(null)
 const creationPreview = ref(null)
 const isFormulaDropTarget = ref(false)
@@ -125,7 +132,7 @@ const laneClassName = computed(() => {
     return 'opacity-100 ring-1 ring-inset ring-[var(--track-color-light)]'
   }
 
-  return isMuted.value ? 'opacity-35' : 'opacity-100'
+  return isAudible.value ? 'opacity-100' : 'opacity-35'
 })
 
 const dragPreview = computed(() => {
@@ -145,6 +152,8 @@ const displayTrackName = computed(() => {
 })
 
 const isMuted = computed(() => Boolean(props.track.muted))
+const isSoloed = computed(() => Boolean(props.track.soloed))
+const isAudible = computed(() => isTrackAudible(props.track, tracks.value))
 
 const trackColor = computed(() => getTrackColor(props.track.color))
 
@@ -156,10 +165,18 @@ const trackColorStyle = computed(() => ({
 
 const muteButtonClassName = computed(() => {
   if (isMuted.value) {
-    return 'border-zinc-600 text-zinc-500 hover:border-zinc-500 hover:text-zinc-300'
+    return 'border-rose-500 bg-rose-500 text-white hover:border-rose-400 hover:bg-rose-400'
   }
 
-  return 'border-[var(--track-color-border)] bg-[color:color-mix(in_srgb,var(--track-color)_16%,transparent)] text-[var(--track-color-light)] hover:border-[var(--track-color-light)]'
+  return 'border-zinc-700 bg-zinc-900/70 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200'
+})
+
+const soloButtonClassName = computed(() => {
+  if (isSoloed.value) {
+    return 'border-[var(--track-color)] bg-[var(--track-color)] text-white hover:border-[var(--track-color-light)] hover:bg-[var(--track-color-light)]'
+  }
+
+  return 'border-zinc-700 bg-zinc-900/70 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200'
 })
 
 function handleContextMenu(event) {
@@ -197,6 +214,10 @@ function handleContextMenu(event) {
 
 function handleToggleMuted() {
   dawStore.toggleTrackMuted(props.track.id)
+}
+
+function handleToggleSoloed() {
+  dawStore.toggleTrackSoloed(props.track.id)
 }
 
 function handleLanePointerDown(event) {

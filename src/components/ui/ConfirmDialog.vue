@@ -5,7 +5,7 @@
     <template #footer>
       <div class="flex justify-end gap-2">
         <Button variant="ghost" @click="emit('cancel')">Cancel</Button>
-        <Button variant="danger" @click="emit('confirm')">Delete Track</Button>
+        <Button variant="danger" @click="emit('confirm')">{{ confirmLabel }}</Button>
       </div>
     </template>
   </Modal>
@@ -21,6 +21,10 @@ const props = defineProps({
     required: true
   },
   title: {
+    type: String,
+    default: 'Confirm'
+  },
+  confirmLabel: {
     type: String,
     default: 'Confirm'
   },

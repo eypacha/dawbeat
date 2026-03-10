@@ -21,6 +21,7 @@ export function createTrack() {
     id: createTrackId(),
     color: DEFAULT_TRACK_COLOR,
     muted: false,
+    soloed: false,
     name: undefined,
     clips: []
   }

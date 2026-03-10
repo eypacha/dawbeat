@@ -57,6 +57,13 @@
 
         <Divider />
         <IconButton
+          :icon="FilePlus"
+          label="New Project"
+          size="sm"
+          @click="newProjectConfirmVisible = true"
+        />
+
+        <IconButton
           :icon="FolderOpen"
           label="Open JSON"
           size="sm"
@@ -97,6 +104,15 @@
       @change="handleProjectFileChange"
     >
 
+    <ConfirmDialog
+      confirm-label="Create New"
+      :message="'Current project changes will be replaced. Start a new empty project?'"
+      title="New Project"
+      :visible="newProjectConfirmVisible"
+      @cancel="newProjectConfirmVisible = false"
+      @confirm="handleNewProjectConfirm"
+    />
+
     <SettingsModal :visible="settingsVisible" @close="settingsVisible = false" />
   </Panel>
 </template>
@@ -104,12 +120,13 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Download, FolderOpen, Pause, Play, Repeat, Settings2, Square } from 'lucide-vue-next'
+import { Download, FilePlus, FolderOpen, Pause, Play, Repeat, Settings2, Square } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
 import { downloadProjectWav } from '@/services/exportService'
 import { downloadProjectFile, importProjectFile } from '@/services/projectPersistence'
 import { enqueueSnackbar } from '@/services/notifications'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import Divider from '@/components/ui/Divider.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import Panel from '@/components/ui/Panel.vue'
@@ -123,6 +140,7 @@ const projectFileInput = ref(null)
 const sampleRateDraft = ref(String(sampleRate.value))
 const settingsVisible = ref(false)
 const exportingWav = ref(false)
+const newProjectConfirmVisible = ref(false)
 
 const transportTime = computed(() => `${time.value.toFixed(2)} ticks`)
 
@@ -145,6 +163,12 @@ function resetSampleRateDraft() {
 
 function handleProjectDownload() {
   downloadProjectFile(dawStore.$state)
+}
+
+async function handleNewProjectConfirm() {
+  await stop()
+  dawStore.resetToEmptyProject()
+  newProjectConfirmVisible.value = false
 }
 
 async function handleWavExport() {
