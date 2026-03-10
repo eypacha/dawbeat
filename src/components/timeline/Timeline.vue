@@ -20,10 +20,6 @@
         </div>
 
         <div class="relative h-11 shrink-0" :style="{ width: timelineWidthStyle }">
-          <span class="absolute right-3 top-2 text-[10px] uppercase tracking-[0.3em] text-zinc-600">
-            Ticks
-          </span>
-
           <TimelineLoopRegion
             :loop-enabled="loopEnabled"
             :loop-start="loopStart"

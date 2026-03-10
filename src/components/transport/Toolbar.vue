@@ -172,7 +172,7 @@ const settingsVisible = ref(false)
 const exportingWav = ref(false)
 const newProjectConfirmVisible = ref(false)
 
-const transportTime = computed(() => `${time.value.toFixed(2)} ticks`)
+const transportTime = computed(() => time.value.toFixed(2))
 
 watch(sampleRate, (nextSampleRate) => {
   sampleRateDraft.value = String(nextSampleRate)
