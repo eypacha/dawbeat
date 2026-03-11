@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { usePointerEdgeAutoScroll } from '@/composables/usePointerEdgeAutoScroll'
 import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { clampClipPlacementStart } from '@/services/timelineService'
 
@@ -27,13 +28,18 @@ export function useTimelineClipInteraction({
   let dragClipId = clip.id
   let dragSelectedClipIds = [clip.id]
   let dragSourceTrackId = trackId
+  let interactionScrollContainer = null
+  let interactionStartScrollLeft = 0
   let duplicateDragActivated = false
   let hasActiveHistoryTransaction = false
   let resizeStartTick = 0
   let resizeEndTick = 0
+  const { startAutoScroll, stopAutoScroll, updateAutoScroll } = usePointerEdgeAutoScroll({
+    onScroll: syncInteractionFromPointerState
+  })
 
   function handlePointerDown(event) {
-    if (!startInteraction(event)) {
+    if (!startInteraction(event, { horizontal: true, vertical: true })) {
       return
     }
 
@@ -66,7 +72,7 @@ export function useTimelineClipInteraction({
   }
 
   function handleResizeStartPointerDown(event) {
-    if (!startInteraction(event)) {
+    if (!startInteraction(event, { horizontal: true, vertical: false })) {
       return
     }
 
@@ -78,7 +84,7 @@ export function useTimelineClipInteraction({
   }
 
   function handleResizeEndPointerDown(event) {
-    if (!startInteraction(event)) {
+    if (!startInteraction(event, { horizontal: true, vertical: false })) {
       return
     }
 
@@ -88,7 +94,7 @@ export function useTimelineClipInteraction({
     beginHistoryTransaction('resize-clip-end')
   }
 
-  function startInteraction(event) {
+  function startInteraction(event, autoScrollAxes) {
     if (event.button !== 0 || editingClipId.value) {
       return false
     }
@@ -96,10 +102,13 @@ export function useTimelineClipInteraction({
     event.preventDefault()
     dragStartX = event.clientX
     dragStartY = event.clientY
+    interactionScrollContainer = getInteractionScrollContainer(event)
+    interactionStartScrollLeft = interactionScrollContainer?.scrollLeft ?? 0
 
     window.addEventListener('pointermove', handlePointerMove)
     window.addEventListener('pointerup', handlePointerUp)
     window.addEventListener('pointercancel', handlePointerCancel)
+    startAutoScroll(event, interactionScrollContainer, autoScrollAxes)
 
     return true
   }
@@ -109,47 +118,8 @@ export function useTimelineClipInteraction({
       return
     }
 
-    const dragDistance = Math.hypot(event.clientX - dragStartX, event.clientY - dragStartY)
-    const deltaTicks = (event.clientX - dragStartX) / pixelsPerTick.value
-    const shouldSnap = shouldSnapFromPointerEvent(event)
-
-    if (isDragging.value) {
-      if (duplicateDrag.value && !duplicateDragActivated) {
-        if (dragDistance <= DUPLICATE_DRAG_THRESHOLD_PX) {
-          return
-        }
-
-        duplicateDragActivated = true
-      }
-
-      dragDesiredStart = getDraggedTick(dragStartTick + deltaTicks, shouldSnap)
-      dragTargetTrackId = dragSelectedClipIds.length > 1 ? dragSourceTrackId : getDragTargetTrackId(event)
-
-      if (dragSelectedClipIds.length > 1) {
-        if (!duplicateDrag.value) {
-          dawStore.moveSelectedClips(dragClipId, dragDesiredStart, shouldSnap)
-        }
-
-        dawStore.clearClipDragPreview()
-        return
-      }
-
-      if (duplicateDrag.value) {
-        syncDragPreview(shouldSnap)
-        return
-      }
-
-      syncSourceClipPosition(shouldSnap)
-      syncDragPreview(shouldSnap)
-      return
-    }
-
-    if (resizeMode.value === 'start') {
-      dawStore.resizeClipStart(trackId, clip.id, resizeStartTick + deltaTicks, shouldSnap)
-      return
-    }
-
-    dawStore.resizeClipEnd(trackId, clip.id, resizeEndTick + deltaTicks, shouldSnap)
+    syncInteractionFromPointerState(event)
+    updateAutoScroll(event)
   }
 
   function handlePointerUp(event) {
@@ -254,8 +224,77 @@ export function useTimelineClipInteraction({
     dragDesiredStart = clip.start
     dragStartTick = clip.start
     dragTargetTrackId = trackId
+    interactionScrollContainer = null
+    interactionStartScrollLeft = 0
     hasActiveHistoryTransaction = false
+    stopAutoScroll()
     removeInteractionListeners()
+  }
+
+  function syncInteractionFromPointerState(pointerState) {
+    if (!isDragging.value && !resizeMode.value) {
+      return
+    }
+
+    const deltaX = getHorizontalPointerDelta(pointerState.clientX)
+    const dragDistance = Math.hypot(deltaX, pointerState.clientY - dragStartY)
+    const deltaTicks = deltaX / pixelsPerTick.value
+    const shouldSnap = shouldSnapFromPointerState(pointerState)
+
+    if (isDragging.value) {
+      if (duplicateDrag.value && !duplicateDragActivated) {
+        if (dragDistance <= DUPLICATE_DRAG_THRESHOLD_PX) {
+          return
+        }
+
+        duplicateDragActivated = true
+      }
+
+      dragDesiredStart = getDraggedTick(dragStartTick + deltaTicks, shouldSnap)
+      dragTargetTrackId =
+        dragSelectedClipIds.length > 1 ? dragSourceTrackId : getDragTargetTrackId(pointerState)
+
+      if (dragSelectedClipIds.length > 1) {
+        if (!duplicateDrag.value) {
+          dawStore.moveSelectedClips(dragClipId, dragDesiredStart, shouldSnap)
+        }
+
+        dawStore.clearClipDragPreview()
+        return
+      }
+
+      if (duplicateDrag.value) {
+        syncDragPreview(shouldSnap)
+        return
+      }
+
+      syncSourceClipPosition(shouldSnap)
+      syncDragPreview(shouldSnap)
+      return
+    }
+
+    if (resizeMode.value === 'start') {
+      dawStore.resizeClipStart(trackId, clip.id, resizeStartTick + deltaTicks, shouldSnap)
+      return
+    }
+
+    dawStore.resizeClipEnd(trackId, clip.id, resizeEndTick + deltaTicks, shouldSnap)
+  }
+
+  function getHorizontalPointerDelta(clientX) {
+    const scrollLeft = interactionScrollContainer?.scrollLeft ?? interactionStartScrollLeft
+    return clientX - dragStartX + (scrollLeft - interactionStartScrollLeft)
+  }
+
+  function getInteractionScrollContainer(event) {
+    const target = event.target instanceof Element ? event.target : null
+    const scrollContainer = target?.closest('[data-timeline-scroll-container="true"]')
+
+    return scrollContainer instanceof HTMLElement ? scrollContainer : null
+  }
+
+  function shouldSnapFromPointerState(pointerState) {
+    return pointerState.shiftKey !== true
   }
 
   function getDragTargetTrackId(event) {

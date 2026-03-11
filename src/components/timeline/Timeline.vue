@@ -9,6 +9,7 @@
     <div
       ref="scrollContainer"
       class="flex-1 overflow-auto border border-zinc-800 bg-zinc-950/80"
+      data-timeline-scroll-container="true"
       @wheel="handleWheel"
     >
       <div class="sticky top-0 z-20 flex min-w-full w-max border-b border-zinc-800 bg-zinc-900/95">
