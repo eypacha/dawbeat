@@ -65,6 +65,7 @@ function createEmptyProject() {
     loopEnd: 16,
     masterGain: 1,
     sampleRate: DEFAULT_SAMPLE_RATE,
+    showEvaluatedPanel: true,
     showClipWaveforms: true,
     tickSize: BASE_TICK_SIZE,
     tracks: [createTrack()],
@@ -94,6 +95,7 @@ function createInitialState() {
     time: 0,
     zoom: project.zoom,
     sampleRate: project.sampleRate,
+    showEvaluatedPanel: project.showEvaluatedPanel,
     showClipWaveforms: project.showClipWaveforms,
     tickSize: project.tickSize,
     tracks: project.tracks,
@@ -141,6 +143,7 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   store.masterGain = normalizedProject.masterGain
   store.zoom = normalizedProject.zoom
   store.sampleRate = normalizedProject.sampleRate
+  store.showEvaluatedPanel = normalizedProject.showEvaluatedPanel
   store.showClipWaveforms = normalizedProject.showClipWaveforms
   store.tickSize = normalizedProject.tickSize
   store.tracks = normalizedProject.tracks
@@ -508,6 +511,12 @@ export const useDawStore = defineStore('dawStore', {
     setShowClipWaveforms(value) {
       return this.recordHistoryStep('set-show-clip-waveforms', () => {
         this.showClipWaveforms = Boolean(value)
+      })
+    },
+
+    setShowEvaluatedPanel(value) {
+      return this.recordHistoryStep('set-show-evaluated-panel', () => {
+        this.showEvaluatedPanel = Boolean(value)
       })
     },
 

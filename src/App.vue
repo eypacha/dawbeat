@@ -11,7 +11,7 @@
         <EffectsPanel :collapsed="effectsCollapsed" @toggle-collapse="toggleEffectsCollapsed" />
       </main>
 
-      <EvaluatedPanel />
+      <EvaluatedPanel v-if="showEvaluatedPanel" />
     </div>
 
     <ContextMenu
@@ -107,7 +107,16 @@ const transportPlayback = useTransportPlayback()
 const { enableAudio, stop } = transportPlayback
 const effectsCollapsed = ref(false)
 const libraryCollapsed = ref(false)
-const { audioReady, editingClipId, editingFormulaId, formulas, selectedClipId, selectedClipIds, tracks } = storeToRefs(dawStore)
+const {
+  audioReady,
+  editingClipId,
+  editingFormulaId,
+  formulas,
+  selectedClipId,
+  selectedClipIds,
+  showEvaluatedPanel,
+  tracks
+} = storeToRefs(dawStore)
 
 const editingClipFormula = computed(() => {
   if (!editingClipId.value) {

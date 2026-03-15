@@ -23,6 +23,20 @@
       >
     </label>
 
+    <label class="mt-6 flex items-center justify-between gap-4">
+      <div>
+        <p class="text-sm text-zinc-200">Show evaluated panel</p>
+        <p class="text-xs text-zinc-500">Display the real-time playback expression under the main layout.</p>
+      </div>
+
+      <input
+        :checked="showEvaluatedPanel"
+        class="h-4 w-4 rounded border-zinc-700 bg-zinc-950 text-zinc-100 focus:ring-zinc-500"
+        type="checkbox"
+        @change="handleShowEvaluatedPanelChange"
+      >
+    </label>
+
     <div class="mt-6 flex items-center justify-between gap-4">
       <p class="text-sm text-zinc-300">Reset local storage</p>
       <Button size="xs" variant="danger" @click="handleResetProject">Reset</Button>
@@ -51,11 +65,15 @@ defineProps({
 const emit = defineEmits(['close'])
 
 const dawStore = useDawStore()
-const { showClipWaveforms } = storeToRefs(dawStore)
+const { showClipWaveforms, showEvaluatedPanel } = storeToRefs(dawStore)
 const { stop } = useTransportPlayback()
 
 function handleShowClipWaveformsChange(event) {
   dawStore.setShowClipWaveforms(event.target.checked)
+}
+
+function handleShowEvaluatedPanelChange(event) {
+  dawStore.setShowEvaluatedPanel(event.target.checked)
 }
 
 async function handleResetProject() {

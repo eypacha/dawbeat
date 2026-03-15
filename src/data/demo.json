@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "tracks": [
     {
       "id": "c7f7a6b1-a6c7-4dac-bd13-c34a8051f9e6",
@@ -66,9 +66,9 @@
         },
         {
           "id": "49c6a9be-323a-4f3c-b6a6-156a992c20ed",
-          "formula": "t*(256+(1&t>>14))",
-          "formulaId": null,
-          "formulaName": "Melody B",
+          "formula": null,
+          "formulaId": "6ddc4581-7f55-491c-bf6c-00885426969d",
+          "formulaName": null,
           "start": 96,
           "duration": 8
         }
@@ -320,6 +320,11 @@
       "id": "b190b32e-01db-4864-a55e-18b6b585424b",
       "name": "Intro",
       "code": "t*(t&16384?7:5)*(3+(3&t>>14))>>(3&t>>9)|t>>6"
+    },
+    {
+      "id": "6ddc4581-7f55-491c-bf6c-00885426969d",
+      "name": "Outro",
+      "code": "t*(256+(1&t>>14))"
     }
   ],
   "zoom": 0.17600295796990517,
@@ -341,5 +346,6 @@
   "masterGain": 1,
   "sampleRate": 8000,
   "tickSize": 1024,
-  "showClipWaveforms": true
+  "showClipWaveforms": true,
+  "showEvaluatedPanel": true
 }
