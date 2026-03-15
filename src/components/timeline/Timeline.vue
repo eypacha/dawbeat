@@ -100,6 +100,7 @@ import {
   TRACK_LABEL_WIDTH,
   getSamplesPerTick,
   pixelsToTicks,
+  snapTicks,
   ticksToPixels
 } from '@/utils/timeUtils'
 
@@ -255,7 +256,7 @@ async function scrubToClientX(clientX) {
   const timelineX = scrollContainer.value.scrollLeft + clientX - containerRect.left - TRACK_LABEL_WIDTH
   const nextTime = Math.min(
     FIXED_TIMELINE_TICKS,
-    Math.max(0, pixelsToTicks(timelineX, pixelsPerTick.value))
+    Math.max(0, snapTicks(pixelsToTicks(timelineX, pixelsPerTick.value), 1))
   )
 
   await seekToTime(nextTime)
