@@ -10,6 +10,8 @@
         <Timeline />
         <EffectsPanel :collapsed="effectsCollapsed" @toggle-collapse="toggleEffectsCollapsed" />
       </main>
+
+      <EvaluatedPanel />
     </div>
 
     <ContextMenu
@@ -68,6 +70,7 @@ import { computed, reactive, ref, onBeforeUnmount, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import StartScreen from '@/components/boot/StartScreen.vue'
 import EffectsPanel from '@/components/effects/EffectsPanel.vue'
+import EvaluatedPanel from '@/components/evaluated/EvaluatedPanel.vue'
 import FormulaLibrary from '@/components/library/FormulaLibrary.vue'
 import Timeline from '@/components/timeline/Timeline.vue'
 import TrackUnionOperatorMenu from '@/components/timeline/TrackUnionOperatorMenu.vue'
