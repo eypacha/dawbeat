@@ -1,399 +1,345 @@
 {
-  "version": 3,
+  "version": 4,
   "tracks": [
     {
-      "id": "f2a8b8d6-6b53-4c4c-81df-5f6d9d85a101",
+      "id": "c7f7a6b1-a6c7-4dac-bd13-c34a8051f9e6",
       "color": "#6366f1",
       "muted": false,
       "soloed": false,
-      "unionOperator": "|",
+      "unionOperator": ">>",
       "clips": [
         {
-          "id": "a68e1769-4d51-4e9f-8363-d238d787002e",
+          "id": "478c793c-af78-400e-86bc-99cab09db9e5",
           "formula": null,
-          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
+          "formulaId": "b190b32e-01db-4864-a55e-18b6b585424b",
           "formulaName": null,
           "start": 0,
-          "duration": 3
+          "duration": 16
         },
         {
-          "id": "cbc2fea9-92bb-4d5c-96ad-e0860867016b",
+          "id": "9db70e34-acb4-4b59-8d0b-eae6827bb17f",
           "formula": null,
-          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
-          "formulaName": null,
-          "start": 0,
-          "duration": 3
-        },
-        {
-          "id": "86da4c6d-7539-40a4-b998-5f7dfa748167",
-          "formula": null,
-          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
-          "formulaName": null,
-          "start": 0,
-          "duration": 3
-        },
-        {
-          "id": "18aea82a-e7ab-48e1-aad2-eeb712361543",
-          "formula": null,
-          "formulaId": "02ce47ed-7e13-4c54-8c88-f1a3d44562a5",
-          "formulaName": null,
-          "start": 3,
-          "duration": 1
-        },
-        {
-          "id": "70884d0d-991f-424e-bf05-7bf6d24e55fd",
-          "formula": null,
-          "formulaId": "02ce47ed-7e13-4c54-8c88-f1a3d44562a5",
-          "formulaName": null,
-          "start": 3,
-          "duration": 1
-        },
-        {
-          "id": "37d5f76b-954c-48cc-bfd9-dc72f30aaf2b",
-          "formula": null,
-          "formulaId": "02ce47ed-7e13-4c54-8c88-f1a3d44562a5",
-          "formulaName": null,
-          "start": 3,
-          "duration": 1
-        },
-        {
-          "id": "e23ea88e-c6f9-49e0-b3a3-f0db804e09ff",
-          "formula": null,
-          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
-          "formulaName": null,
-          "start": 4,
-          "duration": 3
-        },
-        {
-          "id": "5d74ef2c-4515-4677-9a0f-42e481fc331c",
-          "formula": null,
-          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
-          "formulaName": null,
-          "start": 4,
-          "duration": 3
-        },
-        {
-          "id": "c65a762b-57cc-4ea4-b80c-979545ace92c",
-          "formula": null,
-          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
-          "formulaName": null,
-          "start": 4,
-          "duration": 3
-        },
-        {
-          "id": "4941ee8c-5065-4af8-9339-53a5424957c0",
-          "formula": "t >> 3",
-          "formulaId": null,
-          "formulaName": "Kick",
-          "start": 7,
-          "duration": 1
-        },
-        {
-          "id": "091f1df8-a38d-49fb-a9af-bd00238279f9",
-          "formula": null,
-          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
-          "formulaName": null,
-          "start": 8,
-          "duration": 3
-        },
-        {
-          "id": "e06be694-46c5-43c7-9797-5e0b750e7010",
-          "formula": null,
-          "formulaId": "02ce47ed-7e13-4c54-8c88-f1a3d44562a5",
-          "formulaName": null,
-          "start": 11,
-          "duration": 1
-        },
-        {
-          "id": "885bf4e4-fbb5-4fd4-b6db-52f6aa8b49cc",
-          "formula": null,
-          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
-          "formulaName": null,
-          "start": 12,
-          "duration": 2
-        },
-        {
-          "id": "aee16381-bf52-439f-b7ca-1b30b268258d",
-          "formula": null,
-          "formulaId": "02ce47ed-7e13-4c54-8c88-f1a3d44562a5",
-          "formulaName": null,
-          "start": 14,
-          "duration": 2
-        },
-        {
-          "id": "efc28358-7e73-4a14-a51e-a7899feada15",
-          "formula": null,
-          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
+          "formulaId": "c196a3aa-6cf5-4aac-b199-9750ee6fbc59",
           "formulaName": null,
           "start": 16,
-          "duration": 6
+          "duration": 32
         },
         {
-          "id": "dd157504-70ad-4af8-bd3c-88da78855077",
+          "id": "293e6a40-247c-4a7a-b53c-3777cbd64153",
           "formula": null,
-          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
+          "formulaId": "c196a3aa-6cf5-4aac-b199-9750ee6fbc59",
           "formulaName": null,
-          "start": 23,
-          "duration": 3
+          "start": 48,
+          "duration": 2
         },
         {
-          "id": "55e0892a-4f32-4bef-92b5-5dc2bd1b5fbc",
+          "id": "6849022c-dd2f-4ad1-9170-180cb6ef9127",
           "formula": null,
-          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
+          "formulaId": "c196a3aa-6cf5-4aac-b199-9750ee6fbc59",
           "formulaName": null,
-          "start": 27,
-          "duration": 3
+          "start": 52,
+          "duration": 2
         },
         {
-          "id": "296d616b-a961-4608-b1e1-c3471d848735",
+          "id": "31e845f8-e055-46f0-877d-24d11be9f890",
           "formula": null,
-          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
+          "formulaId": "c196a3aa-6cf5-4aac-b199-9750ee6fbc59",
           "formulaName": null,
-          "start": 31,
-          "duration": 3
+          "start": 56,
+          "duration": 2
         },
         {
-          "id": "bc2c7dab-4979-4c74-bac9-baa7c75d6715",
+          "id": "b84e9d39-0ac5-4561-922b-475e61b35688",
           "formula": null,
-          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
+          "formulaId": "c196a3aa-6cf5-4aac-b199-9750ee6fbc59",
           "formulaName": null,
-          "start": 35,
-          "duration": 3
+          "start": 60,
+          "duration": 2
         },
         {
-          "id": "27a90285-87a6-4006-a606-085862289a43",
+          "id": "e1628ea4-236f-4ba7-847b-41796c953c2b",
           "formula": null,
-          "formulaId": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
+          "formulaId": "c196a3aa-6cf5-4aac-b199-9750ee6fbc59",
           "formulaName": null,
-          "start": 39,
-          "duration": 26
+          "start": 64,
+          "duration": 31.25
+        },
+        {
+          "id": "49c6a9be-323a-4f3c-b6a6-156a992c20ed",
+          "formula": "t*(256+(1&t>>14))",
+          "formulaId": null,
+          "formulaName": "Melody B",
+          "start": 96,
+          "duration": 8
         }
       ]
     },
     {
-      "id": "81e56bb6-5ca7-4e4e-a7f7-b43df392c202",
+      "id": "55267b37-b44e-461d-a524-c41c2d1c1e32",
       "color": "#3b82f6",
       "muted": false,
       "soloed": false,
       "unionOperator": "|",
       "clips": [
         {
-          "id": "5a1c1be4-287b-456f-8c3e-7d46d467d3c6",
-          "formula": null,
-          "formulaId": "5ffcef45-ac88-4271-86a3-98419c24153e",
-          "formulaName": null,
-          "start": 16,
-          "duration": 42
-        }
-      ]
-    },
-    {
-      "id": "ae16605a-98dc-4e4d-87af-e28edae9092c",
-      "color": "#06b6d4",
-      "muted": false,
-      "soloed": false,
-      "unionOperator": "|",
-      "clips": [
+          "id": "6c8a2fbf-61be-4b13-96af-111ea46d36b9",
+          "formula": "3 & t >> 8",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 32,
+          "duration": 16
+        },
         {
-          "id": "952426ec-b05b-440f-8b18-a45a9ea98c0a",
-          "formula": null,
-          "formulaId": "a0498f48-de82-417f-b0ff-e8949c58d9c0",
-          "formulaName": null,
-          "start": 20,
-          "duration": 38
+          "id": "1a8d55bb-ffa9-46bb-9644-034160c371b8",
+          "formula": "3&t>>8",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 64,
+          "duration": 39.75
         }
       ]
     },
     {
-      "id": "6370c3e7-5cb2-40bf-8843-91b1ffbaedbe",
-      "color": "#10b981",
+      "id": "d15f8520-a302-46b5-8702-408903642985",
+      "color": "#06b6d4",
       "muted": false,
       "soloed": false,
       "unionOperator": "&",
       "clips": [
         {
-          "id": "72a78288-6fdb-4da2-8d2a-260ac9455ffb",
-          "formula": "(t>>4|t>>3|t*3) & 64 *.999",
+          "id": "df083a1e-b897-48de-ad20-addb3d437efd",
+          "formula": "t>>(t&4096?3:4)",
           "formulaId": null,
           "formulaName": "",
-          "start": 24,
-          "duration": 34
+          "start": 36,
+          "duration": 12
+        },
+        {
+          "id": "28fe2178-c698-47bc-9565-b29deb2e070a",
+          "formula": "t & 63",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 49.5,
+          "duration": 0.25
+        },
+        {
+          "id": "266246f1-73f5-4b61-ac0c-e8a4cfcf6699",
+          "formula": "t & 31",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 50.5,
+          "duration": 0.25
+        },
+        {
+          "id": "58a178a7-1afe-440b-aa6e-9c612b4ff5e1",
+          "formula": "t & 31",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 51.5,
+          "duration": 0.25
+        },
+        {
+          "id": "d0d9133d-dd96-40e8-ad23-a3d10c91c154",
+          "formula": "t & 31",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 52.5,
+          "duration": 0.25
+        },
+        {
+          "id": "9b6fc5e5-ecf9-405c-9626-6d0d4ba06f32",
+          "formula": "t & 31",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 53.5,
+          "duration": 0.25
+        },
+        {
+          "id": "70738200-a1fe-43e3-8418-966eae327551",
+          "formula": "t & 31",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 54.5,
+          "duration": 0.25
+        },
+        {
+          "id": "1b03884f-e33e-4cca-847e-61dc356aded0",
+          "formula": "t & 31",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 55.5,
+          "duration": 0.25
+        },
+        {
+          "id": "4577c7b8-da3b-4e71-8e2c-545531ef2fe6",
+          "formula": "t & 31",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 56.5,
+          "duration": 0.25
+        },
+        {
+          "id": "a3b900f5-19ca-4afa-a30a-cb7eda31b7c3",
+          "formula": "t & 63",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 57.5,
+          "duration": 0.25
+        },
+        {
+          "id": "f21de91c-c637-4111-95d7-2e81c2f11728",
+          "formula": "t & 31",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 58.5,
+          "duration": 0.25
+        },
+        {
+          "id": "123f1268-5541-49ab-a6b9-1c9ebd7500fd",
+          "formula": "t & 31",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 59.5,
+          "duration": 0.25
+        },
+        {
+          "id": "733461a2-fc4a-4dde-826a-98a2e7db4ef4",
+          "formula": "t & 31",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 60.5,
+          "duration": 0.25
+        },
+        {
+          "id": "f4f9215b-c6c1-4d22-abb6-38ce14d5a6fb",
+          "formula": "t & 63",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 61.5,
+          "duration": 0.25
+        },
+        {
+          "id": "c4c08f66-e3d1-48db-b95c-5c524ca92772",
+          "formula": "t & 31",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 62.5,
+          "duration": 0.25
+        },
+        {
+          "id": "8c581fe2-8e6f-475b-b423-1e94c38a5a29",
+          "formula": "t & 31",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 63.5,
+          "duration": 0.25
+        },
+        {
+          "id": "d430b331-4fc9-4fa6-afde-d35b922011a3",
+          "formula": "t>>(t&4096?3:4)",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 64,
+          "duration": 40.25
         }
       ]
     },
     {
-      "id": "7b5c2260-c582-4ed3-9ea8-20e42f2c5b1b",
-      "color": "#eab308",
+      "id": "8650da8e-afd2-4d22-a17e-7ee95806bbef",
+      "color": "#10b981",
       "muted": false,
       "soloed": false,
       "unionOperator": "|",
       "clips": [
         {
-          "id": "d80d9e00-c850-4a68-ba8c-e99c46be9648",
-          "formula": null,
-          "formulaId": "983a46da-5748-428a-8c8b-00e165e09e3a",
-          "formulaName": null,
-          "start": 31,
-          "duration": 4
-        },
-        {
-          "id": "2636f3ea-f89f-44d2-aa2f-606bb76cc32f",
-          "formula": null,
-          "formulaId": "983a46da-5748-428a-8c8b-00e165e09e3a",
-          "formulaName": null,
-          "start": 42,
-          "duration": 16
-        }
-      ]
-    },
-    {
-      "id": "296bb249-c817-4f9e-bffe-d8a7b47708e1",
-      "color": "#f97316",
-      "muted": false,
-      "soloed": false,
-      "unionOperator": "|",
-      "clips": [
-        {
-          "id": "223f743f-b230-4486-bc05-c8e7b98633e8",
-          "formula": null,
-          "formulaId": "dc30d968-7497-49f9-b79e-d3608279eddf",
-          "formulaName": null,
-          "start": 7,
-          "duration": 0.25
-        },
-        {
-          "id": "34c1f3f0-fdc2-40ea-9d7f-2c399002929d",
-          "formula": null,
-          "formulaId": "dc30d968-7497-49f9-b79e-d3608279eddf",
-          "formulaName": null,
-          "start": 8,
-          "duration": 0.25
-        },
-        {
-          "id": "968e7ccf-5b25-49cc-ade2-77bdcb4043ab",
-          "formula": null,
-          "formulaId": "dc30d968-7497-49f9-b79e-d3608279eddf",
-          "formulaName": null,
+          "id": "8ea7b325-fd32-434d-8da6-80cdbae0e624",
+          "formula": "t * t >> 8",
+          "formulaId": null,
+          "formulaName": "",
           "start": 15,
-          "duration": 0.25
+          "duration": 1
         },
         {
-          "id": "25b71b4e-194a-4efd-bdae-7d30f1ba5f27",
-          "formula": null,
-          "formulaId": "dc30d968-7497-49f9-b79e-d3608279eddf",
-          "formulaName": null,
-          "start": 16,
-          "duration": 0.25
+          "id": "85f5e439-5533-4547-b873-9700398c8081",
+          "formula": "t * t >> 8",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 31.5,
+          "duration": 0.5
         },
         {
-          "id": "16363daf-cdc7-4908-9ac2-f7b2ac3e042f",
-          "formula": null,
-          "formulaId": "dc30d968-7497-49f9-b79e-d3608279eddf",
-          "formulaName": null,
-          "start": 23,
-          "duration": 0.25
-        },
-        {
-          "id": "3165bd49-d93f-4b21-8145-f0c2b33285fa",
-          "formula": null,
-          "formulaId": "dc30d968-7497-49f9-b79e-d3608279eddf",
-          "formulaName": null,
-          "start": 24,
-          "duration": 0.25
-        }
-      ]
-    },
-    {
-      "id": "0e41c022-88bc-463d-b83b-4b9cc0286796",
-      "color": "#ef4444",
-      "muted": false,
-      "soloed": false,
-      "unionOperator": "|",
-      "clips": [
-        {
-          "id": "fbd82c71-b55a-42d5-a450-e1733ca9adc5",
-          "formula": "(t * t) >> 5 & 63",
+          "id": "47d9d2b2-407f-4cfd-81d4-575bff0482c9",
+          "formula": "t * t >> 8",
           "formulaId": null,
           "formulaName": "",
           "start": 58,
-          "duration": 7
+          "duration": 2
+        },
+        {
+          "id": "f2ad8865-1d94-4968-8d49-21bc5d00a69d",
+          "formula": "t * t >> 8",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 62,
+          "duration": 2
+        },
+        {
+          "id": "ed0e7eae-7a8f-495c-b6c7-2b4b275efb2a",
+          "formula": "t & 64",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 80,
+          "duration": 8
+        },
+        {
+          "id": "6c4a0a2d-a410-4ddc-aeb6-41da881ba51b",
+          "formula": "t & 63",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 88,
+          "duration": 4
+        },
+        {
+          "id": "e5aa25a7-43f1-444e-9883-2cb7088129af",
+          "formula": "t & 31",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 92,
+          "duration": 4
         }
       ]
     }
   ],
   "formulas": [
     {
-      "id": "d40954c4-bc52-461a-a98e-a0ccc50c7ea0",
-      "name": "Kick 4",
-      "code": "t >> 4"
+      "id": "c196a3aa-6cf5-4aac-b199-9750ee6fbc59",
+      "name": "Melody B",
+      "code": "t*((t&4096?6:16)+(1&t>>14))"
     },
     {
-      "id": "5ffcef45-ac88-4271-86a3-98419c24153e",
-      "name": "",
-      "code": "t & 64"
-    },
-    {
-      "id": "983a46da-5748-428a-8c8b-00e165e09e3a",
-      "name": "",
-      "code": "t & 0x256 ? t >> 4 : t >> 10"
-    },
-    {
-      "id": "02ce47ed-7e13-4c54-8c88-f1a3d44562a5",
-      "name": "Kick 3",
-      "code": "t >> 3"
-    },
-    {
-      "id": "a0498f48-de82-417f-b0ff-e8949c58d9c0",
-      "name": "",
-      "code": "t & 32"
-    },
-    {
-      "id": "dc30d968-7497-49f9-b79e-d3608279eddf",
-      "name": "pow",
-      "code": "t * t"
+      "id": "b190b32e-01db-4864-a55e-18b6b585424b",
+      "name": "Intro",
+      "code": "t*(t&16384?7:5)*(3+(3&t>>14))>>(3&t>>9)|t>>6"
     }
   ],
-  "zoom": 0.5227272668160685,
-  "loopStart": 42,
-  "loopEnd": 65,
-  "loopEnabled": true,
-  "audioEffects": [
-    {
-      "id": "f8a58b78-5260-45c7-8858-79454605d851",
-      "type": "eq",
-      "enabled": true,
-      "expanded": true,
-      "params": {
-        "bass": 7,
-        "mid": 0,
-        "treble": -5
-      }
-    }
-  ],
+  "zoom": 0.17600295796990517,
+  "loopStart": 96,
+  "loopEnd": 104,
+  "loopEnabled": false,
+  "audioEffects": [],
   "evalEffects": [
     {
-      "id": "fx1",
+      "id": "fx6",
       "type": "stereoOffset",
       "enabled": true,
       "expanded": true,
       "params": {
         "offset": 128
       }
-    },
-    {
-      "id": "fx5",
-      "type": "tReplacement",
-      "enabled": true,
-      "expanded": true,
-      "params": {
-        "stereo": false,
-        "expression": "t + t % 5",
-        "leftExpression": "t",
-        "rightExpression": "t"
-      }
     }
   ],
   "masterGain": 1,
   "sampleRate": 8000,
-  "tickSize": 1024
+  "tickSize": 1024,
+  "showClipWaveforms": true
 }
