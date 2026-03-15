@@ -30,7 +30,7 @@ import {
   normalizeMixValue,
   normalizeUnitValue
 } from '@/services/audioEffectService'
-import { createEvalEffect, createStereoOffsetEvalEffect } from '@/services/evalEffectService'
+import { createEvalEffect, createStereoOffsetEvalEffect, mergeTReplacementParams } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
 import { normalizeTrackUnionOperator } from '@/services/trackUnionOperatorService'
 import demoProject from '@/data/demo.json'
@@ -911,21 +911,7 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       if (effect.type === 'tReplacement') {
-        if (typeof params.stereo !== 'undefined') {
-          effect.params.stereo = Boolean(params.stereo)
-        }
-
-        if (typeof params.expression === 'string') {
-          effect.params.expression = params.expression
-        }
-
-        if (typeof params.leftExpression === 'string') {
-          effect.params.leftExpression = params.leftExpression
-        }
-
-        if (typeof params.rightExpression === 'string') {
-          effect.params.rightExpression = params.rightExpression
-        }
+        effect.params = mergeTReplacementParams(effect.params, params)
       }
     },
 

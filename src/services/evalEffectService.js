@@ -48,6 +48,40 @@ export function createTReplacementEvalEffect(effect = {}) {
   }
 }
 
+export function mergeTReplacementParams(currentParams = {}, updates = {}) {
+  const normalizedCurrentParams = createTReplacementEvalEffect({ params: currentParams }).params
+  const nextParams = {
+    ...normalizedCurrentParams
+  }
+  const currentStereo = Boolean(normalizedCurrentParams.stereo)
+  const hasStereoUpdate = typeof updates.stereo !== 'undefined'
+  const nextStereo = hasStereoUpdate ? Boolean(updates.stereo) : currentStereo
+
+  if (typeof updates.expression === 'string') {
+    nextParams.expression = updates.expression
+  }
+
+  if (typeof updates.leftExpression === 'string') {
+    nextParams.leftExpression = updates.leftExpression
+  }
+
+  if (typeof updates.rightExpression === 'string') {
+    nextParams.rightExpression = updates.rightExpression
+  }
+
+  if (hasStereoUpdate && currentStereo !== nextStereo) {
+    if (nextStereo) {
+      nextParams.leftExpression = nextParams.expression
+      nextParams.rightExpression = nextParams.expression
+    } else {
+      nextParams.expression = nextParams.leftExpression
+    }
+  }
+
+  nextParams.stereo = nextStereo
+  return nextParams
+}
+
 export function applyEvalEffects(formula, evalEffects = []) {
   let expressions = [formula]
 
