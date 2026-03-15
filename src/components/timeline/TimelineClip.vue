@@ -42,7 +42,7 @@
       @pointerdown.stop="handleResizeEndPointerDown"
     />
 
-    <div class="relative z-10">
+    <div class="relative z-[1]">
       <template v-if="showFormulaName">
         <span class="block truncate font-medium">{{ resolvedFormulaName }}</span>
         <span class="mt-1 block truncate text-[10px] opacity-70">{{ resolvedFormula }}</span>

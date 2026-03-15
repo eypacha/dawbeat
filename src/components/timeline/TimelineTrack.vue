@@ -13,7 +13,7 @@
     />
 
     <div
-      class="sticky left-0 z-10 flex shrink-0 flex-col justify-center border-r border-zinc-800 px-4 py-0"
+      class="sticky left-0 z-20 flex shrink-0 flex-col justify-center border-r border-zinc-800 px-4 py-0"
       data-context-menu-enabled="true"
       draggable="true"
       :class="[
@@ -72,7 +72,7 @@
 
     <div
       ref="laneElement"
-      class="relative h-20 shrink-0 transition-opacity"
+      class="relative z-0 h-20 shrink-0 transition-opacity"
       data-context-menu-enabled="true"
       data-timeline-track-lane="true"
       :class="laneClassName"
