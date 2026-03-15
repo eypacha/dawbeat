@@ -21,6 +21,13 @@
       :stroke-width="2.25"
     />
 
+    <TimelineClipWaveform
+      :duration="clip.duration"
+      :formula="resolvedFormula"
+      :start="clip.start"
+      :width="clipWidth"
+    />
+
     <span
       v-if="isSelected && !isEditing"
       class="timeline-clip-handle absolute inset-y-0 left-0 w-2 cursor-ew-resize border-r"
@@ -34,12 +41,14 @@
       @pointerdown.stop="handleResizeEndPointerDown"
     />
 
-    <template v-if="showFormulaName">
-      <span class="block truncate font-medium">{{ resolvedFormulaName }}</span>
-      <span class="mt-1 block truncate text-[10px] opacity-70">{{ resolvedFormula }}</span>
-    </template>
+    <div class="relative z-10">
+      <template v-if="showFormulaName">
+        <span class="block truncate font-medium">{{ resolvedFormulaName }}</span>
+        <span class="mt-1 block truncate text-[10px] opacity-70">{{ resolvedFormula }}</span>
+      </template>
 
-    <span v-else class="block truncate font-medium">{{ resolvedFormula }}</span>
+      <span v-else class="block truncate font-medium">{{ resolvedFormula }}</span>
+    </div>
   </div>
 </template>
 
@@ -47,11 +56,12 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Link2 } from 'lucide-vue-next'
+import TimelineClipWaveform from '@/components/timeline/TimelineClipWaveform.vue'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineClipInteraction } from '@/composables/useTimelineClipInteraction'
 import { resolveClipFormula, resolveClipFormulaName } from '@/services/formulaService'
 import { useDawStore } from '@/stores/dawStore'
-import { ticksToPixels, ticksToSamples } from '@/utils/timeUtils'
+import { ticksToPixels } from '@/utils/timeUtils'
 
 const props = defineProps({
   clip: {
@@ -66,7 +76,7 @@ const props = defineProps({
 
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
-const { editingClipId, formulas, pixelsPerTick, selectedClipIds, tickSize, tracks } = storeToRefs(dawStore)
+const { editingClipId, formulas, pixelsPerTick, selectedClipIds, tracks } = storeToRefs(dawStore)
 const isFormulaDropTarget = ref(false)
 const MIN_CLIP_RENDER_TICKS = 0.5
 
@@ -74,13 +84,16 @@ const resolvedFormula = computed(() => resolveClipFormula(props.clip, formulas.v
 const isReferenceClip = computed(() => Boolean(props.clip.formulaId))
 const resolvedFormulaName = computed(() => resolveClipFormulaName(props.clip, formulas.value))
 const showFormulaName = computed(() => Boolean(resolvedFormulaName.value))
+const clipWidth = computed(() =>
+  Math.max(
+    ticksToPixels(props.clip.duration, pixelsPerTick.value),
+    ticksToPixels(MIN_CLIP_RENDER_TICKS, pixelsPerTick.value)
+  )
+)
 
 const clipStyle = computed(() => ({
   left: `${ticksToPixels(props.clip.start, pixelsPerTick.value)}px`,
-  width: `${Math.max(
-    ticksToPixels(props.clip.duration, pixelsPerTick.value),
-    ticksToPixels(MIN_CLIP_RENDER_TICKS, pixelsPerTick.value)
-  )}px`
+  width: `${clipWidth.value}px`
 }))
 
 const isEditing = computed(() => editingClipId.value === props.clip.id)

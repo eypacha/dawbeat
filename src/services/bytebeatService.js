@@ -1,14 +1,12 @@
 import { normalizeDecibels, normalizeDelayTime, normalizeMasterGain, normalizeMixValue, normalizeUnitValue } from '@/services/audioEffectService'
+import { loadByteBeatNodeClass } from '@/services/bytebeatNodeLoader'
 import { validateFormula } from '@/utils/formulaValidation'
 import { Macro_BitCrusherNode, Macro_DelayNode, Macro_ToneControlNode } from '@/utils/macroNodes'
 
-const BYTEBEAT_SCRIPT_URL = '/vendors/ByteBeat.js'
 const SILENT_FORMULA = '0'
 
 let audioContext = null
 let byteBeatNode = null
-let byteBeatNodeClass = null
-let loadPromise = null
 let initPromise = null
 let formulaUpdatePromise = Promise.resolve()
 let currentExpressionsKey = null
@@ -219,38 +217,6 @@ function sanitizeCompiledExpressions(compiledExpressions = []) {
 
 function getAudioContextConstructor() {
   return window.AudioContext || window.webkitAudioContext
-}
-
-async function loadByteBeatNodeClass() {
-  if (byteBeatNodeClass) {
-    return byteBeatNodeClass
-  }
-
-  if (window.ByteBeatNode) {
-    byteBeatNodeClass = window.ByteBeatNode
-    return byteBeatNodeClass
-  }
-
-  if (!loadPromise) {
-    loadPromise = new Promise((resolve, reject) => {
-      const script = document.createElement('script')
-      script.src = BYTEBEAT_SCRIPT_URL
-      script.async = true
-      script.onload = () => {
-        if (!window.ByteBeatNode) {
-          reject(new Error('ByteBeatNode no esta disponible despues de cargar el vendor'))
-          return
-        }
-
-        byteBeatNodeClass = window.ByteBeatNode
-        resolve(byteBeatNodeClass)
-      }
-      script.onerror = () => reject(new Error(`No se pudo cargar ${BYTEBEAT_SCRIPT_URL}`))
-      document.head.appendChild(script)
-    })
-  }
-
-  return loadPromise
 }
 
 async function createNode(providedAudioContext) {
