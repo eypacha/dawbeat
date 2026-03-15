@@ -22,6 +22,7 @@
     />
 
     <TimelineClipWaveform
+      v-if="showClipWaveforms"
       :duration="clip.duration"
       :formula="resolvedFormula"
       :start="clip.start"
@@ -76,7 +77,7 @@ const props = defineProps({
 
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
-const { editingClipId, formulas, pixelsPerTick, selectedClipIds, tracks } = storeToRefs(dawStore)
+const { editingClipId, formulas, pixelsPerTick, selectedClipIds, showClipWaveforms, tracks } = storeToRefs(dawStore)
 const isFormulaDropTarget = ref(false)
 const MIN_CLIP_RENDER_TICKS = 0.5
 

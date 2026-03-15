@@ -9,7 +9,21 @@
       </div>
     </template>
 
-    <div class="flex items-center justify-between gap-4">
+    <label class="flex items-center justify-between gap-4">
+      <div>
+        <p class="text-sm text-zinc-200">Show clip waveforms</p>
+        <p class="text-xs text-zinc-500">Render formula previews inside timeline clips.</p>
+      </div>
+
+      <input
+        :checked="showClipWaveforms"
+        class="h-4 w-4 rounded border-zinc-700 bg-zinc-950 text-zinc-100 focus:ring-zinc-500"
+        type="checkbox"
+        @change="handleShowClipWaveformsChange"
+      >
+    </label>
+
+    <div class="mt-6 flex items-center justify-between gap-4">
       <p class="text-sm text-zinc-300">Reset local storage</p>
       <Button size="xs" variant="danger" @click="handleResetProject">Reset</Button>
     </div>
@@ -18,6 +32,7 @@
 </template>
 
 <script setup>
+import { storeToRefs } from 'pinia'
 import Button from '@/components/ui/Button.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import Modal from '@/components/ui/Modal.vue'
@@ -36,7 +51,12 @@ defineProps({
 const emit = defineEmits(['close'])
 
 const dawStore = useDawStore()
+const { showClipWaveforms } = storeToRefs(dawStore)
 const { stop } = useTransportPlayback()
+
+function handleShowClipWaveformsChange(event) {
+  dawStore.setShowClipWaveforms(event.target.checked)
+}
 
 async function handleResetProject() {
   await stop()

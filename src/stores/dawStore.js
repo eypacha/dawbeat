@@ -65,6 +65,7 @@ function createEmptyProject() {
     loopEnd: 16,
     masterGain: 1,
     sampleRate: DEFAULT_SAMPLE_RATE,
+    showClipWaveforms: true,
     tickSize: BASE_TICK_SIZE,
     tracks: [createTrack()],
     zoom: 1
@@ -93,6 +94,7 @@ function createInitialState() {
     time: 0,
     zoom: project.zoom,
     sampleRate: project.sampleRate,
+    showClipWaveforms: project.showClipWaveforms,
     tickSize: project.tickSize,
     tracks: project.tracks,
     historyApplying: false,
@@ -139,6 +141,7 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   store.masterGain = normalizedProject.masterGain
   store.zoom = normalizedProject.zoom
   store.sampleRate = normalizedProject.sampleRate
+  store.showClipWaveforms = normalizedProject.showClipWaveforms
   store.tickSize = normalizedProject.tickSize
   store.tracks = normalizedProject.tracks
   clearTransientSelectionState(store)
@@ -499,6 +502,12 @@ export const useDawStore = defineStore('dawStore', {
     setSampleRate(value) {
       return this.recordHistoryStep('set-sample-rate', () => {
         this.sampleRate = normalizeSampleRate(value, this.sampleRate)
+      })
+    },
+
+    setShowClipWaveforms(value) {
+      return this.recordHistoryStep('set-show-clip-waveforms', () => {
+        this.showClipWaveforms = Boolean(value)
       })
     },
 

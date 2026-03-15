@@ -8,12 +8,12 @@ import { DEFAULT_TRACK_COLOR, getTrackColor } from '@/utils/colorUtils'
 import { BASE_TICK_SIZE, MAX_ZOOM, MIN_ZOOM, TIMELINE_SNAP_SUBDIVISIONS, clamp } from '@/utils/timeUtils'
 
 const PROJECT_STORAGE_KEY = 'dawbeat-project'
-const PROJECT_VERSION = 3
+const PROJECT_VERSION = 4
 const SAVE_DEBOUNCE_MS = 400
 const DEFAULT_LOOP_START = 0
 const DEFAULT_LOOP_END = 16
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
-const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, PROJECT_VERSION])
+const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, PROJECT_VERSION])
 
 export function serializeProject(state) {
   return normalizeProjectPayload({
@@ -28,7 +28,8 @@ export function serializeProject(state) {
     evalEffects: state.evalEffects,
     masterGain: state.masterGain,
     sampleRate: state.sampleRate,
-    tickSize: state.tickSize
+    tickSize: state.tickSize,
+    showClipWaveforms: state.showClipWaveforms
   })
 }
 
@@ -181,7 +182,10 @@ function normalizeProjectPayload(project) {
       : [createStereoOffsetEvalEffect({ id: 'fx1' })],
     masterGain: normalizeMasterGain(project.masterGain),
     sampleRate: normalizeSampleRate(project.sampleRate, DEFAULT_SAMPLE_RATE),
-    tickSize: normalizePositiveNumber(project.tickSize, BASE_TICK_SIZE)
+    tickSize: normalizePositiveNumber(project.tickSize, BASE_TICK_SIZE),
+    showClipWaveforms: hasOwn(project, 'showClipWaveforms')
+      ? Boolean(project.showClipWaveforms)
+      : true
   }
 }
 
