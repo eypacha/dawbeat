@@ -66,7 +66,7 @@ function createEmptyProject() {
     masterGain: 1,
     sampleRate: DEFAULT_SAMPLE_RATE,
     tickSize: BASE_TICK_SIZE,
-    tracks: [],
+    tracks: [createTrack()],
     zoom: 1
   }
 }
