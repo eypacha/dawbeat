@@ -327,8 +327,8 @@
       "code": "t*(256+(1&t>>14))"
     }
   ],
-  "zoom": 0.17600295796990517,
-  "loopStart": 96,
+  "zoom": 0.650850252836944,
+  "loopStart": 63.75,
   "loopEnd": 104,
   "loopEnabled": false,
   "audioEffects": [],
