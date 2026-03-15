@@ -238,9 +238,11 @@ function buildClipClipboard(entries, tracks, formulas) {
 
   const sortedEntries = sortClipEntriesForClipboard(tracks, entries)
   const anchorStart = sortedEntries[0]?.clip.start ?? 0
+  const anchorTickStart = Math.floor(Math.max(0, anchorStart))
 
   return {
     anchorStart,
+    anchorTickOffset: anchorStart - anchorTickStart,
     clips: sortedEntries.map((entry) => {
       const referencedFormula = entry.clip.formulaId
         ? getFormulaById(formulas, entry.clip.formulaId)
@@ -257,6 +259,27 @@ function buildClipClipboard(entries, tracks, formulas) {
     }),
     sourceTrackIds: [...new Set(sortedEntries.map((entry) => entry.trackId))]
   }
+}
+
+function getClipboardAnchorTickOffset(clipboard) {
+  if (!clipboard) {
+    return 0
+  }
+
+  if (typeof clipboard.anchorTickOffset === 'number' && Number.isFinite(clipboard.anchorTickOffset)) {
+    return clipboard.anchorTickOffset
+  }
+
+  if (typeof clipboard.anchorStart === 'number' && Number.isFinite(clipboard.anchorStart)) {
+    return clipboard.anchorStart - Math.floor(Math.max(0, clipboard.anchorStart))
+  }
+
+  return 0
+}
+
+function getPasteAnchorStart(playheadTime, clipboard) {
+  const playheadTickStart = Math.floor(Math.max(0, Number(playheadTime) || 0))
+  return playheadTickStart + getClipboardAnchorTickOffset(clipboard)
 }
 
 function resolvePasteTargetTrack(store, sourceTrackId) {
@@ -714,6 +737,7 @@ export const useDawStore = defineStore('dawStore', {
 
         const pastedClipIds = []
         const touchedTrackIds = new Set()
+        const pasteAnchorStart = getPasteAnchorStart(this.time, clipboard)
         let pastedAnchorTrackId = null
         let pastedAnchorFormulaId = null
 
@@ -726,7 +750,7 @@ export const useDawStore = defineStore('dawStore', {
             continue
           }
 
-          const desiredStart = this.time + clipboardClip.startOffset
+          const desiredStart = pasteAnchorStart + clipboardClip.startOffset
           const nextStart = clampClipPlacementStart(targetTrack, desiredStart, clipboardClip.duration)
           const referencedFormula = clipboardClip.formulaId
             ? getFormulaById(this.formulas, clipboardClip.formulaId)
