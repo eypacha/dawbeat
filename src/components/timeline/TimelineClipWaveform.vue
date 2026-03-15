@@ -130,14 +130,14 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .timeline-clip-waveform__baseline {
-  stroke: rgb(244 244 245 / 0.12);
+  stroke: color-mix(in srgb, var(--track-color-light) 24%, transparent);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
 
 .timeline-clip-waveform__path {
   fill: none;
-  stroke: color-mix(in srgb, white 76%, var(--track-color-light) 24%);
+  stroke: color-mix(in srgb, var(--track-color-light) 78%, white 22%);
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.25;
