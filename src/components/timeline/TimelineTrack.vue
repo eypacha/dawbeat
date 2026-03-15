@@ -121,7 +121,7 @@ import {
   getTrackColor,
   lightenHex
 } from '@/utils/colorUtils'
-import { TRACK_LABEL_WIDTH, pixelsToTicks } from '@/utils/timeUtils'
+import { TRACK_LABEL_WIDTH, getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
 
 const DRAG_THRESHOLD_PX = 6
 
@@ -169,11 +169,12 @@ let creationBounds = null
 let creationHistoryActive = false
 let creationStartX = 0
 const FORMULA_DROP_DURATION = 1
+const visibleTickStep = computed(() => getVisibleTimelineTickStep(pixelsPerTick.value))
 
 const laneStyle = computed(() => ({
   width: props.timelineWidth,
   backgroundImage: 'linear-gradient(to right, rgba(63, 63, 70, 0.5) 1px, transparent 1px)',
-  backgroundSize: `${pixelsPerTick.value}px 100%`
+  backgroundSize: `${ticksToPixels(visibleTickStep.value, pixelsPerTick.value)}px 100%`
 }))
 
 const laneClassName = computed(() => {

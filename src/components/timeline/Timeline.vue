@@ -98,6 +98,7 @@ import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
 import {
   TRACK_LABEL_WIDTH,
+  getVisibleTimelineTickStep,
   getSamplesPerTick,
   pixelsToTicks,
   snapTicks,
@@ -128,7 +129,16 @@ const {
 })
 
 const samplesPerTick = computed(() => getSamplesPerTick(tickSize.value))
-const rulerMarks = computed(() => Array.from({ length: FIXED_TIMELINE_TICKS }, (_, index) => index))
+const visibleTickStep = computed(() => getVisibleTimelineTickStep(pixelsPerTick.value))
+const rulerMarks = computed(() => {
+  const marks = []
+
+  for (let tick = 0; tick < FIXED_TIMELINE_TICKS; tick += visibleTickStep.value) {
+    marks.push(tick)
+  }
+
+  return marks
+})
 const timelineWidthStyle = computed(() => `${ticksToPixels(FIXED_TIMELINE_TICKS, pixelsPerTick.value)}px`)
 const draggingTrackColor = computed(
   () => tracks.value.find((track) => track.id === draggingTrackId.value)?.color ?? null
@@ -136,7 +146,7 @@ const draggingTrackColor = computed(
 const rulerStyle = computed(() => ({
   width: timelineWidthStyle.value,
   backgroundImage: 'linear-gradient(to right, rgba(63, 63, 70, 0.5) 1px, transparent 1px)',
-  backgroundSize: `${pixelsPerTick.value}px 100%`
+  backgroundSize: `${ticksToPixels(visibleTickStep.value, pixelsPerTick.value)}px 100%`
 }))
 
 function handleWheel(event) {
