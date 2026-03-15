@@ -282,6 +282,25 @@ function getPasteAnchorStart(playheadTime, clipboard) {
   return playheadTickStart + getClipboardAnchorTickOffset(clipboard)
 }
 
+function normalizeTrackName(nextName) {
+  const normalizedName = typeof nextName === 'string' ? nextName.trim() : ''
+  return normalizedName || undefined
+}
+
+function applyTrackPresentation(track, { color, name } = {}) {
+  if (!track) {
+    return
+  }
+
+  if (typeof name !== 'undefined') {
+    track.name = normalizeTrackName(name)
+  }
+
+  if (typeof color === 'string' && TRACK_COLOR_PALETTE.includes(color)) {
+    track.color = getTrackColor(color)
+  }
+}
+
 function resolvePasteTargetTrack(store, sourceTrackId) {
   const sourceTrack = findTrack(store.tracks, sourceTrackId)
 
@@ -1038,8 +1057,7 @@ export const useDawStore = defineStore('dawStore', {
           return
         }
 
-        const normalizedName = typeof nextName === 'string' ? nextName.trim() : ''
-        track.name = normalizedName || undefined
+        applyTrackPresentation(track, { name: nextName })
       })
     },
 
@@ -1047,11 +1065,23 @@ export const useDawStore = defineStore('dawStore', {
       return this.recordHistoryStep('set-track-color', () => {
         const track = findTrack(this.tracks, trackId)
 
-        if (!track || !TRACK_COLOR_PALETTE.includes(color)) {
+        if (!track) {
           return
         }
 
-        track.color = getTrackColor(color)
+        applyTrackPresentation(track, { color })
+      })
+    },
+
+    updateTrackPresentation(trackId, updates = {}) {
+      return this.recordHistoryStep('update-track-presentation', () => {
+        const track = findTrack(this.tracks, trackId)
+
+        if (!track) {
+          return
+        }
+
+        applyTrackPresentation(track, updates)
       })
     },
 

@@ -21,15 +21,8 @@
       @select="handleContextMenuSelect"
     >
       <template #submenu="{ item, close }">
-        <TrackColorPalette
-          v-if="item.action === 'set-track-color'"
-          :colors="item.colors"
-          :selected-color="item.selectedColor"
-          @select="handleTrackColorSelect(item, $event, close)"
-        />
-
         <TrackUnionOperatorMenu
-          v-else-if="item.action === 'set-track-union-operator'"
+          v-if="item.action === 'set-track-union-operator'"
           :options="item.options"
           :selected-operator="item.selectedOperator"
           @select="handleTrackUnionOperatorSelect(item, $event, close)"
@@ -46,13 +39,13 @@
       @confirm="confirmTrackDeletion"
     />
 
-    <TextInputDialog
-      :initial-value="renameDialog.trackName"
-      :visible="renameDialog.visible"
-      label="Track Name"
-      title="Rename Track"
-      @cancel="closeRenameDialog"
-      @confirm="confirmTrackRename"
+    <TrackPresentationDialog
+      :colors="trackPresentationDialog.colors"
+      :initial-color="trackPresentationDialog.trackColor"
+      :initial-name="trackPresentationDialog.trackName"
+      :visible="trackPresentationDialog.visible"
+      @cancel="closeTrackPresentationDialog"
+      @confirm="confirmTrackPresentation"
     />
 
     <FormulaInputDialog
@@ -83,14 +76,14 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import ContextMenu from '@/components/ui/ContextMenu.vue'
 import FormulaInputDialog from '@/components/ui/FormulaInputDialog.vue'
 import SnackbarContainer from '@/components/ui/SnackbarContainer.vue'
-import TextInputDialog from '@/components/ui/TextInputDialog.vue'
-import TrackColorPalette from '@/components/timeline/TrackColorPalette.vue'
+import TrackPresentationDialog from '@/components/ui/TrackPresentationDialog.vue'
 import { provideContextMenu } from '@/composables/useContextMenu'
 import { getFormulaById, resolveClipFormula, resolveClipFormulaName } from '@/services/formulaService'
 import { initKeyboardShortcuts } from '@/services/keyboardShortcuts'
 import { findTrackWithClip } from '@/services/dawStoreService'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
+import { TRACK_COLOR_PALETTE } from '@/utils/colorUtils'
 
 const dawStore = useDawStore()
 const contextMenu = provideContextMenu()
@@ -99,7 +92,9 @@ const confirmDialog = reactive({
   message: '',
   trackId: null
 })
-const renameDialog = reactive({
+const trackPresentationDialog = reactive({
+  colors: TRACK_COLOR_PALETTE,
+  trackColor: TRACK_COLOR_PALETTE[0],
   trackId: null,
   trackName: '',
   visible: false
@@ -293,13 +288,6 @@ function handleContextMenuSelect(action, item) {
     return
   }
 
-  if (action === 'rename-track') {
-    renameDialog.trackId = item.trackId
-    renameDialog.trackName = item.trackName ?? ''
-    renameDialog.visible = true
-    return
-  }
-
   if (action === 'add-clip-formula-to-library') {
     dawStore.addClipFormulaToLibrary(item.trackId, item.clipId)
     return
@@ -312,12 +300,16 @@ function handleContextMenuSelect(action, item) {
 
   if (action === 'detach-clip-formula') {
     dawStore.detachClipFormula(item.trackId, item.clipId)
+    return
   }
-}
 
-function handleTrackColorSelect(item, color, close) {
-  dawStore.setTrackColor(item.trackId, color)
-  close()
+  if (action === 'edit-track-presentation') {
+    trackPresentationDialog.trackColor = item.trackColor ?? TRACK_COLOR_PALETTE[0]
+    trackPresentationDialog.trackId = item.trackId
+    trackPresentationDialog.trackName = item.trackName ?? ''
+    trackPresentationDialog.visible = true
+    return
+  }
 }
 
 function handleTrackUnionOperatorSelect(item, operator, close) {
@@ -339,18 +331,19 @@ function confirmTrackDeletion() {
   closeConfirmDialog()
 }
 
-function closeRenameDialog() {
-  renameDialog.trackId = null
-  renameDialog.trackName = ''
-  renameDialog.visible = false
+function closeTrackPresentationDialog() {
+  trackPresentationDialog.trackColor = TRACK_COLOR_PALETTE[0]
+  trackPresentationDialog.trackId = null
+  trackPresentationDialog.trackName = ''
+  trackPresentationDialog.visible = false
 }
 
-function confirmTrackRename(nextName) {
-  if (renameDialog.trackId) {
-    dawStore.renameTrack(renameDialog.trackId, nextName)
+function confirmTrackPresentation(nextTrackPresentation) {
+  if (trackPresentationDialog.trackId) {
+    dawStore.updateTrackPresentation(trackPresentationDialog.trackId, nextTrackPresentation)
   }
 
-  closeRenameDialog()
+  closeTrackPresentationDialog()
 }
 
 function closeFormulaDialog() {

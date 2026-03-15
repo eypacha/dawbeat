@@ -117,7 +117,6 @@ import { buildCreatedClip, clampClipPlacementStart, getTrackCreateBounds } from 
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useDawStore } from '@/stores/dawStore'
 import {
-  TRACK_COLOR_PALETTE,
   darkenHex,
   getTrackColor,
   lightenHex
@@ -249,18 +248,11 @@ function handleContextMenu(event) {
         trackId: props.track.id
       },
       {
-        label: 'Rename Track',
-        action: 'rename-track',
+        label: 'Name and color',
+        action: 'edit-track-presentation',
         trackId: props.track.id,
+        trackColor: trackColor.value,
         trackName: props.track.name ?? ''
-      },
-      {
-        action: 'set-track-color',
-        colors: TRACK_COLOR_PALETTE,
-        label: 'Color',
-        selectedColor: trackColor.value,
-        trackId: props.track.id,
-        type: 'palette'
       },
       {
         action: 'set-track-union-operator',

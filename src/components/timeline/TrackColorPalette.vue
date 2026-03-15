@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-center gap-2 rounded border border-zinc-700 bg-zinc-800 p-2 shadow-lg shadow-black/30">
+  <div class="flex items-center gap-2  p-2">
     <button
       v-for="color in colors"
       :key="color"
