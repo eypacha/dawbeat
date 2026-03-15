@@ -1289,6 +1289,30 @@ export const useDawStore = defineStore('dawStore', {
       this.selectedTrackId = anchorEntry.trackId
     },
 
+    nudgeSelectedClips(deltaTicks, shouldSnap = true, anchorClipId = this.selectedClipId) {
+      const normalizedDeltaTicks = Number(deltaTicks)
+
+      if (!Number.isFinite(normalizedDeltaTicks) || normalizedDeltaTicks === 0 || !anchorClipId) {
+        return false
+      }
+
+      const selectedClipEntries = collectSelectedClipEntries(this.tracks, this.selectedClipIds)
+
+      if (!selectedClipEntries.length) {
+        return false
+      }
+
+      const anchorEntry = selectedClipEntries.find((entry) => entry.clipId === anchorClipId)
+
+      if (!anchorEntry) {
+        return false
+      }
+
+      return this.recordHistoryStep('nudge-selected-clips', () => {
+        this.moveSelectedClips(anchorClipId, anchorEntry.clip.start + normalizedDeltaTicks, shouldSnap)
+      })
+    },
+
     placeClip(trackId, clipId, nextStart, shouldSnap = true) {
       const track = findTrack(this.tracks, trackId)
 

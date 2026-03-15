@@ -1,3 +1,5 @@
+import { TIMELINE_SNAP_SUBDIVISIONS } from '@/utils/timeUtils'
+
 function isTyping() {
   const element = document.activeElement
 
@@ -13,6 +15,7 @@ function isTyping() {
 }
 
 export function initKeyboardShortcuts({ dawStore, transport }) {
+  const clipNudgeStep = 1 / TIMELINE_SNAP_SUBDIVISIONS
   const shortcuts = {
     Space: async (event) => {
       event.preventDefault()
@@ -21,6 +24,22 @@ export function initKeyboardShortcuts({ dawStore, transport }) {
     KeyL: (event) => {
       event.preventDefault()
       dawStore.toggleLoop()
+    },
+    ArrowLeft: (event) => {
+      if (event.metaKey || event.ctrlKey || event.altKey || !dawStore.selectedClipIds.length) {
+        return
+      }
+
+      event.preventDefault()
+      dawStore.nudgeSelectedClips(-clipNudgeStep, !event.shiftKey)
+    },
+    ArrowRight: (event) => {
+      if (event.metaKey || event.ctrlKey || event.altKey || !dawStore.selectedClipIds.length) {
+        return
+      }
+
+      event.preventDefault()
+      dawStore.nudgeSelectedClips(clipNudgeStep, !event.shiftKey)
     }
   }
 
