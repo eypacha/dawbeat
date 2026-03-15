@@ -64,9 +64,19 @@
         <TimelineTrack
           v-for="(track, index) in tracks"
           :key="track.id"
+          :is-track-reorder-source="draggingTrackId === track.id"
           :track-index="index"
+          :track-reorder-active="trackDropTarget?.trackId === track.id"
+          :track-reorder-color="draggingTrackColor"
+          :track-reorder-placement="
+            trackDropTarget?.trackId === track.id ? trackDropTarget.placement : null
+          "
           :track="track"
           :timeline-width="timelineWidthStyle"
+          @track-reorder-drop="handleTrackReorderDrop"
+          @track-reorder-end="handleTrackReorderEnd"
+          @track-reorder-over="handleTrackReorderOver"
+          @track-reorder-start="handleTrackReorderStart"
         />
 
         <TimelineAddTrackRow :timeline-width="timelineWidthStyle" />
@@ -102,6 +112,8 @@ const { editingClipId, loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, 
   storeToRefs(dawStore)
 const scrollContainer = ref(null)
 const timelineSurfaceElement = ref(null)
+const draggingTrackId = ref(null)
+const trackDropTarget = ref(null)
 let scrubPointerId = null
 
 const {
@@ -117,6 +129,9 @@ const {
 const samplesPerTick = computed(() => getSamplesPerTick(tickSize.value))
 const rulerMarks = computed(() => Array.from({ length: FIXED_TIMELINE_TICKS }, (_, index) => index))
 const timelineWidthStyle = computed(() => `${ticksToPixels(FIXED_TIMELINE_TICKS, pixelsPerTick.value)}px`)
+const draggingTrackColor = computed(
+  () => tracks.value.find((track) => track.id === draggingTrackId.value)?.color ?? null
+)
 const rulerStyle = computed(() => ({
   width: timelineWidthStyle.value,
   backgroundImage: 'linear-gradient(to right, rgba(63, 63, 70, 0.5) 1px, transparent 1px)',
@@ -172,6 +187,34 @@ function handleTimelineSurfacePointerDownCapture(event) {
   handleSurfacePointerDown(event)
 }
 
+function handleTrackReorderStart(trackId) {
+  draggingTrackId.value = trackId
+  trackDropTarget.value = null
+}
+
+function handleTrackReorderOver(target) {
+  if (!draggingTrackId.value || !target?.trackId || draggingTrackId.value === target.trackId) {
+    trackDropTarget.value = null
+    return
+  }
+
+  trackDropTarget.value = target
+}
+
+function handleTrackReorderDrop(target) {
+  if (!draggingTrackId.value || !target?.trackId || draggingTrackId.value === target.trackId) {
+    cleanupTrackReorder()
+    return
+  }
+
+  dawStore.reorderTrack(draggingTrackId.value, target.trackId, target.placement)
+  cleanupTrackReorder()
+}
+
+function handleTrackReorderEnd() {
+  cleanupTrackReorder()
+}
+
 function handleScrubPointerDown(event) {
   if (!scrollContainer.value || event.button !== 0) {
     return
@@ -218,6 +261,11 @@ async function scrubToClientX(clientX) {
   await seekToTime(nextTime)
 }
 
+function cleanupTrackReorder() {
+  draggingTrackId.value = null
+  trackDropTarget.value = null
+}
+
 watch(time, (nextTime) => {
   if (!scrollContainer.value) {
     return
@@ -247,6 +295,7 @@ watch(time, (nextTime) => {
 })
 
 onBeforeUnmount(() => {
+  cleanupTrackReorder()
   scrubPointerId = null
   window.removeEventListener('pointermove', handleScrubPointerMove)
   window.removeEventListener('pointerup', handleScrubPointerEnd)

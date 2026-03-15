@@ -147,7 +147,7 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   return true
 }
 
-function reorderEntries(entries, draggedId, targetId) {
+function reorderEntries(entries, draggedId, targetId, placement = 'before') {
   if (!draggedId || !targetId || draggedId === targetId) {
     return entries
   }
@@ -161,7 +161,14 @@ function reorderEntries(entries, draggedId, targetId) {
 
   const nextEntries = [...entries]
   const [draggedEntry] = nextEntries.splice(sourceIndex, 1)
-  nextEntries.splice(targetIndex, 0, draggedEntry)
+  const nextTargetIndex = nextEntries.findIndex((entry) => entry.id === targetId)
+
+  if (nextTargetIndex === -1) {
+    return entries
+  }
+
+  const insertIndex = placement === 'after' ? nextTargetIndex + 1 : nextTargetIndex
+  nextEntries.splice(insertIndex, 0, draggedEntry)
   return nextEntries
 }
 
@@ -990,6 +997,12 @@ export const useDawStore = defineStore('dawStore', {
         if (removedTrack.clips.some((clip) => clip.id === this.editingClipId)) {
           this.editingClipId = null
         }
+      })
+    },
+
+    reorderTrack(trackId, targetTrackId, placement = 'before') {
+      return this.recordHistoryStep('reorder-track', () => {
+        this.tracks = reorderEntries(this.tracks, trackId, targetTrackId, placement)
       })
     },
 

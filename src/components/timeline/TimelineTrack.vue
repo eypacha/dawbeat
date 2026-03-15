@@ -1,16 +1,31 @@
 <template>
   <div
-    class="flex min-w-full w-max border-b border-zinc-800 last:border-b-0"
+    class="relative flex min-w-full w-max border-b border-zinc-800 last:border-b-0"
     :data-track-id="track.id"
     :style="trackColorStyle"
     @click="dawStore.selectTrack(track.id)"
   >
     <div
+      v-if="trackReorderActive"
+      class="pointer-events-none absolute inset-x-0 z-30 h-0.5"
+      :class="trackReorderPlacement === 'after' ? 'bottom-0' : 'top-0'"
+      :style="trackReorderIndicatorStyle"
+    />
+
+    <div
       class="sticky left-0 z-10 flex shrink-0 flex-col justify-center border-r border-zinc-800 px-4 py-0"
       data-context-menu-enabled="true"
-      :class="track.id === selectedTrackId ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-900 text-zinc-300'"
+      draggable="true"
+      :class="[
+        track.id === selectedTrackId ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-900 text-zinc-300',
+        isTrackReorderSource ? 'cursor-grabbing opacity-50' : 'cursor-grab'
+      ]"
       :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
       @contextmenu="handleContextMenu"
+      @dragend="handleTrackReorderDragEnd"
+      @dragstart="handleTrackReorderDragStart"
+      @dragover.prevent="handleTrackHeaderDragOver"
+      @drop.prevent="handleTrackHeaderDrop"
     >
       <div class="min-w-0">
         <span class="block min-w-0 truncate text-sm transition-opacity" :class="isAudible ? '' : 'opacity-55'">
@@ -112,9 +127,25 @@ import { TRACK_LABEL_WIDTH, pixelsToTicks } from '@/utils/timeUtils'
 const DRAG_THRESHOLD_PX = 6
 
 const props = defineProps({
+  isTrackReorderSource: {
+    type: Boolean,
+    default: false
+  },
   trackIndex: {
     type: Number,
     required: true
+  },
+  trackReorderActive: {
+    type: Boolean,
+    default: false
+  },
+  trackReorderColor: {
+    type: String,
+    default: null
+  },
+  trackReorderPlacement: {
+    type: String,
+    default: null
   },
   track: {
     type: Object,
@@ -125,6 +156,7 @@ const props = defineProps({
     required: true
   }
 })
+const emit = defineEmits(['track-reorder-start', 'track-reorder-over', 'track-reorder-drop', 'track-reorder-end'])
 
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
@@ -180,6 +212,10 @@ const trackColorStyle = computed(() => ({
   '--track-color': trackColor.value,
   '--track-color-border': darkenHex(trackColor.value, 15),
   '--track-color-light': lightenHex(trackColor.value, 15)
+}))
+
+const trackReorderIndicatorStyle = computed(() => ({
+  backgroundColor: props.trackReorderColor ? lightenHex(getTrackColor(props.trackReorderColor), 15) : 'var(--track-color-light)'
 }))
 
 const muteButtonClassName = computed(() => {
@@ -250,6 +286,47 @@ function handleToggleMuted() {
 
 function handleToggleSoloed() {
   dawStore.toggleTrackSoloed(props.track.id)
+}
+
+function handleTrackReorderDragStart(event) {
+  if (!event.dataTransfer) {
+    return
+  }
+
+  dawStore.selectTrack(props.track.id)
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData('application/x-dawbeat-track-id', props.track.id)
+  emit('track-reorder-start', props.track.id)
+}
+
+function handleTrackHeaderDragOver(event) {
+  if (!isTrackReorderDragEvent(event)) {
+    return
+  }
+
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+
+  emit('track-reorder-over', {
+    placement: getTrackReorderPlacement(event),
+    trackId: props.track.id
+  })
+}
+
+function handleTrackHeaderDrop(event) {
+  if (!isTrackReorderDragEvent(event)) {
+    return
+  }
+
+  emit('track-reorder-drop', {
+    placement: getTrackReorderPlacement(event),
+    trackId: props.track.id
+  })
+}
+
+function handleTrackReorderDragEnd() {
+  emit('track-reorder-end')
 }
 
 function handleLaneContextMenu(event) {
@@ -451,6 +528,25 @@ function getDroppedFormulaOffsetPx(event) {
   const offset = Number(rawOffset)
 
   return Number.isFinite(offset) ? offset : 0
+}
+
+function isTrackReorderDragEvent(event) {
+  if (!event.dataTransfer?.types) {
+    return false
+  }
+
+  return Array.from(event.dataTransfer.types).includes('application/x-dawbeat-track-id')
+}
+
+function getTrackReorderPlacement(event) {
+  const currentTarget = event.currentTarget
+
+  if (!(currentTarget instanceof HTMLElement)) {
+    return 'before'
+  }
+
+  const { height, top } = currentTarget.getBoundingClientRect()
+  return event.clientY >= top + height / 2 ? 'after' : 'before'
 }
 
 onBeforeUnmount(() => {
