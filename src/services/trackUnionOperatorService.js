@@ -5,6 +5,8 @@ export const TRACK_UNION_OPERATOR_OPTIONS = [
   { value: '+', label: 'Add (+)' },
   { value: '-', label: 'Subtract (-)' },
   { value: '*', label: 'Multiply (*)' },
+  { value: '<<', label: 'Left Shift (<<)' },
+  { value: '>>', label: 'Right Shift (>>)' },
   { value: '&', label: 'Bitwise AND (&)' },
   { value: '^', label: 'Bitwise XOR (^)' },
   { value: '%', label: 'Modulo (%)' }
