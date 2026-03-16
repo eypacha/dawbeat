@@ -1,6 +1,6 @@
 import { storeToRefs } from 'pinia'
 import { watch } from 'vue'
-import { getActiveFormula } from '@/engine/timelineEngine'
+import { getActiveFormula, getPlaybackEndTick } from '@/engine/timelineEngine'
 import bytebeatService from '@/services/bytebeatService'
 import { applyEvalEffects } from '@/services/evalEffectService'
 import { useDawStore } from '@/stores/dawStore'
@@ -54,6 +54,15 @@ export function useTransportPlayback() {
       }
 
       return
+    }
+
+    if (!loopEnabled.value) {
+      const playbackEndTick = getPlaybackEndTick(tracks.value)
+
+      if (playbackEndTick <= 0 || timeTicks >= playbackEndTick) {
+        await stop()
+        return
+      }
     }
 
     const activeFormula = getActiveFormula(timeTicks, tracks.value, formulas.value)

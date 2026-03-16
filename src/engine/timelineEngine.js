@@ -1,6 +1,7 @@
 import { resolveClipFormula } from '@/services/formulaService'
 import { isTrackAudible } from '@/services/trackPlaybackState'
 import { normalizeTrackUnionOperator } from '@/services/trackUnionOperatorService'
+import { getClipEnd } from '@/utils/timeUtils'
 
 export function getActiveFormula(timeTicks, tracks, formulas) {
   const activeTracks = []
@@ -35,4 +36,20 @@ export function getActiveFormula(timeTicks, tracks, formulas) {
       `(${expression} ${activeTracks[index].unionOperator} ${trackEntry.formula})`,
     activeTracks[0].formula
   )
+}
+
+export function getPlaybackEndTick(tracks) {
+  let maxEnd = 0
+
+  for (const track of tracks) {
+    if (!isTrackAudible(track, tracks)) {
+      continue
+    }
+
+    for (const clip of track.clips) {
+      maxEnd = Math.max(maxEnd, getClipEnd(clip))
+    }
+  }
+
+  return maxEnd
 }
