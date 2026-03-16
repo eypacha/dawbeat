@@ -83,7 +83,7 @@
       "clips": [
         {
           "id": "6c8a2fbf-61be-4b13-96af-111ea46d36b9",
-          "formula": "3 & t >> 8",
+          "formula": "3&t>>8",
           "formulaId": null,
           "formulaName": "",
           "start": 32,
@@ -116,7 +116,7 @@
         },
         {
           "id": "28fe2178-c698-47bc-9565-b29deb2e070a",
-          "formula": "t & 63",
+          "formula": "t&63",
           "formulaId": null,
           "formulaName": "",
           "start": 49.5,
@@ -124,7 +124,7 @@
         },
         {
           "id": "266246f1-73f5-4b61-ac0c-e8a4cfcf6699",
-          "formula": "t & 31",
+          "formula": "t&31",
           "formulaId": null,
           "formulaName": "",
           "start": 50.5,
@@ -132,7 +132,7 @@
         },
         {
           "id": "58a178a7-1afe-440b-aa6e-9c612b4ff5e1",
-          "formula": "t & 31",
+          "formula": "t&31",
           "formulaId": null,
           "formulaName": "",
           "start": 51.5,
@@ -140,7 +140,7 @@
         },
         {
           "id": "d0d9133d-dd96-40e8-ad23-a3d10c91c154",
-          "formula": "t & 31",
+          "formula": "t&31",
           "formulaId": null,
           "formulaName": "",
           "start": 52.5,
@@ -148,7 +148,7 @@
         },
         {
           "id": "9b6fc5e5-ecf9-405c-9626-6d0d4ba06f32",
-          "formula": "t & 31",
+          "formula": "t&31",
           "formulaId": null,
           "formulaName": "",
           "start": 53.5,
@@ -156,7 +156,7 @@
         },
         {
           "id": "70738200-a1fe-43e3-8418-966eae327551",
-          "formula": "t & 31",
+          "formula": "t&31",
           "formulaId": null,
           "formulaName": "",
           "start": 54.5,
@@ -164,7 +164,7 @@
         },
         {
           "id": "1b03884f-e33e-4cca-847e-61dc356aded0",
-          "formula": "t & 31",
+          "formula": "t&31",
           "formulaId": null,
           "formulaName": "",
           "start": 55.5,
@@ -172,7 +172,7 @@
         },
         {
           "id": "4577c7b8-da3b-4e71-8e2c-545531ef2fe6",
-          "formula": "t & 31",
+          "formula": "t&31",
           "formulaId": null,
           "formulaName": "",
           "start": 56.5,
@@ -180,7 +180,7 @@
         },
         {
           "id": "a3b900f5-19ca-4afa-a30a-cb7eda31b7c3",
-          "formula": "t & 63",
+          "formula": "t&63",
           "formulaId": null,
           "formulaName": "",
           "start": 57.5,
@@ -188,7 +188,7 @@
         },
         {
           "id": "f21de91c-c637-4111-95d7-2e81c2f11728",
-          "formula": "t & 31",
+          "formula": "t&31",
           "formulaId": null,
           "formulaName": "",
           "start": 58.5,
@@ -196,7 +196,7 @@
         },
         {
           "id": "123f1268-5541-49ab-a6b9-1c9ebd7500fd",
-          "formula": "t & 31",
+          "formula": "t&31",
           "formulaId": null,
           "formulaName": "",
           "start": 59.5,
@@ -204,7 +204,7 @@
         },
         {
           "id": "733461a2-fc4a-4dde-826a-98a2e7db4ef4",
-          "formula": "t & 31",
+          "formula": "t&31",
           "formulaId": null,
           "formulaName": "",
           "start": 60.5,
@@ -220,7 +220,7 @@
         },
         {
           "id": "c4c08f66-e3d1-48db-b95c-5c524ca92772",
-          "formula": "t & 31",
+          "formula": "t&31",
           "formulaId": null,
           "formulaName": "",
           "start": 62.5,
@@ -228,7 +228,7 @@
         },
         {
           "id": "8c581fe2-8e6f-475b-b423-1e94c38a5a29",
-          "formula": "t & 31",
+          "formula": "t&31",
           "formulaId": null,
           "formulaName": "",
           "start": 63.5,
