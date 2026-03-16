@@ -61,8 +61,14 @@
           :style="marqueeSelectionStyle"
         />
 
-        <div
-          v-if="!variableTracks.length"
+        <TimelineVariableTrack
+          v-for="variableTrack in variableTracks"
+          :key="variableTrack.name"
+          :timeline-width="timelineWidthStyle"
+          :variable-track="variableTrack"
+        />
+
+                <div
           class="flex min-w-full w-max border-b border-zinc-800 bg-zinc-950/60"
         >
           <div
@@ -81,14 +87,7 @@
 
           <div class="h-11 shrink-0 bg-zinc-950/35" :style="{ width: timelineWidthStyle }" />
         </div>
-
-        <TimelineVariableTrack
-          v-for="variableTrack in variableTracks"
-          :key="variableTrack.name"
-          :timeline-width="timelineWidthStyle"
-          :variable-track="variableTrack"
-        />
-
+        
         <TimelineTrack
           v-for="(track, index) in tracks"
           :key="track.id"
