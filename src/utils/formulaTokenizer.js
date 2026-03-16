@@ -1,5 +1,5 @@
 const DOUBLE_OPERATORS = ['>>', '<<']
-const SINGLE_OPERATORS = new Set(['+', '-', '*', '/', '%', '&', '|', '^', '~', '!', '=', '<', '>', '?', ':'])
+const SINGLE_OPERATORS = new Set(['+', '-', '*', '/', '%', '&', '|', '^', '~', '!', '=', '<', '>', '?', ':',','])
 const PARENTHESES = new Set(['(', ')'])
 const FUNCTION_NAMES = new Set([
   'sin',
