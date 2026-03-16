@@ -21,7 +21,16 @@ const FUNCTION_NAMES = new Set([
 ])
 
 export function tokenizeFormula(expression = '') {
+  return tokenizeFormulaWithOptions(expression)
+}
+
+export function tokenizeFormulaWithOptions(expression = '', options = {}) {
   const source = String(expression)
+  const allowedIdentifiers = new Set(
+    Array.isArray(options.allowedIdentifiers)
+      ? options.allowedIdentifiers.filter((identifier) => typeof identifier === 'string' && identifier)
+      : []
+  )
   const tokens = []
   let index = 0
 
@@ -73,6 +82,11 @@ export function tokenizeFormula(expression = '') {
       if (FUNCTION_NAMES.has(identifier) && source[lookaheadIndex] === '(') {
         tokens.push({
           type: 'function',
+          value: identifier
+        })
+      } else if (allowedIdentifiers.has(identifier)) {
+        tokens.push({
+          type: 'identifier',
           value: identifier
         })
       } else {
@@ -146,7 +160,11 @@ function getNumberEndIndex(source, startIndex) {
 }
 
 export function renderFormulaTokensToHtml(expression = '') {
-  const tokens = tokenizeFormula(expression)
+  return renderFormulaTokensToHtmlWithOptions(expression)
+}
+
+export function renderFormulaTokensToHtmlWithOptions(expression = '', options = {}) {
+  const tokens = tokenizeFormulaWithOptions(expression, options)
 
   if (!tokens.length) {
     return ''

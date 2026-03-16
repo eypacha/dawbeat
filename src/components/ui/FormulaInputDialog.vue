@@ -58,12 +58,14 @@
 
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import Button from '@/components/ui/Button.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import Input from '@/components/ui/Input.vue'
 import Modal from '@/components/ui/Modal.vue'
-import { renderFormulaTokensToHtml } from '@/utils/formulaTokenizer'
-import { validateFormula } from '@/utils/formulaValidation'
+import { useDawStore } from '@/stores/dawStore'
+import { renderFormulaTokensToHtmlWithOptions } from '@/utils/formulaTokenizer'
+import { validateFormulaWithOptions } from '@/utils/formulaValidation'
 
 const props = defineProps({
   initialValue: {
@@ -94,12 +96,19 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'eval', 'save'])
 
+const dawStore = useDawStore()
+const { variableTracks } = storeToRefs(dawStore)
 const draftName = ref(props.initialName)
 const draftValue = ref(props.initialValue)
 const formulaValid = ref(true)
 const highlightLayerElement = ref(null)
 const textareaElement = ref(null)
-const highlightedFormulaHtml = computed(() => renderFormulaTokensToHtml(draftValue.value))
+const allowedIdentifiers = computed(() => variableTracks.value.map((variableTrack) => variableTrack.name))
+const highlightedFormulaHtml = computed(() =>
+  renderFormulaTokensToHtmlWithOptions(draftValue.value, {
+    allowedIdentifiers: allowedIdentifiers.value
+  })
+)
 
 watch(
   () => props.visible,
@@ -174,7 +183,9 @@ function handleEvalShortcut() {
 }
 
 function syncFormulaValidity() {
-  formulaValid.value = validateFormula(draftValue.value)
+  formulaValid.value = validateFormulaWithOptions(draftValue.value, {
+    allowedIdentifiers: allowedIdentifiers.value
+  })
 }
 
 function syncHighlightScroll() {
@@ -262,6 +273,10 @@ function syncHighlightScroll() {
 
 :deep(.token-function) {
   color: #38bdf8;
+}
+
+:deep(.token-identifier) {
+  color: rgb(244 244 245);
 }
 
 :deep(.token-invalid) {

@@ -4,6 +4,20 @@ const MATH_SCOPE_DECLARATION = Object.getOwnPropertyNames(Math)
   .join(', ')
 
 export function validateFormula(code) {
+  return validateFormulaWithOptions(code)
+}
+
+export function validateFormulaWithOptions(code, options = {}) {
+  const allowedIdentifiersDeclaration = Array.isArray(options.allowedIdentifiers)
+    ? options.allowedIdentifiers
+        .filter((identifier) => typeof identifier === 'string' && identifier)
+        .map((identifier) => `${identifier} = 0`)
+        .join(', ')
+    : ''
+  const scopeDeclaration = [MATH_SCOPE_DECLARATION, allowedIdentifiersDeclaration]
+    .filter(Boolean)
+    .join(', ')
+
   try {
     // Validate both parse time and a minimal runtime execution so
     // references like `ty` are rejected before reaching the engine.
@@ -11,7 +25,7 @@ export function validateFormula(code) {
     // eslint-disable-next-line no-new-func
     const evaluator = new Function(
       't',
-      `var ${MATH_SCOPE_DECLARATION}; return (${code})`
+      `${scopeDeclaration ? `var ${scopeDeclaration}; ` : ''}return (${code})`
     )
     evaluator(0)
     return true
