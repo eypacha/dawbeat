@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "tracks": [
     {
       "id": "c7f7a6b1-a6c7-4dac-bd13-c34a8051f9e6",
@@ -111,8 +111,8 @@
           "formula": "t>>(t&4096?3:4)",
           "formulaId": null,
           "formulaName": "",
-          "start": 36,
-          "duration": 12
+          "start": 40,
+          "duration": 8
         },
         {
           "id": "28fe2178-c698-47bc-9565-b29deb2e070a",
@@ -310,6 +310,7 @@
       ]
     }
   ],
+  "variableTracks": [],
   "formulas": [
     {
       "id": "c196a3aa-6cf5-4aac-b199-9750ee6fbc59",
@@ -327,9 +328,9 @@
       "code": "t*(256+(1&t>>14))"
     }
   ],
-  "zoom": 0.650850252836944,
+  "zoom": 0.1557978365600579,
   "loopStart": 64,
-  "loopEnd": 104,
+  "loopEnd": 96,
   "loopEnabled": false,
   "audioEffects": [],
   "evalEffects": [
