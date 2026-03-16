@@ -88,7 +88,14 @@
 
       <div class="flex min-w-0 flex-1 items-center justify-end gap-4">
         <div class="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
-          <span class="border border-zinc-800 bg-zinc-950 px-3 py-1">{{ transportTime }}</span>
+          <button
+            class="border border-zinc-800 w-25 bg-zinc-950 px-3 py-1 text-zinc-300 transition hover:border-zinc-700 hover:text-zinc-100"
+            type="button"
+            :title="transportDisplayHint"
+            @click="cycleTransportDisplayMode"
+          >
+            {{ transportDisplay }}
+          </button>
           <div class="flex items-center gap-2 border border-zinc-800 bg-zinc-950 px-2 py-1">
             <input
               v-model="sampleRateDraft"
@@ -157,6 +164,7 @@ import { useDawStore } from '@/stores/dawStore'
 import { downloadProjectWav } from '@/services/exportService'
 import { downloadProjectFile, importProjectFile } from '@/services/projectPersistence'
 import { enqueueSnackbar } from '@/services/notifications'
+import { ticksToSamples } from '@/utils/timeUtils'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import Divider from '@/components/ui/Divider.vue'
 import IconButton from '@/components/ui/IconButton.vue'
@@ -165,14 +173,46 @@ import SettingsModal from '@/components/ui/SettingsModal.vue'
 
 const dawStore = useDawStore()
 const { play, pause, stop } = useTransportPlayback()
-const { canRedo, canUndo, loopEnabled, playing, sampleRate, time } = storeToRefs(dawStore)
+const { canRedo, canUndo, loopEnabled, playing, sampleRate, tickSize, time } = storeToRefs(dawStore)
 const projectFileInput = ref(null)
 const sampleRateDraft = ref(String(sampleRate.value))
 const settingsVisible = ref(false)
 const exportingWav = ref(false)
 const newProjectConfirmVisible = ref(false)
+const transportDisplayMode = ref('sample')
 
+const transportSampleTime = computed(() => {
+  const sampleTime = ticksToSamples(time.value, tickSize.value)
+
+  if (!Number.isFinite(sampleTime)) {
+    return 0
+  }
+
+  return Math.max(0, Math.floor(sampleTime))
+})
 const transportTime = computed(() => time.value.toFixed(2))
+const transportDisplay = computed(() => {
+  if (transportDisplayMode.value === 'ticks') {
+    return `tick=${transportTime.value}`
+  }
+
+  if (transportDisplayMode.value === 'clock') {
+    return formatTransportClock(transportSampleTime.value, sampleRate.value)
+  }
+
+  return `t=${transportSampleTime.value}`
+})
+const transportDisplayHint = computed(() => {
+  if (transportDisplayMode.value === 'ticks') {
+    return 'Click to show elapsed time'
+  }
+
+  if (transportDisplayMode.value === 'clock') {
+    return 'Click to show t'
+  }
+
+  return 'Click to show raw ticks'
+})
 
 watch(sampleRate, (nextSampleRate) => {
   sampleRateDraft.value = String(nextSampleRate)
@@ -189,6 +229,36 @@ function commitSampleRate() {
 
 function resetSampleRateDraft() {
   sampleRateDraft.value = String(sampleRate.value)
+}
+
+function cycleTransportDisplayMode() {
+  if (transportDisplayMode.value === 'sample') {
+    transportDisplayMode.value = 'ticks'
+    return
+  }
+
+  if (transportDisplayMode.value === 'ticks') {
+    transportDisplayMode.value = 'clock'
+    return
+  }
+
+  transportDisplayMode.value = 'sample'
+}
+
+function formatTransportClock(sampleTime, currentSampleRate) {
+  const normalizedSampleTime = Number(sampleTime)
+  const normalizedSampleRate = Number(currentSampleRate)
+
+  if (!Number.isFinite(normalizedSampleTime) || !Number.isFinite(normalizedSampleRate) || normalizedSampleRate <= 0) {
+    return '00:00:000'
+  }
+
+  const totalMilliseconds = Math.floor((normalizedSampleTime / normalizedSampleRate) * 1000)
+  const minutes = Math.floor(totalMilliseconds / 60000)
+  const seconds = Math.floor((totalMilliseconds % 60000) / 1000)
+  const milliseconds = totalMilliseconds % 1000
+
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}:${String(milliseconds).padStart(3, '0')}`
 }
 
 function handleProjectDownload() {
