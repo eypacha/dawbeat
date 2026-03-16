@@ -253,7 +253,7 @@
       "clips": [
         {
           "id": "8ea7b325-fd32-434d-8da6-80cdbae0e624",
-          "formula": "t * t >> 8",
+          "formula": "t*t>>8",
           "formulaId": null,
           "formulaName": "",
           "start": 15,
@@ -261,7 +261,7 @@
         },
         {
           "id": "85f5e439-5533-4547-b873-9700398c8081",
-          "formula": "t * t >> 8",
+          "formula": "t*t>>8",
           "formulaId": null,
           "formulaName": "",
           "start": 31.5,
@@ -269,7 +269,7 @@
         },
         {
           "id": "47d9d2b2-407f-4cfd-81d4-575bff0482c9",
-          "formula": "t * t >> 8",
+          "formula": "t*t>>8",
           "formulaId": null,
           "formulaName": "",
           "start": 58,
@@ -277,7 +277,7 @@
         },
         {
           "id": "f2ad8865-1d94-4968-8d49-21bc5d00a69d",
-          "formula": "t * t >> 8",
+          "formula": "t*t>>8",
           "formulaId": null,
           "formulaName": "",
           "start": 62,
@@ -285,7 +285,7 @@
         },
         {
           "id": "ed0e7eae-7a8f-495c-b6c7-2b4b275efb2a",
-          "formula": "t & 64",
+          "formula": "t&64",
           "formulaId": null,
           "formulaName": "",
           "start": 80,
@@ -293,7 +293,7 @@
         },
         {
           "id": "6c4a0a2d-a410-4ddc-aeb6-41da881ba51b",
-          "formula": "t & 63",
+          "formula": "t&63",
           "formulaId": null,
           "formulaName": "",
           "start": 88,
@@ -301,7 +301,7 @@
         },
         {
           "id": "e5aa25a7-43f1-444e-9883-2cb7088129af",
-          "formula": "t & 31",
+          "formula": "t&31",
           "formulaId": null,
           "formulaName": "",
           "start": 92,
