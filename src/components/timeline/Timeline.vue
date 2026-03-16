@@ -17,7 +17,7 @@
           class="sticky left-0 z-30 flex shrink-0 items-center border-r border-zinc-800 bg-zinc-900 px-4 text-[10px] uppercase tracking-[0.3em] text-zinc-500"
           :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
         >
-          Tracks
+          Timeline
         </div>
 
         <div class="relative h-11 shrink-0" :style="rulerStyle">
@@ -61,6 +61,34 @@
           :style="marqueeSelectionStyle"
         />
 
+        <div
+          v-if="!variableTracks.length"
+          class="flex min-w-full w-max border-b border-zinc-800 bg-zinc-950/60"
+        >
+          <div
+            class="sticky left-0 z-20 flex shrink-0 items-center justify-between gap-3 border-r border-zinc-800 bg-zinc-900 px-4 py-2"
+            :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
+          >
+            <span class="text-[10px] uppercase tracking-[0.3em] text-cyan-500">Variables</span>
+            <button
+              class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-cyan-900/80 bg-cyan-950/40 text-cyan-300 transition hover:border-cyan-700 hover:text-cyan-100"
+              type="button"
+              @click="dawStore.addVariableTrack()"
+            >
+              <Plus class="h-4 w-4" />
+            </button>
+          </div>
+
+          <div class="h-11 shrink-0 border-b border-cyan-950/50 bg-cyan-950/10" :style="{ width: timelineWidthStyle }" />
+        </div>
+
+        <TimelineVariableTrack
+          v-for="variableTrack in variableTracks"
+          :key="variableTrack.name"
+          :timeline-width="timelineWidthStyle"
+          :variable-track="variableTrack"
+        />
+
         <TimelineTrack
           v-for="(track, index) in tracks"
           :key="track.id"
@@ -88,11 +116,13 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { Plus } from 'lucide-vue-next'
 import Panel from '@/components/ui/Panel.vue'
 import Playhead from '@/components/timeline/Playhead.vue'
 import TimelineAddTrackRow from '@/components/timeline/TimelineAddTrackRow.vue'
 import TimelineLoopRegion from '@/components/timeline/TimelineLoopRegion.vue'
 import TimelineTrack from '@/components/timeline/TimelineTrack.vue'
+import TimelineVariableTrack from '@/components/timeline/TimelineVariableTrack.vue'
 import { useTimelineMarqueeSelection } from '@/composables/useTimelineMarqueeSelection'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
@@ -110,7 +140,7 @@ const FIXED_TIMELINE_TICKS = 256
 
 const dawStore = useDawStore()
 const { seekToTime } = useTransportPlayback()
-const { editingClipId, loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, tickSize, time, tracks } =
+const { editingClipId, loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, tickSize, time, tracks, variableTracks } =
   storeToRefs(dawStore)
 const scrollContainer = ref(null)
 const timelineSurfaceElement = ref(null)

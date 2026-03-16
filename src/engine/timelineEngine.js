@@ -1,9 +1,10 @@
 import { resolveClipFormula } from '@/services/formulaService'
 import { isTrackAudible } from '@/services/trackPlaybackState'
 import { normalizeTrackUnionOperator } from '@/services/trackUnionOperatorService'
+import { getActiveVariableDefinitions, prependVariableDefinitions } from '@/services/variableTrackService'
 import { getClipEnd } from '@/utils/timeUtils'
 
-export function getActiveFormula(timeTicks, tracks, formulas) {
+export function getActiveFormula(timeTicks, tracks, formulas, variableTracks = []) {
   const activeTracks = []
 
   for (const track of tracks) {
@@ -31,10 +32,15 @@ export function getActiveFormula(timeTicks, tracks, formulas) {
     return null
   }
 
-  return activeTracks.slice(1).reduce(
+  const combinedExpression = activeTracks.slice(1).reduce(
     (expression, trackEntry, index) =>
       `(${expression} ${activeTracks[index].unionOperator} ${trackEntry.formula})`,
     activeTracks[0].formula
+  )
+
+  return prependVariableDefinitions(
+    combinedExpression,
+    getActiveVariableDefinitions(timeTicks, variableTracks)
   )
 }
 

@@ -53,6 +53,7 @@
     <FormulaInputDialog
       :initial-name="editingFormulaName"
       :initial-value="editingFormulaValue"
+      :show-name="showFormulaDialogNameField"
       :visible="isFormulaDialogVisible"
       label="Formula"
       :title="formulaDialogTitle"
@@ -83,7 +84,7 @@ import TrackPresentationDialog from '@/components/ui/TrackPresentationDialog.vue
 import { provideContextMenu } from '@/composables/useContextMenu'
 import { getFormulaById, resolveClipFormula, resolveClipFormulaName } from '@/services/formulaService'
 import { initKeyboardShortcuts } from '@/services/keyboardShortcuts'
-import { findTrackWithClip } from '@/services/dawStoreService'
+import { findTimelineClip } from '@/services/dawStoreService'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
 import { TRACK_COLOR_PALETTE } from '@/utils/colorUtils'
@@ -115,37 +116,36 @@ const {
   selectedClipId,
   selectedClipIds,
   showEvaluatedPanel,
-  tracks
+  tracks,
+  variableTracks
 } = storeToRefs(dawStore)
 
-const editingClipFormula = computed(() => {
+const editingClipRecord = computed(() => {
   if (!editingClipId.value) {
+    return null
+  }
+
+  return findTimelineClip(tracks.value, variableTracks.value, editingClipId.value)
+})
+
+const editingClipFormula = computed(() => {
+  if (!editingClipRecord.value?.clip) {
     return ''
   }
 
-  const result = findTrackWithClip(tracks.value, editingClipId.value)
-
-  if (!result) {
-    return ''
+  if (editingClipRecord.value.laneType === 'variable') {
+    return editingClipRecord.value.clip.formula ?? ''
   }
 
-  const clip = result.track.clips[result.clipIndex]
-  return clip ? resolveClipFormula(clip, formulas.value) : ''
+  return resolveClipFormula(editingClipRecord.value.clip, formulas.value)
 })
 
 const editingClipFormulaName = computed(() => {
-  if (!editingClipId.value) {
+  if (!editingClipRecord.value?.clip || editingClipRecord.value.laneType === 'variable') {
     return ''
   }
 
-  const result = findTrackWithClip(tracks.value, editingClipId.value)
-
-  if (!result) {
-    return ''
-  }
-
-  const clip = result.track.clips[result.clipIndex]
-  return clip ? resolveClipFormulaName(clip, formulas.value) : ''
+  return resolveClipFormulaName(editingClipRecord.value.clip, formulas.value)
 })
 
 const editingLibraryFormula = computed(() => {
@@ -182,9 +182,16 @@ const editingFormulaName = computed(() => {
   return editingLibraryFormulaName.value
 })
 
-const formulaDialogTitle = computed(() =>
-  editingClipId.value ? 'Edit Clip Formula' : 'Edit Library Formula'
-)
+const showFormulaDialogNameField = computed(() => editingClipRecord.value?.laneType !== 'variable')
+const formulaDialogTitle = computed(() => {
+  if (!editingClipId.value) {
+    return 'Edit Library Formula'
+  }
+
+  return editingClipRecord.value?.laneType === 'variable'
+    ? 'Edit Variable Formula'
+    : 'Edit Clip Formula'
+})
 const mainLayoutStyle = computed(() => ({
   '--effects-width': effectsCollapsed.value ? '56px' : '304px',
   '--library-width': libraryCollapsed.value ? '56px' : '320px'
@@ -265,6 +272,11 @@ function handleContextMenuSelect(action, item) {
     return
   }
 
+  if (action === 'add-variable-track') {
+    dawStore.addVariableTrack()
+    return
+  }
+
   if (action === 'edit-clip') {
     dawStore.setEditingClip(item.clipId)
     return
@@ -288,6 +300,17 @@ function handleContextMenuSelect(action, item) {
     return
   }
 
+  if (action === 'create-variable-clip-at-position') {
+    dawStore.recordHistoryStep('create-variable-clip-at-position', () => {
+      dawStore.addVariableClip(item.variableTrackName, {
+        duration: item.duration ?? 1,
+        formula: '0',
+        start: item.start ?? 0
+      })
+    })
+    return
+  }
+
   if (action === 'paste-clips') {
     dawStore.pasteClipboardAtPlayhead()
     return
@@ -297,6 +320,11 @@ function handleContextMenuSelect(action, item) {
     confirmDialog.trackId = item.trackId
     confirmDialog.message = `Delete ${item.trackName ?? 'this track'}?`
     confirmDialog.visible = true
+    return
+  }
+
+  if (action === 'delete-variable-track') {
+    dawStore.removeVariableTrack(item.variableTrackName)
     return
   }
 

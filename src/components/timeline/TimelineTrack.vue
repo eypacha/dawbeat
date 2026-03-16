@@ -2,6 +2,7 @@
   <div
     class="relative flex min-w-full w-max border-b border-zinc-800 last:border-b-0"
     :data-track-id="track.id"
+    :data-clip-lane-id="track.id"
     :style="trackColorStyle"
     @click="dawStore.selectTrack(track.id)"
   >
@@ -186,7 +187,7 @@ const laneClassName = computed(() => {
 })
 
 const dragPreview = computed(() => {
-  if (clipDragPreview.value?.targetTrackId !== props.track.id) {
+  if (clipDragPreview.value?.targetLaneId !== props.track.id) {
     return null
   }
 

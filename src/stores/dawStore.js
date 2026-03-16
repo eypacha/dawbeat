@@ -12,12 +12,17 @@ import {
   createTrack,
   createTrackId,
   createTrackClip,
+  createVariableTrack,
+  createVariableTrackClip,
   findClip,
   findClipIndex,
   findTrack,
   findTrackIndex,
-  findTrackWithClip,
-  sortTrackClips
+  findTimelineClip,
+  findVariableTrack,
+  findVariableTrackIndex,
+  sortTrackClips,
+  sortVariableTrackClips
 } from '@/services/dawStoreService'
 import {
   createAudioEffect,
@@ -47,6 +52,7 @@ import {
 } from '@/utils/timeUtils'
 import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
 import { TRACK_COLOR_PALETTE, getTrackColor } from '@/utils/colorUtils'
+import { getNextVariableTrackName } from '@/services/variableTrackService'
 
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
 const MAX_HISTORY_ENTRIES = 100
@@ -69,6 +75,7 @@ function createEmptyProject() {
     showClipWaveforms: true,
     tickSize: BASE_TICK_SIZE,
     tracks: [createTrack()],
+    variableTracks: [],
     zoom: 1
   }
 }
@@ -99,6 +106,7 @@ function createInitialState() {
     showClipWaveforms: project.showClipWaveforms,
     tickSize: project.tickSize,
     tracks: project.tracks,
+    variableTracks: project.variableTracks,
     historyApplying: false,
     historyFuture: [],
     historyPast: [],
@@ -147,6 +155,7 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   store.showClipWaveforms = normalizedProject.showClipWaveforms
   store.tickSize = normalizedProject.tickSize
   store.tracks = normalizedProject.tracks
+  store.variableTracks = normalizedProject.variableTracks
   clearTransientSelectionState(store)
   store.playing = nextPlaying
   store.time = nextTime
@@ -192,18 +201,18 @@ function syncSelectedClipState(store, clipIds) {
   store.selectedClipId = nextSelectedClipIds[0] ?? null
 }
 
-function collectSelectedClipEntries(tracks, clipIds) {
+function collectSelectedClipEntries(tracks, variableTracks, clipIds) {
   const selectedClipIds = normalizeSelectedClipIds(clipIds)
   const entries = []
 
   for (const clipId of selectedClipIds) {
-    const result = findTrackWithClip(tracks, clipId)
+    const result = findTimelineClip(tracks, variableTracks, clipId)
 
     if (!result) {
       continue
     }
 
-    const clip = result.track.clips[result.clipIndex]
+    const clip = result.clip
 
     if (!clip) {
       continue
@@ -212,16 +221,24 @@ function collectSelectedClipEntries(tracks, clipIds) {
     entries.push({
       clip,
       clipId,
-      track: result.track,
-      trackId: result.track.id
+      lane: result.lane,
+      laneId: result.laneId,
+      laneType: result.laneType
     })
   }
 
   return entries
 }
 
-function sortClipEntriesForClipboard(tracks, clipEntries) {
-  const trackIndexById = new Map(tracks.map((track, index) => [track.id, index]))
+function getLaneOrderMap(tracks, variableTracks) {
+  return new Map([
+    ...variableTracks.map((variableTrack, index) => [`variable:${variableTrack.name}`, index]),
+    ...tracks.map((track, index) => [`track:${track.id}`, variableTracks.length + index])
+  ])
+}
+
+function sortClipEntriesForClipboard(tracks, variableTracks, clipEntries) {
+  const laneOrderById = getLaneOrderMap(tracks, variableTracks)
 
   return [...clipEntries].sort((leftEntry, rightEntry) => {
     const startDelta = leftEntry.clip.start - rightEntry.clip.start
@@ -231,18 +248,18 @@ function sortClipEntriesForClipboard(tracks, clipEntries) {
     }
 
     return (
-      (trackIndexById.get(leftEntry.trackId) ?? Number.MAX_SAFE_INTEGER) -
-      (trackIndexById.get(rightEntry.trackId) ?? Number.MAX_SAFE_INTEGER)
+      (laneOrderById.get(`${leftEntry.laneType}:${leftEntry.laneId}`) ?? Number.MAX_SAFE_INTEGER) -
+      (laneOrderById.get(`${rightEntry.laneType}:${rightEntry.laneId}`) ?? Number.MAX_SAFE_INTEGER)
     )
   })
 }
 
-function buildClipClipboard(entries, tracks, formulas) {
+function buildClipClipboard(entries, tracks, variableTracks, formulas) {
   if (!entries.length) {
     return null
   }
 
-  const sortedEntries = sortClipEntriesForClipboard(tracks, entries)
+  const sortedEntries = sortClipEntriesForClipboard(tracks, variableTracks, entries)
   const anchorStart = sortedEntries[0]?.clip.start ?? 0
   const anchorTickStart = Math.floor(Math.max(0, anchorStart))
 
@@ -257,13 +274,16 @@ function buildClipClipboard(entries, tracks, formulas) {
       return {
         duration: entry.clip.duration,
         formula: referencedFormula?.code ?? entry.clip.formula ?? null,
-        formulaId: referencedFormula?.id ?? null,
-        formulaName: referencedFormula?.name ?? entry.clip.formulaName ?? null,
-        sourceTrackId: entry.trackId,
+        formulaId: entry.laneType === 'track' ? referencedFormula?.id ?? null : null,
+        formulaName:
+          entry.laneType === 'track' ? referencedFormula?.name ?? entry.clip.formulaName ?? null : null,
+        sourceLaneId: entry.laneId,
+        sourceLaneType: entry.laneType,
+        sourceTrackId: entry.laneType === 'track' ? entry.laneId : null,
         startOffset: entry.clip.start - anchorStart
       }
     }),
-    sourceTrackIds: [...new Set(sortedEntries.map((entry) => entry.trackId))]
+    sourceLaneIds: [...new Set(sortedEntries.map((entry) => `${entry.laneType}:${entry.laneId}`))]
   }
 }
 
@@ -323,11 +343,49 @@ function resolvePasteTargetTrack(store, sourceTrackId) {
   return store.tracks[0] ?? null
 }
 
+function resolvePasteTargetVariableTrack(store, sourceVariableTrackName) {
+  const sourceVariableTrack = findVariableTrack(store.variableTracks, sourceVariableTrackName)
+
+  if (sourceVariableTrack) {
+    return sourceVariableTrack
+  }
+
+  return store.variableTracks[0] ?? null
+}
+
+function resolvePasteTargetLane(store, clipboardClip) {
+  if (clipboardClip?.sourceLaneType === 'variable') {
+    return {
+      lane: resolvePasteTargetVariableTrack(store, clipboardClip.sourceLaneId),
+      laneType: 'variable'
+    }
+  }
+
+  return {
+    lane: resolvePasteTargetTrack(store, clipboardClip?.sourceLaneId ?? clipboardClip?.sourceTrackId),
+    laneType: 'track'
+  }
+}
+
+function sortLaneClips(entry) {
+  if (!entry?.lane) {
+    return
+  }
+
+  if (entry.laneType === 'variable') {
+    sortVariableTrackClips(entry.lane)
+    return
+  }
+
+  sortTrackClips(entry.lane)
+}
+
 export const useDawStore = defineStore('dawStore', {
   state: createInitialState,
 
   getters: {
-    canPasteClipsAtPlayhead: (state) => Boolean(state.clipClipboard?.clips?.length && state.tracks.length),
+    canPasteClipsAtPlayhead: (state) =>
+      Boolean(state.clipClipboard?.clips?.length && (state.tracks.length || state.variableTracks.length)),
     pixelsPerTick: (state) => BASE_PIXELS_PER_TICK * state.zoom,
     canRedo: (state) => !state.playing && state.historyFuture.length > 0,
     canUndo: (state) => !state.playing && state.historyPast.length > 0
@@ -733,8 +791,17 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     copySelectedClips() {
-      const selectedClipEntries = collectSelectedClipEntries(this.tracks, this.selectedClipIds)
-      const nextClipboard = buildClipClipboard(selectedClipEntries, this.tracks, this.formulas)
+      const selectedClipEntries = collectSelectedClipEntries(
+        this.tracks,
+        this.variableTracks,
+        this.selectedClipIds
+      )
+      const nextClipboard = buildClipClipboard(
+        selectedClipEntries,
+        this.tracks,
+        this.variableTracks,
+        this.formulas
+      )
 
       if (!nextClipboard) {
         return false
@@ -749,8 +816,13 @@ export const useDawStore = defineStore('dawStore', {
         return this.copySelectedClips()
       }
 
-      const selectedClipEntries = collectSelectedClipEntries(this.tracks, [clipId])
-      const nextClipboard = buildClipClipboard(selectedClipEntries, this.tracks, this.formulas)
+      const selectedClipEntries = collectSelectedClipEntries(this.tracks, this.variableTracks, [clipId])
+      const nextClipboard = buildClipClipboard(
+        selectedClipEntries,
+        this.tracks,
+        this.variableTracks,
+        this.formulas
+      )
 
       if (!nextClipboard) {
         return false
@@ -768,12 +840,12 @@ export const useDawStore = defineStore('dawStore', {
       return this.recordHistoryStep('paste-clips', () => {
         const clipboard = this.clipClipboard
 
-        if (!clipboard?.clips?.length || !this.tracks.length) {
+        if (!clipboard?.clips?.length || (!this.tracks.length && !this.variableTracks.length)) {
           return []
         }
 
         const pastedClipIds = []
-        const touchedTrackIds = new Set()
+        const touchedLaneEntries = []
         const pasteAnchorStart = getPasteAnchorStart(this.time, clipboard)
         let pastedAnchorTrackId = null
         let pastedAnchorFormulaId = null
@@ -781,33 +853,43 @@ export const useDawStore = defineStore('dawStore', {
         this.editingClipId = null
 
         for (const clipboardClip of clipboard.clips) {
-          const targetTrack = resolvePasteTargetTrack(this, clipboardClip.sourceTrackId)
+          const targetEntry = resolvePasteTargetLane(this, clipboardClip)
 
-          if (!targetTrack) {
+          if (!targetEntry.lane) {
             continue
           }
 
           const desiredStart = pasteAnchorStart + clipboardClip.startOffset
-          const nextStart = clampClipPlacementStart(targetTrack, desiredStart, clipboardClip.duration)
+          const nextStart = clampClipPlacementStart(
+            targetEntry.lane,
+            desiredStart,
+            clipboardClip.duration
+          )
           const referencedFormula = clipboardClip.formulaId
             ? getFormulaById(this.formulas, clipboardClip.formulaId)
             : null
 
-          const nextClip = createTrackClip({
-            duration: clipboardClip.duration,
-            formula: referencedFormula ? null : clipboardClip.formula ?? null,
-            formulaId: referencedFormula?.id ?? null,
-            formulaName: referencedFormula?.name ?? clipboardClip.formulaName ?? null,
-            start: nextStart
-          })
+          const nextClip = targetEntry.laneType === 'variable'
+            ? createVariableTrackClip({
+                duration: clipboardClip.duration,
+                formula: clipboardClip.formula ?? null,
+                start: nextStart
+              })
+            : createTrackClip({
+                duration: clipboardClip.duration,
+                formula: referencedFormula ? null : clipboardClip.formula ?? null,
+                formulaId: referencedFormula?.id ?? null,
+                formulaName: referencedFormula?.name ?? clipboardClip.formulaName ?? null,
+                start: nextStart
+              })
 
-          targetTrack.clips.push(nextClip)
+          targetEntry.lane.clips.push(nextClip)
           pastedClipIds.push(nextClip.id)
-          touchedTrackIds.add(targetTrack.id)
+          touchedLaneEntries.push(targetEntry)
 
           if (pastedAnchorTrackId === null) {
-            pastedAnchorTrackId = targetTrack.id
-            pastedAnchorFormulaId = nextClip.formulaId ?? null
+            pastedAnchorTrackId = targetEntry.laneType === 'track' ? targetEntry.lane.id : null
+            pastedAnchorFormulaId = targetEntry.laneType === 'track' ? nextClip.formulaId ?? null : null
           }
         }
 
@@ -815,12 +897,8 @@ export const useDawStore = defineStore('dawStore', {
           return []
         }
 
-        for (const trackId of touchedTrackIds) {
-          const track = findTrack(this.tracks, trackId)
-
-          if (track) {
-            sortTrackClips(track)
-          }
+        for (const touchedLaneEntry of touchedLaneEntries) {
+          sortLaneClips(touchedLaneEntry)
         }
 
         this.setSelectedClips(pastedClipIds)
@@ -993,6 +1071,38 @@ export const useDawStore = defineStore('dawStore', {
       })
     },
 
+    addVariableTrack() {
+      return this.recordHistoryStep('add-variable-track', () => {
+        const nextVariableTrack = createVariableTrack({
+          name: getNextVariableTrackName(this.variableTracks)
+        })
+
+        this.variableTracks.push(nextVariableTrack)
+        return nextVariableTrack.name
+      })
+    },
+
+    removeVariableTrack(variableTrackName) {
+      return this.recordHistoryStep('remove-variable-track', () => {
+        const variableTrackIndex = findVariableTrackIndex(this.variableTracks, variableTrackName)
+
+        if (variableTrackIndex === -1) {
+          return
+        }
+
+        const [removedVariableTrack] = this.variableTracks.splice(variableTrackIndex, 1)
+        const removedClipIds = new Set(removedVariableTrack.clips.map((clip) => clip.id))
+
+        this.setSelectedClips(
+          this.selectedClipIds.filter((selectedClipId) => !removedClipIds.has(selectedClipId))
+        )
+
+        if (removedVariableTrack.clips.some((clip) => clip.id === this.editingClipId)) {
+          this.editingClipId = null
+        }
+      })
+    },
+
     duplicateTrack(trackId) {
       return this.recordHistoryStep('duplicate-track', () => {
         const trackIndex = findTrackIndex(this.tracks, trackId)
@@ -1151,6 +1261,26 @@ export const useDawStore = defineStore('dawStore', {
       return nextClip.id
     },
 
+    addVariableClip(variableTrackName, clip) {
+      const variableTrack = findVariableTrack(this.variableTracks, variableTrackName)
+
+      if (!variableTrack) {
+        return null
+      }
+
+      const nextClip = createVariableTrackClip({
+        ...clip,
+        formula: clip.formula ?? undefined
+      })
+
+      variableTrack.clips.push(nextClip)
+      sortVariableTrackClips(variableTrack)
+      this.setSelectedClips([nextClip.id])
+      this.selectedTrackId = null
+      this.selectedFormulaId = null
+      return nextClip.id
+    },
+
     updateClip(trackId, clipId, updates) {
       const track = findTrack(this.tracks, trackId)
 
@@ -1171,16 +1301,40 @@ export const useDawStore = defineStore('dawStore', {
       }
     },
 
+    updateVariableClip(variableTrackName, clipId, updates) {
+      const variableTrack = findVariableTrack(this.variableTracks, variableTrackName)
+
+      if (!variableTrack) {
+        return
+      }
+
+      const clip = findClip(variableTrack, clipId)
+
+      if (!clip) {
+        return
+      }
+
+      Object.assign(clip, updates, {
+        formula: typeof updates?.formula === 'string' ? updates.formula : clip.formula
+      })
+      this.selectedFormulaId = null
+    },
+
     saveClipFormulaDraft(clipId, draft) {
-      const result = findTrackWithClip(this.tracks, clipId)
+      const result = findTimelineClip(this.tracks, this.variableTracks, clipId)
 
       if (!result) {
         return
       }
 
-      const clip = result.track.clips[result.clipIndex]
+      const clip = result.clip
 
       if (!clip) {
+        return
+      }
+
+      if (result.laneType === 'variable') {
+        clip.formula = draft.code
         return
       }
 
@@ -1192,15 +1346,20 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     saveClipFormulaDraftAndName(clipId, draft) {
-      const result = findTrackWithClip(this.tracks, clipId)
+      const result = findTimelineClip(this.tracks, this.variableTracks, clipId)
 
       if (!result) {
         return
       }
 
-      const clip = result.track.clips[result.clipIndex]
+      const clip = result.clip
 
       if (!clip) {
+        return
+      }
+
+      if (result.laneType === 'variable') {
+        clip.formula = draft.code
         return
       }
 
@@ -1236,8 +1395,29 @@ export const useDawStore = defineStore('dawStore', {
       clip.start = clampClipStart(track, clipId, snappedStart)
     },
 
+    moveVariableClip(variableTrackName, clipId, nextStart, shouldSnap = true) {
+      const variableTrack = findVariableTrack(this.variableTracks, variableTrackName)
+
+      if (!variableTrack) {
+        return
+      }
+
+      const clip = findClip(variableTrack, clipId)
+
+      if (!clip) {
+        return
+      }
+
+      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      clip.start = clampClipStart(variableTrack, clipId, snappedStart)
+    },
+
     moveSelectedClips(anchorClipId, nextStart, shouldSnap = true) {
-      const selectedClipEntries = collectSelectedClipEntries(this.tracks, this.selectedClipIds)
+      const selectedClipEntries = collectSelectedClipEntries(
+        this.tracks,
+        this.variableTracks,
+        this.selectedClipIds
+      )
 
       if (!selectedClipEntries.length) {
         return
@@ -1251,46 +1431,42 @@ export const useDawStore = defineStore('dawStore', {
 
       const snappedStart = getDraggedTick(nextStart, shouldSnap)
       const desiredDelta = snappedStart - anchorEntry.clip.start
-      const clipIdsByTrackId = new Map()
+      const clipIdsByLaneKey = new Map()
 
       for (const entry of selectedClipEntries) {
-        const existingClipIds = clipIdsByTrackId.get(entry.trackId) ?? []
-        existingClipIds.push(entry.clipId)
-        clipIdsByTrackId.set(entry.trackId, existingClipIds)
+        const laneKey = `${entry.laneType}:${entry.laneId}`
+        const existingClipIds = clipIdsByLaneKey.get(laneKey) ?? {
+          clipIds: [],
+          lane: entry.lane,
+          laneType: entry.laneType
+        }
+        existingClipIds.clipIds.push(entry.clipId)
+        clipIdsByLaneKey.set(laneKey, existingClipIds)
       }
 
       let minDelta = Number.NEGATIVE_INFINITY
       let maxDelta = Number.POSITIVE_INFINITY
 
-      for (const [trackId, clipIds] of clipIdsByTrackId) {
-        const track = findTrack(this.tracks, trackId)
-
-        if (!track) {
-          continue
-        }
-
-        const bounds = getClipGroupMoveBounds(track, clipIds)
+      for (const laneEntry of clipIdsByLaneKey.values()) {
+        const bounds = getClipGroupMoveBounds(laneEntry.lane, laneEntry.clipIds)
         minDelta = Math.max(minDelta, bounds.minDelta)
         maxDelta = Math.min(maxDelta, bounds.maxDelta)
       }
 
       const clampedDelta = Math.max(minDelta, Math.min(desiredDelta, maxDelta))
-      const touchedTrackIds = new Set()
+      const touchedLaneEntries = new Map()
 
       for (const entry of selectedClipEntries) {
         entry.clip.start += clampedDelta
-        touchedTrackIds.add(entry.trackId)
+        touchedLaneEntries.set(`${entry.laneType}:${entry.laneId}`, entry)
       }
 
-      for (const trackId of touchedTrackIds) {
-        const track = findTrack(this.tracks, trackId)
-
-        if (track) {
-          sortTrackClips(track)
-        }
+      for (const touchedLaneEntry of touchedLaneEntries.values()) {
+        sortLaneClips(touchedLaneEntry)
       }
 
-      this.selectedTrackId = anchorEntry.trackId
+      this.selectedTrackId = anchorEntry.laneType === 'track' ? anchorEntry.laneId : null
+      this.selectedFormulaId = anchorEntry.laneType === 'track' ? anchorEntry.clip.formulaId ?? null : null
     },
 
     nudgeSelectedClips(deltaTicks, shouldSnap = true, anchorClipId = this.selectedClipId) {
@@ -1300,7 +1476,11 @@ export const useDawStore = defineStore('dawStore', {
         return false
       }
 
-      const selectedClipEntries = collectSelectedClipEntries(this.tracks, this.selectedClipIds)
+      const selectedClipEntries = collectSelectedClipEntries(
+        this.tracks,
+        this.variableTracks,
+        this.selectedClipIds
+      )
 
       if (!selectedClipEntries.length) {
         return false
@@ -1333,6 +1513,24 @@ export const useDawStore = defineStore('dawStore', {
       const snappedStart = getDraggedTick(nextStart, shouldSnap)
       clip.start = clampClipPlacementStart(track, snappedStart, clip.duration, clipId)
       sortTrackClips(track)
+    },
+
+    placeVariableClip(variableTrackName, clipId, nextStart, shouldSnap = true) {
+      const variableTrack = findVariableTrack(this.variableTracks, variableTrackName)
+
+      if (!variableTrack) {
+        return
+      }
+
+      const clip = findClip(variableTrack, clipId)
+
+      if (!clip) {
+        return
+      }
+
+      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      clip.start = clampClipPlacementStart(variableTrack, snappedStart, clip.duration, clipId)
+      sortVariableTrackClips(variableTrack)
     },
 
     moveClipToTrack(sourceTrackId, targetTrackId, clipId, nextStart, shouldSnap = true) {
@@ -1386,6 +1584,27 @@ export const useDawStore = defineStore('dawStore', {
       clip.duration = clipEnd - clampedStart
     },
 
+    resizeVariableClipStart(variableTrackName, clipId, nextStart, shouldSnap = true) {
+      const variableTrack = findVariableTrack(this.variableTracks, variableTrackName)
+
+      if (!variableTrack) {
+        return
+      }
+
+      const clip = findClip(variableTrack, clipId)
+
+      if (!clip) {
+        return
+      }
+
+      const clipEnd = getClipEnd(clip)
+      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      const clampedStart = clampClipResizeStart(variableTrack, clipId, snappedStart)
+
+      clip.start = clampedStart
+      clip.duration = clipEnd - clampedStart
+    },
+
     resizeClipEnd(trackId, clipId, nextEnd, shouldSnap = true) {
       const track = findTrack(this.tracks, trackId)
 
@@ -1401,6 +1620,25 @@ export const useDawStore = defineStore('dawStore', {
 
       const snappedEnd = getDraggedTick(nextEnd, shouldSnap)
       const clampedEnd = clampClipResizeEnd(track, clipId, snappedEnd)
+
+      clip.duration = clampedEnd - clip.start
+    },
+
+    resizeVariableClipEnd(variableTrackName, clipId, nextEnd, shouldSnap = true) {
+      const variableTrack = findVariableTrack(this.variableTracks, variableTrackName)
+
+      if (!variableTrack) {
+        return
+      }
+
+      const clip = findClip(variableTrack, clipId)
+
+      if (!clip) {
+        return
+      }
+
+      const snappedEnd = getDraggedTick(nextEnd, shouldSnap)
+      const clampedEnd = clampClipResizeEnd(variableTrack, clipId, snappedEnd)
 
       clip.duration = clampedEnd - clip.start
     },
@@ -1433,46 +1671,67 @@ export const useDawStore = defineStore('dawStore', {
       return duplicateClipId
     },
 
+    duplicateVariableClip(variableTrackName, clipId) {
+      const variableTrack = findVariableTrack(this.variableTracks, variableTrackName)
+
+      if (!variableTrack) {
+        return null
+      }
+
+      const sourceClip = findClip(variableTrack, clipId)
+
+      if (!sourceClip) {
+        return null
+      }
+
+      const duplicateClip = createDuplicateClip(sourceClip)
+      const duplicateClipId = duplicateClip.id
+
+      variableTrack.clips.push(duplicateClip)
+      sortVariableTrackClips(variableTrack)
+      this.selectedTrackId = null
+      this.selectedFormulaId = null
+      this.setSelectedClips([duplicateClipId])
+      return duplicateClipId
+    },
+
     duplicateSelectedClips(anchorClipId) {
-      const selectedClipEntries = collectSelectedClipEntries(this.tracks, this.selectedClipIds)
+      const selectedClipEntries = collectSelectedClipEntries(
+        this.tracks,
+        this.variableTracks,
+        this.selectedClipIds
+      )
 
       if (!selectedClipEntries.length) {
         return []
       }
 
       const duplicatedClipIds = []
-      const trackIdsToSort = new Set()
+      const laneEntriesToSort = new Map()
       const duplicatedClipIdBySourceId = new Map()
 
       for (const entry of selectedClipEntries) {
         const duplicateClip = createDuplicateClip(entry.clip)
-        entry.track.clips.push(duplicateClip)
+        entry.lane.clips.push(duplicateClip)
         duplicatedClipIds.push(duplicateClip.id)
         duplicatedClipIdBySourceId.set(entry.clipId, duplicateClip.id)
-        trackIdsToSort.add(entry.trackId)
+        laneEntriesToSort.set(`${entry.laneType}:${entry.laneId}`, entry)
       }
 
-      for (const trackId of trackIdsToSort) {
-        const track = findTrack(this.tracks, trackId)
-
-        if (track) {
-          sortTrackClips(track)
-        }
+      for (const laneEntry of laneEntriesToSort.values()) {
+        sortLaneClips(laneEntry)
       }
 
       this.setSelectedClips(duplicatedClipIds)
 
       const duplicatedAnchorClipId = duplicatedClipIdBySourceId.get(anchorClipId) ?? duplicatedClipIds[0] ?? null
       const anchorEntry = duplicatedAnchorClipId
-        ? collectSelectedClipEntries(this.tracks, [duplicatedAnchorClipId])[0]
+        ? collectSelectedClipEntries(this.tracks, this.variableTracks, [duplicatedAnchorClipId])[0]
         : null
 
       if (anchorEntry) {
-        this.selectedTrackId = anchorEntry.trackId
-
-        if (anchorEntry.clip.formulaId) {
-          this.selectedFormulaId = anchorEntry.clip.formulaId
-        }
+        this.selectedTrackId = anchorEntry.laneType === 'track' ? anchorEntry.laneId : null
+        this.selectedFormulaId = anchorEntry.laneType === 'track' ? anchorEntry.clip.formulaId ?? null : null
       }
 
       return duplicatedClipIds
@@ -1564,13 +1823,13 @@ export const useDawStore = defineStore('dawStore', {
 
     removeClip(clipId) {
       return this.recordHistoryStep('remove-clip', () => {
-        const result = findTrackWithClip(this.tracks, clipId)
+        const result = findTimelineClip(this.tracks, this.variableTracks, clipId)
 
         if (!result) {
           return
         }
 
-        result.track.clips.splice(result.clipIndex, 1)
+        result.lane.clips.splice(result.clipIndex, 1)
         this.editingClipId = null
         this.removeSelectedClip(clipId)
       })
@@ -1585,13 +1844,13 @@ export const useDawStore = defineStore('dawStore', {
         }
 
         for (const clipId of selectedClipIds) {
-          const result = findTrackWithClip(this.tracks, clipId)
+          const result = findTimelineClip(this.tracks, this.variableTracks, clipId)
 
           if (!result) {
             continue
           }
 
-          result.track.clips.splice(result.clipIndex, 1)
+          result.lane.clips.splice(result.clipIndex, 1)
         }
 
         if (selectedClipIds.includes(this.editingClipId)) {

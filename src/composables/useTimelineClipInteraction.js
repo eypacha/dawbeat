@@ -1,20 +1,40 @@
 import { ref } from 'vue'
 import { usePointerEdgeAutoScroll } from '@/composables/usePointerEdgeAutoScroll'
-import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
+import { getDraggedTick } from '@/services/snapService'
 import { clampClipPlacementStart } from '@/services/timelineService'
 
 const DUPLICATE_DRAG_THRESHOLD_PX = 6
 
 export function useTimelineClipInteraction({
+  allowCrossLane = true,
   clip,
-  trackId,
   dawStore,
   editingClipId,
+  getLaneId = (lane) => lane?.id,
+  laneId,
+  lanes,
+  onSelect,
   pixelsPerTick,
   selectedClipIds,
+  trackId,
   tracks,
-  onSelect
+  duplicateClipInLane = (currentLaneId, clipId) => dawStore.duplicateClip(currentLaneId, clipId),
+  duplicateSelectedClips = (anchorClipId) => dawStore.duplicateSelectedClips(anchorClipId),
+  moveClipInLane = (currentLaneId, clipId, nextStart, shouldSnap) =>
+    dawStore.moveClip(currentLaneId, clipId, nextStart, shouldSnap),
+  moveClipToLane = (sourceLaneId, targetLaneId, clipId, nextStart, shouldSnap) =>
+    dawStore.moveClipToTrack(sourceLaneId, targetLaneId, clipId, nextStart, shouldSnap),
+  moveSelectedClips = (anchorClipId, nextStart, shouldSnap) =>
+    dawStore.moveSelectedClips(anchorClipId, nextStart, shouldSnap),
+  placeClipInLane = (currentLaneId, clipId, nextStart, shouldSnap) =>
+    dawStore.placeClip(currentLaneId, clipId, nextStart, shouldSnap),
+  resizeClipEndInLane = (currentLaneId, clipId, nextEnd, shouldSnap) =>
+    dawStore.resizeClipEnd(currentLaneId, clipId, nextEnd, shouldSnap),
+  resizeClipStartInLane = (currentLaneId, clipId, nextStart, shouldSnap) =>
+    dawStore.resizeClipStart(currentLaneId, clipId, nextStart, shouldSnap)
 }) {
+  const resolvedLaneId = laneId ?? trackId
+  const resolvedLanes = lanes ?? tracks
   const isDragging = ref(false)
   const resizeMode = ref(null)
   const duplicateDrag = ref(false)
@@ -24,10 +44,10 @@ export function useTimelineClipInteraction({
   let dragStartY = 0
   let dragStartTick = 0
   let dragDesiredStart = 0
-  let dragTargetTrackId = trackId
+  let dragTargetLaneId = resolvedLaneId
   let dragClipId = clip.id
   let dragSelectedClipIds = [clip.id]
-  let dragSourceTrackId = trackId
+  let dragSourceLaneId = resolvedLaneId
   let interactionScrollContainer = null
   let interactionStartScrollLeft = 0
   let duplicateDragActivated = false
@@ -47,8 +67,8 @@ export function useTimelineClipInteraction({
     dragSelectedClipIds = selectedClipIds.value.includes(clip.id) ? [...selectedClipIds.value] : [clip.id]
     dragStartTick = clip.start
     dragDesiredStart = clip.start
-    dragSourceTrackId = trackId
-    dragTargetTrackId = trackId
+    dragSourceLaneId = resolvedLaneId
+    dragTargetLaneId = resolvedLaneId
     duplicateDrag.value = event.altKey === true
     duplicateDragActivated = false
 
@@ -128,46 +148,40 @@ export function useTimelineClipInteraction({
     }
 
     const shouldClearDuplicateClickGuard = ignoreNextClick.value
-    const shouldSnap = shouldSnapFromPointerEvent(event)
+    const shouldSnap = event.shiftKey !== true
 
     if (isDragging.value) {
       if (dragSelectedClipIds.length > 1) {
         if (duplicateDrag.value && duplicateDragActivated) {
-          const duplicatedClipIds = dawStore.duplicateSelectedClips(dragClipId)
+          const duplicatedClipIds = duplicateSelectedClips(dragClipId)
           const dragClipIndex = dragSelectedClipIds.indexOf(dragClipId)
           const duplicatedAnchorClipId =
             duplicatedClipIds[dragClipIndex] ?? duplicatedClipIds[0] ?? null
 
           if (duplicatedAnchorClipId) {
-            dawStore.moveSelectedClips(duplicatedAnchorClipId, dragDesiredStart, shouldSnap)
+            moveSelectedClips(duplicatedAnchorClipId, dragDesiredStart, shouldSnap)
           }
         }
       } else if (duplicateDrag.value && duplicateDragActivated) {
-        const duplicateClipId = dawStore.duplicateClip(dragSourceTrackId, clip.id)
+        const duplicateClipId = duplicateClipInLane(dragSourceLaneId, clip.id)
 
         if (duplicateClipId) {
-          const previewStart = getDuplicatePreviewStart(dragTargetTrackId, shouldSnap)
+          const previewStart = getDuplicatePreviewStart(dragTargetLaneId, shouldSnap)
 
-          if (dragTargetTrackId === dragSourceTrackId) {
-            dawStore.placeClip(dragSourceTrackId, duplicateClipId, previewStart, shouldSnap)
+          if (dragTargetLaneId === dragSourceLaneId) {
+            placeClipInLane(dragSourceLaneId, duplicateClipId, previewStart, shouldSnap)
           } else {
-            dawStore.moveClipToTrack(
-              dragSourceTrackId,
-              dragTargetTrackId,
+            moveClipToLane(
+              dragSourceLaneId,
+              dragTargetLaneId,
               duplicateClipId,
               previewStart,
               shouldSnap
             )
           }
         }
-      } else if (!duplicateDrag.value && dragTargetTrackId !== dragSourceTrackId) {
-        dawStore.moveClipToTrack(
-          dragSourceTrackId,
-          dragTargetTrackId,
-          dragClipId,
-          dragDesiredStart,
-          shouldSnap
-        )
+      } else if (dragTargetLaneId !== dragSourceLaneId) {
+        moveClipToLane(dragSourceLaneId, dragTargetLaneId, dragClipId, dragDesiredStart, shouldSnap)
       }
     }
 
@@ -188,18 +202,13 @@ export function useTimelineClipInteraction({
     }
 
     if (resizeMode.value === 'start') {
-      dawStore.updateClip(trackId, clip.id, {
-        start: resizeStartTick,
-        duration: resizeEndTick - resizeStartTick
-      })
+      resizeClipStartInLane(resolvedLaneId, clip.id, resizeStartTick, false)
     } else if (resizeMode.value === 'end') {
-      dawStore.updateClip(trackId, clip.id, {
-        duration: resizeEndTick - clip.start
-      })
+      resizeClipEndInLane(resolvedLaneId, clip.id, resizeEndTick, false)
     } else if (isDragging.value && dragSelectedClipIds.length > 1 && !duplicateDrag.value) {
-      dawStore.moveSelectedClips(dragClipId, dragStartTick, false)
+      moveSelectedClips(dragClipId, dragStartTick, false)
     } else if (isDragging.value && !duplicateDrag.value) {
-      dawStore.moveClip(dragSourceTrackId, dragClipId, dragStartTick, false)
+      moveClipInLane(dragSourceLaneId, dragClipId, dragStartTick, false)
     }
 
     dawStore.clearClipDragPreview()
@@ -220,10 +229,10 @@ export function useTimelineClipInteraction({
     duplicateDragActivated = false
     dragClipId = clip.id
     dragSelectedClipIds = [clip.id]
-    dragSourceTrackId = trackId
+    dragSourceLaneId = resolvedLaneId
     dragDesiredStart = clip.start
     dragStartTick = clip.start
-    dragTargetTrackId = trackId
+    dragTargetLaneId = resolvedLaneId
     interactionScrollContainer = null
     interactionStartScrollLeft = 0
     hasActiveHistoryTransaction = false
@@ -239,7 +248,7 @@ export function useTimelineClipInteraction({
     const deltaX = getHorizontalPointerDelta(pointerState.clientX)
     const dragDistance = Math.hypot(deltaX, pointerState.clientY - dragStartY)
     const deltaTicks = deltaX / pixelsPerTick.value
-    const shouldSnap = shouldSnapFromPointerState(pointerState)
+    const shouldSnap = pointerState.shiftKey !== true
 
     if (isDragging.value) {
       if (duplicateDrag.value && !duplicateDragActivated) {
@@ -251,12 +260,12 @@ export function useTimelineClipInteraction({
       }
 
       dragDesiredStart = getDraggedTick(dragStartTick + deltaTicks, shouldSnap)
-      dragTargetTrackId =
-        dragSelectedClipIds.length > 1 ? dragSourceTrackId : getDragTargetTrackId(pointerState)
+      dragTargetLaneId =
+        dragSelectedClipIds.length > 1 ? dragSourceLaneId : getDragTargetLaneId(pointerState)
 
       if (dragSelectedClipIds.length > 1) {
         if (!duplicateDrag.value) {
-          dawStore.moveSelectedClips(dragClipId, dragDesiredStart, shouldSnap)
+          moveSelectedClips(dragClipId, dragDesiredStart, shouldSnap)
         }
 
         dawStore.clearClipDragPreview()
@@ -274,11 +283,11 @@ export function useTimelineClipInteraction({
     }
 
     if (resizeMode.value === 'start') {
-      dawStore.resizeClipStart(trackId, clip.id, resizeStartTick + deltaTicks, shouldSnap)
+      resizeClipStartInLane(resolvedLaneId, clip.id, resizeStartTick + deltaTicks, shouldSnap)
       return
     }
 
-    dawStore.resizeClipEnd(trackId, clip.id, resizeEndTick + deltaTicks, shouldSnap)
+    resizeClipEndInLane(resolvedLaneId, clip.id, resizeEndTick + deltaTicks, shouldSnap)
   }
 
   function getHorizontalPointerDelta(clientX) {
@@ -293,34 +302,34 @@ export function useTimelineClipInteraction({
     return scrollContainer instanceof HTMLElement ? scrollContainer : null
   }
 
-  function shouldSnapFromPointerState(pointerState) {
-    return pointerState.shiftKey !== true
-  }
-
-  function getDragTargetTrackId(event) {
-    const targetTrackElement = document
-      .elementFromPoint(event.clientX, event.clientY)
-      ?.closest('[data-track-id]')
-
-    if (!(targetTrackElement instanceof HTMLElement)) {
-      return trackId
+  function getDragTargetLaneId(event) {
+    if (!allowCrossLane) {
+      return resolvedLaneId
     }
 
-    const nextTrackId = targetTrackElement.dataset.trackId
-    const trackExists = tracks.value.some((trackEntry) => trackEntry.id === nextTrackId)
+    const targetLaneElement = document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest('[data-clip-lane-id]')
 
-    return trackExists && nextTrackId ? nextTrackId : trackId
+    if (!(targetLaneElement instanceof HTMLElement)) {
+      return resolvedLaneId
+    }
+
+    const nextLaneId = targetLaneElement.dataset.clipLaneId
+    const laneExists = resolvedLanes.value.some((laneEntry) => getLaneId(laneEntry) === nextLaneId)
+
+    return laneExists && nextLaneId ? nextLaneId : resolvedLaneId
   }
 
-  function getDuplicatePreviewStart(targetTrackId, shouldSnap = true) {
-    const targetTrack = tracks.value.find((trackEntry) => trackEntry.id === targetTrackId)
+  function getDuplicatePreviewStart(targetLaneId, shouldSnap = true) {
+    const targetLane = resolvedLanes.value.find((laneEntry) => getLaneId(laneEntry) === targetLaneId)
 
-    if (!targetTrack) {
+    if (!targetLane) {
       return dragDesiredStart
     }
 
     return clampClipPlacementStart(
-      targetTrack,
+      targetLane,
       getDraggedTick(dragDesiredStart, shouldSnap),
       clip.duration
     )
@@ -331,21 +340,23 @@ export function useTimelineClipInteraction({
       dawStore.setClipDragPreview({
         clipId: `duplicate-preview-${clip.id}`,
         duration: clip.duration,
-        sourceTrackId: dragSourceTrackId,
-        start: getDuplicatePreviewStart(dragTargetTrackId, shouldSnap),
-        targetTrackId: dragTargetTrackId
+        sourceLaneId: dragSourceLaneId,
+        sourceTrackId: dragSourceLaneId,
+        start: getDuplicatePreviewStart(dragTargetLaneId, shouldSnap),
+        targetLaneId: dragTargetLaneId,
+        targetTrackId: dragTargetLaneId
       })
       return
     }
 
-    if (dragTargetTrackId === dragSourceTrackId) {
+    if (dragTargetLaneId === dragSourceLaneId) {
       dawStore.clearClipDragPreview()
       return
     }
 
-    const targetTrack = tracks.value.find((trackEntry) => trackEntry.id === dragTargetTrackId)
+    const targetLane = resolvedLanes.value.find((laneEntry) => getLaneId(laneEntry) === dragTargetLaneId)
 
-    if (!targetTrack) {
+    if (!targetLane) {
       dawStore.clearClipDragPreview()
       return
     }
@@ -353,23 +364,25 @@ export function useTimelineClipInteraction({
     dawStore.setClipDragPreview({
       clipId: dragClipId,
       duration: clip.duration,
-      sourceTrackId: dragSourceTrackId,
+      sourceLaneId: dragSourceLaneId,
+      sourceTrackId: dragSourceLaneId,
       start: clampClipPlacementStart(
-        targetTrack,
+        targetLane,
         getDraggedTick(dragDesiredStart, shouldSnap),
         clip.duration
       ),
-      targetTrackId: dragTargetTrackId
+      targetLaneId: dragTargetLaneId,
+      targetTrackId: dragTargetLaneId
     })
   }
 
   function syncSourceClipPosition(shouldSnap = true) {
-    if (dragTargetTrackId === dragSourceTrackId) {
-      dawStore.moveClip(dragSourceTrackId, dragClipId, dragDesiredStart, shouldSnap)
+    if (dragTargetLaneId === dragSourceLaneId) {
+      moveClipInLane(dragSourceLaneId, dragClipId, dragDesiredStart, shouldSnap)
       return
     }
 
-    dawStore.moveClip(dragSourceTrackId, dragClipId, dragStartTick, shouldSnap)
+    moveClipInLane(dragSourceLaneId, dragClipId, dragStartTick, shouldSnap)
   }
 
   function removeInteractionListeners() {

@@ -1,5 +1,6 @@
 import { DEFAULT_TRACK_COLOR } from '@/utils/colorUtils'
 import { DEFAULT_TRACK_UNION_OPERATOR } from '@/services/trackUnionOperatorService'
+import { DEFAULT_VARIABLE_CLIP_FORMULA, normalizeVariableTrackName } from '@/services/variableTrackService'
 
 export function createClipId() {
   if (globalThis.crypto?.randomUUID) {
@@ -29,8 +30,19 @@ export function createTrack() {
   }
 }
 
+export function createVariableTrack(variableTrack = {}) {
+  return {
+    name: normalizeVariableTrackName(variableTrack.name),
+    clips: Array.isArray(variableTrack.clips) ? [...variableTrack.clips] : []
+  }
+}
+
 export function sortTrackClips(track) {
   track.clips.sort((leftClip, rightClip) => leftClip.start - rightClip.start)
+}
+
+export function sortVariableTrackClips(variableTrack) {
+  sortTrackClips(variableTrack)
 }
 
 export function findTrack(tracks, trackId) {
@@ -39,6 +51,14 @@ export function findTrack(tracks, trackId) {
 
 export function findTrackIndex(tracks, trackId) {
   return tracks.findIndex((track) => track.id === trackId)
+}
+
+export function findVariableTrack(variableTracks, variableTrackName) {
+  return variableTracks.find((variableTrack) => variableTrack.name === variableTrackName) ?? null
+}
+
+export function findVariableTrackIndex(variableTracks, variableTrackName) {
+  return variableTracks.findIndex((variableTrack) => variableTrack.name === variableTrackName)
 }
 
 export function findClip(track, clipId) {
@@ -72,6 +92,49 @@ export function findTrackWithClip(tracks, clipId) {
   return null
 }
 
+export function findVariableTrackWithClip(variableTracks, clipId) {
+  for (const variableTrack of variableTracks) {
+    const clipIndex = findClipIndex(variableTrack, clipId)
+
+    if (clipIndex !== -1) {
+      return {
+        clipIndex,
+        track: variableTrack
+      }
+    }
+  }
+
+  return null
+}
+
+export function findTimelineClip(tracks, variableTracks, clipId) {
+  const trackResult = findTrackWithClip(tracks, clipId)
+
+  if (trackResult) {
+    return {
+      clip: trackResult.track.clips[trackResult.clipIndex] ?? null,
+      clipIndex: trackResult.clipIndex,
+      lane: trackResult.track,
+      laneId: trackResult.track.id,
+      laneType: 'track'
+    }
+  }
+
+  const variableTrackResult = findVariableTrackWithClip(variableTracks, clipId)
+
+  if (!variableTrackResult) {
+    return null
+  }
+
+  return {
+    clip: variableTrackResult.track.clips[variableTrackResult.clipIndex] ?? null,
+    clipIndex: variableTrackResult.clipIndex,
+    lane: variableTrackResult.track,
+    laneId: variableTrackResult.track.name,
+    laneType: 'variable'
+  }
+}
+
 export function createTrackClip(clip) {
   return {
     id: clip.id ?? createClipId(),
@@ -80,6 +143,15 @@ export function createTrackClip(clip) {
     formulaName: clip.formulaName ?? null,
     ...clip
   }
+}
+
+export function createVariableTrackClip(clip = {}) {
+  return createTrackClip({
+    ...clip,
+    formula: typeof clip.formula === 'string' ? clip.formula : DEFAULT_VARIABLE_CLIP_FORMULA,
+    formulaId: null,
+    formulaName: null
+  })
 }
 
 export function createDuplicateClip(sourceClip) {

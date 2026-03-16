@@ -1,24 +1,36 @@
 import { createAudioEffect, createDelayAudioEffect, normalizeMasterGain } from '@/services/audioEffectService'
-import { createTrackClip, createTrackId, sortTrackClips } from '@/services/dawStoreService'
+import {
+  createTrackClip,
+  createTrackId,
+  createVariableTrack,
+  createVariableTrackClip,
+  sortTrackClips,
+  sortVariableTrackClips
+} from '@/services/dawStoreService'
 import { createEvalEffect, createStereoOffsetEvalEffect } from '@/services/evalEffectService'
 import { createFormula } from '@/services/formulaService'
 import { normalizeTrackUnionOperator } from '@/services/trackUnionOperatorService'
+import {
+  getNextVariableTrackName,
+  normalizeVariableTrackName
+} from '@/services/variableTrackService'
 import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
 import { DEFAULT_TRACK_COLOR, getTrackColor } from '@/utils/colorUtils'
 import { BASE_TICK_SIZE, MAX_ZOOM, MIN_ZOOM, TIMELINE_SNAP_SUBDIVISIONS, clamp } from '@/utils/timeUtils'
 
 const PROJECT_STORAGE_KEY = 'dawbeat-project'
-const PROJECT_VERSION = 5
+const PROJECT_VERSION = 6
 const SAVE_DEBOUNCE_MS = 400
 const DEFAULT_LOOP_START = 0
 const DEFAULT_LOOP_END = 16
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
-const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, PROJECT_VERSION])
+const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, PROJECT_VERSION])
 
 export function serializeProject(state) {
   return normalizeProjectPayload({
     version: PROJECT_VERSION,
     tracks: state.tracks,
+    variableTracks: state.variableTracks,
     formulas: state.formulas,
     zoom: state.zoom,
     loopStart: state.loopStart,
@@ -157,9 +169,15 @@ function normalizeProjectPayload(project) {
     .filter(isRecord)
     .map((formula) => createFormula(formula))
   const formulaIds = new Set(formulas.map((formula) => formula.id))
+  const usedVariableTrackNames = new Set()
   const tracks = project.tracks
     .map((track) => normalizeTrack(track, formulaIds))
     .filter(Boolean)
+  const variableTracks = Array.isArray(project.variableTracks)
+    ? project.variableTracks
+        .map((variableTrack) => normalizeVariableTrack(variableTrack, usedVariableTrackNames))
+        .filter(Boolean)
+    : []
 
   const loopStart = normalizeNonNegativeNumber(project.loopStart, DEFAULT_LOOP_START)
   const loopEnd = Math.max(
@@ -170,6 +188,7 @@ function normalizeProjectPayload(project) {
   return {
     version: PROJECT_VERSION,
     tracks,
+    variableTracks,
     formulas,
     zoom: clamp(normalizeNumber(project.zoom, 1), MIN_ZOOM, MAX_ZOOM),
     loopStart,
@@ -214,6 +233,30 @@ function normalizeTrack(track, formulaIds) {
   return nextTrack
 }
 
+function normalizeVariableTrack(variableTrack, usedNames) {
+  if (!isRecord(variableTrack)) {
+    return null
+  }
+
+  const fallbackName = getNextVariableTrackName(
+    [...usedNames].map((name) => ({ name }))
+  )
+  const normalizedName = normalizeVariableTrackName(variableTrack.name, fallbackName)
+  const nextName = usedNames.has(normalizedName) ? fallbackName : normalizedName
+
+  usedNames.add(nextName)
+
+  const nextVariableTrack = createVariableTrack({
+    name: nextName,
+    clips: Array.isArray(variableTrack.clips)
+      ? variableTrack.clips.map((clip) => normalizeVariableClip(clip)).filter(Boolean)
+      : []
+  })
+
+  sortVariableTrackClips(nextVariableTrack)
+  return nextVariableTrack
+}
+
 function normalizeClip(clip, formulaIds) {
   if (!isRecord(clip)) {
     return null
@@ -228,6 +271,19 @@ function normalizeClip(clip, formulaIds) {
     formulaId: hasValidFormulaId ? clip.formulaId : null,
     formulaName:
       !hasValidFormulaId && typeof clip.formulaName === 'string' ? clip.formulaName : null,
+    start: normalizeNonNegativeNumber(clip.start, 0),
+    duration: normalizePositiveNumber(clip.duration, 4)
+  })
+}
+
+function normalizeVariableClip(clip) {
+  if (!isRecord(clip)) {
+    return null
+  }
+
+  return createVariableTrackClip({
+    id: typeof clip.id === 'string' && clip.id ? clip.id : undefined,
+    formula: typeof clip.formula === 'string' ? clip.formula : undefined,
     start: normalizeNonNegativeNumber(clip.start, 0),
     duration: normalizePositiveNumber(clip.duration, 4)
   })

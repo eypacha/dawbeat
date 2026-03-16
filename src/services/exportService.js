@@ -41,7 +41,12 @@ async function renderProjectToWav(state) {
 function renderTimelineChannels(state, totalSamples) {
   const leftChannel = new Float32Array(totalSamples)
   const rightChannel = new Float32Array(totalSamples)
-  const boundaries = collectTimelineBoundaries(state.tracks, state.tickSize, totalSamples)
+  const boundaries = collectTimelineBoundaries(
+    state.tracks,
+    state.variableTracks,
+    state.tickSize,
+    totalSamples
+  )
   const evaluatorCache = new Map()
 
   for (let index = 0; index < boundaries.length - 1; index += 1) {
@@ -53,7 +58,12 @@ function renderTimelineChannels(state, totalSamples) {
     }
 
     const timeTicks = samplesToTicks(startSample, state.tickSize)
-    const activeFormula = getActiveFormula(timeTicks, state.tracks, state.formulas)
+    const activeFormula = getActiveFormula(
+      timeTicks,
+      state.tracks,
+      state.formulas,
+      state.variableTracks
+    )
     const expressions = getRenderableExpressions(activeFormula, state.evalEffects)
 
     if (!expressions.length) {
@@ -72,11 +82,18 @@ function renderTimelineChannels(state, totalSamples) {
   return [leftChannel, rightChannel]
 }
 
-function collectTimelineBoundaries(tracks, tickSize, totalSamples) {
+function collectTimelineBoundaries(tracks, variableTracks, tickSize, totalSamples) {
   const boundaries = new Set([0, totalSamples])
 
   for (const track of tracks) {
     for (const clip of track.clips) {
+      boundaries.add(clampSampleBoundary(ticksToSamples(clip.start, tickSize), totalSamples))
+      boundaries.add(clampSampleBoundary(ticksToSamples(getClipEnd(clip), tickSize), totalSamples))
+    }
+  }
+
+  for (const variableTrack of variableTracks ?? []) {
+    for (const clip of variableTrack.clips) {
       boundaries.add(clampSampleBoundary(ticksToSamples(clip.start, tickSize), totalSamples))
       boundaries.add(clampSampleBoundary(ticksToSamples(getClipEnd(clip), tickSize), totalSamples))
     }

@@ -9,15 +9,17 @@
       </div>
     </template>
 
-    <label class="block text-xs uppercase tracking-[0.18em] text-zinc-500">
-      Name
-    </label>
+    <template v-if="showName">
+      <label class="block text-xs uppercase tracking-[0.18em] text-zinc-500">
+        Name
+      </label>
 
-    <Input
-      v-model="draftName"
-      class="mt-2"
-      :placeholder="draftValue"
-    />
+      <Input
+        v-model="draftName"
+        class="mt-2"
+        :placeholder="draftValue"
+      />
+    </template>
 
     <label class="mt-4 block text-xs uppercase tracking-[0.18em] text-zinc-500">
       {{ label }}
@@ -71,6 +73,10 @@ const props = defineProps({
   initialName: {
     type: String,
     default: ''
+  },
+  showName: {
+    type: Boolean,
+    default: true
   },
   label: {
     type: String,

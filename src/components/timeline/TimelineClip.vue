@@ -126,9 +126,12 @@ const {
   handleResizeStartPointerDown
 } = useTimelineClipInteraction({
   clip: props.clip,
+  laneId: props.trackId,
+  lanes: tracks,
   trackId: props.trackId,
   dawStore,
   editingClipId,
+  getLaneId: (trackEntry) => trackEntry.id,
   pixelsPerTick,
   selectedClipIds,
   tracks,

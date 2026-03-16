@@ -1,6 +1,6 @@
 <template>
   <div
-    class="timeline-clip-preview pointer-events-none absolute top-3 bottom-3 box-border border border-dashed"
+    class="timeline-clip-preview pointer-events-none absolute box-border border border-dashed"
     :style="previewStyle"
   />
 </template>
@@ -19,6 +19,10 @@ const props = defineProps({
   duration: {
     type: Number,
     required: true
+  },
+  compact: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -27,7 +31,9 @@ const { pixelsPerTick } = storeToRefs(dawStore)
 const MIN_CLIP_RENDER_TICKS = 0.5
 
 const previewStyle = computed(() => ({
+  bottom: props.compact ? '0.25rem' : '0.75rem',
   left: `${ticksToPixels(props.start, pixelsPerTick.value)}px`,
+  top: props.compact ? '0.25rem' : '0.75rem',
   width: `${Math.max(
     ticksToPixels(props.duration, pixelsPerTick.value),
     ticksToPixels(MIN_CLIP_RENDER_TICKS, pixelsPerTick.value)
