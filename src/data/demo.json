@@ -239,8 +239,8 @@
           "formula": "t>>(t&4096?3:4)",
           "formulaId": null,
           "formulaName": "",
-          "start": 64,
-          "duration": 40.25
+          "start": 72,
+          "duration": 32.25
         }
       ]
     },
@@ -319,20 +319,82 @@
     },
     {
       "id": "b190b32e-01db-4864-a55e-18b6b585424b",
-      "name": "Intro",
+      "name": "Alien dungeon",
       "code": "t*(t&16384?7:5)*(3+(3&t>>14))>>(3&t>>9)|t>>6"
     },
     {
       "id": "6ddc4581-7f55-491c-bf6c-00885426969d",
       "name": "Outro",
       "code": "t*(256+(1&t>>14))"
+    },
+    {
+      "id": "c385cbf4-f971-46f7-bd59-4e0f7357744e",
+      "name": "The 42 melody",
+      "code": "t*(42&t>>10)"
+    },
+    {
+      "id": "b91718ab-ebc2-4c3d-b0a5-0b223cd1f1e1",
+      "name": "Bear",
+      "code": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)"
+    },
+    {
+      "id": "7bde4ab8-1c46-4846-8174-fd7466e6095f",
+      "name": "Awesome level",
+      "code": "t*(t&16384?6:5)*(3+(3&t>>(t&2048?7:14)))>>(3&t>>9)|t>>2"
+    },
+    {
+      "id": "64a7fa8b-ce00-4dfb-b148-5e01bdb19962",
+      "name": "Sierpinsky",
+      "code": "t&t>>8"
+    },
+    {
+      "id": "562db7ca-e236-4338-b1aa-66dd702451f9",
+      "name": "unknown",
+      "code": "t%(t/(t>>9|t>>13))"
+    },
+    {
+      "id": "e706493d-451e-4be1-a6b4-1620d144e8ef",
+      "name": "CA98",
+      "code": "t*(0xCA98CA98>>(t>>9&30)&15)|t>>8"
+    },
+    {
+      "id": "16d682a9-4fce-4a2e-a7c8-7c5f324a8279",
+      "name": "Mr Arpeggiator",
+      "code": "t/8>>(t>>9)*t/((t>>14&3)+4)"
+    },
+    {
+      "id": "5ed008e7-e02e-4862-827d-a2ad67507c4e",
+      "name": "Arcade game",
+      "code": "t*((t>>9|t>>13)&15)&129"
+    },
+    {
+      "id": "d3f953ea-2e97-4e36-bd62-c3bd2ee38204",
+      "name": "ONE MILLION alarms",
+      "code": "t*t/(t>>12&t>>8)<<7"
+    },
+    {
+      "id": "1489e484-99ce-440b-8643-3d534f4201de",
+      "name": "",
+      "code": ""
     }
   ],
-  "zoom": 0.1557978365600579,
+  "zoom": 0.20816188442707054,
   "loopStart": 64,
   "loopEnd": 96,
   "loopEnabled": false,
-  "audioEffects": [],
+  "audioEffects": [
+    {
+      "id": "d0342ddc-a0c8-4d90-a3b5-9ba29aebc923",
+      "type": "delay",
+      "enabled": false,
+      "expanded": false,
+      "params": {
+        "delayTime": 0.19,
+        "feedback": 0.21,
+        "mix": 0.5
+      }
+    }
+  ],
   "evalEffects": [
     {
       "id": "fx6",
