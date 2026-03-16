@@ -313,7 +313,7 @@
   "formulas": [
     {
       "id": "c196a3aa-6cf5-4aac-b199-9750ee6fbc59",
-      "name": "Melody B",
+      "name": "Melody",
       "code": "t*((t&4096?6:16)+(1&t>>14))"
     },
     {
