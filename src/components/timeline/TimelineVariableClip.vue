@@ -169,28 +169,28 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .timeline-variable-clip {
-  background: rgba(14, 116, 144, 0.76);
-  border-color: rgba(125, 211, 252, 0.38);
+  background: rgba(228, 228, 231, 0.16);
+  border-color: rgba(244, 244, 245, 0.18);
   cursor: grab;
 }
 
 .timeline-variable-clip--default {
-  background: rgba(8, 145, 178, 0.72);
+  background: rgba(228, 228, 231, 0.18);
 }
 
 .timeline-variable-clip--selected,
 .timeline-variable-clip--editing {
-  background: rgba(6, 182, 212, 0.88);
-  box-shadow: 0 0 0 1px rgba(224, 242, 254, 0.5);
+  background: rgba(244, 244, 245, 0.28);
+  box-shadow: 0 0 0 1px rgba(244, 244, 245, 0.24);
 }
 
 .timeline-variable-clip--dragging {
-  background: rgba(34, 211, 238, 0.72);
+  background: rgba(244, 244, 245, 0.22);
   cursor: grabbing;
 }
 
 .timeline-variable-clip-handle {
-  background: rgba(224, 242, 254, 0.12);
-  border-color: rgba(186, 230, 253, 0.4);
+  background: rgba(244, 244, 245, 0.08);
+  border-color: rgba(244, 244, 245, 0.18);
 }
 </style>

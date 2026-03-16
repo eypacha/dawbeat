@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative flex min-w-full w-max border-b border-cyan-950/80 bg-cyan-950/20"
+    class="relative flex min-w-full w-max border-b border-zinc-800 bg-zinc-950/35"
     :data-clip-lane-id="variableTrack.name"
     :data-variable-track-name="variableTrack.name"
   >
@@ -10,7 +10,7 @@
       :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
       @contextmenu="handleHeaderContextMenu"
     >
-      <span class="truncate text-[11px] font-medium uppercase tracking-[0.18em] text-cyan-400">
+      <span class="truncate text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-200">
         var {{ variableTrack.name }}
       </span>
     </div>

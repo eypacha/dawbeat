@@ -69,9 +69,9 @@
             class="sticky left-0 z-20 flex shrink-0 items-center justify-between gap-3 border-r border-zinc-800 bg-zinc-900 px-4 py-2"
             :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
           >
-            <span class="text-[10px] uppercase tracking-[0.3em] text-cyan-500">Variables</span>
+            <span class="text-[10px] uppercase tracking-[0.3em] text-zinc-200">Variables</span>
             <button
-              class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-cyan-900/80 bg-cyan-950/40 text-cyan-300 transition hover:border-cyan-700 hover:text-cyan-100"
+              class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-zinc-700 bg-zinc-950/70 text-zinc-300 transition hover:border-zinc-500 hover:text-zinc-100"
               type="button"
               @click="dawStore.addVariableTrack()"
             >
@@ -79,7 +79,7 @@
             </button>
           </div>
 
-          <div class="h-11 shrink-0 border-b border-cyan-950/50 bg-cyan-950/10" :style="{ width: timelineWidthStyle }" />
+          <div class="h-11 shrink-0 bg-zinc-950/35" :style="{ width: timelineWidthStyle }" />
         </div>
 
         <TimelineVariableTrack
