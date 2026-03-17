@@ -13,7 +13,7 @@
     @dragleave.stop="handleFormulaDragLeave"
     @drop.prevent.stop="handleFormulaDrop"
     @dblclick.stop="handleEditStart"
-    @pointerdown.stop="handlePointerDown"
+    @pointerdown.stop="handleClipPointerDown"
   >
     <Link2
       v-if="isReferenceClip"
@@ -79,6 +79,7 @@ const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
 const { editingClipId, formulas, pixelsPerTick, selectedClipIds, showClipWaveforms, tracks } = storeToRefs(dawStore)
 const isFormulaDropTarget = ref(false)
+const pendingShiftSelectionAction = ref(null)
 const MIN_CLIP_RENDER_TICKS = 0.5
 
 const resolvedFormula = computed(() => resolveClipFormula(props.clip, formulas.value))
@@ -101,12 +102,31 @@ const isEditing = computed(() => editingClipId.value === props.clip.id)
 const isSelected = computed(() => selectedClipIds.value.includes(props.clip.id))
 const isPartOfMultipleSelection = computed(() => isSelected.value && selectedClipIds.value.length > 1)
 
-function handleSelect({ preserveMultiSelection = false } = {}) {
+function handleSelect(payload = {}) {
   if (ignoreNextClick.value) {
     return
   }
 
+  const preserveMultiSelection = payload?.preserveMultiSelection === true
+  const shiftSelectionAction =
+    payload?.shiftKey === true && payload?.disableShiftToggle !== true
+      ? pendingShiftSelectionAction.value ?? (isSelected.value ? 'remove' : 'add')
+      : null
+
+  pendingShiftSelectionAction.value = null
   dawStore.selectTrack(props.trackId)
+
+  if (shiftSelectionAction === 'remove') {
+    dawStore.removeSelectedClip(props.clip.id)
+    dawStore.selectFormula(null)
+    return
+  }
+
+  if (shiftSelectionAction === 'add') {
+    dawStore.addSelectedClip(props.clip.id)
+    dawStore.selectFormula(props.clip.formulaId ?? null)
+    return
+  }
 
   if (!preserveMultiSelection || !isPartOfMultipleSelection.value) {
     dawStore.selectClip(props.clip.id)
@@ -137,6 +157,12 @@ const {
   tracks,
   onSelect: handleSelect
 })
+
+function handleClipPointerDown(event) {
+  pendingShiftSelectionAction.value =
+    event.shiftKey === true ? (isSelected.value ? 'remove' : 'add') : null
+  handlePointerDown(event)
+}
 
 const buttonClassName = computed(() => {
   if (isEditing.value) {

@@ -4,6 +4,7 @@ import { getDraggedTick } from '@/services/snapService'
 import { clampClipPlacementStart } from '@/services/timelineService'
 
 const DUPLICATE_DRAG_THRESHOLD_PX = 6
+const DRAG_SELECTION_THRESHOLD_PX = 3
 
 export function useTimelineClipInteraction({
   allowCrossLane = true,
@@ -50,8 +51,10 @@ export function useTimelineClipInteraction({
   let dragSourceLaneId = resolvedLaneId
   let interactionScrollContainer = null
   let interactionStartScrollLeft = 0
+  let deferSelectionOnPointerDown = false
   let duplicateDragActivated = false
   let hasActiveHistoryTransaction = false
+  let clipWasSelectedOnPointerDown = false
   let resizeStartTick = 0
   let resizeEndTick = 0
   const { startAutoScroll, stopAutoScroll, updateAutoScroll } = usePointerEdgeAutoScroll({
@@ -64,13 +67,15 @@ export function useTimelineClipInteraction({
     }
 
     dragClipId = clip.id
-    dragSelectedClipIds = selectedClipIds.value.includes(clip.id) ? [...selectedClipIds.value] : [clip.id]
+    clipWasSelectedOnPointerDown = selectedClipIds.value.includes(clip.id)
+    dragSelectedClipIds = clipWasSelectedOnPointerDown ? [...selectedClipIds.value] : [clip.id]
     dragStartTick = clip.start
     dragDesiredStart = clip.start
     dragSourceLaneId = resolvedLaneId
     dragTargetLaneId = resolvedLaneId
     duplicateDrag.value = event.altKey === true
     duplicateDragActivated = false
+    deferSelectionOnPointerDown = event.shiftKey === true
 
     beginHistoryTransaction(
       duplicateDrag.value
@@ -84,7 +89,7 @@ export function useTimelineClipInteraction({
 
     if (duplicateDrag.value) {
       ignoreNextClick.value = true
-    } else {
+    } else if (!deferSelectionOnPointerDown) {
       onSelect({ preserveMultiSelection: dragSelectedClipIds.length > 1 })
     }
 
@@ -235,7 +240,9 @@ export function useTimelineClipInteraction({
     dragTargetLaneId = resolvedLaneId
     interactionScrollContainer = null
     interactionStartScrollLeft = 0
+    deferSelectionOnPointerDown = false
     hasActiveHistoryTransaction = false
+    clipWasSelectedOnPointerDown = false
     stopAutoScroll()
     removeInteractionListeners()
   }
@@ -251,6 +258,14 @@ export function useTimelineClipInteraction({
     const shouldSnap = pointerState.shiftKey !== true
 
     if (isDragging.value) {
+      if (deferSelectionOnPointerDown && dragDistance > DRAG_SELECTION_THRESHOLD_PX) {
+        if (!clipWasSelectedOnPointerDown) {
+          onSelect({ disableShiftToggle: true })
+        }
+
+        deferSelectionOnPointerDown = false
+      }
+
       if (duplicateDrag.value && !duplicateDragActivated) {
         if (dragDistance <= DUPLICATE_DRAG_THRESHOLD_PX) {
           return

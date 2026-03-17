@@ -10,7 +10,7 @@
     @click.stop="handleSelect"
     @contextmenu.stop.prevent="handleContextMenu"
     @dblclick.stop="handleEditStart"
-    @pointerdown.stop="handlePointerDown"
+    @pointerdown.stop="handleClipPointerDown"
   >
     <span
       v-if="isSelected && !isEditing"
@@ -30,7 +30,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineClipInteraction } from '@/composables/useTimelineClipInteraction'
@@ -51,6 +51,7 @@ const props = defineProps({
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
 const { editingClipId, pixelsPerTick, selectedClipIds, variableTracks } = storeToRefs(dawStore)
+const pendingShiftSelectionAction = ref(null)
 const MIN_CLIP_RENDER_TICKS = 0.5
 
 const clipWidth = computed(() =>
@@ -69,12 +70,31 @@ const isEditing = computed(() => editingClipId.value === props.clip.id)
 const isSelected = computed(() => selectedClipIds.value.includes(props.clip.id))
 const isPartOfMultipleSelection = computed(() => isSelected.value && selectedClipIds.value.length > 1)
 
-function handleSelect({ preserveMultiSelection = false } = {}) {
+function handleSelect(payload = {}) {
   if (ignoreNextClick.value) {
     return
   }
 
+  const preserveMultiSelection = payload?.preserveMultiSelection === true
+  const shiftSelectionAction =
+    payload?.shiftKey === true && payload?.disableShiftToggle !== true
+      ? pendingShiftSelectionAction.value ?? (isSelected.value ? 'remove' : 'add')
+      : null
+
+  pendingShiftSelectionAction.value = null
   dawStore.selectTrack(null)
+
+  if (shiftSelectionAction === 'remove') {
+    dawStore.removeSelectedClip(props.clip.id)
+    dawStore.selectFormula(null)
+    return
+  }
+
+  if (shiftSelectionAction === 'add') {
+    dawStore.addSelectedClip(props.clip.id)
+    dawStore.selectFormula(null)
+    return
+  }
 
   if (!preserveMultiSelection || !isPartOfMultipleSelection.value) {
     dawStore.selectClip(props.clip.id)
@@ -115,6 +135,12 @@ const {
     dawStore.resizeVariableClipStart(laneId, clipId, nextStart, shouldSnap),
   selectedClipIds
 })
+
+function handleClipPointerDown(event) {
+  pendingShiftSelectionAction.value =
+    event.shiftKey === true ? (isSelected.value ? 'remove' : 'add') : null
+  handlePointerDown(event)
+}
 
 const buttonClassName = computed(() => {
   if (isEditing.value) {
