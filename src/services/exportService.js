@@ -1,8 +1,10 @@
 import { Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, connect as toneConnect } from 'tone'
 import { getActiveFormula } from '@/engine/timelineEngine'
 import {
+  getAutomationLaneByAudioEffectParam,
   getAutomationLaneById,
   getSortedAutomationPoints,
+  resolveAudioEffectAtTime,
   resolveMasterGainAtTime,
   MASTER_GAIN_AUTOMATION_LANE_ID
 } from '@/services/automationService'
@@ -26,6 +28,11 @@ import { getClipEnd, samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 
 const SILENT_EVALUATOR = () => 0
 const DEFAULT_EXPORT_WAV_SAMPLE_RATE = 44100
+const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter']
+const MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS = {
+  distortion: ['drive'],
+  reverb: ['decay', 'preDelay']
+}
 
 export async function downloadProjectWav(state, filename = createWavFilename()) {
   const wavBuffer = await renderProjectToWav(state)
@@ -148,7 +155,7 @@ function renderTimelineChannels(
 
 async function renderAudioEffectsOffline(state, channelData, sampleRate) {
   const enabledAudioEffects = (state.audioEffects ?? []).filter(
-    (effect) => effect?.enabled && ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter'].includes(effect.type)
+    (effect) => effect?.enabled && OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES.includes(effect.type)
   )
   const masterGainLane = getAutomationLaneById(
     state.automationLanes,
@@ -187,10 +194,22 @@ async function renderAudioEffectsOffline(state, channelData, sampleRate) {
   audioBuffer.copyToChannel(channelData[1], 1)
   source.buffer = audioBuffer
 
+  const sourceSampleRate = getSourceSampleRate(state.sampleRate)
   const toneNodes = await Promise.all(
-    enabledAudioEffects.map((effect) => createOfflineAudioEffectNode(effect, toneContext))
+    enabledAudioEffects.map(async (effect) => ({
+      effect,
+      node: await createOfflineAudioEffectNode(effect, toneContext)
+    }))
   )
-  const nodes = toneNodes.filter(Boolean)
+  const nodeEntries = toneNodes.filter((entry) => entry.node)
+  const nodes = nodeEntries.map((entry) => entry.node)
+  const manualAutomationTask = await prepareOfflineAudioEffectAutomation(nodeEntries, {
+    automationLanes: state.automationLanes,
+    durationSeconds: frameCount / sampleRate,
+    offlineContext,
+    sourceSampleRate,
+    tickSize: state.tickSize
+  })
 
   let previousNode = source
 
@@ -203,7 +222,13 @@ async function renderAudioEffectsOffline(state, channelData, sampleRate) {
 
   source.start(0)
 
-  const renderedBuffer = await offlineContext.startRendering()
+  const renderPromise = offlineContext.startRendering()
+
+  if (manualAutomationTask) {
+    await manualAutomationTask
+  }
+
+  const renderedBuffer = await renderPromise
 
   for (const node of nodes) {
     safeDispose(node)
@@ -329,6 +354,496 @@ async function createOfflineAudioEffectNode(effect, toneContext) {
   }
 
   return null
+}
+
+async function prepareOfflineAudioEffectAutomation(
+  nodeEntries,
+  { automationLanes, durationSeconds, offlineContext, sourceSampleRate, tickSize }
+) {
+  if (!nodeEntries.length) {
+    return null
+  }
+
+  const manualEntries = []
+
+  for (const entry of nodeEntries) {
+    const resolvedEffectAtStart = resolveAudioEffectAtTime(0, automationLanes, entry.effect)
+    await applyOfflineAudioEffectState(entry.node, resolvedEffectAtStart)
+    scheduleOfflineAudioEffectAutomation(
+      entry.node,
+      entry.effect,
+      automationLanes,
+      sourceSampleRate,
+      tickSize
+    )
+
+    const manualParamKeys = getManualOfflineAutomationParamKeys(entry.effect.type).filter((paramKey) =>
+      getAutomationLaneByAudioEffectParam(automationLanes, entry.effect.id, paramKey)
+    )
+
+    if (manualParamKeys.length) {
+      manualEntries.push({
+        ...entry,
+        manualParamKeys
+      })
+    }
+  }
+
+  const checkpoints = collectManualOfflineAutomationCheckpoints(
+    manualEntries,
+    automationLanes,
+    durationSeconds,
+    sourceSampleRate,
+    tickSize
+  )
+
+  if (!checkpoints.length) {
+    return null
+  }
+
+  const scheduledSuspends = checkpoints.map((checkpoint) => ({
+    checkpoint,
+    promise: offlineContext.suspend(checkpoint.timeSeconds)
+  }))
+
+  return scheduledSuspends.reduce(
+    (chain, { checkpoint, promise }) =>
+      chain.then(async () => {
+        await promise
+
+        for (const entry of manualEntries) {
+          await applyOfflineAudioEffectStateAtTime(
+            entry.node,
+            entry.effect,
+            automationLanes,
+            checkpoint.timeTicks,
+            entry.manualParamKeys
+          )
+        }
+
+        await offlineContext.resume()
+      }),
+    Promise.resolve()
+  )
+}
+
+function scheduleOfflineAudioEffectAutomation(
+  node,
+  effect,
+  automationLanes,
+  sourceSampleRate,
+  tickSize
+) {
+  const resolvedEffectAtStart = resolveAudioEffectAtTime(0, automationLanes, effect)
+  const initialParams = resolvedEffectAtStart?.params ?? {}
+
+  for (const paramKey of Object.keys(initialParams)) {
+    const target = getOfflineAudioEffectAutomationTarget(node, effect.type, paramKey)
+    const lane = getAutomationLaneByAudioEffectParam(automationLanes, effect.id, paramKey)
+
+    if (!target || !lane) {
+      continue
+    }
+
+    scheduleOfflineParamAutomation(target, lane, {
+      initialValue: initialParams[paramKey],
+      normalizeValue: (value) => normalizeAudioEffectParamValue(effect.type, paramKey, value),
+      sourceSampleRate,
+      tickSize
+    })
+  }
+}
+
+function scheduleOfflineParamAutomation(
+  target,
+  lane,
+  { initialValue, normalizeValue, sourceSampleRate, tickSize }
+) {
+  if (typeof target?.setValueAtTime !== 'function') {
+    return
+  }
+
+  const points = getSortedAutomationPoints(lane?.points ?? [])
+  const normalizedInitialValue = normalizeValue(initialValue)
+
+  if (typeof target.cancelScheduledValues === 'function') {
+    target.cancelScheduledValues(0)
+  }
+
+  target.setValueAtTime(normalizedInitialValue, 0)
+
+  let lastTimeSeconds = 0
+
+  for (const point of points) {
+    const timeSeconds = ticksToSeconds(point.time, tickSize, sourceSampleRate)
+    const normalizedValue = normalizeValue(point.value)
+
+    if (timeSeconds <= 0) {
+      target.setValueAtTime(normalizedValue, 0)
+      continue
+    }
+
+    if (
+      typeof target.linearRampToValueAtTime === 'function' &&
+      timeSeconds > lastTimeSeconds
+    ) {
+      target.linearRampToValueAtTime(normalizedValue, timeSeconds)
+    } else {
+      target.setValueAtTime(normalizedValue, timeSeconds)
+    }
+
+    lastTimeSeconds = timeSeconds
+  }
+}
+
+function collectManualOfflineAutomationCheckpoints(
+  manualEntries,
+  automationLanes,
+  durationSeconds,
+  sourceSampleRate,
+  tickSize
+) {
+  const checkpoints = new Map()
+
+  for (const entry of manualEntries) {
+    for (const paramKey of entry.manualParamKeys) {
+      const lane = getAutomationLaneByAudioEffectParam(automationLanes, entry.effect.id, paramKey)
+      const points = getSortedAutomationPoints(lane?.points ?? [])
+
+      for (const point of points) {
+        if (point.time <= 0) {
+          continue
+        }
+
+        const timeSeconds = ticksToSeconds(point.time, tickSize, sourceSampleRate)
+
+        if (timeSeconds <= 0 || timeSeconds >= durationSeconds) {
+          continue
+        }
+
+        checkpoints.set(point.time, {
+          timeTicks: point.time,
+          timeSeconds
+        })
+      }
+    }
+  }
+
+  return [...checkpoints.values()].sort((left, right) => left.timeSeconds - right.timeSeconds)
+}
+
+function getManualOfflineAutomationParamKeys(effectType) {
+  return MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS[effectType] ?? []
+}
+
+function getOfflineAudioEffectAutomationTarget(node, effectType, paramKey) {
+  if (!node) {
+    return null
+  }
+
+  if (effectType === 'eq') {
+    if (paramKey === 'low') {
+      return node.low
+    }
+
+    if (paramKey === 'mid') {
+      return node.mid
+    }
+
+    if (paramKey === 'high') {
+      return node.high
+    }
+
+    if (paramKey === 'lowFrequency') {
+      return node.lowFrequency
+    }
+
+    if (paramKey === 'highFrequency') {
+      return node.highFrequency
+    }
+  }
+
+  if (effectType === 'distortion' && paramKey === 'wet') {
+    return node.wet
+  }
+
+  if (effectType === 'stereoWidener' && paramKey === 'width') {
+    return node.width
+  }
+
+  if (effectType === 'delay') {
+    if (paramKey === 'delayTime') {
+      return node.delayTime
+    }
+
+    if (paramKey === 'feedback') {
+      return node.feedback
+    }
+
+    if (paramKey === 'wet') {
+      return node.wet
+    }
+  }
+
+  if (effectType === 'compressor') {
+    if (paramKey === 'threshold') {
+      return node.threshold
+    }
+
+    if (paramKey === 'ratio') {
+      return node.ratio
+    }
+
+    if (paramKey === 'attack') {
+      return node.attack
+    }
+
+    if (paramKey === 'release') {
+      return node.release
+    }
+
+    if (paramKey === 'knee') {
+      return node.knee
+    }
+  }
+
+  if (effectType === 'limiter' && paramKey === 'threshold') {
+    return node.threshold
+  }
+
+  if (effectType === 'reverb' && paramKey === 'wet') {
+    return node.wet
+  }
+
+  return null
+}
+
+async function applyOfflineAudioEffectStateAtTime(
+  node,
+  effect,
+  automationLanes,
+  timeTicks,
+  paramKeys = null
+) {
+  const resolvedEffect = resolveAudioEffectAtTime(timeTicks, automationLanes, effect)
+  await applyOfflineAudioEffectState(node, resolvedEffect, paramKeys)
+}
+
+async function applyOfflineAudioEffectState(node, effect, paramKeys = null) {
+  if (!node || !effect?.params) {
+    return
+  }
+
+  const keysToApply = paramKeys ?? Object.keys(effect.params)
+
+  for (const paramKey of keysToApply) {
+    await applyOfflineAudioEffectParamValue(node, effect.type, paramKey, effect.params[paramKey])
+  }
+}
+
+async function applyOfflineAudioEffectParamValue(node, effectType, paramKey, value) {
+  if (effectType === 'eq') {
+    if (paramKey === 'low') {
+      node.low.value = normalizeDecibels(value)
+      return
+    }
+
+    if (paramKey === 'mid') {
+      node.mid.value = normalizeDecibels(value)
+      return
+    }
+
+    if (paramKey === 'high') {
+      node.high.value = normalizeDecibels(value)
+      return
+    }
+
+    if (paramKey === 'lowFrequency') {
+      node.lowFrequency.value = normalizeFrequency(value)
+      return
+    }
+
+    if (paramKey === 'highFrequency') {
+      node.highFrequency.value = normalizeFrequency(value)
+    }
+
+    return
+  }
+
+  if (effectType === 'distortion') {
+    if (paramKey === 'drive') {
+      node.distortion = normalizeDrive(value)
+      return
+    }
+
+    if (paramKey === 'wet') {
+      node.wet.value = normalizeWet(value)
+    }
+
+    return
+  }
+
+  if (effectType === 'stereoWidener') {
+    if (paramKey === 'width') {
+      node.width.value = normalizeWidth(value)
+    }
+
+    return
+  }
+
+  if (effectType === 'delay') {
+    if (paramKey === 'delayTime') {
+      node.delayTime.value = normalizeTime(value)
+      return
+    }
+
+    if (paramKey === 'feedback') {
+      node.feedback.value = normalizeFeedback(value)
+      return
+    }
+
+    if (paramKey === 'wet') {
+      node.wet.value = normalizeWet(value)
+    }
+
+    return
+  }
+
+  if (effectType === 'compressor') {
+    if (paramKey === 'threshold') {
+      node.threshold.value = normalizeThreshold(value)
+      return
+    }
+
+    if (paramKey === 'ratio') {
+      node.ratio.value = normalizeRatio(value)
+      return
+    }
+
+    if (paramKey === 'attack') {
+      node.attack.value = normalizeTime(value)
+      return
+    }
+
+    if (paramKey === 'release') {
+      node.release.value = normalizeTime(value)
+      return
+    }
+
+    if (paramKey === 'knee') {
+      node.knee.value = normalizeKnee(value)
+    }
+
+    return
+  }
+
+  if (effectType === 'limiter') {
+    if (paramKey === 'threshold') {
+      node.threshold.value = normalizeThreshold(value)
+    }
+
+    return
+  }
+
+  if (effectType === 'reverb') {
+    if (paramKey === 'wet') {
+      node.wet.value = normalizeWet(value)
+      return
+    }
+
+    if (paramKey === 'decay') {
+      node.decay = normalizeDecay(value)
+      await node.ready
+      return
+    }
+
+    if (paramKey === 'preDelay') {
+      node.preDelay = normalizeTime(value)
+      await node.ready
+    }
+  }
+}
+
+function normalizeAudioEffectParamValue(effectType, paramKey, value) {
+  if (effectType === 'eq') {
+    if (paramKey === 'low' || paramKey === 'mid' || paramKey === 'high') {
+      return normalizeDecibels(value)
+    }
+
+    if (paramKey === 'lowFrequency' || paramKey === 'highFrequency') {
+      return normalizeFrequency(value)
+    }
+  }
+
+  if (effectType === 'distortion') {
+    if (paramKey === 'drive') {
+      return normalizeDrive(value)
+    }
+
+    if (paramKey === 'wet') {
+      return normalizeWet(value)
+    }
+  }
+
+  if (effectType === 'stereoWidener' && paramKey === 'width') {
+    return normalizeWidth(value)
+  }
+
+  if (effectType === 'delay') {
+    if (paramKey === 'delayTime') {
+      return normalizeTime(value)
+    }
+
+    if (paramKey === 'feedback') {
+      return normalizeFeedback(value)
+    }
+
+    if (paramKey === 'wet') {
+      return normalizeWet(value)
+    }
+  }
+
+  if (effectType === 'compressor') {
+    if (paramKey === 'threshold') {
+      return normalizeThreshold(value)
+    }
+
+    if (paramKey === 'ratio') {
+      return normalizeRatio(value)
+    }
+
+    if (paramKey === 'attack' || paramKey === 'release') {
+      return normalizeTime(value)
+    }
+
+    if (paramKey === 'knee') {
+      return normalizeKnee(value)
+    }
+  }
+
+  if (effectType === 'limiter' && paramKey === 'threshold') {
+    return normalizeThreshold(value)
+  }
+
+  if (effectType === 'reverb') {
+    if (paramKey === 'wet') {
+      return normalizeWet(value)
+    }
+
+    if (paramKey === 'decay') {
+      return normalizeDecay(value)
+    }
+
+    if (paramKey === 'preDelay') {
+      return normalizeTime(value)
+    }
+  }
+
+  return value
+}
+
+function ticksToSeconds(ticks, tickSize, sourceSampleRate) {
+  return ticksToSamples(ticks, tickSize) / sourceSampleRate
 }
 
 function applyMasterGainToChannelData(channelData, state, sampleRate) {

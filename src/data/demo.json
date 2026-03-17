@@ -373,24 +373,210 @@
       "code": "t*t/(t>>12&t>>8)<<7"
     }
   ],
-  "zoom": 0.20816188442707054,
+  "zoom": 0.18740573342144468,
   "loopStart": 64,
   "loopEnd": 96,
   "loopEnabled": false,
   "audioEffects": [
+    {
+      "id": "75f86f92-f8e9-46e4-8980-cef4dbefe964",
+      "type": "eq",
+      "enabled": false,
+      "expanded": true,
+      "params": {
+        "low": 4,
+        "mid": 9,
+        "high": 0,
+        "lowFrequency": 400,
+        "highFrequency": 2500
+      }
+    },
+    {
+      "id": "01c647b0-8a46-4368-98a5-a32963baf09a",
+      "type": "stereoWidener",
+      "enabled": false,
+      "expanded": true,
+      "params": {
+        "width": 0.52
+      }
+    }
   ],
   "evalEffects": [
     {
       "id": "fx6",
       "type": "stereoOffset",
-      "enabled": true,
+      "enabled": false,
       "expanded": true,
+      "params": {
+        "offset": 128
+      }
+    },
+    {
+      "id": "fx5",
+      "type": "stereoOffset",
+      "enabled": true,
+      "expanded": false,
+      "params": {
+        "offset": 128
+      }
+    },
+    {
+      "id": "fx6",
+      "type": "stereoOffset",
+      "enabled": true,
+      "expanded": false,
+      "params": {
+        "offset": 128
+      }
+    },
+    {
+      "id": "fx7",
+      "type": "stereoOffset",
+      "enabled": true,
+      "expanded": false,
+      "params": {
+        "offset": 128
+      }
+    },
+    {
+      "id": "fx8",
+      "type": "stereoOffset",
+      "enabled": true,
+      "expanded": false,
+      "params": {
+        "offset": 128
+      }
+    },
+    {
+      "id": "fx9",
+      "type": "stereoOffset",
+      "enabled": true,
+      "expanded": false,
       "params": {
         "offset": 128
       }
     }
   ],
-  "automationLanes": [],
+  "automationLanes": [
+    {
+      "id": "masterGain",
+      "type": "masterGain",
+      "points": [
+        {
+          "time": 0,
+          "value": 0
+        },
+        {
+          "time": 4.25,
+          "value": 0.7547325721153846
+        },
+        {
+          "time": 16,
+          "value": 0.7433143028846154
+        },
+        {
+          "time": 16.25,
+          "value": 0.42127403846153844
+        },
+        {
+          "time": 32.25,
+          "value": 0.44163161057692313
+        },
+        {
+          "time": 47.75,
+          "value": 0.8243689903846154
+        },
+        {
+          "time": 48,
+          "value": 0.47498497596153844
+        },
+        {
+          "time": 50,
+          "value": 0.45387620192307687
+        },
+        {
+          "time": 50,
+          "value": 1
+        },
+        {
+          "time": 52,
+          "value": 1
+        },
+        {
+          "time": 52,
+          "value": 0.42713341346153844
+        },
+        {
+          "time": 54,
+          "value": 0.4159405048076923
+        },
+        {
+          "time": 54,
+          "value": 0.9910606971153846
+        },
+        {
+          "time": 56,
+          "value": 0.9845252403846154
+        },
+        {
+          "time": 56,
+          "value": 0.42405348557692313
+        },
+        {
+          "time": 58,
+          "value": 0.4579326923076923
+        },
+        {
+          "time": 58,
+          "value": 1
+        },
+        {
+          "time": 60,
+          "value": 1
+        },
+        {
+          "time": 60,
+          "value": 0.46927584134615385
+        },
+        {
+          "time": 62,
+          "value": 0.5006009615384616
+        },
+        {
+          "time": 62,
+          "value": 1
+        },
+        {
+          "time": 64,
+          "value": 0.9358473557692307
+        },
+        {
+          "time": 64,
+          "value": 0.41871995192307687
+        },
+        {
+          "time": 72,
+          "value": 0.8382662259615384
+        },
+        {
+          "time": 80,
+          "value": 0.8089693509615384
+        },
+        {
+          "time": 80,
+          "value": 0.3759765625
+        },
+        {
+          "time": 95.25,
+          "value": 1
+        },
+        {
+          "time": 105.5,
+          "value": 0
+        }
+      ]
+    }
+  ],
   "masterGain": 1,
   "sampleRate": 8000,
   "tickSize": 1024,
