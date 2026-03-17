@@ -1,9 +1,11 @@
 import { getActiveFormula } from '@/engine/timelineEngine'
 import { applyEvalEffects } from '@/services/evalEffectService'
+import { DEFAULT_SAMPLE_RATE } from '@/utils/audioSettings'
 import { validateFormula } from '@/utils/formulaValidation'
 import { getClipEnd, samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 
 const SILENT_EVALUATOR = () => 0
+const DEFAULT_EXPORT_WAV_SAMPLE_RATE = 44100
 
 export async function downloadProjectWav(state, filename = createWavFilename()) {
   const wavBuffer = await renderProjectToWav(state)
@@ -29,35 +31,66 @@ async function renderProjectToWav(state) {
     throw new Error('Project is empty')
   }
 
-  const totalSamples = Math.max(1, Math.ceil(ticksToSamples(totalTicks, state.tickSize)))
-  const [leftChannel, rightChannel] = renderTimelineChannels(state, totalSamples)
+  const sourceSampleRate = getSourceSampleRate(state.sampleRate)
+  const outputSampleRate = getOutputSampleRate(sourceSampleRate)
+  const totalSourceSamples = Math.max(1, Math.ceil(ticksToSamples(totalTicks, state.tickSize)))
+  const totalOutputSamples = Math.max(
+    1,
+    Math.ceil((totalSourceSamples * outputSampleRate) / sourceSampleRate)
+  )
+  const [leftChannel, rightChannel] = renderTimelineChannels(state, {
+    outputSampleRate,
+    sourceSampleRate,
+    totalOutputSamples,
+    totalSourceSamples
+  })
 
   return encodeWavFile({
     channelData: [leftChannel, rightChannel],
-    sampleRate: state.sampleRate
+    sampleRate: outputSampleRate
   })
 }
 
-function renderTimelineChannels(state, totalSamples) {
-  const leftChannel = new Float32Array(totalSamples)
-  const rightChannel = new Float32Array(totalSamples)
+function renderTimelineChannels(
+  state,
+  { outputSampleRate, sourceSampleRate, totalOutputSamples, totalSourceSamples }
+) {
+  const leftChannel = new Float32Array(totalOutputSamples)
+  const rightChannel = new Float32Array(totalOutputSamples)
   const boundaries = collectTimelineBoundaries(
     state.tracks,
     state.variableTracks,
     state.tickSize,
-    totalSamples
+    totalSourceSamples
   )
   const evaluatorCache = new Map()
 
   for (let index = 0; index < boundaries.length - 1; index += 1) {
-    const startSample = boundaries[index]
-    const endSample = boundaries[index + 1]
+    const startSourceSample = boundaries[index]
+    const endSourceSample = boundaries[index + 1]
 
-    if (endSample <= startSample) {
+    if (endSourceSample <= startSourceSample) {
       continue
     }
 
-    const timeTicks = samplesToTicks(startSample, state.tickSize)
+    const startOutputSample = convertSourceBoundaryToOutputSample(
+      startSourceSample,
+      sourceSampleRate,
+      outputSampleRate,
+      totalOutputSamples
+    )
+    const endOutputSample = convertSourceBoundaryToOutputSample(
+      endSourceSample,
+      sourceSampleRate,
+      outputSampleRate,
+      totalOutputSamples
+    )
+
+    if (endOutputSample <= startOutputSample) {
+      continue
+    }
+
+    const timeTicks = samplesToTicks(startSourceSample, state.tickSize)
     const activeFormula = getActiveFormula(
       timeTicks,
       state.tracks,
@@ -73,9 +106,19 @@ function renderTimelineChannels(state, totalSamples) {
     const leftEvaluator = getExpressionEvaluator(expressions[0], evaluatorCache)
     const rightEvaluator = getExpressionEvaluator(expressions[1] ?? expressions[0], evaluatorCache)
 
-    for (let sample = startSample; sample < endSample; sample += 1) {
-      leftChannel[sample] = clampAudioSample(evaluateBytebeatSample(leftEvaluator, sample) * state.masterGain)
-      rightChannel[sample] = clampAudioSample(evaluateBytebeatSample(rightEvaluator, sample) * state.masterGain)
+    for (let outputSample = startOutputSample; outputSample < endOutputSample; outputSample += 1) {
+      const sourceSample = convertOutputSampleToSourceSample(
+        outputSample,
+        sourceSampleRate,
+        outputSampleRate
+      )
+
+      leftChannel[outputSample] = clampAudioSample(
+        evaluateBytebeatSample(leftEvaluator, sourceSample) * state.masterGain
+      )
+      rightChannel[outputSample] = clampAudioSample(
+        evaluateBytebeatSample(rightEvaluator, sourceSample) * state.masterGain
+      )
     }
   }
 
@@ -104,6 +147,34 @@ function collectTimelineBoundaries(tracks, variableTracks, tickSize, totalSample
 
 function clampSampleBoundary(sample, totalSamples) {
   return Math.min(totalSamples, Math.max(0, Math.floor(sample)))
+}
+
+function getSourceSampleRate(sampleRate) {
+  const numericValue = Number(sampleRate)
+
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    return DEFAULT_SAMPLE_RATE
+  }
+
+  return Math.max(1, Math.floor(numericValue))
+}
+
+function getOutputSampleRate(sourceSampleRate) {
+  return Math.max(DEFAULT_EXPORT_WAV_SAMPLE_RATE, sourceSampleRate)
+}
+
+function convertSourceBoundaryToOutputSample(
+  sourceSample,
+  sourceSampleRate,
+  outputSampleRate,
+  totalOutputSamples
+) {
+  const outputSample = Math.ceil((sourceSample * outputSampleRate) / sourceSampleRate)
+  return Math.min(totalOutputSamples, Math.max(0, outputSample))
+}
+
+function convertOutputSampleToSourceSample(outputSample, sourceSampleRate, outputSampleRate) {
+  return Math.floor((outputSample * sourceSampleRate) / outputSampleRate)
 }
 
 function getProjectDurationTicks(tracks) {
