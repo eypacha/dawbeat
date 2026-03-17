@@ -1,4 +1,13 @@
+import { Compressor, Context as ToneContext, EQ3, Limiter, connect as toneConnect } from 'tone'
 import { getActiveFormula } from '@/engine/timelineEngine'
+import {
+  normalizeDecibels,
+  normalizeFrequency,
+  normalizeKnee,
+  normalizeRatio,
+  normalizeThreshold,
+  normalizeTime
+} from '@/services/audioEffectService'
 import { applyEvalEffects } from '@/services/evalEffectService'
 import { DEFAULT_SAMPLE_RATE } from '@/utils/audioSettings'
 import { validateFormula } from '@/utils/formulaValidation'
@@ -44,9 +53,14 @@ async function renderProjectToWav(state) {
     totalOutputSamples,
     totalSourceSamples
   })
+  const [processedLeftChannel, processedRightChannel] = await renderAudioEffectsOffline(
+    state,
+    [leftChannel, rightChannel],
+    outputSampleRate
+  )
 
   return encodeWavFile({
-    channelData: [leftChannel, rightChannel],
+    channelData: [processedLeftChannel, processedRightChannel],
     sampleRate: outputSampleRate
   })
 }
@@ -113,16 +127,145 @@ function renderTimelineChannels(
         outputSampleRate
       )
 
-      leftChannel[outputSample] = clampAudioSample(
-        evaluateBytebeatSample(leftEvaluator, sourceSample) * state.masterGain
-      )
-      rightChannel[outputSample] = clampAudioSample(
-        evaluateBytebeatSample(rightEvaluator, sourceSample) * state.masterGain
-      )
+      leftChannel[outputSample] = evaluateBytebeatSample(leftEvaluator, sourceSample)
+      rightChannel[outputSample] = evaluateBytebeatSample(rightEvaluator, sourceSample)
     }
   }
 
   return [leftChannel, rightChannel]
+}
+
+async function renderAudioEffectsOffline(state, channelData, sampleRate) {
+  const enabledAudioEffects = (state.audioEffects ?? []).filter(
+    (effect) => effect?.enabled && ['eq', 'compressor', 'limiter'].includes(effect.type)
+  )
+
+  if (!enabledAudioEffects.length && state.masterGain === 1) {
+    return channelData
+  }
+
+  const OfflineAudioContextCtor = window.OfflineAudioContext || window.webkitOfflineAudioContext
+
+  if (!OfflineAudioContextCtor) {
+    return applyMasterGainToChannelData(channelData, state.masterGain)
+  }
+
+  const frameCount = channelData[0]?.length ?? 0
+
+  if (!frameCount) {
+    return channelData
+  }
+
+  const offlineContext = new OfflineAudioContextCtor(2, frameCount, sampleRate)
+  const toneContext = new ToneContext({ context: offlineContext })
+  const source = offlineContext.createBufferSource()
+  const audioBuffer = offlineContext.createBuffer(2, frameCount, sampleRate)
+
+  audioBuffer.copyToChannel(channelData[0], 0)
+  audioBuffer.copyToChannel(channelData[1], 1)
+  source.buffer = audioBuffer
+
+  const toneNodes = enabledAudioEffects.map((effect) => createOfflineAudioEffectNode(effect, toneContext))
+  const nodes = toneNodes.filter(Boolean)
+  const masterGainNode = offlineContext.createGain()
+  masterGainNode.gain.value = Number.isFinite(Number(state.masterGain)) ? Number(state.masterGain) : 1
+
+  let previousNode = source
+
+  for (const node of nodes) {
+    toneConnect(previousNode, node)
+    previousNode = node
+  }
+
+  previousNode.connect(masterGainNode)
+  masterGainNode.connect(offlineContext.destination)
+
+  source.start(0)
+
+  const renderedBuffer = await offlineContext.startRendering()
+
+  for (const node of nodes) {
+    safeDispose(node)
+  }
+
+  return [
+    renderedBuffer.getChannelData(0).slice(),
+    renderedBuffer.getChannelData(1).slice()
+  ]
+}
+
+function createOfflineAudioEffectNode(effect, toneContext) {
+  if (!effect) {
+    return null
+  }
+
+  if (effect.type === 'eq') {
+    const node = new EQ3({
+      context: toneContext,
+      high: 0,
+      highFrequency: 2500,
+      low: 0,
+      lowFrequency: 400,
+      mid: 0
+    })
+
+    node.low.value = normalizeDecibels(effect.params?.low)
+    node.mid.value = normalizeDecibels(effect.params?.mid)
+    node.high.value = normalizeDecibels(effect.params?.high)
+    node.lowFrequency.value = normalizeFrequency(effect.params?.lowFrequency)
+    node.highFrequency.value = normalizeFrequency(effect.params?.highFrequency)
+
+    return node
+  }
+
+  if (effect.type === 'compressor') {
+    const node = new Compressor({
+      attack: 0.003,
+      context: toneContext,
+      knee: 30,
+      ratio: 4,
+      release: 0.25,
+      threshold: -24
+    })
+
+    node.threshold.value = normalizeThreshold(effect.params?.threshold)
+    node.ratio.value = normalizeRatio(effect.params?.ratio)
+    node.attack.value = normalizeTime(effect.params?.attack)
+    node.release.value = normalizeTime(effect.params?.release)
+    node.knee.value = normalizeKnee(effect.params?.knee)
+
+    return node
+  }
+
+  if (effect.type === 'limiter') {
+    const node = new Limiter({
+      context: toneContext,
+      threshold: -6
+    })
+
+    node.threshold.value = normalizeThreshold(effect.params?.threshold)
+    return node
+  }
+
+  return null
+}
+
+function applyMasterGainToChannelData(channelData, masterGain) {
+  const gain = Number.isFinite(Number(masterGain)) ? Number(masterGain) : 1
+
+  if (gain === 1) {
+    return channelData
+  }
+
+  return channelData.map((channel) => {
+    const nextChannel = new Float32Array(channel.length)
+
+    for (let index = 0; index < channel.length; index += 1) {
+      nextChannel[index] = channel[index] * gain
+    }
+
+    return nextChannel
+  })
 }
 
 function collectTimelineBoundaries(tracks, variableTracks, tickSize, totalSamples) {
@@ -241,6 +384,18 @@ function evaluateBytebeatSample(evaluator, time) {
 
 function clampAudioSample(value) {
   return Math.max(-1, Math.min(1, value))
+}
+
+function safeDispose(node) {
+  if (!node || typeof node.dispose !== 'function') {
+    return
+  }
+
+  try {
+    node.dispose()
+  } catch {
+    // Ignore dispose failures during export cleanup.
+  }
 }
 
 function encodeWavFile({ channelData, sampleRate }) {

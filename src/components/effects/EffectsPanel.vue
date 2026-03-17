@@ -180,7 +180,9 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-vue-next'
+import AudioCompressorItem from '@/components/effects/AudioCompressorItem.vue'
 import AudioEqItem from '@/components/effects/AudioEqItem.vue'
+import AudioLimiterItem from '@/components/effects/AudioLimiterItem.vue'
 import AudioMasterGainItem from '@/components/effects/AudioMasterGainItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
@@ -224,6 +226,14 @@ const availableAudioEffects = [
   {
     name: 'EQ3',
     type: 'eq'
+  },
+  {
+    name: 'Compressor',
+    type: 'compressor'
+  },
+  {
+    name: 'Limiter',
+    type: 'limiter'
   }
 ]
 const totalEffects = computed(() => audioEffects.value.length + evalEffects.value.length)
@@ -233,6 +243,14 @@ function getEffectsBySection(section) {
 }
 
 function getAudioEffectComponent(effectType) {
+  if (effectType === 'compressor') {
+    return AudioCompressorItem
+  }
+
+  if (effectType === 'limiter') {
+    return AudioLimiterItem
+  }
+
   return AudioEqItem
 }
 

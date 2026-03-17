@@ -7,11 +7,19 @@ export function createAudioEffectId() {
 }
 
 export function createAudioEffect(effect = {}) {
-  if (effect.type !== 'eq') {
-    return null
-  }
+  switch (effect.type) {
+    case 'compressor':
+      return createCompressorAudioEffect(effect)
 
-  return createEqAudioEffect(effect)
+    case 'limiter':
+      return createLimiterAudioEffect(effect)
+
+    case 'eq':
+      return createEqAudioEffect(effect)
+
+    default:
+      return null
+  }
 }
 
 export function createEqAudioEffect(effect = {}) {
@@ -31,6 +39,34 @@ export function createEqAudioEffect(effect = {}) {
       high: normalizeDecibels(effect.params?.high ?? 0),
       lowFrequency,
       highFrequency
+    }
+  }
+}
+
+export function createCompressorAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'compressor',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      threshold: normalizeThreshold(effect.params?.threshold ?? -24),
+      ratio: normalizeRatio(effect.params?.ratio ?? 4),
+      attack: normalizeTime(effect.params?.attack ?? 0.003),
+      release: normalizeTime(effect.params?.release ?? 0.25),
+      knee: normalizeKnee(effect.params?.knee ?? 30)
+    }
+  }
+}
+
+export function createLimiterAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'limiter',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      threshold: normalizeThreshold(effect.params?.threshold ?? -6)
     }
   }
 }
@@ -63,6 +99,46 @@ export function normalizeFrequency(value) {
   }
 
   return Math.min(12000, Math.max(40, Math.round(numericValue)))
+}
+
+export function normalizeThreshold(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return -24
+  }
+
+  return Math.min(0, Math.max(-100, numericValue))
+}
+
+export function normalizeRatio(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 4
+  }
+
+  return Math.min(20, Math.max(1, numericValue))
+}
+
+export function normalizeTime(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 0.003
+  }
+
+  return Math.min(1, Math.max(0, numericValue))
+}
+
+export function normalizeKnee(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 30
+  }
+
+  return Math.min(40, Math.max(0, numericValue))
 }
 
 function normalizeEqFrequencies(lowFrequency, highFrequency) {

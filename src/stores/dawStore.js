@@ -26,10 +26,16 @@ import {
 } from '@/services/dawStoreService'
 import {
   createAudioEffect,
+  createCompressorAudioEffect,
   createEqAudioEffect,
+  createLimiterAudioEffect,
   normalizeDecibels,
   normalizeFrequency,
+  normalizeKnee,
   normalizeMasterGain,
+  normalizeRatio,
+  normalizeThreshold,
+  normalizeTime,
 } from '@/services/audioEffectService'
 import { createEvalEffect, createStereoOffsetEvalEffect, mergeTReplacementParams } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
@@ -641,6 +647,20 @@ export const useDawStore = defineStore('dawStore', {
           const defaults = createEqAudioEffect({ id: effect.id })
           effect.enabled = defaults.enabled
           effect.params = defaults.params
+          return
+        }
+
+        if (effect.type === 'compressor') {
+          const defaults = createCompressorAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+          return
+        }
+
+        if (effect.type === 'limiter') {
+          const defaults = createLimiterAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
         }
       })
     },
@@ -676,6 +696,38 @@ export const useDawStore = defineStore('dawStore', {
         if (effect.params.lowFrequency >= effect.params.highFrequency) {
           effect.params.lowFrequency = Math.max(40, effect.params.highFrequency - 10)
           effect.params.highFrequency = Math.min(12000, effect.params.lowFrequency + 10)
+        }
+
+        return
+      }
+
+      if (effect.type === 'compressor') {
+        if (typeof params.threshold !== 'undefined') {
+          effect.params.threshold = normalizeThreshold(params.threshold)
+        }
+
+        if (typeof params.ratio !== 'undefined') {
+          effect.params.ratio = normalizeRatio(params.ratio)
+        }
+
+        if (typeof params.attack !== 'undefined') {
+          effect.params.attack = normalizeTime(params.attack)
+        }
+
+        if (typeof params.release !== 'undefined') {
+          effect.params.release = normalizeTime(params.release)
+        }
+
+        if (typeof params.knee !== 'undefined') {
+          effect.params.knee = normalizeKnee(params.knee)
+        }
+
+        return
+      }
+
+      if (effect.type === 'limiter') {
+        if (typeof params.threshold !== 'undefined') {
+          effect.params.threshold = normalizeThreshold(params.threshold)
         }
       }
     },

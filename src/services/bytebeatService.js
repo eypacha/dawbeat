@@ -1,5 +1,13 @@
-import { Context as ToneContext, EQ3, connect as toneConnect } from 'tone'
-import { normalizeDecibels, normalizeFrequency, normalizeMasterGain } from '@/services/audioEffectService'
+import { Compressor, Context as ToneContext, EQ3, Limiter, connect as toneConnect } from 'tone'
+import {
+  normalizeDecibels,
+  normalizeFrequency,
+  normalizeKnee,
+  normalizeMasterGain,
+  normalizeRatio,
+  normalizeThreshold,
+  normalizeTime
+} from '@/services/audioEffectService'
 import { loadByteBeatNodeClass } from '@/services/bytebeatNodeLoader'
 import { validateFormula } from '@/utils/formulaValidation'
 
@@ -60,18 +68,36 @@ function createAudioEffectNode(effect) {
     return null
   }
 
-  if (effect.type !== 'eq') {
-    return null
+  if (effect.type === 'eq') {
+    return new EQ3({
+      context: toneContext,
+      high: 0,
+      highFrequency: 2500,
+      low: 0,
+      lowFrequency: 400,
+      mid: 0
+    })
   }
 
-  return new EQ3({
-    context: toneContext,
-    high: 0,
-    highFrequency: 2500,
-    low: 0,
-    lowFrequency: 400,
-    mid: 0
-  })
+  if (effect.type === 'compressor') {
+    return new Compressor({
+      attack: 0.003,
+      context: toneContext,
+      knee: 30,
+      ratio: 4,
+      release: 0.25,
+      threshold: -24
+    })
+  }
+
+  if (effect.type === 'limiter') {
+    return new Limiter({
+      context: toneContext,
+      threshold: -6
+    })
+  }
+
+  return null
 }
 
 function ensureAudioEffectNode(effect) {
@@ -108,6 +134,20 @@ function syncAudioEffectNode(effect) {
     node.high.value = normalizeDecibels(effect.params?.high)
     node.lowFrequency.value = normalizeFrequency(effect.params?.lowFrequency)
     node.highFrequency.value = normalizeFrequency(effect.params?.highFrequency)
+    return node
+  }
+
+  if (effect.type === 'compressor') {
+    node.threshold.value = normalizeThreshold(effect.params?.threshold)
+    node.ratio.value = normalizeRatio(effect.params?.ratio)
+    node.attack.value = normalizeTime(effect.params?.attack)
+    node.release.value = normalizeTime(effect.params?.release)
+    node.knee.value = normalizeKnee(effect.params?.knee)
+    return node
+  }
+
+  if (effect.type === 'limiter') {
+    node.threshold.value = normalizeThreshold(effect.params?.threshold)
     return node
   }
 
