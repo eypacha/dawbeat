@@ -24,7 +24,7 @@
       >
         <div class="flex items-center justify-between gap-3">
           <div class="min-w-0 flex-1">
-            <p class="truncate text-sm font-medium text-zinc-50">{{ effect.name }}</p>
+            <p class="truncate text-[13px] font-medium leading-tight text-zinc-50">{{ effect.name }}</p>
           </div>
 
           <div class="flex shrink-0 items-center gap-1.5">

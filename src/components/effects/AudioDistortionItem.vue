@@ -21,7 +21,7 @@
           </div>
 
           <div class="min-w-0 flex-1">
-            <p class="truncate text-sm font-medium text-zinc-50">Distortion</p>
+            <p class="truncate text-[13px] font-medium leading-tight text-zinc-50">Distortion</p>
           </div>
         </div>
 

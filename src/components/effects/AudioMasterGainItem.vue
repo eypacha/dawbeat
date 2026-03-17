@@ -2,7 +2,7 @@
   <article class="w-full max-w-full min-w-0 overflow-hidden rounded border border-zinc-700 bg-zinc-900/90 p-3 text-zinc-100">
     <div class="flex items-center justify-between gap-3">
       <div class="min-w-0 flex-1">
-        <p class="truncate text-sm font-medium text-zinc-50">Master Gain</p>
+        <p class="truncate text-[13px] font-medium leading-tight text-zinc-50">Master Gain</p>
       </div>
     </div>
 
