@@ -180,8 +180,6 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-vue-next'
-import AudioBitCrusherItem from '@/components/effects/AudioBitCrusherItem.vue'
-import AudioDelayItem from '@/components/effects/AudioDelayItem.vue'
 import AudioEqItem from '@/components/effects/AudioEqItem.vue'
 import AudioMasterGainItem from '@/components/effects/AudioMasterGainItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
@@ -224,15 +222,7 @@ const availableFormulaEffects = [
 ]
 const availableAudioEffects = [
   {
-    name: 'BitCrusher',
-    type: 'bitcrusher'
-  },
-  {
-    name: 'Delay',
-    type: 'delay'
-  },
-  {
-    name: 'EQ',
+    name: 'EQ3',
     type: 'eq'
   }
 ]
@@ -243,15 +233,7 @@ function getEffectsBySection(section) {
 }
 
 function getAudioEffectComponent(effectType) {
-  if (effectType === 'bitcrusher') {
-    return AudioBitCrusherItem
-  }
-
-  if (effectType === 'eq') {
-    return AudioEqItem
-  }
-
-  return AudioDelayItem
+  return AudioEqItem
 }
 
 function setActiveSection(section) {

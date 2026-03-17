@@ -21,7 +21,7 @@
           </div>
 
           <div class="min-w-0 flex-1">
-            <p class="truncate text-sm font-medium text-zinc-50">EQ</p>
+            <p class="truncate text-sm font-medium text-zinc-50">EQ3</p>
           </div>
         </div>
 
@@ -52,18 +52,18 @@
           <div class="grid gap-3 pt-4">
               <label class="grid gap-2">
                 <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                  <span>Bass</span>
-                  <span>{{ bassLabel }}</span>
+                  <span>Low</span>
+                  <span>{{ lowLabel }}</span>
                 </div>
                 <input
                   class="accent-amber-300"
-                  :value="effect.params.bass"
+                  :value="effect.params.low"
                   max="24"
                   min="-24"
                   step="1"
                   type="range"
                   @blur="emit('interaction-end')"
-                  @input="handleParamInput('bass', $event)"
+                  @input="handleParamInput('low', $event)"
                   @keydown="handleInteractionKeydown"
                   @keyup="emit('interaction-end')"
                   @pointercancel="emit('interaction-end')"
@@ -96,18 +96,62 @@
 
               <label class="grid gap-2">
                 <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                  <span>Treble</span>
-                  <span>{{ trebleLabel }}</span>
+                  <span>High</span>
+                  <span>{{ highLabel }}</span>
                 </div>
                 <input
                   class="accent-amber-300"
-                  :value="effect.params.treble"
+                  :value="effect.params.high"
                   max="24"
                   min="-24"
                   step="1"
                   type="range"
                   @blur="emit('interaction-end')"
-                  @input="handleParamInput('treble', $event)"
+                  @input="handleParamInput('high', $event)"
+                  @keydown="handleInteractionKeydown"
+                  @keyup="emit('interaction-end')"
+                  @pointercancel="emit('interaction-end')"
+                  @pointerdown="emit('interaction-start')"
+                  @pointerup="emit('interaction-end')"
+                />
+              </label>
+
+              <label class="grid gap-2">
+                <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+                  <span>Low Cut</span>
+                  <span>{{ lowFrequencyLabel }}</span>
+                </div>
+                <input
+                  class="accent-amber-300"
+                  :value="effect.params.lowFrequency"
+                  max="12000"
+                  min="40"
+                  step="10"
+                  type="range"
+                  @blur="emit('interaction-end')"
+                  @input="handleParamInput('lowFrequency', $event)"
+                  @keydown="handleInteractionKeydown"
+                  @keyup="emit('interaction-end')"
+                  @pointercancel="emit('interaction-end')"
+                  @pointerdown="emit('interaction-start')"
+                  @pointerup="emit('interaction-end')"
+                />
+              </label>
+
+              <label class="grid gap-2">
+                <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+                  <span>High Cut</span>
+                  <span>{{ highFrequencyLabel }}</span>
+                </div>
+                <input
+                  class="accent-amber-300"
+                  :value="effect.params.highFrequency"
+                  max="12000"
+                  min="40"
+                  step="10"
+                  type="range"
+                  @blur="emit('interaction-end')"
+                  @input="handleParamInput('highFrequency', $event)"
                   @keydown="handleInteractionKeydown"
                   @keyup="emit('interaction-end')"
                   @pointercancel="emit('interaction-end')"
@@ -168,9 +212,11 @@ const emit = defineEmits([
   'update-param'
 ])
 
-const bassLabel = computed(() => `${Number(props.effect.params.bass ?? 0).toFixed(0)} dB`)
+const lowLabel = computed(() => `${Number(props.effect.params.low ?? 0).toFixed(0)} dB`)
 const midLabel = computed(() => `${Number(props.effect.params.mid ?? 0).toFixed(0)} dB`)
-const trebleLabel = computed(() => `${Number(props.effect.params.treble ?? 0).toFixed(0)} dB`)
+const highLabel = computed(() => `${Number(props.effect.params.high ?? 0).toFixed(0)} dB`)
+const lowFrequencyLabel = computed(() => `${Number(props.effect.params.lowFrequency ?? 0).toFixed(0)} Hz`)
+const highFrequencyLabel = computed(() => `${Number(props.effect.params.highFrequency ?? 0).toFixed(0)} Hz`)
 
 function handleParamInput(key, event) {
   emit('update-param', props.effect.id, key, Number(event.target.value))

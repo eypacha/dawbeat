@@ -1,11 +1,12 @@
-import { normalizeDecibels, normalizeDelayTime, normalizeMasterGain, normalizeMixValue, normalizeUnitValue } from '@/services/audioEffectService'
+import { Context as ToneContext, EQ3, connect as toneConnect } from 'tone'
+import { normalizeDecibels, normalizeFrequency, normalizeMasterGain } from '@/services/audioEffectService'
 import { loadByteBeatNodeClass } from '@/services/bytebeatNodeLoader'
 import { validateFormula } from '@/utils/formulaValidation'
-import { Macro_BitCrusherNode, Macro_DelayNode, Macro_ToneControlNode } from '@/utils/macroNodes'
 
 const SILENT_FORMULA = '0'
 
 let audioContext = null
+let toneContext = null
 let byteBeatNode = null
 let initPromise = null
 let formulaUpdatePromise = Promise.resolve()
@@ -30,6 +31,18 @@ function safeDisconnect(node) {
   }
 }
 
+function safeDispose(node) {
+  if (!node || typeof node.dispose !== 'function') {
+    return
+  }
+
+  try {
+    node.dispose()
+  } catch {
+    // Ignore dispose errors when rebuilding the graph.
+  }
+}
+
 function ensureMasterGainNode() {
   if (!audioContext) {
     return null
@@ -43,33 +56,22 @@ function ensureMasterGainNode() {
 }
 
 function createAudioEffectNode(effect) {
-  if (!audioContext || !effect) {
+  if (!audioContext || !toneContext || !effect) {
     return null
   }
 
-  switch (effect.type) {
-    case 'bitcrusher':
-      return new Macro_BitCrusherNode(audioContext, {
-        bits: 0.45
-      })
-
-    case 'delay':
-      return new Macro_DelayNode(audioContext, {
-        delayTime: 0.18,
-        feedback: 0.35,
-        mix: 0.5
-      })
-
-    case 'eq':
-      return new Macro_ToneControlNode(audioContext, {
-        bass: 0,
-        mid: 0,
-        treble: 0
-      })
-
-    default:
-      return null
+  if (effect.type !== 'eq') {
+    return null
   }
+
+  return new EQ3({
+    context: toneContext,
+    high: 0,
+    highFrequency: 2500,
+    low: 0,
+    lowFrequency: 400,
+    mid: 0
+  })
 }
 
 function ensureAudioEffectNode(effect) {
@@ -100,28 +102,13 @@ function syncAudioEffectNode(effect) {
     return null
   }
 
-  const nextEnabled = Boolean(effect.enabled)
-
-  if (typeof node.effect !== 'undefined' && node.effect !== nextEnabled) {
-    node.effect = nextEnabled
-  }
-
-  if (effect.type === 'delay') {
-    node.delayTime.value = normalizeDelayTime(effect.params?.delayTime)
-    node.feedback.value = normalizeMixValue(effect.params?.feedback)
-    node.mix.value = normalizeMixValue(effect.params?.mix)
-    return node
-  }
-
-  if (effect.type === 'bitcrusher') {
-    node.bits.value = normalizeUnitValue(effect.params?.bits)
-    return node
-  }
-
   if (effect.type === 'eq') {
-    node.bass.value = normalizeDecibels(effect.params?.bass)
+    node.low.value = normalizeDecibels(effect.params?.low)
     node.mid.value = normalizeDecibels(effect.params?.mid)
-    node.treble.value = normalizeDecibels(effect.params?.treble)
+    node.high.value = normalizeDecibels(effect.params?.high)
+    node.lowFrequency.value = normalizeFrequency(effect.params?.lowFrequency)
+    node.highFrequency.value = normalizeFrequency(effect.params?.highFrequency)
+    return node
   }
 
   return node
@@ -136,10 +123,12 @@ function syncAudioEffectNodes(audioEffects) {
     }
 
     safeDisconnect(node)
+    safeDispose(node)
     audioEffectNodes.delete(effectId)
   }
 
   return audioEffects
+    .filter((effect) => effect.enabled)
     .map((effect) => syncAudioEffectNode(effect))
     .filter(Boolean)
 }
@@ -160,7 +149,7 @@ function connectAudioGraph(audioEffects = currentAudioEffects) {
   safeDisconnect(outputNode)
 
   if (!nodes.length) {
-    byteBeatNode.connect(outputNode)
+    toneConnect(byteBeatNode, outputNode)
     outputNode.connect(audioContext.destination)
     return
   }
@@ -172,11 +161,11 @@ function connectAudioGraph(audioEffects = currentAudioEffects) {
   let previousNode = byteBeatNode
 
   for (const node of nodes) {
-    previousNode.connect(node)
+    toneConnect(previousNode, node)
     previousNode = node
   }
 
-  previousNode.connect(outputNode)
+  toneConnect(previousNode, outputNode)
   outputNode.connect(audioContext.destination)
 }
 
@@ -227,6 +216,7 @@ async function createNode(providedAudioContext) {
   }
 
   audioContext = providedAudioContext ?? new AudioContextCtor()
+  toneContext = new ToneContext({ context: audioContext })
 
   const ByteBeatNode = await loadByteBeatNodeClass()
   await ByteBeatNode.setup(audioContext)

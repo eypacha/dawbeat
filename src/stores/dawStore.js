@@ -26,14 +26,10 @@ import {
 } from '@/services/dawStoreService'
 import {
   createAudioEffect,
-  createBitCrusherAudioEffect,
-  createDelayAudioEffect,
   createEqAudioEffect,
   normalizeDecibels,
-  normalizeDelayTime,
+  normalizeFrequency,
   normalizeMasterGain,
-  normalizeMixValue,
-  normalizeUnitValue
 } from '@/services/audioEffectService'
 import { createEvalEffect, createStereoOffsetEvalEffect, mergeTReplacementParams } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
@@ -587,6 +583,11 @@ export const useDawStore = defineStore('dawStore', {
     addAudioEffect(effect) {
       return this.recordHistoryStep('add-audio-effect', () => {
         const nextEffect = createAudioEffect(effect)
+
+        if (!nextEffect) {
+          return null
+        }
+
         this.audioEffects.push(nextEffect)
         return nextEffect.id
       })
@@ -636,22 +637,8 @@ export const useDawStore = defineStore('dawStore', {
           return
         }
 
-        if (effect.type === 'delay') {
-          const defaults = createDelayAudioEffect({ id: effect.id })
-          effect.enabled = defaults.enabled
-          effect.params = defaults.params
-          return
-        }
-
         if (effect.type === 'eq') {
           const defaults = createEqAudioEffect({ id: effect.id })
-          effect.enabled = defaults.enabled
-          effect.params = defaults.params
-          return
-        }
-
-        if (effect.type === 'bitcrusher') {
-          const defaults = createBitCrusherAudioEffect({ id: effect.id })
           effect.enabled = defaults.enabled
           effect.params = defaults.params
         }
@@ -665,38 +652,31 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      if (effect.type === 'delay') {
-        if (typeof params.delayTime !== 'undefined') {
-          effect.params.delayTime = normalizeDelayTime(params.delayTime)
-        }
-
-        if (typeof params.feedback !== 'undefined') {
-          effect.params.feedback = normalizeMixValue(params.feedback)
-        }
-
-        if (typeof params.mix !== 'undefined') {
-          effect.params.mix = normalizeMixValue(params.mix)
-        }
-        return
-      }
-
       if (effect.type === 'eq') {
-        if (typeof params.bass !== 'undefined') {
-          effect.params.bass = normalizeDecibels(params.bass)
+        if (typeof params.low !== 'undefined') {
+          effect.params.low = normalizeDecibels(params.low)
         }
 
         if (typeof params.mid !== 'undefined') {
           effect.params.mid = normalizeDecibels(params.mid)
         }
 
-        if (typeof params.treble !== 'undefined') {
-          effect.params.treble = normalizeDecibels(params.treble)
+        if (typeof params.high !== 'undefined') {
+          effect.params.high = normalizeDecibels(params.high)
         }
-        return
-      }
 
-      if (effect.type === 'bitcrusher' && typeof params.bits !== 'undefined') {
-        effect.params.bits = normalizeUnitValue(params.bits)
+        if (typeof params.lowFrequency !== 'undefined') {
+          effect.params.lowFrequency = normalizeFrequency(params.lowFrequency)
+        }
+
+        if (typeof params.highFrequency !== 'undefined') {
+          effect.params.highFrequency = normalizeFrequency(params.highFrequency)
+        }
+
+        if (effect.params.lowFrequency >= effect.params.highFrequency) {
+          effect.params.lowFrequency = Math.max(40, effect.params.highFrequency - 10)
+          effect.params.highFrequency = Math.min(12000, effect.params.lowFrequency + 10)
+        }
       }
     },
 

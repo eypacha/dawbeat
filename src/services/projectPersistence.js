@@ -1,4 +1,4 @@
-import { createAudioEffect, createDelayAudioEffect, normalizeMasterGain } from '@/services/audioEffectService'
+import { createAudioEffect, normalizeMasterGain } from '@/services/audioEffectService'
 import {
   createTrackClip,
   createTrackId,
@@ -196,7 +196,7 @@ function normalizeProjectPayload(project) {
     loopEnabled: typeof project.loopEnabled === 'boolean' ? project.loopEnabled : false,
     audioEffects: hasOwn(project, 'audioEffects')
       ? normalizeAudioEffects(project.audioEffects)
-      : [createDelayAudioEffect({ id: 'fx-audio-delay' })],
+      : [],
     evalEffects: hasOwn(project, 'evalEffects')
       ? normalizeEvalEffects(project.evalEffects)
       : [createStereoOffsetEvalEffect({ id: 'fx1' })],
@@ -294,7 +294,10 @@ function normalizeAudioEffects(audioEffects) {
     return []
   }
 
-  return audioEffects.filter(isRecord).map((effect) => createAudioEffect(effect))
+  return audioEffects
+    .filter(isRecord)
+    .map((effect) => createAudioEffect(effect))
+    .filter(Boolean)
 }
 
 function normalizeEvalEffects(evalEffects) {
