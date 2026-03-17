@@ -11,6 +11,9 @@ export function createAudioEffect(effect = {}) {
     case 'compressor':
       return createCompressorAudioEffect(effect)
 
+    case 'reverb':
+      return createReverbAudioEffect(effect)
+
     case 'limiter':
       return createLimiterAudioEffect(effect)
 
@@ -67,6 +70,20 @@ export function createLimiterAudioEffect(effect = {}) {
     expanded: effect.expanded ?? false,
     params: {
       threshold: normalizeThreshold(effect.params?.threshold ?? -6)
+    }
+  }
+}
+
+export function createReverbAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'reverb',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      decay: normalizeDecay(effect.params?.decay ?? 2.5),
+      preDelay: normalizeTime(effect.params?.preDelay ?? 0.02),
+      wet: normalizeWet(effect.params?.wet ?? 0.3)
     }
   }
 }
@@ -139,6 +156,26 @@ export function normalizeKnee(value) {
   }
 
   return Math.min(40, Math.max(0, numericValue))
+}
+
+export function normalizeDecay(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 2.5
+  }
+
+  return Math.min(10, Math.max(0.1, numericValue))
+}
+
+export function normalizeWet(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 0.3
+  }
+
+  return Math.min(1, Math.max(0, numericValue))
 }
 
 function normalizeEqFrequencies(lowFrequency, highFrequency) {

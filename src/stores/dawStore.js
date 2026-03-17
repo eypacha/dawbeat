@@ -29,6 +29,8 @@ import {
   createCompressorAudioEffect,
   createEqAudioEffect,
   createLimiterAudioEffect,
+  createReverbAudioEffect,
+  normalizeDecay,
   normalizeDecibels,
   normalizeFrequency,
   normalizeKnee,
@@ -36,6 +38,7 @@ import {
   normalizeRatio,
   normalizeThreshold,
   normalizeTime,
+  normalizeWet,
 } from '@/services/audioEffectService'
 import { createEvalEffect, createStereoOffsetEvalEffect, mergeTReplacementParams } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
@@ -657,6 +660,13 @@ export const useDawStore = defineStore('dawStore', {
           return
         }
 
+        if (effect.type === 'reverb') {
+          const defaults = createReverbAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+          return
+        }
+
         if (effect.type === 'limiter') {
           const defaults = createLimiterAudioEffect({ id: effect.id })
           effect.enabled = defaults.enabled
@@ -720,6 +730,22 @@ export const useDawStore = defineStore('dawStore', {
 
         if (typeof params.knee !== 'undefined') {
           effect.params.knee = normalizeKnee(params.knee)
+        }
+
+        return
+      }
+
+      if (effect.type === 'reverb') {
+        if (typeof params.decay !== 'undefined') {
+          effect.params.decay = normalizeDecay(params.decay)
+        }
+
+        if (typeof params.preDelay !== 'undefined') {
+          effect.params.preDelay = normalizeTime(params.preDelay)
+        }
+
+        if (typeof params.wet !== 'undefined') {
+          effect.params.wet = normalizeWet(params.wet)
         }
 
         return

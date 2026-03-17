@@ -1,12 +1,14 @@
-import { Compressor, Context as ToneContext, EQ3, Limiter, connect as toneConnect } from 'tone'
+import { Compressor, Context as ToneContext, EQ3, Limiter, Reverb, connect as toneConnect } from 'tone'
 import { getActiveFormula } from '@/engine/timelineEngine'
 import {
+  normalizeDecay,
   normalizeDecibels,
   normalizeFrequency,
   normalizeKnee,
   normalizeRatio,
   normalizeThreshold,
-  normalizeTime
+  normalizeTime,
+  normalizeWet
 } from '@/services/audioEffectService'
 import { applyEvalEffects } from '@/services/evalEffectService'
 import { DEFAULT_SAMPLE_RATE } from '@/utils/audioSettings'
@@ -137,7 +139,7 @@ function renderTimelineChannels(
 
 async function renderAudioEffectsOffline(state, channelData, sampleRate) {
   const enabledAudioEffects = (state.audioEffects ?? []).filter(
-    (effect) => effect?.enabled && ['eq', 'compressor', 'limiter'].includes(effect.type)
+    (effect) => effect?.enabled && ['eq', 'compressor', 'reverb', 'limiter'].includes(effect.type)
   )
 
   if (!enabledAudioEffects.length && state.masterGain === 1) {
@@ -165,7 +167,9 @@ async function renderAudioEffectsOffline(state, channelData, sampleRate) {
   audioBuffer.copyToChannel(channelData[1], 1)
   source.buffer = audioBuffer
 
-  const toneNodes = enabledAudioEffects.map((effect) => createOfflineAudioEffectNode(effect, toneContext))
+  const toneNodes = await Promise.all(
+    enabledAudioEffects.map((effect) => createOfflineAudioEffectNode(effect, toneContext))
+  )
   const nodes = toneNodes.filter(Boolean)
   const masterGainNode = offlineContext.createGain()
   masterGainNode.gain.value = Number.isFinite(Number(state.masterGain)) ? Number(state.masterGain) : 1
@@ -194,7 +198,7 @@ async function renderAudioEffectsOffline(state, channelData, sampleRate) {
   ]
 }
 
-function createOfflineAudioEffectNode(effect, toneContext) {
+async function createOfflineAudioEffectNode(effect, toneContext) {
   if (!effect) {
     return null
   }
@@ -244,6 +248,22 @@ function createOfflineAudioEffectNode(effect, toneContext) {
     })
 
     node.threshold.value = normalizeThreshold(effect.params?.threshold)
+    return node
+  }
+
+  if (effect.type === 'reverb') {
+    const node = new Reverb({
+      context: toneContext,
+      decay: 2.5,
+      preDelay: 0.02,
+      wet: 0.3
+    })
+
+    node.wet.value = normalizeWet(effect.params?.wet)
+    node.decay = normalizeDecay(effect.params?.decay)
+    node.preDelay = normalizeTime(effect.params?.preDelay)
+    await node.ready
+
     return node
   }
 

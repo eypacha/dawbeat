@@ -1,12 +1,14 @@
-import { Compressor, Context as ToneContext, EQ3, Limiter, connect as toneConnect } from 'tone'
+import { Compressor, Context as ToneContext, EQ3, Limiter, Reverb, connect as toneConnect } from 'tone'
 import {
+  normalizeDecay,
   normalizeDecibels,
   normalizeFrequency,
   normalizeKnee,
   normalizeMasterGain,
   normalizeRatio,
   normalizeThreshold,
-  normalizeTime
+  normalizeTime,
+  normalizeWet
 } from '@/services/audioEffectService'
 import { loadByteBeatNodeClass } from '@/services/bytebeatNodeLoader'
 import { validateFormula } from '@/utils/formulaValidation'
@@ -63,7 +65,7 @@ function ensureMasterGainNode() {
   return masterGainNode
 }
 
-function createAudioEffectNode(effect) {
+async function createAudioEffectNode(effect) {
   if (!audioContext || !toneContext || !effect) {
     return null
   }
@@ -97,10 +99,22 @@ function createAudioEffectNode(effect) {
     })
   }
 
+  if (effect.type === 'reverb') {
+    const node = new Reverb({
+      context: toneContext,
+      decay: 2.5,
+      preDelay: 0.02,
+      wet: 0.3
+    })
+
+    await node.ready
+    return node
+  }
+
   return null
 }
 
-function ensureAudioEffectNode(effect) {
+async function ensureAudioEffectNode(effect) {
   if (!effect) {
     return null
   }
@@ -111,7 +125,7 @@ function ensureAudioEffectNode(effect) {
     return existingNode
   }
 
-  const nextNode = createAudioEffectNode(effect)
+  const nextNode = await createAudioEffectNode(effect)
 
   if (!nextNode) {
     return null
@@ -121,8 +135,8 @@ function ensureAudioEffectNode(effect) {
   return nextNode
 }
 
-function syncAudioEffectNode(effect) {
-  const node = ensureAudioEffectNode(effect)
+async function syncAudioEffectNode(effect) {
+  const node = await ensureAudioEffectNode(effect)
 
   if (!node) {
     return null
@@ -151,10 +165,18 @@ function syncAudioEffectNode(effect) {
     return node
   }
 
+  if (effect.type === 'reverb') {
+    node.wet.value = normalizeWet(effect.params?.wet)
+    node.decay = normalizeDecay(effect.params?.decay)
+    node.preDelay = normalizeTime(effect.params?.preDelay)
+    await node.ready
+    return node
+  }
+
   return node
 }
 
-function syncAudioEffectNodes(audioEffects) {
+async function syncAudioEffectNodes(audioEffects) {
   const activeIds = new Set(audioEffects.map((effect) => effect.id))
 
   for (const [effectId, node] of audioEffectNodes.entries()) {
@@ -167,20 +189,23 @@ function syncAudioEffectNodes(audioEffects) {
     audioEffectNodes.delete(effectId)
   }
 
-  return audioEffects
-    .filter((effect) => effect.enabled)
-    .map((effect) => syncAudioEffectNode(effect))
-    .filter(Boolean)
+  const nodes = await Promise.all(
+    audioEffects
+      .filter((effect) => effect.enabled)
+      .map((effect) => syncAudioEffectNode(effect))
+  )
+
+  return nodes.filter(Boolean)
 }
 
-function connectAudioGraph(audioEffects = currentAudioEffects) {
+async function connectAudioGraph(audioEffects = currentAudioEffects) {
   if (!byteBeatNode || !audioContext) {
     return
   }
 
   safeDisconnect(byteBeatNode)
   const outputNode = ensureMasterGainNode()
-  const nodes = syncAudioEffectNodes(audioEffects)
+  const nodes = await syncAudioEffectNodes(audioEffects)
 
   if (!outputNode) {
     return
@@ -301,7 +326,7 @@ const bytebeatService = {
       await audioContext.resume()
     }
 
-    connectAudioGraph()
+    await connectAudioGraph()
   },
 
   async unlock() {
@@ -336,13 +361,13 @@ const bytebeatService = {
   async syncAudioEffects(audioEffects = []) {
     await this.init()
     currentAudioEffects = [...audioEffects]
-    syncAudioEffectNodes(audioEffects)
+    await syncAudioEffectNodes(audioEffects)
   },
 
   async reconnectAudioGraph(audioEffects = currentAudioEffects) {
     await this.init()
     currentAudioEffects = [...audioEffects]
-    connectAudioGraph(audioEffects)
+    await connectAudioGraph(audioEffects)
   },
 
   async setMasterGain(value) {

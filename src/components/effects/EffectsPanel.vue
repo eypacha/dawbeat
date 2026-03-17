@@ -184,6 +184,7 @@ import AudioCompressorItem from '@/components/effects/AudioCompressorItem.vue'
 import AudioEqItem from '@/components/effects/AudioEqItem.vue'
 import AudioLimiterItem from '@/components/effects/AudioLimiterItem.vue'
 import AudioMasterGainItem from '@/components/effects/AudioMasterGainItem.vue'
+import AudioReverbItem from '@/components/effects/AudioReverbItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
 import Divider from '@/components/ui/Divider.vue'
@@ -234,6 +235,10 @@ const availableAudioEffects = [
   {
     name: 'Limiter',
     type: 'limiter'
+  },
+  {
+    name: 'Reverb',
+    type: 'reverb'
   }
 ]
 const totalEffects = computed(() => audioEffects.value.length + evalEffects.value.length)
@@ -249,6 +254,10 @@ function getAudioEffectComponent(effectType) {
 
   if (effectType === 'limiter') {
     return AudioLimiterItem
+  }
+
+  if (effectType === 'reverb') {
+    return AudioReverbItem
   }
 
   return AudioEqItem
