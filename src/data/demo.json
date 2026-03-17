@@ -378,17 +378,6 @@
   "loopEnd": 96,
   "loopEnabled": false,
   "audioEffects": [
-    {
-      "id": "d0342ddc-a0c8-4d90-a3b5-9ba29aebc923",
-      "type": "delay",
-      "enabled": false,
-      "expanded": false,
-      "params": {
-        "delayTime": 0.19,
-        "feedback": 0.21,
-        "mix": 0.5
-      }
-    }
   ],
   "evalEffects": [
     {
