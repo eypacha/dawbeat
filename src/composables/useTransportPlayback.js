@@ -1,6 +1,7 @@
 import { storeToRefs } from 'pinia'
 import { watch } from 'vue'
 import { getActiveFormula, getPlaybackEndTick } from '@/engine/timelineEngine'
+import { resolveAudioEffectsAtTime } from '@/services/automationService'
 import bytebeatService from '@/services/bytebeatService'
 import { applyEvalEffects } from '@/services/evalEffectService'
 import { useDawStore } from '@/stores/dawStore'
@@ -33,6 +34,13 @@ export function useTransportPlayback() {
     await bytebeatService.syncMasterGainAtTime(timeTicks, dawStore)
   }
 
+  const getAudioEffectsAtTime = (timeTicks) =>
+    resolveAudioEffectsAtTime(timeTicks, dawStore.automationLanes, audioEffects.value)
+
+  const syncAudioEffectsAtTime = async (timeTicks) => {
+    await bytebeatService.syncAudioEffects(getAudioEffectsAtTime(timeTicks))
+  }
+
   const syncPlaybackFrame = async () => {
     const currentSample = bytebeatService.getCurrentSample()
     const timeTicks = samplesToTicks(currentSample, tickSize.value)
@@ -47,6 +55,7 @@ export function useTransportPlayback() {
 
         await bytebeatService.seekToSample(loopStartSample, loopExpressions)
         dawStore.setTime(loopStart.value)
+        await syncAudioEffectsAtTime(loopStart.value)
         await syncMasterGainAtTime(loopStart.value)
       } catch (error) {
         console.error('No se pudo reiniciar el loop', error)
@@ -74,6 +83,7 @@ export function useTransportPlayback() {
     const activeExpressions = applyEvalEffects(activeFormula, evalEffects.value)
 
     dawStore.setTime(timeTicks)
+    void syncAudioEffectsAtTime(timeTicks)
     void syncMasterGainAtTime(timeTicks)
     void bytebeatService.setExpressions(activeExpressions)
 
@@ -90,7 +100,7 @@ export function useTransportPlayback() {
     await bytebeatService.init()
     await bytebeatService.unlock()
     bytebeatService.setDesiredSampleRate(sampleRate.value)
-    await bytebeatService.syncAudioEffects(audioEffects.value)
+    await syncAudioEffectsAtTime(dawStore.time)
     await syncMasterGainAtTime(dawStore.time)
     await bytebeatService.setExpressions([''], true, true)
 
@@ -105,7 +115,7 @@ export function useTransportPlayback() {
     try {
       await enableAudio()
       bytebeatService.setDesiredSampleRate(sampleRate.value)
-      await bytebeatService.syncAudioEffects(audioEffects.value)
+      await syncAudioEffectsAtTime(dawStore.time)
 
       const resumeTime = dawStore.time
       const resumeFromPause = resumeTime > 0
@@ -195,6 +205,7 @@ export function useTransportPlayback() {
 
       try {
         await bytebeatService.seekToSample(targetSample, activeExpressions)
+        await syncAudioEffectsAtTime(normalizedTime)
         await syncMasterGainAtTime(normalizedTime)
       } catch (error) {
         console.error('No se pudo mover el playhead', error)
@@ -204,6 +215,7 @@ export function useTransportPlayback() {
     }
 
     bytebeatService.holdSample(targetSample)
+    void syncAudioEffectsAtTime(normalizedTime)
     void syncMasterGainAtTime(normalizedTime)
   }
 
@@ -218,11 +230,11 @@ export function useTransportPlayback() {
 
   watch(
     audioEffects,
-    (nextAudioEffects) => {
-      void bytebeatService.syncAudioEffects(nextAudioEffects)
+    () => {
+      void syncAudioEffectsAtTime(dawStore.time)
 
       if (playing.value) {
-        void bytebeatService.reconnectAudioGraph(nextAudioEffects)
+        void bytebeatService.reconnectAudioGraph(getAudioEffectsAtTime(dawStore.time))
       }
     },
     { deep: true }
@@ -233,6 +245,7 @@ export function useTransportPlayback() {
   })
 
   watch(automationLanes, () => {
+    void syncAudioEffectsAtTime(dawStore.time)
     void syncMasterGainAtTime(dawStore.time)
   }, { deep: true })
 

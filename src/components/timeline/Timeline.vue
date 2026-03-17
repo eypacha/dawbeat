@@ -106,14 +106,14 @@
           @track-reorder-start="handleTrackReorderStart"
         />
 
+        <TimelineAddTrackRow :timeline-width="timelineWidthStyle" />
+
         <TimelineAutomationLane
           v-for="lane in automationLanes"
           :key="lane.id"
           :lane="lane"
           :timeline-width="timelineWidthStyle"
         />
-
-        <TimelineAddTrackRow :timeline-width="timelineWidthStyle" />
       </div>
     </div>
   </Panel>

@@ -52,7 +52,15 @@
           <div class="grid gap-3 pt-4">
             <label class="grid gap-2">
               <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                <span>Drive</span>
+                <div class="flex items-center gap-2">
+                  <EffectParamAutomationButton
+                    :effect-id="effect.id"
+                    label="Distortion Drive"
+                    param-key="drive"
+                    @create="emit('create-automation', effect.id, 'drive')"
+                  />
+                  <span>Drive</span>
+                </div>
                 <span>{{ driveLabel }}</span>
               </div>
               <input
@@ -74,7 +82,15 @@
 
             <label class="grid gap-2">
               <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                <span>Wet</span>
+                <div class="flex items-center gap-2">
+                  <EffectParamAutomationButton
+                    :effect-id="effect.id"
+                    label="Distortion Wet"
+                    param-key="wet"
+                    @create="emit('create-automation', effect.id, 'wet')"
+                  />
+                  <span>Wet</span>
+                </div>
                 <span>{{ wetLabel }}</span>
               </div>
               <input
@@ -122,6 +138,7 @@
 import { computed } from 'vue'
 import { GripVertical, Power, SlidersHorizontal } from 'lucide-vue-next'
 import CollapseTransition from '../ui/CollapseTransition.vue'
+import EffectParamAutomationButton from '@/components/effects/EffectParamAutomationButton.vue'
 
 const props = defineProps({
   dragging: {
@@ -137,6 +154,7 @@ const props = defineProps({
 const emit = defineEmits([
   'drag-end',
   'drag-start',
+  'create-automation',
   'interaction-end',
   'interaction-start',
   'remove',

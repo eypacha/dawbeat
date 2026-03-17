@@ -52,7 +52,15 @@
           <div class="grid gap-3 pt-4">
               <label class="grid gap-2">
                 <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                  <span>Time</span>
+                  <div class="flex items-center gap-2">
+                    <EffectParamAutomationButton
+                      :effect-id="effect.id"
+                      label="Delay Time"
+                      param-key="delayTime"
+                      @create="emit('create-automation', effect.id, 'delayTime')"
+                    />
+                    <span>Time</span>
+                  </div>
                   <span>{{ delayTimeLabel }}</span>
                 </div>
 
@@ -75,7 +83,15 @@
 
               <label class="grid gap-2">
                 <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                  <span>Feedback</span>
+                  <div class="flex items-center gap-2">
+                    <EffectParamAutomationButton
+                      :effect-id="effect.id"
+                      label="Delay Feedback"
+                      param-key="feedback"
+                      @create="emit('create-automation', effect.id, 'feedback')"
+                    />
+                    <span>Feedback</span>
+                  </div>
                   <span>{{ feedbackLabel }}</span>
                 </div>
 
@@ -98,7 +114,15 @@
 
               <label class="grid gap-2">
                 <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                  <span>Wet</span>
+                  <div class="flex items-center gap-2">
+                    <EffectParamAutomationButton
+                      :effect-id="effect.id"
+                      label="Delay Wet"
+                      param-key="wet"
+                      @create="emit('create-automation', effect.id, 'wet')"
+                    />
+                    <span>Wet</span>
+                  </div>
                   <span>{{ wetLabel }}</span>
                 </div>
 
@@ -147,6 +171,7 @@
 import { computed } from 'vue'
 import { GripVertical, Power, SlidersHorizontal } from 'lucide-vue-next'
 import CollapseTransition from '../ui/CollapseTransition.vue'
+import EffectParamAutomationButton from '@/components/effects/EffectParamAutomationButton.vue'
 
 const props = defineProps({
   dragging: {
@@ -162,6 +187,7 @@ const props = defineProps({
 const emit = defineEmits([
   'drag-end',
   'drag-start',
+  'create-automation',
   'interaction-end',
   'interaction-start',
   'remove',

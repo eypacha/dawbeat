@@ -39,7 +39,7 @@
           left: `${point.x}px`,
           top: `${point.y}px`
         }"
-        :title="`${point.point.time.toFixed(2)} / ${point.point.value.toFixed(2)}`"
+        :title="`${point.point.time.toFixed(2)} / ${Number(point.point.value ?? 0).toFixed(2)}`"
         data-automation-point="true"
         type="button"
         @pointerdown.stop="handlePointPointerDown($event, point)"
@@ -52,7 +52,7 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useContextMenu } from '@/composables/useContextMenu'
-import { MASTER_GAIN_AUTOMATION_MAX } from '@/services/automationService'
+import { getAutomationLaneConfig } from '@/services/automationService'
 import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { useDawStore } from '@/stores/dawStore'
 import { TRACK_LABEL_WIDTH, clamp, getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
@@ -80,8 +80,9 @@ let dragHistoryActive = false
 let dragPointIndex = -1
 let dragStartPoint = null
 
+const laneConfig = computed(() => getAutomationLaneConfig(props.lane))
 const visibleTickStep = computed(() => getVisibleTimelineTickStep(pixelsPerTick.value))
-const laneLabel = computed(() => (props.lane.type === 'masterGain' ? 'Master Gain' : props.lane.id))
+const laneLabel = computed(() => laneConfig.value?.label ?? props.lane.id)
 const laneStyle = computed(() => ({
   width: props.timelineWidth,
   height: `${LANE_HEIGHT}px`,
@@ -225,18 +226,24 @@ function getPointFromEvent(event) {
   const laneRect = laneElement.value.getBoundingClientRect()
   const relativeX = Math.max(0, event.clientX - laneRect.left)
   const relativeY = clamp(event.clientY - laneRect.top, 0, LANE_HEIGHT)
+  const minValue = laneConfig.value?.min ?? 0
+  const maxValue = laneConfig.value?.max ?? 1
+  const valueRange = Math.max(0.0001, maxValue - minValue)
 
   return {
     time: getDraggedTick(
       pixelsToTicks(relativeX, pixelsPerTick.value),
       shouldSnapFromPointerEvent(event)
     ),
-    value: clamp((1 - relativeY / LANE_HEIGHT) * MASTER_GAIN_AUTOMATION_MAX, 0, MASTER_GAIN_AUTOMATION_MAX)
+    value: clamp(minValue + (1 - relativeY / LANE_HEIGHT) * valueRange, minValue, maxValue)
   }
 }
 
 function valueToY(value) {
-  return clamp((1 - value / MASTER_GAIN_AUTOMATION_MAX) * LANE_HEIGHT, 0, LANE_HEIGHT)
+  const minValue = laneConfig.value?.min ?? 0
+  const maxValue = laneConfig.value?.max ?? 1
+  const valueRange = Math.max(0.0001, maxValue - minValue)
+  return clamp((1 - (value - minValue) / valueRange) * LANE_HEIGHT, 0, LANE_HEIGHT)
 }
 
 onBeforeUnmount(() => {

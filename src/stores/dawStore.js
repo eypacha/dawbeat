@@ -47,11 +47,13 @@ import {
   normalizeWidth
 } from '@/services/audioEffectService'
 import {
+  createAudioEffectParamAutomationLane,
   createDefaultAutomationLane,
+  getAutomationLaneByAudioEffectParam,
   getAutomationLaneById as findAutomationLaneById,
   getAutomationValueAtTime,
   getDefaultAutomationLanes,
-  normalizeAutomationPoint
+  normalizeAutomationPointForLane
 } from '@/services/automationService'
 import { createEvalEffect, createStereoOffsetEvalEffect, mergeTReplacementParams } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
@@ -410,6 +412,8 @@ export const useDawStore = defineStore('dawStore', {
   getters: {
     canPasteClipsAtPlayhead: (state) =>
       Boolean(state.clipClipboard?.clips?.length && (state.tracks.length || state.variableTracks.length)),
+    getAutomationLaneByAudioEffectParam: (state) => (effectId, paramKey) =>
+      getAutomationLaneByAudioEffectParam(state.automationLanes, effectId, paramKey),
     getAutomationLaneById: (state) => (laneId) => findAutomationLaneById(state.automationLanes, laneId),
     getAutomationValueAt: (state) => (time, laneId) =>
       getAutomationValueAtTime(time, findAutomationLaneById(state.automationLanes, laneId)),
@@ -613,7 +617,7 @@ export const useDawStore = defineStore('dawStore', {
           return null
         }
 
-        const nextPoint = normalizeAutomationPoint(point)
+        const nextPoint = normalizeAutomationPointForLane(point, lane)
 
         if (lane.points[0] && nextPoint.time === 0) {
           this.selectAutomationPoint(laneId, 0)
@@ -641,6 +645,31 @@ export const useDawStore = defineStore('dawStore', {
       })
     },
 
+    enableAudioEffectParamAutomationLane(effectId, paramKey) {
+      return this.recordHistoryStep('enable-audio-effect-param-automation-lane', () => {
+        const effect = this.audioEffects.find((entry) => entry.id === effectId)
+
+        if (!effect) {
+          return null
+        }
+
+        const existingLane = this.getAutomationLaneByAudioEffectParam(effectId, paramKey)
+
+        if (existingLane) {
+          return existingLane.id
+        }
+
+        const nextLane = createAudioEffectParamAutomationLane(effect, paramKey)
+
+        if (!nextLane) {
+          return null
+        }
+
+        this.automationLanes.push(nextLane)
+        return nextLane.id
+      })
+    },
+
     updateAutomationPoint(laneId, index, nextPoint) {
       const lane = this.getAutomationLaneById(laneId)
 
@@ -648,7 +677,7 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      const normalizedPoint = normalizeAutomationPoint(nextPoint, lane.points[index])
+      const normalizedPoint = normalizeAutomationPointForLane(nextPoint, lane, lane.points[index])
 
       lane.points[index] = index === 0
         ? {
@@ -769,6 +798,11 @@ export const useDawStore = defineStore('dawStore', {
     removeAudioEffect(effectId) {
       return this.recordHistoryStep('remove-audio-effect', () => {
         this.audioEffects = this.audioEffects.filter((entry) => entry.id !== effectId)
+        this.automationLanes = this.automationLanes.filter((lane) => lane.effectId !== effectId)
+
+        if (this.selectedAutomationPoint?.laneId && !this.getAutomationLaneById(this.selectedAutomationPoint.laneId)) {
+          this.clearAutomationPointSelection()
+        }
       })
     },
 

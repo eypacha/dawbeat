@@ -52,7 +52,15 @@
           <div class="grid gap-3 pt-4">
             <label class="grid gap-2">
               <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                <span>Threshold</span>
+                <div class="flex items-center gap-2">
+                  <EffectParamAutomationButton
+                    :effect-id="effect.id"
+                    label="Compressor Threshold"
+                    param-key="threshold"
+                    @create="emit('create-automation', effect.id, 'threshold')"
+                  />
+                  <span>Threshold</span>
+                </div>
                 <span>{{ thresholdLabel }}</span>
               </div>
               <input
@@ -74,7 +82,15 @@
 
             <label class="grid gap-2">
               <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                <span>Ratio</span>
+                <div class="flex items-center gap-2">
+                  <EffectParamAutomationButton
+                    :effect-id="effect.id"
+                    label="Compressor Ratio"
+                    param-key="ratio"
+                    @create="emit('create-automation', effect.id, 'ratio')"
+                  />
+                  <span>Ratio</span>
+                </div>
                 <span>{{ ratioLabel }}</span>
               </div>
               <input
@@ -96,7 +112,15 @@
 
             <label class="grid gap-2">
               <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                <span>Attack</span>
+                <div class="flex items-center gap-2">
+                  <EffectParamAutomationButton
+                    :effect-id="effect.id"
+                    label="Compressor Attack"
+                    param-key="attack"
+                    @create="emit('create-automation', effect.id, 'attack')"
+                  />
+                  <span>Attack</span>
+                </div>
                 <span>{{ attackLabel }}</span>
               </div>
               <input
@@ -118,7 +142,15 @@
 
             <label class="grid gap-2">
               <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                <span>Release</span>
+                <div class="flex items-center gap-2">
+                  <EffectParamAutomationButton
+                    :effect-id="effect.id"
+                    label="Compressor Release"
+                    param-key="release"
+                    @create="emit('create-automation', effect.id, 'release')"
+                  />
+                  <span>Release</span>
+                </div>
                 <span>{{ releaseLabel }}</span>
               </div>
               <input
@@ -140,7 +172,15 @@
 
             <label class="grid gap-2">
               <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                <span>Knee</span>
+                <div class="flex items-center gap-2">
+                  <EffectParamAutomationButton
+                    :effect-id="effect.id"
+                    label="Compressor Knee"
+                    param-key="knee"
+                    @create="emit('create-automation', effect.id, 'knee')"
+                  />
+                  <span>Knee</span>
+                </div>
                 <span>{{ kneeLabel }}</span>
               </div>
               <input
@@ -188,6 +228,7 @@
 import { computed } from 'vue'
 import { GripVertical, Power, SlidersHorizontal } from 'lucide-vue-next'
 import CollapseTransition from '../ui/CollapseTransition.vue'
+import EffectParamAutomationButton from '@/components/effects/EffectParamAutomationButton.vue'
 
 const props = defineProps({
   dragging: {
@@ -203,6 +244,7 @@ const props = defineProps({
 const emit = defineEmits([
   'drag-end',
   'drag-start',
+  'create-automation',
   'interaction-end',
   'interaction-start',
   'remove',

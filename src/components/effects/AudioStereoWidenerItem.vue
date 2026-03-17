@@ -52,7 +52,15 @@
           <div class="grid gap-3 pt-4">
             <label class="grid gap-2">
               <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                <span>Width</span>
+                <div class="flex items-center gap-2">
+                  <EffectParamAutomationButton
+                    :effect-id="effect.id"
+                    label="Stereo Widener Width"
+                    param-key="width"
+                    @create="emit('create-automation', effect.id, 'width')"
+                  />
+                  <span>Width</span>
+                </div>
                 <span>{{ widthLabel }}</span>
               </div>
               <input
@@ -100,6 +108,7 @@
 import { computed } from 'vue'
 import { GripVertical, Power, SlidersHorizontal } from 'lucide-vue-next'
 import CollapseTransition from '../ui/CollapseTransition.vue'
+import EffectParamAutomationButton from '@/components/effects/EffectParamAutomationButton.vue'
 
 const props = defineProps({
   dragging: {
@@ -115,6 +124,7 @@ const props = defineProps({
 const emit = defineEmits([
   'drag-end',
   'drag-start',
+  'create-automation',
   'interaction-end',
   'interaction-start',
   'remove',

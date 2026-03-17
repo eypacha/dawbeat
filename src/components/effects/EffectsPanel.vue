@@ -110,7 +110,7 @@
             <div class="grid gap-3">
 	              <template v-if="activeSection === 'audio'">
 	                <div
-	                  v-for="effect in audioEffects"
+	                  v-for="effect in displayAudioEffects"
                   :key="effect.id"
                   class="rounded transition-shadow"
                   :class="dropTargetSection === 'audio' && dropTargetEffectId === effect.id
@@ -123,6 +123,7 @@
                     :is="getAudioEffectComponent(effect.type)"
                     :dragging="draggingEffectId === effect.id && draggingSection === 'audio'"
                     :effect="effect"
+                    @create-automation="handleCreateAudioEffectAutomation"
                     @drag-end="handleDragEnd"
                     @drag-start="handleDragStart('audio', $event)"
                     @interaction-end="handleContinuousInteractionEnd"
@@ -136,7 +137,6 @@
                 </div>
 
                 <AudioMasterGainItem
-                  :automation-enabled="hasMasterGainAutomationLane"
                   :gain="displayMasterGain"
                   @create-automation="dawStore.enableMasterGainAutomationLane()"
                   @interaction-end="handleContinuousInteractionEnd"
@@ -194,6 +194,7 @@ import Button from '@/components/ui/Button.vue'
 import Divider from '@/components/ui/Divider.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import Panel from '@/components/ui/Panel.vue'
+import { resolveAudioEffectAtTime } from '@/services/automationService'
 import { useDawStore } from '@/stores/dawStore'
 
 defineProps({
@@ -258,7 +259,13 @@ const availableAudioEffects = [
   }
 ]
 const totalEffects = computed(() => audioEffects.value.length + evalEffects.value.length)
-const hasMasterGainAutomationLane = computed(() => Boolean(dawStore.getAutomationLaneById('masterGain')))
+const displayAudioEffects = computed(() => audioEffects.value.map((effect) => {
+  if (activeContinuousInteractionLabel.value === `update-audio-effect-${effect.id}`) {
+    return effect
+  }
+
+  return resolveAudioEffectAtTime(time.value, dawStore.automationLanes, effect)
+}))
 const displayMasterGain = computed(() => {
   if (activeContinuousInteractionLabel.value === 'update-master-gain') {
     return masterGain.value
@@ -433,6 +440,10 @@ function handleUpdateAudioEffectParam(effectIdToUpdate, key, value) {
   dawStore.updateAudioEffectParams(effectIdToUpdate, {
     [key]: value
   })
+}
+
+function handleCreateAudioEffectAutomation(effectId, paramKey) {
+  dawStore.enableAudioEffectParamAutomationLane(effectId, paramKey)
 }
 
 function handleAudioEffectInteractionStart(effectIdToStart) {

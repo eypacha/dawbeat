@@ -52,7 +52,15 @@
           <div class="grid gap-3 pt-4">
               <label class="grid gap-2">
                 <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                  <span>Low</span>
+                  <div class="flex items-center gap-2">
+                    <EffectParamAutomationButton
+                      :effect-id="effect.id"
+                      label="EQ3 Low"
+                      param-key="low"
+                      @create="emit('create-automation', effect.id, 'low')"
+                    />
+                    <span>Low</span>
+                  </div>
                   <span>{{ lowLabel }}</span>
                 </div>
                 <input
@@ -74,7 +82,15 @@
 
               <label class="grid gap-2">
                 <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                  <span>Mid</span>
+                  <div class="flex items-center gap-2">
+                    <EffectParamAutomationButton
+                      :effect-id="effect.id"
+                      label="EQ3 Mid"
+                      param-key="mid"
+                      @create="emit('create-automation', effect.id, 'mid')"
+                    />
+                    <span>Mid</span>
+                  </div>
                   <span>{{ midLabel }}</span>
                 </div>
                 <input
@@ -96,7 +112,15 @@
 
               <label class="grid gap-2">
                 <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                  <span>High</span>
+                  <div class="flex items-center gap-2">
+                    <EffectParamAutomationButton
+                      :effect-id="effect.id"
+                      label="EQ3 High"
+                      param-key="high"
+                      @create="emit('create-automation', effect.id, 'high')"
+                    />
+                    <span>High</span>
+                  </div>
                   <span>{{ highLabel }}</span>
                 </div>
                 <input
@@ -118,7 +142,15 @@
 
               <label class="grid gap-2">
                 <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                  <span>Low Cut</span>
+                  <div class="flex items-center gap-2">
+                    <EffectParamAutomationButton
+                      :effect-id="effect.id"
+                      label="EQ3 Low Cut"
+                      param-key="lowFrequency"
+                      @create="emit('create-automation', effect.id, 'lowFrequency')"
+                    />
+                    <span>Low Cut</span>
+                  </div>
                   <span>{{ lowFrequencyLabel }}</span>
                 </div>
                 <input
@@ -140,7 +172,15 @@
 
               <label class="grid gap-2">
                 <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                  <span>High Cut</span>
+                  <div class="flex items-center gap-2">
+                    <EffectParamAutomationButton
+                      :effect-id="effect.id"
+                      label="EQ3 High Cut"
+                      param-key="highFrequency"
+                      @create="emit('create-automation', effect.id, 'highFrequency')"
+                    />
+                    <span>High Cut</span>
+                  </div>
                   <span>{{ highFrequencyLabel }}</span>
                 </div>
                 <input
@@ -188,6 +228,7 @@
 import { computed } from 'vue'
 import { GripVertical, Power, SlidersHorizontal } from 'lucide-vue-next'
 import CollapseTransition from '../ui/CollapseTransition.vue'
+import EffectParamAutomationButton from '@/components/effects/EffectParamAutomationButton.vue'
 
 const props = defineProps({
   dragging: {
@@ -203,6 +244,7 @@ const props = defineProps({
 const emit = defineEmits([
   'drag-end',
   'drag-start',
+  'create-automation',
   'interaction-end',
   'interaction-start',
   'remove',
