@@ -8,6 +8,9 @@ export function createAudioEffectId() {
 
 export function createAudioEffect(effect = {}) {
   switch (effect.type) {
+    case 'delay':
+      return createDelayAudioEffect(effect)
+
     case 'compressor':
       return createCompressorAudioEffect(effect)
 
@@ -42,6 +45,20 @@ export function createEqAudioEffect(effect = {}) {
       high: normalizeDecibels(effect.params?.high ?? 0),
       lowFrequency,
       highFrequency
+    }
+  }
+}
+
+export function createDelayAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'delay',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      delayTime: normalizeTime(effect.params?.delayTime ?? 0.25),
+      feedback: normalizeFeedback(effect.params?.feedback ?? 0.35),
+      wet: normalizeWet(effect.params?.wet ?? effect.params?.mix ?? 0.25)
     }
   }
 }
@@ -176,6 +193,16 @@ export function normalizeWet(value) {
   }
 
   return Math.min(1, Math.max(0, numericValue))
+}
+
+export function normalizeFeedback(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 0.35
+  }
+
+  return Math.min(0.95, Math.max(0, numericValue))
 }
 
 function normalizeEqFrequencies(lowFrequency, highFrequency) {

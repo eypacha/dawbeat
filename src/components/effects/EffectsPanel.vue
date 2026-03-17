@@ -181,6 +181,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-vue-next'
 import AudioCompressorItem from '@/components/effects/AudioCompressorItem.vue'
+import AudioDelayItem from '@/components/effects/AudioDelayItem.vue'
 import AudioEqItem from '@/components/effects/AudioEqItem.vue'
 import AudioLimiterItem from '@/components/effects/AudioLimiterItem.vue'
 import AudioMasterGainItem from '@/components/effects/AudioMasterGainItem.vue'
@@ -229,6 +230,10 @@ const availableAudioEffects = [
     type: 'eq'
   },
   {
+    name: 'Feedback Delay',
+    type: 'delay'
+  },
+  {
     name: 'Compressor',
     type: 'compressor'
   },
@@ -248,6 +253,10 @@ function getEffectsBySection(section) {
 }
 
 function getAudioEffectComponent(effectType) {
+  if (effectType === 'delay') {
+    return AudioDelayItem
+  }
+
   if (effectType === 'compressor') {
     return AudioCompressorItem
   }

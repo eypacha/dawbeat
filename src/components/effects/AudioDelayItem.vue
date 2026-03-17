@@ -21,7 +21,7 @@
           </div>
 
           <div class="min-w-0 flex-1">
-            <p class="truncate text-sm font-medium text-zinc-50">Delay</p>
+            <p class="truncate text-sm font-medium text-zinc-50">Feedback Delay</p>
           </div>
         </div>
 
@@ -98,19 +98,19 @@
 
               <label class="grid gap-2">
                 <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                  <span>Mix</span>
-                  <span>{{ mixLabel }}</span>
+                  <span>Wet</span>
+                  <span>{{ wetLabel }}</span>
                 </div>
 
                 <input
                   class="accent-amber-300"
-                  :value="effect.params.mix"
+                  :value="effect.params.wet"
                   max="1"
                   min="0"
                   step="0.01"
                   type="range"
                   @blur="emit('interaction-end')"
-                  @input="handleMixInput"
+                  @input="handleWetInput"
                   @keydown="handleInteractionKeydown"
                   @keyup="emit('interaction-end')"
                   @pointercancel="emit('interaction-end')"
@@ -173,7 +173,7 @@ const emit = defineEmits([
 
 const delayTimeLabel = computed(() => `${Number(props.effect.params.delayTime ?? 0).toFixed(2)} s`)
 const feedbackLabel = computed(() => Number(props.effect.params.feedback ?? 0).toFixed(2))
-const mixLabel = computed(() => Number(props.effect.params.mix ?? 0).toFixed(2))
+const wetLabel = computed(() => Number(props.effect.params.wet ?? 0).toFixed(2))
 
 function handleDelayTimeInput(event) {
   emit('update-param', props.effect.id, 'delayTime', Number(event.target.value))
@@ -183,8 +183,8 @@ function handleFeedbackInput(event) {
   emit('update-param', props.effect.id, 'feedback', Number(event.target.value))
 }
 
-function handleMixInput(event) {
-  emit('update-param', props.effect.id, 'mix', Number(event.target.value))
+function handleWetInput(event) {
+  emit('update-param', props.effect.id, 'wet', Number(event.target.value))
 }
 
 function handleInteractionKeydown(event) {

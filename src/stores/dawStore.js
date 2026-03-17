@@ -26,19 +26,21 @@ import {
 } from '@/services/dawStoreService'
 import {
   createAudioEffect,
+  createDelayAudioEffect,
   createCompressorAudioEffect,
   createEqAudioEffect,
   createLimiterAudioEffect,
   createReverbAudioEffect,
   normalizeDecay,
   normalizeDecibels,
+  normalizeFeedback,
   normalizeFrequency,
   normalizeKnee,
   normalizeMasterGain,
   normalizeRatio,
   normalizeThreshold,
   normalizeTime,
-  normalizeWet,
+  normalizeWet
 } from '@/services/audioEffectService'
 import { createEvalEffect, createStereoOffsetEvalEffect, mergeTReplacementParams } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
@@ -653,6 +655,13 @@ export const useDawStore = defineStore('dawStore', {
           return
         }
 
+        if (effect.type === 'delay') {
+          const defaults = createDelayAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+          return
+        }
+
         if (effect.type === 'compressor') {
           const defaults = createCompressorAudioEffect({ id: effect.id })
           effect.enabled = defaults.enabled
@@ -706,6 +715,22 @@ export const useDawStore = defineStore('dawStore', {
         if (effect.params.lowFrequency >= effect.params.highFrequency) {
           effect.params.lowFrequency = Math.max(40, effect.params.highFrequency - 10)
           effect.params.highFrequency = Math.min(12000, effect.params.lowFrequency + 10)
+        }
+
+        return
+      }
+
+      if (effect.type === 'delay') {
+        if (typeof params.delayTime !== 'undefined') {
+          effect.params.delayTime = normalizeTime(params.delayTime)
+        }
+
+        if (typeof params.feedback !== 'undefined') {
+          effect.params.feedback = normalizeFeedback(params.feedback)
+        }
+
+        if (typeof params.wet !== 'undefined') {
+          effect.params.wet = normalizeWet(params.wet)
         }
 
         return

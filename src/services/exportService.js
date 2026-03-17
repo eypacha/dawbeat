@@ -1,8 +1,9 @@
-import { Compressor, Context as ToneContext, EQ3, Limiter, Reverb, connect as toneConnect } from 'tone'
+import { Compressor, Context as ToneContext, EQ3, FeedbackDelay, Limiter, Reverb, connect as toneConnect } from 'tone'
 import { getActiveFormula } from '@/engine/timelineEngine'
 import {
   normalizeDecay,
   normalizeDecibels,
+  normalizeFeedback,
   normalizeFrequency,
   normalizeKnee,
   normalizeRatio,
@@ -139,7 +140,7 @@ function renderTimelineChannels(
 
 async function renderAudioEffectsOffline(state, channelData, sampleRate) {
   const enabledAudioEffects = (state.audioEffects ?? []).filter(
-    (effect) => effect?.enabled && ['eq', 'compressor', 'reverb', 'limiter'].includes(effect.type)
+    (effect) => effect?.enabled && ['eq', 'delay', 'compressor', 'reverb', 'limiter'].includes(effect.type)
   )
 
   if (!enabledAudioEffects.length && state.masterGain === 1) {
@@ -218,6 +219,21 @@ async function createOfflineAudioEffectNode(effect, toneContext) {
     node.high.value = normalizeDecibels(effect.params?.high)
     node.lowFrequency.value = normalizeFrequency(effect.params?.lowFrequency)
     node.highFrequency.value = normalizeFrequency(effect.params?.highFrequency)
+
+    return node
+  }
+
+  if (effect.type === 'delay') {
+    const node = new FeedbackDelay({
+      context: toneContext,
+      delayTime: 0.25,
+      feedback: 0.35,
+      wet: 0.25
+    })
+
+    node.delayTime.value = normalizeTime(effect.params?.delayTime)
+    node.feedback.value = normalizeFeedback(effect.params?.feedback)
+    node.wet.value = normalizeWet(effect.params?.wet)
 
     return node
   }

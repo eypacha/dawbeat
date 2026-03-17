@@ -1,7 +1,8 @@
-import { Compressor, Context as ToneContext, EQ3, Limiter, Reverb, connect as toneConnect } from 'tone'
+import { Compressor, Context as ToneContext, EQ3, FeedbackDelay, Limiter, Reverb, connect as toneConnect } from 'tone'
 import {
   normalizeDecay,
   normalizeDecibels,
+  normalizeFeedback,
   normalizeFrequency,
   normalizeKnee,
   normalizeMasterGain,
@@ -81,6 +82,15 @@ async function createAudioEffectNode(effect) {
     })
   }
 
+  if (effect.type === 'delay') {
+    return new FeedbackDelay({
+      context: toneContext,
+      delayTime: 0.25,
+      feedback: 0.35,
+      wet: 0.25
+    })
+  }
+
   if (effect.type === 'compressor') {
     return new Compressor({
       attack: 0.003,
@@ -148,6 +158,13 @@ async function syncAudioEffectNode(effect) {
     node.high.value = normalizeDecibels(effect.params?.high)
     node.lowFrequency.value = normalizeFrequency(effect.params?.lowFrequency)
     node.highFrequency.value = normalizeFrequency(effect.params?.highFrequency)
+    return node
+  }
+
+  if (effect.type === 'delay') {
+    node.delayTime.value = normalizeTime(effect.params?.delayTime)
+    node.feedback.value = normalizeFeedback(effect.params?.feedback)
+    node.wet.value = normalizeWet(effect.params?.wet)
     return node
   }
 
