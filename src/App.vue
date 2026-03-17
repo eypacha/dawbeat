@@ -113,6 +113,7 @@ const {
   editingClipId,
   editingFormulaId,
   formulas,
+  selectedAutomationPoint,
   selectedClipId,
   selectedClipIds,
   showEvaluatedPanel,
@@ -213,6 +214,7 @@ function handleKeydown(event) {
   if (event.key === 'Escape') {
     if (!editingClipId.value) {
       dawStore.clearClipSelection()
+      dawStore.clearAutomationPointSelection()
     }
 
     return
@@ -222,15 +224,23 @@ function handleKeydown(event) {
     return
   }
 
-  if (!selectedClipIds.value.length && !selectedClipId.value) {
-    return
-  }
-
   if (editingClipId.value) {
     return
   }
 
   if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
+    return
+  }
+
+  if (selectedAutomationPoint.value) {
+    dawStore.removeAutomationPoint(
+      selectedAutomationPoint.value.laneId,
+      selectedAutomationPoint.value.index
+    )
+    return
+  }
+
+  if (!selectedClipIds.value.length && !selectedClipId.value) {
     return
   }
 
@@ -320,6 +330,11 @@ function handleContextMenuSelect(action, item) {
     confirmDialog.trackId = item.trackId
     confirmDialog.message = `Delete ${item.trackName ?? 'this track'}?`
     confirmDialog.visible = true
+    return
+  }
+
+  if (action === 'delete-automation-lane') {
+    dawStore.removeAutomationLane(item.laneId)
     return
   }
 

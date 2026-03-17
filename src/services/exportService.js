@@ -1,6 +1,12 @@
 import { Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, connect as toneConnect } from 'tone'
 import { getActiveFormula } from '@/engine/timelineEngine'
 import {
+  getAutomationLaneById,
+  getSortedAutomationPoints,
+  resolveMasterGainAtTime,
+  MASTER_GAIN_AUTOMATION_LANE_ID
+} from '@/services/automationService'
+import {
   normalizeDecay,
   normalizeDecibels,
   normalizeDrive,
@@ -144,15 +150,26 @@ async function renderAudioEffectsOffline(state, channelData, sampleRate) {
   const enabledAudioEffects = (state.audioEffects ?? []).filter(
     (effect) => effect?.enabled && ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter'].includes(effect.type)
   )
+  const masterGainLane = getAutomationLaneById(
+    state.automationLanes,
+    MASTER_GAIN_AUTOMATION_LANE_ID
+  )
+  const automationPoints = getSortedAutomationPoints(masterGainLane?.points ?? [])
+  const hasStaticMasterGain = automationPoints.length <= 1
+  const initialMasterGain = resolveMasterGainAtTime(0, state.automationLanes, state.masterGain)
 
-  if (!enabledAudioEffects.length && state.masterGain === 1) {
+  if (!enabledAudioEffects.length && hasStaticMasterGain && initialMasterGain === 1) {
     return channelData
+  }
+
+  if (!enabledAudioEffects.length) {
+    return applyMasterGainToChannelData(channelData, state, sampleRate)
   }
 
   const OfflineAudioContextCtor = window.OfflineAudioContext || window.webkitOfflineAudioContext
 
   if (!OfflineAudioContextCtor) {
-    return applyMasterGainToChannelData(channelData, state.masterGain)
+    return applyMasterGainToChannelData(channelData, state, sampleRate)
   }
 
   const frameCount = channelData[0]?.length ?? 0
@@ -174,8 +191,6 @@ async function renderAudioEffectsOffline(state, channelData, sampleRate) {
     enabledAudioEffects.map((effect) => createOfflineAudioEffectNode(effect, toneContext))
   )
   const nodes = toneNodes.filter(Boolean)
-  const masterGainNode = offlineContext.createGain()
-  masterGainNode.gain.value = Number.isFinite(Number(state.masterGain)) ? Number(state.masterGain) : 1
 
   let previousNode = source
 
@@ -184,8 +199,7 @@ async function renderAudioEffectsOffline(state, channelData, sampleRate) {
     previousNode = node
   }
 
-  previousNode.connect(masterGainNode)
-  masterGainNode.connect(offlineContext.destination)
+  previousNode.connect(offlineContext.destination)
 
   source.start(0)
 
@@ -196,8 +210,14 @@ async function renderAudioEffectsOffline(state, channelData, sampleRate) {
   }
 
   return [
-    renderedBuffer.getChannelData(0).slice(),
-    renderedBuffer.getChannelData(1).slice()
+    ...applyMasterGainToChannelData(
+      [
+        renderedBuffer.getChannelData(0).slice(),
+        renderedBuffer.getChannelData(1).slice()
+      ],
+      state,
+      sampleRate
+    )
   ]
 }
 
@@ -311,17 +331,37 @@ async function createOfflineAudioEffectNode(effect, toneContext) {
   return null
 }
 
-function applyMasterGainToChannelData(channelData, masterGain) {
-  const gain = Number.isFinite(Number(masterGain)) ? Number(masterGain) : 1
+function applyMasterGainToChannelData(channelData, state, sampleRate) {
+  const automationPoints = getSortedAutomationPoints(
+    getAutomationLaneById(state.automationLanes, MASTER_GAIN_AUTOMATION_LANE_ID)?.points ?? []
+  )
+  const constantGain = resolveMasterGainAtTime(0, state.automationLanes, state.masterGain)
 
-  if (gain === 1) {
+  if (automationPoints.length <= 1 && constantGain === 1) {
     return channelData
   }
+
+  if (automationPoints.length <= 1) {
+    return channelData.map((channel) => {
+      const nextChannel = new Float32Array(channel.length)
+
+      for (let index = 0; index < channel.length; index += 1) {
+        nextChannel[index] = channel[index] * constantGain
+      }
+
+      return nextChannel
+    })
+  }
+
+  const sourceSampleRate = getSourceSampleRate(state.sampleRate)
 
   return channelData.map((channel) => {
     const nextChannel = new Float32Array(channel.length)
 
     for (let index = 0; index < channel.length; index += 1) {
+      const sourceSample = (index * sourceSampleRate) / sampleRate
+      const timeTicks = samplesToTicks(sourceSample, state.tickSize)
+      const gain = resolveMasterGainAtTime(timeTicks, state.automationLanes, state.masterGain)
       nextChannel[index] = channel[index] * gain
     }
 

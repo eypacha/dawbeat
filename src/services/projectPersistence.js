@@ -1,5 +1,9 @@
 import { createAudioEffect, normalizeMasterGain } from '@/services/audioEffectService'
 import {
+  MASTER_GAIN_AUTOMATION_LANE_ID,
+  normalizeAutomationLanes
+} from '@/services/automationService'
+import {
   createTrackClip,
   createTrackId,
   createVariableTrack,
@@ -19,12 +23,12 @@ import { DEFAULT_TRACK_COLOR, getTrackColor } from '@/utils/colorUtils'
 import { BASE_TICK_SIZE, MAX_ZOOM, MIN_ZOOM, TIMELINE_SNAP_SUBDIVISIONS, clamp } from '@/utils/timeUtils'
 
 const PROJECT_STORAGE_KEY = 'dawbeat-project'
-const PROJECT_VERSION = 6
+const PROJECT_VERSION = 8
 const SAVE_DEBOUNCE_MS = 400
 const DEFAULT_LOOP_START = 0
 const DEFAULT_LOOP_END = 16
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
-const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, PROJECT_VERSION])
+const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, PROJECT_VERSION])
 
 export function serializeProject(state) {
   return normalizeProjectPayload({
@@ -38,6 +42,7 @@ export function serializeProject(state) {
     loopEnabled: state.loopEnabled,
     audioEffects: state.audioEffects,
     evalEffects: state.evalEffects,
+    automationLanes: state.automationLanes,
     masterGain: state.masterGain,
     sampleRate: state.sampleRate,
     tickSize: state.tickSize,
@@ -200,6 +205,7 @@ function normalizeProjectPayload(project) {
     evalEffects: hasOwn(project, 'evalEffects')
       ? normalizeEvalEffects(project.evalEffects)
       : [createStereoOffsetEvalEffect({ id: 'fx1' })],
+    automationLanes: normalizeProjectAutomationLanes(project),
     masterGain: normalizeMasterGain(project.masterGain),
     sampleRate: normalizeSampleRate(project.sampleRate, DEFAULT_SAMPLE_RATE),
     tickSize: normalizePositiveNumber(project.tickSize, BASE_TICK_SIZE),
@@ -210,6 +216,32 @@ function normalizeProjectPayload(project) {
       ? Boolean(project.showEvaluatedPanel)
       : true
   }
+}
+
+function normalizeProjectAutomationLanes(project) {
+  const automationLanes = normalizeAutomationLanes(project.automationLanes)
+
+  if (project.version !== 7) {
+    return automationLanes
+  }
+
+  if (automationLanes.length !== 1) {
+    return automationLanes
+  }
+
+  const lane = automationLanes[0]
+
+  if (lane.id !== MASTER_GAIN_AUTOMATION_LANE_ID || lane.points.length !== 1) {
+    return automationLanes
+  }
+
+  const [point] = lane.points
+
+  if (point.time === 0 && point.value === 1) {
+    return []
+  }
+
+  return automationLanes
 }
 
 function normalizeTrack(track, formulaIds) {

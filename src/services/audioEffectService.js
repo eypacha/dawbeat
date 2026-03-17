@@ -143,7 +143,7 @@ export function normalizeMasterGain(value) {
     return 1
   }
 
-  return Math.min(1.5, Math.max(0, numericValue))
+  return Math.min(1, Math.max(0, numericValue))
 }
 
 export function normalizeDecibels(value) {

@@ -29,6 +29,7 @@ let sampleOffset = 0
 let heldSample = null
 let currentAudioEffects = []
 let masterGainValue = 1
+let transportMuted = true
 let masterGainNode = null
 const audioEffectNodes = new Map()
 
@@ -62,10 +63,14 @@ function ensureMasterGainNode() {
   }
 
   if (!masterGainNode) {
-    masterGainNode = new GainNode(audioContext, { gain: masterGainValue })
+    masterGainNode = new GainNode(audioContext, { gain: transportMuted ? 0 : masterGainValue })
   }
 
   return masterGainNode
+}
+
+function getOutputGainValue() {
+  return transportMuted ? 0 : masterGainValue
 }
 
 async function createAudioEffectNode(effect) {
@@ -363,6 +368,12 @@ const bytebeatService = {
     const node = await this.init()
 
     this.releaseHeldSample()
+    transportMuted = false
+    const outputNode = ensureMasterGainNode()
+
+    if (outputNode) {
+      outputNode.gain.value = getOutputGainValue()
+    }
 
     if (resetTime) {
       node.reset()
@@ -389,6 +400,13 @@ const bytebeatService = {
     }
 
     heldSample = this.getCurrentSample()
+    transportMuted = true
+    const outputNode = ensureMasterGainNode()
+
+    if (outputNode) {
+      outputNode.gain.value = 0
+    }
+
     await this.setExpressions([''], false, true)
   },
 
@@ -401,6 +419,13 @@ const bytebeatService = {
     byteBeatNode.reset()
     currentExpressionsKey = null
     sampleOffset = 0
+    transportMuted = true
+    const outputNode = ensureMasterGainNode()
+
+    if (outputNode) {
+      outputNode.gain.value = 0
+    }
+
     await this.setExpressions([''], true, true)
   },
 
@@ -423,8 +448,18 @@ const bytebeatService = {
     const outputNode = ensureMasterGainNode()
 
     if (outputNode) {
-      outputNode.gain.value = masterGainValue
+      outputNode.gain.value = getOutputGainValue()
     }
+  },
+
+  async syncMasterGainAtTime(currentTime, store) {
+    const automationValue =
+      typeof store?.getAutomationValueAt === 'function'
+        ? store.getAutomationValueAt(currentTime, 'masterGain')
+        : null
+
+    const gain = automationValue ?? store?.masterGain ?? masterGainValue
+    await this.setMasterGain(gain)
   },
 
   async setExpressions(expressions, resetToZero = false, force = false) {

@@ -136,10 +136,11 @@
                 </div>
 
                 <AudioMasterGainItem
-                  :gain="masterGain"
+                  :automation-enabled="hasMasterGainAutomationLane"
+                  :gain="displayMasterGain"
+                  @create-automation="dawStore.enableMasterGainAutomationLane()"
                   @interaction-end="handleContinuousInteractionEnd"
                   @interaction-start="handleMasterGainInteractionStart"
-                  @reset="dawStore.resetMasterGain()"
                   @update:gain="dawStore.setMasterGain($event)"
                 />
               </template>
@@ -205,7 +206,7 @@ defineProps({
 const emit = defineEmits(['toggle-collapse'])
 
 const dawStore = useDawStore()
-const { audioEffects, evalEffects, masterGain } = storeToRefs(dawStore)
+const { audioEffects, evalEffects, masterGain, time } = storeToRefs(dawStore)
 const effectId = ref(5)
 const activeSection = ref('formula')
 const activeAddMenu = ref(null)
@@ -257,6 +258,14 @@ const availableAudioEffects = [
   }
 ]
 const totalEffects = computed(() => audioEffects.value.length + evalEffects.value.length)
+const hasMasterGainAutomationLane = computed(() => Boolean(dawStore.getAutomationLaneById('masterGain')))
+const displayMasterGain = computed(() => {
+  if (activeContinuousInteractionLabel.value === 'update-master-gain') {
+    return masterGain.value
+  }
+
+  return dawStore.getAutomationValueAt(time.value, 'masterGain') ?? masterGain.value
+})
 
 function getEffectsBySection(section) {
   return section === 'formula' ? evalEffects.value : audioEffects.value

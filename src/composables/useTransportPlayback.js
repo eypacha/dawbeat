@@ -14,7 +14,7 @@ export function useTransportPlayback() {
   }
 
   const dawStore = useDawStore()
-  const { audioEffects, audioReady, evalEffects, formulas, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, variableTracks } =
+  const { audioEffects, audioReady, automationLanes, evalEffects, formulas, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, variableTracks } =
     storeToRefs(dawStore)
 
   let frameId = 0
@@ -27,6 +27,10 @@ export function useTransportPlayback() {
 
     cancelAnimationFrame(frameId)
     frameId = 0
+  }
+
+  const syncMasterGainAtTime = async (timeTicks) => {
+    await bytebeatService.syncMasterGainAtTime(timeTicks, dawStore)
   }
 
   const syncPlaybackFrame = async () => {
@@ -43,6 +47,7 @@ export function useTransportPlayback() {
 
         await bytebeatService.seekToSample(loopStartSample, loopExpressions)
         dawStore.setTime(loopStart.value)
+        await syncMasterGainAtTime(loopStart.value)
       } catch (error) {
         console.error('No se pudo reiniciar el loop', error)
       }
@@ -69,6 +74,7 @@ export function useTransportPlayback() {
     const activeExpressions = applyEvalEffects(activeFormula, evalEffects.value)
 
     dawStore.setTime(timeTicks)
+    void syncMasterGainAtTime(timeTicks)
     void bytebeatService.setExpressions(activeExpressions)
 
     if (playing.value) {
@@ -85,7 +91,7 @@ export function useTransportPlayback() {
     await bytebeatService.unlock()
     bytebeatService.setDesiredSampleRate(sampleRate.value)
     await bytebeatService.syncAudioEffects(audioEffects.value)
-    await bytebeatService.setMasterGain(masterGain.value)
+    await syncMasterGainAtTime(dawStore.time)
     await bytebeatService.setExpressions([''], true, true)
 
     dawStore.setAudioReady(true)
@@ -100,7 +106,6 @@ export function useTransportPlayback() {
       await enableAudio()
       bytebeatService.setDesiredSampleRate(sampleRate.value)
       await bytebeatService.syncAudioEffects(audioEffects.value)
-      await bytebeatService.setMasterGain(masterGain.value)
 
       const resumeTime = dawStore.time
       const resumeFromPause = resumeTime > 0
@@ -113,6 +118,7 @@ export function useTransportPlayback() {
         bytebeatService.setSampleOffset(0)
       }
 
+      await syncMasterGainAtTime(resumeTime)
       await bytebeatService.setExpressions(initialExpressions, !resumeFromPause, true)
       await bytebeatService.play({ resetTime: !resumeFromPause })
 
@@ -167,6 +173,7 @@ export function useTransportPlayback() {
 
     try {
       await bytebeatService.stop()
+      await syncMasterGainAtTime(0)
     } catch (error) {
       console.error('No se pudo detener la reproduccion bytebeat', error)
     }
@@ -188,6 +195,7 @@ export function useTransportPlayback() {
 
       try {
         await bytebeatService.seekToSample(targetSample, activeExpressions)
+        await syncMasterGainAtTime(normalizedTime)
       } catch (error) {
         console.error('No se pudo mover el playhead', error)
       }
@@ -196,6 +204,7 @@ export function useTransportPlayback() {
     }
 
     bytebeatService.holdSample(targetSample)
+    void syncMasterGainAtTime(normalizedTime)
   }
 
   transportPlayback = {
@@ -219,9 +228,13 @@ export function useTransportPlayback() {
     { deep: true }
   )
 
-  watch(masterGain, (nextMasterGain) => {
-    void bytebeatService.setMasterGain(nextMasterGain)
+  watch(masterGain, () => {
+    void syncMasterGainAtTime(dawStore.time)
   })
+
+  watch(automationLanes, () => {
+    void syncMasterGainAtTime(dawStore.time)
+  }, { deep: true })
 
   watch(sampleRate, (nextSampleRate) => {
     bytebeatService.setDesiredSampleRate(nextSampleRate)

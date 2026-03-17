@@ -106,6 +106,13 @@
           @track-reorder-start="handleTrackReorderStart"
         />
 
+        <TimelineAutomationLane
+          v-for="lane in automationLanes"
+          :key="lane.id"
+          :lane="lane"
+          :timeline-width="timelineWidthStyle"
+        />
+
         <TimelineAddTrackRow :timeline-width="timelineWidthStyle" />
       </div>
     </div>
@@ -117,6 +124,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Plus } from 'lucide-vue-next'
 import Panel from '@/components/ui/Panel.vue'
+import TimelineAutomationLane from '@/components/timeline/TimelineAutomationLane.vue'
 import Playhead from '@/components/timeline/Playhead.vue'
 import TimelineAddTrackRow from '@/components/timeline/TimelineAddTrackRow.vue'
 import TimelineLoopRegion from '@/components/timeline/TimelineLoopRegion.vue'
@@ -139,7 +147,7 @@ const FIXED_TIMELINE_TICKS = 256
 
 const dawStore = useDawStore()
 const { seekToTime } = useTransportPlayback()
-const { editingClipId, loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, tickSize, time, tracks, variableTracks } =
+const { automationLanes, editingClipId, loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, tickSize, time, tracks, variableTracks } =
   storeToRefs(dawStore)
 const scrollContainer = ref(null)
 const timelineSurfaceElement = ref(null)

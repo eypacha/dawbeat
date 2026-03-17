@@ -46,6 +46,13 @@ import {
   normalizeWet,
   normalizeWidth
 } from '@/services/audioEffectService'
+import {
+  createDefaultAutomationLane,
+  getAutomationLaneById as findAutomationLaneById,
+  getAutomationValueAtTime,
+  getDefaultAutomationLanes,
+  normalizeAutomationPoint
+} from '@/services/automationService'
 import { createEvalEffect, createStereoOffsetEvalEffect, mergeTReplacementParams } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
 import { normalizeTrackUnionOperator } from '@/services/trackUnionOperatorService'
@@ -75,6 +82,7 @@ function createDefaultProject() {
 function createEmptyProject() {
   return {
     audioEffects: [],
+    automationLanes: getDefaultAutomationLanes(),
     evalEffects: [],
     formulas: [],
     loopEnabled: false,
@@ -99,6 +107,7 @@ function createInitialState() {
   return {
     audioReady: false,
     audioEffects: project.audioEffects,
+    automationLanes: project.automationLanes,
     clipDragPreview: null,
     clipClipboard: null,
     evalEffects: project.evalEffects,
@@ -123,6 +132,7 @@ function createInitialState() {
     historyPast: [],
     historyRecording: false,
     historyTransaction: null,
+    selectedAutomationPoint: null,
     selectedClipIds: [],
     selectedFormulaId: null,
     selectedClipId: null,
@@ -138,6 +148,7 @@ function clearTransientSelectionState(store) {
   store.clipDragPreview = null
   store.editingClipId = null
   store.editingFormulaId = null
+  store.selectedAutomationPoint = null
   store.selectedFormulaId = null
   store.selectedTrackId = null
   syncSelectedClipState(store, [])
@@ -154,6 +165,7 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   const nextTime = preservePlaybackState ? store.time : 0
 
   store.audioEffects = normalizedProject.audioEffects
+  store.automationLanes = normalizedProject.automationLanes
   store.evalEffects = normalizedProject.evalEffects
   store.formulas = normalizedProject.formulas
   store.loopEnabled = normalizedProject.loopEnabled
@@ -208,6 +220,7 @@ function normalizeSelectedClipIds(clipIds) {
 
 function syncSelectedClipState(store, clipIds) {
   const nextSelectedClipIds = normalizeSelectedClipIds(clipIds)
+  store.selectedAutomationPoint = null
   store.selectedClipIds = nextSelectedClipIds
   store.selectedClipId = nextSelectedClipIds[0] ?? null
 }
@@ -397,6 +410,9 @@ export const useDawStore = defineStore('dawStore', {
   getters: {
     canPasteClipsAtPlayhead: (state) =>
       Boolean(state.clipClipboard?.clips?.length && (state.tracks.length || state.variableTracks.length)),
+    getAutomationLaneById: (state) => (laneId) => findAutomationLaneById(state.automationLanes, laneId),
+    getAutomationValueAt: (state) => (time, laneId) =>
+      getAutomationValueAtTime(time, findAutomationLaneById(state.automationLanes, laneId)),
     pixelsPerTick: (state) => BASE_PIXELS_PER_TICK * state.zoom,
     canRedo: (state) => !state.playing && state.historyFuture.length > 0,
     canUndo: (state) => !state.playing && state.historyPast.length > 0
@@ -569,6 +585,124 @@ export const useDawStore = defineStore('dawStore', {
 
     setMasterGain(value) {
       this.masterGain = normalizeMasterGain(value)
+    },
+
+    selectAutomationPoint(laneId, index) {
+      const lane = this.getAutomationLaneById(laneId)
+
+      if (!lane || !Number.isInteger(index) || index < 0 || index >= lane.points.length) {
+        this.selectedAutomationPoint = null
+        return
+      }
+
+      this.selectedAutomationPoint = {
+        laneId,
+        index
+      }
+    },
+
+    clearAutomationPointSelection() {
+      this.selectedAutomationPoint = null
+    },
+
+    addAutomationPoint(laneId, point) {
+      return this.recordHistoryStep('add-automation-point', () => {
+        const lane = this.getAutomationLaneById(laneId)
+
+        if (!lane) {
+          return null
+        }
+
+        const nextPoint = normalizeAutomationPoint(point)
+
+        if (lane.points[0] && nextPoint.time === 0) {
+          this.selectAutomationPoint(laneId, 0)
+          return 0
+        }
+
+        lane.points.push(nextPoint)
+        this.selectAutomationPoint(laneId, lane.points.length - 1)
+        return lane.points.length - 1
+      })
+    },
+
+    enableMasterGainAutomationLane() {
+      return this.recordHistoryStep('enable-master-gain-automation-lane', () => {
+        if (this.getAutomationLaneById('masterGain')) {
+          return 'masterGain'
+        }
+
+        this.automationLanes.push(
+          createDefaultAutomationLane({
+            value: this.masterGain
+          })
+        )
+        return 'masterGain'
+      })
+    },
+
+    updateAutomationPoint(laneId, index, nextPoint) {
+      const lane = this.getAutomationLaneById(laneId)
+
+      if (!lane || !Number.isInteger(index) || index < 0 || index >= lane.points.length) {
+        return
+      }
+
+      const normalizedPoint = normalizeAutomationPoint(nextPoint, lane.points[index])
+
+      lane.points[index] = index === 0
+        ? {
+            ...normalizedPoint,
+            time: 0
+          }
+        : normalizedPoint
+
+      if (
+        this.selectedAutomationPoint?.laneId === laneId &&
+        this.selectedAutomationPoint.index === index
+      ) {
+        this.selectAutomationPoint(laneId, index)
+      }
+    },
+
+    removeAutomationPoint(laneId, index) {
+      return this.recordHistoryStep('remove-automation-point', () => {
+        const lane = this.getAutomationLaneById(laneId)
+
+        if (!lane || !Number.isInteger(index) || index < 0 || index >= lane.points.length) {
+          return
+        }
+
+        if (index === 0) {
+          this.selectAutomationPoint(laneId, 0)
+          return
+        }
+
+        lane.points.splice(index, 1)
+
+        if (this.selectedAutomationPoint?.laneId !== laneId) {
+          return
+        }
+
+        if (this.selectedAutomationPoint.index === index) {
+          this.clearAutomationPointSelection()
+          return
+        }
+
+        if (this.selectedAutomationPoint.index > index) {
+          this.selectAutomationPoint(laneId, this.selectedAutomationPoint.index - 1)
+        }
+      })
+    },
+
+    removeAutomationLane(laneId) {
+      return this.recordHistoryStep('remove-automation-lane', () => {
+        this.automationLanes = this.automationLanes.filter((lane) => lane.id !== laneId)
+
+        if (this.selectedAutomationPoint?.laneId === laneId) {
+          this.clearAutomationPointSelection()
+        }
+      })
     },
 
     setSampleRate(value) {
@@ -1991,6 +2125,8 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     selectFormula(formulaId) {
+      this.clearAutomationPointSelection()
+
       if (!formulaId) {
         this.selectedFormulaId = null
         return
@@ -2006,6 +2142,7 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     selectTrack(trackId) {
+      this.clearAutomationPointSelection()
       this.selectedTrackId = trackId
     }
   }
