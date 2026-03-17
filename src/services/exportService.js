@@ -1,15 +1,17 @@
-import { Compressor, Context as ToneContext, EQ3, FeedbackDelay, Limiter, Reverb, connect as toneConnect } from 'tone'
+import { Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, connect as toneConnect } from 'tone'
 import { getActiveFormula } from '@/engine/timelineEngine'
 import {
   normalizeDecay,
   normalizeDecibels,
+  normalizeDrive,
   normalizeFeedback,
   normalizeFrequency,
   normalizeKnee,
   normalizeRatio,
   normalizeThreshold,
   normalizeTime,
-  normalizeWet
+  normalizeWet,
+  normalizeWidth
 } from '@/services/audioEffectService'
 import { applyEvalEffects } from '@/services/evalEffectService'
 import { DEFAULT_SAMPLE_RATE } from '@/utils/audioSettings'
@@ -140,7 +142,7 @@ function renderTimelineChannels(
 
 async function renderAudioEffectsOffline(state, channelData, sampleRate) {
   const enabledAudioEffects = (state.audioEffects ?? []).filter(
-    (effect) => effect?.enabled && ['eq', 'delay', 'compressor', 'reverb', 'limiter'].includes(effect.type)
+    (effect) => effect?.enabled && ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter'].includes(effect.type)
   )
 
   if (!enabledAudioEffects.length && state.masterGain === 1) {
@@ -220,6 +222,29 @@ async function createOfflineAudioEffectNode(effect, toneContext) {
     node.lowFrequency.value = normalizeFrequency(effect.params?.lowFrequency)
     node.highFrequency.value = normalizeFrequency(effect.params?.highFrequency)
 
+    return node
+  }
+
+  if (effect.type === 'distortion') {
+    const node = new Distortion({
+      context: toneContext,
+      distortion: 0.4,
+      oversample: '2x',
+      wet: 0.35
+    })
+
+    node.distortion = normalizeDrive(effect.params?.drive)
+    node.wet.value = normalizeWet(effect.params?.wet)
+    return node
+  }
+
+  if (effect.type === 'stereoWidener') {
+    const node = new StereoWidener({
+      context: toneContext,
+      width: 0.5
+    })
+
+    node.width.value = normalizeWidth(effect.params?.width)
     return node
   }
 

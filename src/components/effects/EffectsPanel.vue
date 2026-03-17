@@ -182,10 +182,12 @@ import { storeToRefs } from 'pinia'
 import { ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-vue-next'
 import AudioCompressorItem from '@/components/effects/AudioCompressorItem.vue'
 import AudioDelayItem from '@/components/effects/AudioDelayItem.vue'
+import AudioDistortionItem from '@/components/effects/AudioDistortionItem.vue'
 import AudioEqItem from '@/components/effects/AudioEqItem.vue'
 import AudioLimiterItem from '@/components/effects/AudioLimiterItem.vue'
 import AudioMasterGainItem from '@/components/effects/AudioMasterGainItem.vue'
 import AudioReverbItem from '@/components/effects/AudioReverbItem.vue'
+import AudioStereoWidenerItem from '@/components/effects/AudioStereoWidenerItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
 import Divider from '@/components/ui/Divider.vue'
@@ -230,6 +232,14 @@ const availableAudioEffects = [
     type: 'eq'
   },
   {
+    name: 'Distortion',
+    type: 'distortion'
+  },
+  {
+    name: 'Stereo Widener',
+    type: 'stereoWidener'
+  },
+  {
     name: 'Feedback Delay',
     type: 'delay'
   },
@@ -253,6 +263,14 @@ function getEffectsBySection(section) {
 }
 
 function getAudioEffectComponent(effectType) {
+  if (effectType === 'distortion') {
+    return AudioDistortionItem
+  }
+
+  if (effectType === 'stereoWidener') {
+    return AudioStereoWidenerItem
+  }
+
   if (effectType === 'delay') {
     return AudioDelayItem
   }

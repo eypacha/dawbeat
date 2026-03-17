@@ -8,6 +8,12 @@ export function createAudioEffectId() {
 
 export function createAudioEffect(effect = {}) {
   switch (effect.type) {
+    case 'distortion':
+      return createDistortionAudioEffect(effect)
+
+    case 'stereoWidener':
+      return createStereoWidenerAudioEffect(effect)
+
     case 'delay':
       return createDelayAudioEffect(effect)
 
@@ -45,6 +51,31 @@ export function createEqAudioEffect(effect = {}) {
       high: normalizeDecibels(effect.params?.high ?? 0),
       lowFrequency,
       highFrequency
+    }
+  }
+}
+
+export function createDistortionAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'distortion',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      drive: normalizeDrive(effect.params?.drive ?? effect.params?.distortion ?? 0.4),
+      wet: normalizeWet(effect.params?.wet ?? 0.35)
+    }
+  }
+}
+
+export function createStereoWidenerAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'stereoWidener',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      width: normalizeWidth(effect.params?.width ?? 0.5)
     }
   }
 }
@@ -203,6 +234,26 @@ export function normalizeFeedback(value) {
   }
 
   return Math.min(0.95, Math.max(0, numericValue))
+}
+
+export function normalizeWidth(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 0.5
+  }
+
+  return Math.min(1, Math.max(0, numericValue))
+}
+
+export function normalizeDrive(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 0.4
+  }
+
+  return Math.min(1, Math.max(0, numericValue))
 }
 
 function normalizeEqFrequencies(lowFrequency, highFrequency) {

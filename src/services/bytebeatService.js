@@ -1,7 +1,8 @@
-import { Compressor, Context as ToneContext, EQ3, FeedbackDelay, Limiter, Reverb, connect as toneConnect } from 'tone'
+import { Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, connect as toneConnect } from 'tone'
 import {
   normalizeDecay,
   normalizeDecibels,
+  normalizeDrive,
   normalizeFeedback,
   normalizeFrequency,
   normalizeKnee,
@@ -9,7 +10,8 @@ import {
   normalizeRatio,
   normalizeThreshold,
   normalizeTime,
-  normalizeWet
+  normalizeWet,
+  normalizeWidth
 } from '@/services/audioEffectService'
 import { loadByteBeatNodeClass } from '@/services/bytebeatNodeLoader'
 import { validateFormula } from '@/utils/formulaValidation'
@@ -79,6 +81,22 @@ async function createAudioEffectNode(effect) {
       low: 0,
       lowFrequency: 400,
       mid: 0
+    })
+  }
+
+  if (effect.type === 'distortion') {
+    return new Distortion({
+      context: toneContext,
+      distortion: 0.4,
+      oversample: '2x',
+      wet: 0.35
+    })
+  }
+
+  if (effect.type === 'stereoWidener') {
+    return new StereoWidener({
+      context: toneContext,
+      width: 0.5
     })
   }
 
@@ -158,6 +176,17 @@ async function syncAudioEffectNode(effect) {
     node.high.value = normalizeDecibels(effect.params?.high)
     node.lowFrequency.value = normalizeFrequency(effect.params?.lowFrequency)
     node.highFrequency.value = normalizeFrequency(effect.params?.highFrequency)
+    return node
+  }
+
+  if (effect.type === 'distortion') {
+    node.distortion = normalizeDrive(effect.params?.drive)
+    node.wet.value = normalizeWet(effect.params?.wet)
+    return node
+  }
+
+  if (effect.type === 'stereoWidener') {
+    node.width.value = normalizeWidth(effect.params?.width)
     return node
   }
 

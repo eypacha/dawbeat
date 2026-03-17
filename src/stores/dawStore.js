@@ -26,13 +26,16 @@ import {
 } from '@/services/dawStoreService'
 import {
   createAudioEffect,
+  createDistortionAudioEffect,
   createDelayAudioEffect,
   createCompressorAudioEffect,
   createEqAudioEffect,
   createLimiterAudioEffect,
   createReverbAudioEffect,
+  createStereoWidenerAudioEffect,
   normalizeDecay,
   normalizeDecibels,
+  normalizeDrive,
   normalizeFeedback,
   normalizeFrequency,
   normalizeKnee,
@@ -40,7 +43,8 @@ import {
   normalizeRatio,
   normalizeThreshold,
   normalizeTime,
-  normalizeWet
+  normalizeWet,
+  normalizeWidth
 } from '@/services/audioEffectService'
 import { createEvalEffect, createStereoOffsetEvalEffect, mergeTReplacementParams } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
@@ -655,6 +659,20 @@ export const useDawStore = defineStore('dawStore', {
           return
         }
 
+        if (effect.type === 'distortion') {
+          const defaults = createDistortionAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+          return
+        }
+
+        if (effect.type === 'stereoWidener') {
+          const defaults = createStereoWidenerAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+          return
+        }
+
         if (effect.type === 'delay') {
           const defaults = createDelayAudioEffect({ id: effect.id })
           effect.enabled = defaults.enabled
@@ -715,6 +733,26 @@ export const useDawStore = defineStore('dawStore', {
         if (effect.params.lowFrequency >= effect.params.highFrequency) {
           effect.params.lowFrequency = Math.max(40, effect.params.highFrequency - 10)
           effect.params.highFrequency = Math.min(12000, effect.params.lowFrequency + 10)
+        }
+
+        return
+      }
+
+      if (effect.type === 'distortion') {
+        if (typeof params.drive !== 'undefined') {
+          effect.params.drive = normalizeDrive(params.drive)
+        }
+
+        if (typeof params.wet !== 'undefined') {
+          effect.params.wet = normalizeWet(params.wet)
+        }
+
+        return
+      }
+
+      if (effect.type === 'stereoWidener') {
+        if (typeof params.width !== 'undefined') {
+          effect.params.width = normalizeWidth(params.width)
         }
 
         return
