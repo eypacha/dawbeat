@@ -42,6 +42,7 @@
         @input="handleTextareaInput"
         @scroll="syncHighlightScroll"
         @keydown.esc.prevent="emit('close')"
+        @keydown.shift.enter.prevent="handleEvalShortcut"
         @keydown.meta.enter.prevent="handleEvalShortcut"
         @keydown.ctrl.enter.prevent="handleEvalShortcut"
       />
