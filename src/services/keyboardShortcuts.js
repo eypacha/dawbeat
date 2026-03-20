@@ -1,4 +1,5 @@
 import { TIMELINE_SNAP_SUBDIVISIONS } from '@/utils/timeUtils'
+import { dispatchValueTrackerInput } from '@/services/valueTrackerInputService'
 
 function isTyping() {
   const element = document.activeElement
@@ -51,7 +52,11 @@ export function initKeyboardShortcuts({ dawStore, transport }) {
     const keyboardValue = getKeyboardValueTrackerInput(event)
 
     if (keyboardValue !== null) {
-      const applied = dawStore.applyKeyboardValueToActiveValueTracker(keyboardValue)
+      const applied = dispatchValueTrackerInput({
+        source: 'keyboard',
+        timeTicks: transport.getCurrentTime?.() ?? dawStore.time,
+        value: keyboardValue
+      })
 
       if (applied) {
         event.preventDefault()

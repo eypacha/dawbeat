@@ -4,6 +4,7 @@ import { getActiveFormula, getPlaybackEndTick } from '@/engine/timelineEngine'
 import { resolveAudioEffectsAtTime } from '@/services/automationService'
 import bytebeatService from '@/services/bytebeatService'
 import { applyEvalEffects } from '@/services/evalEffectService'
+import { enqueueSnackbar } from '@/services/notifications'
 import { useDawStore } from '@/stores/dawStore'
 import { samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 
@@ -15,11 +16,12 @@ export function useTransportPlayback() {
   }
 
   const dawStore = useDawStore()
-  const { audioEffects, audioReady, automationLanes, evalEffects, formulas, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, valueTrackerLiveInputs, valueTrackerTracks, variableTracks } =
+  const { audioEffects, audioReady, automationLanes, evalEffects, formulas, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, valueTrackerLiveInputs, valueTrackerRecordingSession, valueTrackerTracks, variableTracks } =
     storeToRefs(dawStore)
 
   let frameId = 0
   let loopJumpInProgress = false
+  let playbackEndStopDisabled = false
 
   const cancelLoop = () => {
     if (!frameId) {
@@ -41,9 +43,59 @@ export function useTransportPlayback() {
     await bytebeatService.syncAudioEffects(getAudioEffectsAtTime(timeTicks))
   }
 
+  const getCurrentTime = () => {
+    if (audioReady.value && playing.value) {
+      return samplesToTicks(bytebeatService.getCurrentSample(), tickSize.value)
+    }
+
+    return dawStore.time
+  }
+
+  const normalizeRecordingStartTime = async () => {
+    const currentTime = getCurrentTime()
+
+    if (!loopEnabled.value || (currentTime >= loopStart.value && currentTime < loopEnd.value)) {
+      return currentTime
+    }
+
+    await seekToTime(loopStart.value)
+    return loopStart.value
+  }
+
+  const notifyRecordingStartFailure = (reason) => {
+    if (reason === 'clip-collision') {
+      enqueueSnackbar('Recording must start in empty Value Tracker space.', {
+        variant: 'error'
+      })
+      return
+    }
+
+    if (reason === 'no-recording-space') {
+      enqueueSnackbar('Recording needs at least 1 tick of free space.', {
+        variant: 'error'
+      })
+      return
+    }
+
+    enqueueSnackbar('Could not start Value Tracker recording.', {
+      variant: 'error'
+    })
+  }
+
   const syncPlaybackFrame = async () => {
     const currentSample = bytebeatService.getCurrentSample()
     const timeTicks = samplesToTicks(currentSample, tickSize.value)
+    const recordingSession = valueTrackerRecordingSession.value
+
+    if (
+      recordingSession &&
+      Number.isFinite(recordingSession.plannedStopTick) &&
+      timeTicks >= recordingSession.plannedStopTick
+    ) {
+      dawStore.finishValueTrackerRecording({
+        stopTick: recordingSession.plannedStopTick
+      })
+    }
 
     if (loopEnabled.value && timeTicks >= loopEnd.value && !loopJumpInProgress) {
       loopJumpInProgress = true
@@ -77,8 +129,18 @@ export function useTransportPlayback() {
       return
     }
 
-    if (!loopEnabled.value) {
-      const playbackEndTick = getPlaybackEndTick(tracks.value)
+    if (!loopEnabled.value && !playbackEndStopDisabled) {
+      let playbackEndTick = getPlaybackEndTick(
+        tracks.value,
+        variableTracks.value,
+        valueTrackerTracks.value
+      )
+
+      if (valueTrackerRecordingSession.value) {
+        playbackEndTick = Number.isFinite(valueTrackerRecordingSession.value.plannedStopTick)
+          ? Math.max(playbackEndTick, valueTrackerRecordingSession.value.plannedStopTick)
+          : Number.POSITIVE_INFINITY
+      }
 
       if (playbackEndTick <= 0 || timeTicks >= playbackEndTick) {
         await stop()
@@ -172,8 +234,14 @@ export function useTransportPlayback() {
       return
     }
 
-    const pausedSample = bytebeatService.getCurrentSample()
-    const pausedTime = samplesToTicks(pausedSample, tickSize.value)
+    const pausedTime = getCurrentTime()
+
+    if (dawStore.isValueTrackerRecording) {
+      dawStore.finishValueTrackerRecording({
+        stopPlayback: true,
+        stopTick: pausedTime
+      })
+    }
 
     loopJumpInProgress = false
     cancelLoop()
@@ -197,6 +265,16 @@ export function useTransportPlayback() {
   }
 
   const stop = async () => {
+    const stopTime = getCurrentTime()
+
+    if (dawStore.isValueTrackerRecording) {
+      dawStore.finishValueTrackerRecording({
+        stopPlayback: true,
+        stopTick: stopTime
+      })
+    }
+
+    playbackEndStopDisabled = false
     loopJumpInProgress = false
     cancelLoop()
     dawStore.stopPlayback()
@@ -247,11 +325,48 @@ export function useTransportPlayback() {
     void syncMasterGainAtTime(normalizedTime)
   }
 
+  const record = async () => {
+    if (dawStore.isValueTrackerRecording) {
+      dawStore.finishValueTrackerRecording({
+        stopTick: getCurrentTime()
+      })
+      return
+    }
+
+    const startTick = await normalizeRecordingStartTime()
+    const startResult = dawStore.startValueTrackerRecording({ startTick })
+
+    if (!startResult.ok) {
+      notifyRecordingStartFailure(startResult.reason)
+      return
+    }
+
+    playbackEndStopDisabled = true
+
+    if (playing.value) {
+      return
+    }
+
+    await play()
+
+    if (!playing.value) {
+      dawStore.cancelValueTrackerRecording()
+      playbackEndStopDisabled = false
+    }
+  }
+
+  const toggleRecord = async () => {
+    await record()
+  }
+
   transportPlayback = {
     play,
     enableAudio,
+    getCurrentTime,
     pause,
+    record,
     seekToTime,
+    toggleRecord,
     togglePlay,
     stop
   }

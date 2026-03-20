@@ -54,6 +54,14 @@
 
       <div class="flex shrink-0 items-center gap-2 text-xs text-zinc-400">
         <IconButton
+          :class="isValueTrackerRecording ? 'border-rose-400/70 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25' : 'border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-rose-500/50 hover:text-rose-200'"
+          label="Record"
+          @click="toggleRecord"
+        >
+          <Circle class="h-4 w-4 fill-current" :stroke-width="2.25" />
+        </IconButton>
+
+        <IconButton
           :icon="Play"
           :class="playing ? 'border-zinc-800 bg-zinc-950 text-zinc-600' : 'border-emerald-500/60 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'"
           :disabled="playing"
@@ -158,7 +166,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Download, FilePlus, FolderOpen, Pause, Play, Redo2, Repeat, Settings2, Square, Undo2 } from 'lucide-vue-next'
+import { Circle, Download, FilePlus, FolderOpen, Pause, Play, Redo2, Repeat, Settings2, Square, Undo2 } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
 import { downloadProjectWav } from '@/services/exportService'
@@ -173,8 +181,8 @@ import Panel from '@/components/ui/Panel.vue'
 import SettingsModal from '@/components/ui/SettingsModal.vue'
 
 const dawStore = useDawStore()
-const { play, pause, stop } = useTransportPlayback()
-const { canRedo, canUndo, loopEnabled, playing, sampleRate, tickSize, time } = storeToRefs(dawStore)
+const { play, pause, stop, toggleRecord } = useTransportPlayback()
+const { canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, sampleRate, tickSize, time } = storeToRefs(dawStore)
 const projectFileInput = ref(null)
 const sampleRateDraft = ref(String(sampleRate.value))
 const settingsVisible = ref(false)

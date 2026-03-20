@@ -315,6 +315,51 @@ export function getValueTrackerEventTicks(clip) {
   )
 }
 
+export function getValueTrackerRecordedStepIndex(timeTicks, startTick, stepSubdivision = DEFAULT_VALUE_TRACKER_STEP_SUBDIVISION) {
+  const normalizedTimeTicks = Number(timeTicks)
+  const normalizedStartTick = Number(startTick)
+  const normalizedStepSubdivision = normalizeValueTrackerStepSubdivision(stepSubdivision)
+
+  if (!Number.isFinite(normalizedTimeTicks) || !Number.isFinite(normalizedStartTick)) {
+    return -1
+  }
+
+  return Math.max(
+    0,
+    Math.floor((normalizedTimeTicks - normalizedStartTick) * normalizedStepSubdivision)
+  )
+}
+
+export function createSparseRecordedValueTrackerValues(
+  capturedSteps,
+  {
+    duration,
+    initialValue = null,
+    stepSubdivision = DEFAULT_VALUE_TRACKER_STEP_SUBDIVISION
+  } = {}
+) {
+  const stepCount = getValueTrackerStepCount(duration, stepSubdivision)
+  const nextValues = createEmptyValueTrackerValues(duration, stepSubdivision)
+  const normalizedCapturedSteps = isRecord(capturedSteps) ? capturedSteps : {}
+  let previousValue = normalizeValueTrackerEventValue(initialValue)
+
+  for (let stepIndex = 0; stepIndex < stepCount; stepIndex += 1) {
+    const capturedValue = normalizeValueTrackerEventValue(normalizedCapturedSteps[stepIndex])
+
+    if (capturedValue === null) {
+      continue
+    }
+
+    if (capturedValue !== previousValue) {
+      nextValues[stepIndex] = capturedValue
+    }
+
+    previousValue = capturedValue
+  }
+
+  return nextValues
+}
+
 export function getValueTrackerBoundVariableName(valueTrackerTrack) {
   if (valueTrackerTrack?.binding?.type !== 'variable') {
     return ''
@@ -367,4 +412,8 @@ function compressLegacyValueTrackerValues(values, stepCount) {
   return denseValues.map((value, index) =>
     index === 0 || value !== denseValues[index - 1] ? value : null
   )
+}
+
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }

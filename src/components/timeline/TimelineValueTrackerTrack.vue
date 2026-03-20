@@ -23,6 +23,12 @@
       </button>
 
       <span class="text-[10px] font-semibold uppercase tracking-[0.3em] text-amber-300/80">[VTR]</span>
+      <span
+        v-if="isRecordingTrack"
+        class="mt-1 inline-flex w-fit items-center rounded border border-rose-400/40 bg-rose-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.24em] text-rose-200"
+      >
+        REC
+      </span>
       <span class="mt-1 truncate text-sm text-zinc-100">{{ valueTrackerTrack.name }}</span>
     </div>
 
@@ -85,7 +91,7 @@ const props = defineProps({
 
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
-const { canPasteClipsAtPlayhead, clipDragPreview, pixelsPerTick, selectedValueTrackerTrackId } = storeToRefs(dawStore)
+const { canPasteClipsAtPlayhead, clipDragPreview, pixelsPerTick, selectedValueTrackerTrackId, valueTrackerRecordingSession } = storeToRefs(dawStore)
 const laneElement = ref(null)
 const creationPreview = ref(null)
 
@@ -107,13 +113,26 @@ const laneStyle = computed(() => ({
   backgroundSize: `${ticksToPixels(visibleTickStep.value, pixelsPerTick.value)}px 100%`
 }))
 const isSelectedTrack = computed(() => selectedValueTrackerTrackId.value === props.valueTrackerTrack.id)
+const isRecordingTrack = computed(() => valueTrackerRecordingSession.value?.trackId === props.valueTrackerTrack.id)
 const selectedHeaderClassName = computed(() =>
-  isSelectedTrack.value ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-900 text-zinc-200'
+  isRecordingTrack.value
+    ? 'bg-rose-950/80 text-zinc-50 ring-1 ring-inset ring-rose-400/45'
+    : isSelectedTrack.value
+      ? 'bg-zinc-800 text-zinc-100'
+      : 'bg-zinc-900 text-zinc-200'
 )
 const laneClassName = computed(() =>
-  isSelectedTrack.value ? 'ring-1 ring-inset ring-amber-300/35' : ''
+  isRecordingTrack.value
+    ? 'ring-1 ring-inset ring-rose-400/45'
+    : isSelectedTrack.value
+      ? 'ring-1 ring-inset ring-amber-300/35'
+      : ''
 )
 const keyboardButtonClassName = computed(() => {
+  if (isRecordingTrack.value) {
+    return 'border-rose-300 bg-rose-300 text-zinc-950 hover:border-rose-200 hover:bg-rose-200'
+  }
+
   if (isSelectedTrack.value) {
     return 'border-yellow-300 bg-yellow-300 text-zinc-950 hover:border-yellow-200 hover:bg-yellow-200'
   }

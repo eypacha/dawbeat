@@ -5,7 +5,8 @@ import {
   getClipGroupMoveBounds,
   clampClipResizeEnd,
   clampClipResizeStart,
-  clampClipStart
+  clampClipStart,
+  getTrackCreateBounds
 } from '@/services/timelineService'
 import { getDraggedTick } from '@/services/snapService'
 import {
@@ -81,8 +82,12 @@ import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
 import { TRACK_COLOR_PALETTE, getTrackColor } from '@/utils/colorUtils'
 import { DEFAULT_VARIABLE_CLIP_FORMULA, getNextVariableTrackName } from '@/services/variableTrackService'
 import {
+  DEFAULT_VALUE_TRACKER_STEP_SUBDIVISION,
+  createSparseRecordedValueTrackerValues,
   createConstantValueTrackerValues,
   createEmptyValueTrackerValues,
+  getValueTrackerRecordedStepIndex,
+  getValueTrackerValueAtTime,
   getNextValueTrackerTrackName,
   isNumericValueTrackerInitializer,
   normalizeValueTrackerValue,
@@ -92,6 +97,7 @@ import {
 } from '@/services/valueTrackerService'
 
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
+const MIN_VALUE_TRACKER_RECORDING_DURATION = 1
 const MAX_HISTORY_ENTRIES = 100
 
 function createDefaultProject() {
@@ -159,6 +165,7 @@ function createInitialState() {
     selectedClipId: null,
     selectedTrackId: null,
     selectedValueTrackerTrackId: null,
+    valueTrackerRecordingSession: null,
     valueTrackerLiveInputs: {}
   }
 }
@@ -175,12 +182,60 @@ function clearTransientSelectionState(store) {
   store.selectedFormulaId = null
   store.selectedTrackId = null
   store.selectedValueTrackerTrackId = null
+  store.valueTrackerRecordingSession = null
   store.valueTrackerLiveInputs = {}
   syncSelectedClipState(store, [])
 }
 
 function resolveActiveValueTrackerTrackForKeyboardInput(state) {
+  const recordingTrackId = state.valueTrackerRecordingSession?.trackId
+
+  if (recordingTrackId) {
+    return findValueTrackerTrack(state.valueTrackerTracks, recordingTrackId)
+  }
+
   return findValueTrackerTrack(state.valueTrackerTracks, state.selectedValueTrackerTrackId)
+}
+
+function createValueTrackerRecordingResult(ok, extras = {}) {
+  return {
+    ok,
+    ...extras
+  }
+}
+
+function removeValueTrackerTrackWithoutHistory(store, valueTrackerTrackId) {
+  const valueTrackerTrackIndex = findValueTrackerTrackIndex(store.valueTrackerTracks, valueTrackerTrackId)
+
+  if (valueTrackerTrackIndex === -1) {
+    return false
+  }
+
+  store.valueTrackerTracks.splice(valueTrackerTrackIndex, 1)
+
+  if (store.selectedValueTrackerTrackId === valueTrackerTrackId) {
+    store.selectedValueTrackerTrackId = null
+  }
+
+  return true
+}
+
+function normalizeValueTrackerRecordingTick(tick, stepSubdivision = DEFAULT_VALUE_TRACKER_STEP_SUBDIVISION) {
+  const normalizedStepSubdivision = Math.max(1, Math.round(Number(stepSubdivision) || 0))
+  const normalizedTick = Math.max(0, Number(tick) || 0)
+
+  return Math.floor(normalizedTick * normalizedStepSubdivision) / normalizedStepSubdivision
+}
+
+function normalizeValueTrackerRecordingStopTick(
+  stopTick,
+  startTick,
+  stepSubdivision = DEFAULT_VALUE_TRACKER_STEP_SUBDIVISION
+) {
+  return Math.max(
+    startTick + MIN_VALUE_TRACKER_RECORDING_DURATION,
+    normalizeValueTrackerRecordingTick(stopTick, stepSubdivision)
+  )
 }
 
 function applyProjectState(store, project, { preservePlaybackState = false } = {}) {
@@ -500,6 +555,7 @@ export const useDawStore = defineStore('dawStore', {
     getAutomationValueAt: (state) => (time, laneId) =>
       getAutomationValueAtTime(time, findAutomationLaneById(state.automationLanes, laneId)),
     activeValueTrackerTrackForKeyboardInput: (state) => resolveActiveValueTrackerTrackForKeyboardInput(state),
+    isValueTrackerRecording: (state) => Boolean(state.valueTrackerRecordingSession),
     pixelsPerTick: (state) => BASE_PIXELS_PER_TICK * state.zoom,
     canRedo: (state) => !state.playing && state.historyFuture.length > 0,
     canUndo: (state) => !state.playing && state.historyPast.length > 0
@@ -1128,14 +1184,229 @@ export const useDawStore = defineStore('dawStore', {
       return true
     },
 
-    applyKeyboardValueToActiveValueTracker(value) {
+    startValueTrackerRecording(options = {}) {
+      if (this.valueTrackerRecordingSession) {
+        return createValueTrackerRecordingResult(false, { reason: 'already-recording' })
+      }
+
+      const beforeSnapshot = this.createProjectSnapshot()
+
+      if (!beforeSnapshot) {
+        return createValueTrackerRecordingResult(false, { reason: 'snapshot-failed' })
+      }
+
+      const stepSubdivision = DEFAULT_VALUE_TRACKER_STEP_SUBDIVISION
+      const startTick = normalizeValueTrackerRecordingTick(options.startTick ?? this.time, stepSubdivision)
+      const previousTargetTrackId = this.selectedValueTrackerTrackId
+
+      let recordingTrack = this.activeValueTrackerTrackForKeyboardInput
+      let autoCreatedTrackId = null
+
+      if (!recordingTrack) {
+        recordingTrack = createValueTrackerTrack({
+          name: getNextValueTrackerTrackName(this.valueTrackerTracks)
+        })
+        this.valueTrackerTracks.push(recordingTrack)
+        autoCreatedTrackId = recordingTrack.id
+      }
+
+      const recordingBounds = getTrackCreateBounds(recordingTrack, startTick)
+
+      if (!recordingBounds) {
+        if (autoCreatedTrackId) {
+          removeValueTrackerTrackWithoutHistory(this, autoCreatedTrackId)
+          this.selectedValueTrackerTrackId = previousTargetTrackId
+        }
+
+        return createValueTrackerRecordingResult(false, { reason: 'clip-collision' })
+      }
+
+      const plannedStopTick = this.loopEnabled
+        ? Math.min(recordingBounds.maxEnd, this.loopEnd)
+        : recordingBounds.maxEnd
+
+      if (
+        Number.isFinite(plannedStopTick) &&
+        plannedStopTick - startTick < MIN_VALUE_TRACKER_RECORDING_DURATION
+      ) {
+        if (autoCreatedTrackId) {
+          removeValueTrackerTrackWithoutHistory(this, autoCreatedTrackId)
+          this.selectedValueTrackerTrackId = previousTargetTrackId
+        }
+
+        return createValueTrackerRecordingResult(false, { reason: 'no-recording-space' })
+      }
+
+      this.selectedValueTrackerTrackId = recordingTrack.id
+      this.valueTrackerRecordingSession = {
+        autoCreatedTrackId,
+        beforeSnapshot,
+        capturedSteps: {},
+        hasInput: false,
+        initialHeldValue: getValueTrackerValueAtTime(startTick, recordingTrack, null),
+        plannedStopTick,
+        previousTargetTrackId,
+        startTick,
+        stepSubdivision,
+        trackId: recordingTrack.id
+      }
+
+      return createValueTrackerRecordingResult(true, {
+        autoCreatedTrackId,
+        plannedStopTick,
+        startTick,
+        trackId: recordingTrack.id
+      })
+    },
+
+    ingestValueTrackerInput(input = {}) {
       const activeValueTrackerTrack = this.activeValueTrackerTrackForKeyboardInput
 
       if (!activeValueTrackerTrack) {
         return false
       }
 
-      return this.setValueTrackerTrackLiveInput(activeValueTrackerTrack.id, value, this.time)
+      const inputTimeTicks = Number(input.timeTicks)
+      const normalizedTimeTicks = Math.max(
+        0,
+        Number.isFinite(inputTimeTicks) ? inputTimeTicks : this.time
+      )
+      const applied = this.setValueTrackerTrackLiveInput(
+        activeValueTrackerTrack.id,
+        input.value,
+        normalizedTimeTicks
+      )
+
+      if (!applied) {
+        return false
+      }
+
+      const recordingSession = this.valueTrackerRecordingSession
+
+      if (!recordingSession || recordingSession.trackId !== activeValueTrackerTrack.id) {
+        return true
+      }
+
+      if (
+        Number.isFinite(recordingSession.plannedStopTick) &&
+        normalizedTimeTicks >= recordingSession.plannedStopTick
+      ) {
+        this.finishValueTrackerRecording({
+          stopTick: recordingSession.plannedStopTick
+        })
+        return true
+      }
+
+      if (normalizedTimeTicks < recordingSession.startTick) {
+        return true
+      }
+
+      const stepIndex = getValueTrackerRecordedStepIndex(
+        normalizedTimeTicks,
+        recordingSession.startTick,
+        recordingSession.stepSubdivision
+      )
+
+      if (stepIndex < 0) {
+        return true
+      }
+
+      recordingSession.capturedSteps = {
+        ...recordingSession.capturedSteps,
+        [stepIndex]: normalizeValueTrackerValue(input.value)
+      }
+      recordingSession.hasInput = true
+      return true
+    },
+
+    finishValueTrackerRecording(options = {}) {
+      const recordingSession = this.valueTrackerRecordingSession
+
+      if (!recordingSession) {
+        return createValueTrackerRecordingResult(false, { reason: 'not-recording' })
+      }
+
+      const recordingTrack = findValueTrackerTrack(this.valueTrackerTracks, recordingSession.trackId)
+      const autoCreatedTrackId = recordingSession.autoCreatedTrackId
+      const previousTargetTrackId = recordingSession.previousTargetTrackId ?? null
+      const cancel = options.cancel === true
+
+      this.valueTrackerRecordingSession = null
+
+      if (!recordingTrack) {
+        this.selectedValueTrackerTrackId = previousTargetTrackId
+        return createValueTrackerRecordingResult(false, { reason: 'missing-track' })
+      }
+
+      if (cancel || !recordingSession.hasInput) {
+        if (autoCreatedTrackId) {
+          removeValueTrackerTrackWithoutHistory(this, autoCreatedTrackId)
+          this.selectedValueTrackerTrackId = previousTargetTrackId
+        } else {
+          this.selectedValueTrackerTrackId = recordingTrack.id
+        }
+
+        return createValueTrackerRecordingResult(true, {
+          cancelled: cancel,
+          createdClipId: null,
+          trackId: cancel && autoCreatedTrackId ? previousTargetTrackId : recordingTrack.id
+        })
+      }
+
+      const resolvedStopTick = Number.isFinite(Number(options.stopTick))
+        ? Number(options.stopTick)
+        : Number.isFinite(recordingSession.plannedStopTick)
+          ? recordingSession.plannedStopTick
+          : this.time
+      const stopTick = Number.isFinite(recordingSession.plannedStopTick)
+        ? Math.min(resolvedStopTick, recordingSession.plannedStopTick)
+        : resolvedStopTick
+      const normalizedStopTick = normalizeValueTrackerRecordingStopTick(
+        stopTick,
+        recordingSession.startTick,
+        recordingSession.stepSubdivision
+      )
+      const duration = normalizedStopTick - recordingSession.startTick
+      const nextValues = createSparseRecordedValueTrackerValues(recordingSession.capturedSteps, {
+        duration,
+        initialValue: recordingSession.initialHeldValue,
+        stepSubdivision: recordingSession.stepSubdivision
+      })
+      const createdClipId = this.addValueTrackerClip(recordingTrack.id, {
+        duration,
+        start: recordingSession.startTick,
+        stepSubdivision: recordingSession.stepSubdivision,
+        values: nextValues
+      })
+      const afterSnapshot = this.createProjectSnapshot()
+
+      if (afterSnapshot && recordingSession.beforeSnapshot) {
+        this.pushHistoryEntry(recordingSession.beforeSnapshot, afterSnapshot)
+      }
+
+      this.selectedValueTrackerTrackId = recordingTrack.id
+
+      return createValueTrackerRecordingResult(true, {
+        createdClipId,
+        duration,
+        stopTick: normalizedStopTick,
+        trackId: recordingTrack.id
+      })
+    },
+
+    cancelValueTrackerRecording(options = {}) {
+      return this.finishValueTrackerRecording({
+        ...options,
+        cancel: true
+      })
+    },
+
+    applyKeyboardValueToActiveValueTracker(value) {
+      return this.ingestValueTrackerInput({
+        source: 'keyboard',
+        timeTicks: this.time,
+        value
+      })
     },
 
     setZoom(nextZoom) {
@@ -1635,6 +1906,10 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     removeValueTrackerTrack(valueTrackerTrackId) {
+      if (this.valueTrackerRecordingSession?.trackId === valueTrackerTrackId) {
+        this.cancelValueTrackerRecording()
+      }
+
       return this.recordHistoryStep('remove-value-tracker-track', () => {
         const valueTrackerTrackIndex = findValueTrackerTrackIndex(this.valueTrackerTracks, valueTrackerTrackId)
 
@@ -2678,6 +2953,11 @@ export const useDawStore = defineStore('dawStore', {
       const nextValueTrackerTrackId = findValueTrackerTrack(this.valueTrackerTracks, valueTrackerTrackId)?.id ?? null
 
       if (!nextValueTrackerTrackId) {
+        return
+      }
+
+      if (this.valueTrackerRecordingSession) {
+        this.selectedValueTrackerTrackId = this.valueTrackerRecordingSession.trackId
         return
       }
 

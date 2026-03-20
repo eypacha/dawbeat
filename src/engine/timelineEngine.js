@@ -51,7 +51,7 @@ export function getActiveFormula(
   )
 }
 
-export function getPlaybackEndTick(tracks) {
+export function getPlaybackEndTick(tracks, variableTracks = [], valueTrackerTracks = []) {
   let maxEnd = 0
 
   for (const track of tracks) {
@@ -60,6 +60,18 @@ export function getPlaybackEndTick(tracks) {
     }
 
     for (const clip of track.clips) {
+      maxEnd = Math.max(maxEnd, getClipEnd(clip))
+    }
+  }
+
+  for (const variableTrack of variableTracks) {
+    for (const clip of variableTrack.clips ?? []) {
+      maxEnd = Math.max(maxEnd, getClipEnd(clip))
+    }
+  }
+
+  for (const valueTrackerTrack of valueTrackerTracks) {
+    for (const clip of valueTrackerTrack.clips ?? []) {
       maxEnd = Math.max(maxEnd, getClipEnd(clip))
     }
   }
