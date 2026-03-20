@@ -10,8 +10,6 @@
         </div>
 
         <div class="flex items-start gap-3">
- 
-
           <IconButton label="Close" size="sm" @click="emit('close')">
             x
           </IconButton>
