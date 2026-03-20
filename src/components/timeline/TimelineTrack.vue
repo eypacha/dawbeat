@@ -114,7 +114,12 @@ import { isTrackAudible } from '@/services/trackPlaybackState'
 import { getTrackUnionOperatorOption, TRACK_UNION_OPERATOR_OPTIONS } from '@/services/trackUnionOperatorService'
 import TimelineClip from '@/components/timeline/TimelineClip.vue'
 import TimelineClipPreview from '@/components/timeline/TimelineClipPreview.vue'
-import { buildCreatedClip, clampClipPlacementStart, getTrackCreateBounds } from '@/services/timelineService'
+import {
+  buildCreatedClip,
+  clampClipPlacementStart,
+  DEFAULT_FORMULA_DROP_DURATION,
+  getTrackCreateBounds
+} from '@/services/timelineService'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useDawStore } from '@/stores/dawStore'
 import {
@@ -169,7 +174,6 @@ let creationAnchorTick = 0
 let creationBounds = null
 let creationHistoryActive = false
 let creationStartX = 0
-const FORMULA_DROP_DURATION = 1
 const visibleTickStep = computed(() => getVisibleTimelineTickStep(pixelsPerTick.value))
 
 const laneStyle = computed(() => ({
@@ -424,12 +428,12 @@ function handleLaneDrop(event) {
   const start = clampClipPlacementStart(
     props.track,
     getPointerTick(event, dragOffsetPx),
-    FORMULA_DROP_DURATION
+    DEFAULT_FORMULA_DROP_DURATION
   )
 
   dawStore.recordHistoryStep('drop-formula-to-track', () => {
     dawStore.addClip(props.track.id, {
-      duration: FORMULA_DROP_DURATION,
+      duration: DEFAULT_FORMULA_DROP_DURATION,
       formulaId,
       start
     })

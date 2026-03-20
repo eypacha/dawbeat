@@ -111,6 +111,7 @@ import Button from '@/components/ui/Button.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import Panel from '@/components/ui/Panel.vue'
 import { getFormulaDisplayName } from '@/services/formulaService'
+import { DEFAULT_FORMULA_DROP_DURATION } from '@/services/timelineService'
 import { useDawStore } from '@/stores/dawStore'
 import { ticksToPixels } from '@/utils/timeUtils'
 
@@ -125,7 +126,6 @@ const emit = defineEmits(['toggle-collapse'])
 
 const dawStore = useDawStore()
 const { formulas, pixelsPerTick, selectedFormulaId } = storeToRefs(dawStore)
-const FORMULA_DRAG_DURATION = 1
 const MIN_CLIP_RENDER_TICKS = 0.5
 
 function handleNewFormula() {
@@ -184,7 +184,7 @@ function getFormulaDragOffset(event) {
 
 function getFormulaDragWidth() {
   return Math.max(
-    ticksToPixels(FORMULA_DRAG_DURATION, pixelsPerTick.value),
+    ticksToPixels(DEFAULT_FORMULA_DROP_DURATION, pixelsPerTick.value),
     ticksToPixels(MIN_CLIP_RENDER_TICKS, pixelsPerTick.value)
   )
 }

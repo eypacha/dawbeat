@@ -2,6 +2,7 @@ import { getClipEnd, TIMELINE_SNAP_SUBDIVISIONS } from '@/utils/timeUtils'
 
 const MIN_CLIP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
 const MIN_NEW_CLIP_DURATION = 1
+export const DEFAULT_FORMULA_DROP_DURATION = 4
 
 export function getClipGroupMoveBounds(track, clipIds) {
   const normalizedClipIds = [...new Set(Array.isArray(clipIds) ? clipIds.filter(Boolean) : [])]
