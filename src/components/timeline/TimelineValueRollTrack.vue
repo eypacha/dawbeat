@@ -6,11 +6,22 @@
     :style="trackStyle"
   >
     <div
-      class="sticky left-0 z-20 flex shrink-0 flex-col justify-center border-r border-zinc-800 bg-zinc-900 px-4 py-2 text-zinc-200"
+      class="sticky left-0 z-20 flex shrink-0 flex-col justify-center border-r border-zinc-800 px-4 py-2 transition-colors"
       data-context-menu-enabled="true"
+      :class="selectedHeaderClassName"
       :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
       @contextmenu="handleHeaderContextMenu"
     >
+      <button
+        class="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-md border text-[10px] transition-colors"
+        :class="keyboardButtonClassName"
+        title="Keyboard Override Target"
+        type="button"
+        @click.stop="handleKeyboardTargetToggle"
+      >
+        <Keyboard class="h-3.5 w-3.5" />
+      </button>
+
       <span class="text-[10px] font-semibold uppercase tracking-[0.3em] text-amber-300/80">[VAL]</span>
       <span class="mt-1 truncate text-sm text-zinc-100">{{ valueRollTrack.name }}</span>
     </div>
@@ -20,6 +31,7 @@
       class="relative z-0 h-16 shrink-0"
       data-context-menu-enabled="true"
       data-timeline-track-lane="true"
+      :class="laneClassName"
       :style="laneStyle"
       @contextmenu="handleLaneContextMenu"
       @pointerdown="handleLanePointerDown"
@@ -49,6 +61,7 @@
 <script setup>
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import { Keyboard } from 'lucide-vue-next'
 import TimelineClipPreview from '@/components/timeline/TimelineClipPreview.vue'
 import TimelineValueRollClip from '@/components/timeline/TimelineValueRollClip.vue'
 import { useContextMenu } from '@/composables/useContextMenu'
@@ -72,7 +85,7 @@ const props = defineProps({
 
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
-const { canPasteClipsAtPlayhead, clipDragPreview, pixelsPerTick } = storeToRefs(dawStore)
+const { canPasteClipsAtPlayhead, clipDragPreview, pixelsPerTick, selectedValueRollTrackId } = storeToRefs(dawStore)
 const laneElement = ref(null)
 const creationPreview = ref(null)
 
@@ -93,6 +106,20 @@ const laneStyle = computed(() => ({
   backgroundImage: 'linear-gradient(to right, rgba(63, 63, 70, 0.45) 1px, transparent 1px)',
   backgroundSize: `${ticksToPixels(visibleTickStep.value, pixelsPerTick.value)}px 100%`
 }))
+const isSelectedTrack = computed(() => selectedValueRollTrackId.value === props.valueRollTrack.id)
+const selectedHeaderClassName = computed(() =>
+  isSelectedTrack.value ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-900 text-zinc-200'
+)
+const laneClassName = computed(() =>
+  isSelectedTrack.value ? 'ring-1 ring-inset ring-amber-300/35' : ''
+)
+const keyboardButtonClassName = computed(() => {
+  if (isSelectedTrack.value) {
+    return 'border-yellow-300 bg-yellow-300 text-zinc-950 hover:border-yellow-200 hover:bg-yellow-200'
+  }
+
+  return 'border-yellow-300/45 bg-zinc-900/70 text-zinc-400 hover:border-yellow-200 hover:text-zinc-200'
+})
 
 const dragPreview = computed(() => {
   if (clipDragPreview.value?.targetLaneId !== props.valueRollTrack.id) {
@@ -104,7 +131,6 @@ const dragPreview = computed(() => {
 
 function handleHeaderContextMenu(event) {
   event.preventDefault()
-  dawStore.selectTrack(null)
 
   openContextMenu({
     x: event.clientX,
@@ -125,6 +151,10 @@ function handleHeaderContextMenu(event) {
   })
 }
 
+function handleKeyboardTargetToggle() {
+  dawStore.toggleValueRollTrackKeyboardTarget(props.valueRollTrack.id)
+}
+
 function handleLaneContextMenu(event) {
   if (!laneElement.value) {
     return
@@ -137,7 +167,6 @@ function handleLaneContextMenu(event) {
   event.preventDefault()
 
   const start = clampClipPlacementStart(props.valueRollTrack, getPointerTick(event), 1)
-  dawStore.selectTrack(null)
   const items = [
     {
       action: 'create-value-roll-clip-at-position',
@@ -181,7 +210,6 @@ function handleLanePointerDown(event) {
   }
 
   event.preventDefault()
-  dawStore.selectTrack(null)
   dawStore.beginHistoryTransaction('create-value-roll-clip')
   creationHistoryActive = Boolean(dawStore.historyTransaction)
 

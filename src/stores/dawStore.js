@@ -85,6 +85,7 @@ import {
   createEmptyValueRollValues,
   getNextValueRollTrackName,
   isNumericValueRollInitializer,
+  normalizeValueRollValue,
   normalizeValueRollValues,
   normalizeValueRollTrackName,
   resizeValueRollValues
@@ -156,7 +157,9 @@ function createInitialState() {
     selectedClipIds: [],
     selectedFormulaId: null,
     selectedClipId: null,
-    selectedTrackId: null
+    selectedTrackId: null,
+    selectedValueRollTrackId: null,
+    valueRollLiveInputs: {}
   }
 }
 
@@ -171,7 +174,13 @@ function clearTransientSelectionState(store) {
   store.selectedAutomationPoint = null
   store.selectedFormulaId = null
   store.selectedTrackId = null
+  store.selectedValueRollTrackId = null
+  store.valueRollLiveInputs = {}
   syncSelectedClipState(store, [])
+}
+
+function resolveActiveValueRollTrackForKeyboardInput(state) {
+  return findValueRollTrack(state.valueRollTracks, state.selectedValueRollTrackId)
 }
 
 function applyProjectState(store, project, { preservePlaybackState = false } = {}) {
@@ -490,6 +499,7 @@ export const useDawStore = defineStore('dawStore', {
     getAutomationLaneById: (state) => (laneId) => findAutomationLaneById(state.automationLanes, laneId),
     getAutomationValueAt: (state) => (time, laneId) =>
       getAutomationValueAtTime(time, findAutomationLaneById(state.automationLanes, laneId)),
+    activeValueRollTrackForKeyboardInput: (state) => resolveActiveValueRollTrackForKeyboardInput(state),
     pixelsPerTick: (state) => BASE_PIXELS_PER_TICK * state.zoom,
     canRedo: (state) => !state.playing && state.historyFuture.length > 0,
     canUndo: (state) => !state.playing && state.historyPast.length > 0
@@ -1093,7 +1103,39 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     setTime(time) {
+      if (Number(time) < Number(this.time)) {
+        this.valueRollLiveInputs = {}
+      }
+
       this.time = time
+    },
+
+    setValueRollTrackLiveInput(valueRollTrackId, value, time = this.time) {
+      const valueRollTrack = findValueRollTrack(this.valueRollTracks, valueRollTrackId)
+
+      if (!valueRollTrack) {
+        return false
+      }
+
+      this.valueRollLiveInputs = {
+        ...this.valueRollLiveInputs,
+        [valueRollTrackId]: {
+          time: Math.max(0, Number(time) || 0),
+          value: normalizeValueRollValue(value)
+        }
+      }
+
+      return true
+    },
+
+    applyKeyboardValueToActiveValueRoll(value) {
+      const activeValueRollTrack = this.activeValueRollTrackForKeyboardInput
+
+      if (!activeValueRollTrack) {
+        return false
+      }
+
+      return this.setValueRollTrackLiveInput(activeValueRollTrack.id, value, this.time)
     },
 
     setZoom(nextZoom) {
@@ -1602,6 +1644,10 @@ export const useDawStore = defineStore('dawStore', {
 
         const [removedValueRollTrack] = this.valueRollTracks.splice(valueRollTrackIndex, 1)
         const removedClipIds = new Set(removedValueRollTrack.clips.map((clip) => clip.id))
+
+        if (this.selectedValueRollTrackId === removedValueRollTrack.id) {
+          this.selectedValueRollTrackId = null
+        }
 
         this.setSelectedClips(
           this.selectedClipIds.filter((selectedClipId) => !removedClipIds.has(selectedClipId))
@@ -2626,6 +2672,19 @@ export const useDawStore = defineStore('dawStore', {
     selectTrack(trackId) {
       this.clearAutomationPointSelection()
       this.selectedTrackId = trackId
+    },
+
+    toggleValueRollTrackKeyboardTarget(valueRollTrackId) {
+      const nextValueRollTrackId = findValueRollTrack(this.valueRollTracks, valueRollTrackId)?.id ?? null
+
+      if (!nextValueRollTrackId) {
+        return
+      }
+
+      this.selectedValueRollTrackId =
+        this.selectedValueRollTrackId === nextValueRollTrackId
+          ? null
+          : nextValueRollTrackId
     }
   }
 })

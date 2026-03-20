@@ -15,7 +15,7 @@ export function useTransportPlayback() {
   }
 
   const dawStore = useDawStore()
-  const { audioEffects, audioReady, automationLanes, evalEffects, formulas, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, valueRollTracks, variableTracks } =
+  const { audioEffects, audioReady, automationLanes, evalEffects, formulas, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, valueRollLiveInputs, valueRollTracks, variableTracks } =
     storeToRefs(dawStore)
 
   let frameId = 0
@@ -55,7 +55,8 @@ export function useTransportPlayback() {
           tracks.value,
           formulas.value,
           variableTracks.value,
-          valueRollTracks.value
+          valueRollTracks.value,
+          valueRollLiveInputs.value
         )
         const loopExpressions = applyEvalEffects(loopFormula, evalEffects.value)
 
@@ -90,7 +91,8 @@ export function useTransportPlayback() {
       tracks.value,
       formulas.value,
       variableTracks.value,
-      valueRollTracks.value
+      valueRollTracks.value,
+      valueRollLiveInputs.value
     )
     const activeExpressions = applyEvalEffects(activeFormula, evalEffects.value)
 
@@ -136,7 +138,8 @@ export function useTransportPlayback() {
         tracks.value,
         formulas.value,
         variableTracks.value,
-        valueRollTracks.value
+        valueRollTracks.value,
+        valueRollLiveInputs.value
       )
       const initialExpressions = applyEvalEffects(initialFormula, evalEffects.value)
 
@@ -223,7 +226,8 @@ export function useTransportPlayback() {
         tracks.value,
         formulas.value,
         variableTracks.value,
-        valueRollTracks.value
+        valueRollTracks.value,
+        valueRollLiveInputs.value
       )
       const activeExpressions = applyEvalEffects(activeFormula, evalEffects.value)
 

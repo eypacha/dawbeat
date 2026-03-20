@@ -203,10 +203,74 @@ export function resizeValueRollValues(
 }
 
 export function getValueRollValueAtTime(timeTicks, valueRollTrack, fallback = VALUE_ROLL_MIN) {
+  return getValueRollValueAtTimeWithLiveInput(timeTicks, valueRollTrack, fallback, null)
+}
+
+export function getValueRollValueAtTimeWithLiveInput(
+  timeTicks,
+  valueRollTrack,
+  fallback = VALUE_ROLL_MIN,
+  liveInput = null
+) {
   if (!Array.isArray(valueRollTrack?.clips) || !valueRollTrack.clips.length) {
-    return normalizeValueRollEventValue(fallback)
+    const normalizedLiveInput = normalizeValueRollLiveInput(liveInput)
+    return normalizedLiveInput?.time <= timeTicks
+      ? normalizedLiveInput.value
+      : normalizeValueRollEventValue(fallback)
   }
 
+  const timelineValue = getTimelineValueRollValueAtTime(timeTicks, valueRollTrack, fallback)
+  const normalizedLiveInput = normalizeValueRollLiveInput(liveInput)
+
+  if (!normalizedLiveInput || normalizedLiveInput.time > timeTicks) {
+    return timelineValue
+  }
+
+  const nextEventTime = getNextValueRollEventTime(valueRollTrack, normalizedLiveInput.time)
+
+  if (nextEventTime !== null && timeTicks >= nextEventTime) {
+    return timelineValue
+  }
+
+  return normalizedLiveInput.value
+}
+
+export function getNextValueRollEventTime(valueRollTrack, afterTime) {
+  const normalizedAfterTime = Number(afterTime)
+
+  if (!Number.isFinite(normalizedAfterTime)) {
+    return null
+  }
+
+  for (const clip of valueRollTrack?.clips ?? []) {
+    const clipStart = Number(clip?.start)
+
+    if (!Number.isFinite(clipStart)) {
+      continue
+    }
+
+    const stepSubdivision = normalizeValueRollStepSubdivision(clip.stepSubdivision)
+    const normalizedValues = normalizeValueRollValues(clip.values, clip.duration, stepSubdivision)
+
+    for (let stepIndex = 0; stepIndex < normalizedValues.length; stepIndex += 1) {
+      const eventValue = normalizeValueRollEventValue(normalizedValues[stepIndex])
+
+      if (eventValue === null) {
+        continue
+      }
+
+      const eventTime = clipStart + stepIndex / stepSubdivision
+
+      if (eventTime > normalizedAfterTime) {
+        return eventTime
+      }
+    }
+  }
+
+  return null
+}
+
+function getTimelineValueRollValueAtTime(timeTicks, valueRollTrack, fallback = VALUE_ROLL_MIN) {
   let resolvedValue = normalizeValueRollEventValue(fallback)
 
   for (const clip of valueRollTrack.clips) {
@@ -279,6 +343,20 @@ function normalizeNullableString(value) {
 function normalizeNullableInteger(value) {
   const numericValue = Number(value)
   return Number.isInteger(numericValue) ? numericValue : null
+}
+
+function normalizeValueRollLiveInput(liveInput) {
+  const time = Number(liveInput?.time)
+  const value = normalizeValueRollEventValue(liveInput?.value)
+
+  if (!Number.isFinite(time) || value === null) {
+    return null
+  }
+
+  return {
+    time: Math.max(0, time),
+    value
+  }
 }
 
 function compressLegacyValueRollValues(values, stepCount) {

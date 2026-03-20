@@ -48,6 +48,18 @@ export function initKeyboardShortcuts({ dawStore, transport }) {
       return
     }
 
+    const keyboardValue = getKeyboardValueRollInput(event)
+
+    if (keyboardValue !== null) {
+      const applied = dawStore.applyKeyboardValueToActiveValueRoll(keyboardValue)
+
+      if (applied) {
+        event.preventDefault()
+      }
+
+      return
+    }
+
     const isCopyShortcut = (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'c'
     const isPasteShortcut = (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'v'
     const isUndoShortcut = (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'z'
@@ -94,4 +106,22 @@ export function initKeyboardShortcuts({ dawStore, transport }) {
   return () => {
     window.removeEventListener('keydown', handleKeyDown)
   }
+}
+
+function getKeyboardValueRollInput(event) {
+  if (event.metaKey || event.ctrlKey || event.altKey) {
+    return null
+  }
+
+  const normalizedKey = typeof event.key === 'string' ? event.key.toLowerCase() : ''
+
+  if (/^[0-9]$/.test(normalizedKey)) {
+    return Number(normalizedKey)
+  }
+
+  if (/^[a-f]$/.test(normalizedKey)) {
+    return normalizedKey.charCodeAt(0) - 87
+  }
+
+  return null
 }

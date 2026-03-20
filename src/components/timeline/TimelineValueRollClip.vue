@@ -143,7 +143,6 @@ function handleSelect(payload = {}) {
       : null
 
   pendingShiftSelectionAction.value = null
-  dawStore.selectTrack(null)
 
   if (shiftSelectionAction === 'remove') {
     dawStore.removeSelectedClip(props.clip.id)

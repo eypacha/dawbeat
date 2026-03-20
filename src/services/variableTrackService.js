@@ -2,7 +2,7 @@ import { tokenizeFormula } from '@/utils/formulaTokenizer'
 import {
   getBoundValueRollVariableNames,
   getValueRollBoundVariableName,
-  getValueRollValueAtTime
+  getValueRollValueAtTimeWithLiveInput
 } from '@/services/valueRollService'
 
 const VARIABLE_TRACK_NAME_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/
@@ -81,7 +81,12 @@ export function resolveVariableClipFormula(clip) {
     : DEFAULT_VARIABLE_CLIP_FORMULA
 }
 
-export function getActiveVariableDefinitions(timeTicks, variableTracks = [], valueRollTracks = []) {
+export function getActiveVariableDefinitions(
+  timeTicks,
+  variableTracks = [],
+  valueRollTracks = [],
+  valueRollLiveInputs = {}
+) {
   const definitionsByName = new Map()
 
   for (const variableTrack of variableTracks) {
@@ -103,7 +108,14 @@ export function getActiveVariableDefinitions(timeTicks, variableTracks = [], val
     }
 
     definitionsByName.set(variableName, {
-      formula: String(getValueRollValueAtTime(timeTicks, valueRollTrack, 0)),
+      formula: String(
+        getValueRollValueAtTimeWithLiveInput(
+          timeTicks,
+          valueRollTrack,
+          0,
+          valueRollLiveInputs?.[valueRollTrack.id] ?? null
+        )
+      ),
       name: variableName
     })
   }
