@@ -60,6 +60,8 @@ const panelClassName = computed(() => {
     widthClassName = 'max-w-sm'
   } else if (props.size === 'lg') {
     widthClassName = 'max-w-2xl'
+  } else if (props.size === 'xl') {
+    widthClassName = 'max-w-6xl'
   }
 
   return `relative w-full ${widthClassName} rounded border border-zinc-700 bg-zinc-900 p-4 shadow-lg shadow-black/40`
