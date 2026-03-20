@@ -100,8 +100,8 @@
             <input
               v-model="sampleRateDraft"
               class="w-14 bg-transparent text-right text-xs text-zinc-100 outline-none"
-              max="44100"
-              min="256"
+              :max="MAX_SAMPLE_RATE"
+              :min="MIN_SAMPLE_RATE"
               step="1"
               type="number"
               @blur="commitSampleRate"
@@ -164,6 +164,7 @@ import { useDawStore } from '@/stores/dawStore'
 import { downloadProjectWav } from '@/services/exportService'
 import { downloadProjectFile, importProjectFile } from '@/services/projectPersistence'
 import { enqueueSnackbar } from '@/services/notifications'
+import { MAX_SAMPLE_RATE, MIN_SAMPLE_RATE } from '@/utils/audioSettings'
 import { ticksToSamples } from '@/utils/timeUtils'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import Divider from '@/components/ui/Divider.vue'
