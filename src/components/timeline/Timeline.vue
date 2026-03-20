@@ -67,26 +67,6 @@
           :timeline-width="timelineWidthStyle"
           :variable-track="variableTrack"
         />
-
-                <div
-          class="flex min-w-full w-max border-b border-zinc-800 bg-zinc-950/60"
-        >
-          <div
-            class="sticky left-0 z-20 flex shrink-0 items-center justify-between gap-3 border-r border-zinc-800 bg-zinc-900 px-4 py-2"
-            :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
-          >
-            <span class="text-[10px] uppercase tracking-[0.3em] text-zinc-200">Variables</span>
-            <button
-              class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-zinc-700 bg-zinc-950/70 text-zinc-300 transition hover:border-zinc-500 hover:text-zinc-100"
-              type="button"
-              @click="dawStore.addVariableTrack()"
-            >
-              <Plus class="h-4 w-4" />
-            </button>
-          </div>
-
-          <div class="h-11 shrink-0 bg-zinc-950/35" :style="{ width: timelineWidthStyle }" />
-        </div>
         
         <TimelineTrack
           v-for="(track, index) in tracks"
@@ -122,7 +102,6 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Plus } from 'lucide-vue-next'
 import Panel from '@/components/ui/Panel.vue'
 import TimelineAutomationLane from '@/components/timeline/TimelineAutomationLane.vue'
 import Playhead from '@/components/timeline/Playhead.vue'

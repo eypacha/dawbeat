@@ -49,9 +49,32 @@
     </div>
 
     <template #footer>
-      <div class="flex justify-end gap-2">
-        <Button :disabled="!formulaValid" @click="emitDraft()">Eval</Button>
-        <Button :disabled="!formulaValid" variant="primary" @click="emitSave()">Save</Button>
+      <div class="flex w-full items-end justify-between gap-4">
+        <div
+          v-if="missingAutoVariableTrackNames.length"
+          class="flex min-w-0 flex-wrap items-end gap-3"
+        >
+          <label
+            v-for="variableTrackName in missingAutoVariableTrackNames"
+            :key="variableTrackName"
+            class="flex min-w-[132px] flex-col gap-1"
+          >
+            <span class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+              Init {{ variableTrackName }}
+            </span>
+
+            <Input
+              :model-value="getVariableInitializerDraft(variableTrackName)"
+              placeholder="0"
+              @update:model-value="setVariableInitializerDraft(variableTrackName, $event)"
+            />
+          </label>
+        </div>
+
+        <div class="ml-auto flex justify-end gap-2">
+          <Button :disabled="!formulaValid" @click="emitDraft()">Eval</Button>
+          <Button :disabled="!formulaValid" variant="primary" @click="emitSave()">Save</Button>
+        </div>
       </div>
     </template>
   </Modal>
@@ -65,6 +88,7 @@ import IconButton from '@/components/ui/IconButton.vue'
 import Input from '@/components/ui/Input.vue'
 import Modal from '@/components/ui/Modal.vue'
 import { useDawStore } from '@/stores/dawStore'
+import { extractAutoVariableTrackNames, getFormulaAllowedIdentifiers } from '@/services/variableTrackService'
 import { renderFormulaTokensToHtmlWithOptions } from '@/utils/formulaTokenizer'
 import { validateFormulaWithOptions } from '@/utils/formulaValidation'
 
@@ -104,7 +128,15 @@ const draftValue = ref(props.initialValue)
 const formulaValid = ref(true)
 const highlightLayerElement = ref(null)
 const textareaElement = ref(null)
-const allowedIdentifiers = computed(() => variableTracks.value.map((variableTrack) => variableTrack.name))
+const variableInitializerDrafts = ref({})
+const allowedIdentifiers = computed(() => getFormulaAllowedIdentifiers(variableTracks.value))
+const existingVariableTrackNames = computed(
+  () => new Set(variableTracks.value.map((variableTrack) => variableTrack.name).filter(Boolean))
+)
+const missingAutoVariableTrackNames = computed(() =>
+  extractAutoVariableTrackNames(draftValue.value)
+    .filter((variableTrackName) => !existingVariableTrackNames.value.has(variableTrackName))
+)
 const highlightedFormulaHtml = computed(() =>
   renderFormulaTokensToHtmlWithOptions(draftValue.value, {
     allowedIdentifiers: allowedIdentifiers.value
@@ -120,6 +152,7 @@ watch(
 
     draftName.value = props.initialName
     draftValue.value = props.initialValue
+    variableInitializerDrafts.value = {}
     syncFormulaValidity()
     await nextTick()
     syncHighlightScroll()
@@ -148,6 +181,17 @@ watch(
   }
 )
 
+watch(
+  missingAutoVariableTrackNames,
+  (variableTrackNames) => {
+    variableInitializerDrafts.value = variableTrackNames.reduce((drafts, variableTrackName) => {
+      drafts[variableTrackName] = variableInitializerDrafts.value[variableTrackName] ?? '0'
+      return drafts
+    }, {})
+  },
+  { immediate: true }
+)
+
 function handleTextareaInput() {
   syncFormulaValidity()
   syncHighlightScroll()
@@ -160,7 +204,8 @@ function emitDraft() {
 
   emit('eval', {
     code: draftValue.value,
-    name: draftName.value
+    name: draftName.value,
+    variableInitializers: collectVariableInitializers()
   })
 }
 
@@ -171,7 +216,8 @@ function emitSave() {
 
   emit('save', {
     code: draftValue.value,
-    name: draftName.value
+    name: draftName.value,
+    variableInitializers: collectVariableInitializers()
   })
 }
 
@@ -181,6 +227,24 @@ function handleEvalShortcut() {
   }
 
   emitDraft()
+}
+
+function collectVariableInitializers() {
+  return missingAutoVariableTrackNames.value.reduce((initializers, variableTrackName) => {
+    initializers[variableTrackName] = getVariableInitializerDraft(variableTrackName)
+    return initializers
+  }, {})
+}
+
+function getVariableInitializerDraft(variableTrackName) {
+  return variableInitializerDrafts.value[variableTrackName] ?? '0'
+}
+
+function setVariableInitializerDraft(variableTrackName, value) {
+  variableInitializerDrafts.value = {
+    ...variableInitializerDrafts.value,
+    [variableTrackName]: value
+  }
 }
 
 function syncFormulaValidity() {

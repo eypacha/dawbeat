@@ -107,10 +107,6 @@ function handleHeaderContextMenu(event) {
     y: event.clientY,
     items: [
       {
-        action: 'add-variable-track',
-        label: 'Add Variable'
-      },
-      {
         action: 'delete-variable-track',
         label: 'Delete Variable',
         variableTrackName: props.variableTrack.name

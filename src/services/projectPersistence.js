@@ -15,6 +15,7 @@ import { createEvalEffect, createStereoOffsetEvalEffect } from '@/services/evalE
 import { createFormula } from '@/services/formulaService'
 import { normalizeTrackUnionOperator } from '@/services/trackUnionOperatorService'
 import {
+  collectAutoVariableTrackNames,
   getNextVariableTrackName,
   normalizeVariableTrackName
 } from '@/services/variableTrackService'
@@ -183,6 +184,20 @@ function normalizeProjectPayload(project) {
         .map((variableTrack) => normalizeVariableTrack(variableTrack, usedVariableTrackNames))
         .filter(Boolean)
     : []
+  const requiredAutoVariableTrackNames = collectAutoVariableTrackNames([
+    ...formulas.map((formula) => formula.code),
+    ...collectTrackInlineFormulas(tracks),
+    ...collectVariableTrackFormulas(variableTracks)
+  ])
+
+  for (const variableTrackName of requiredAutoVariableTrackNames) {
+    if (usedVariableTrackNames.has(variableTrackName)) {
+      continue
+    }
+
+    variableTracks.push(createVariableTrack({ name: variableTrackName }))
+    usedVariableTrackNames.add(variableTrackName)
+  }
 
   const loopStart = normalizeNonNegativeNumber(project.loopStart, DEFAULT_LOOP_START)
   const loopEnd = Math.max(
@@ -338,6 +353,34 @@ function normalizeEvalEffects(evalEffects) {
   }
 
   return evalEffects.filter(isRecord).map((effect) => createEvalEffect(effect))
+}
+
+function collectTrackInlineFormulas(tracks) {
+  if (!Array.isArray(tracks)) {
+    return []
+  }
+
+  return tracks.flatMap((track) =>
+    Array.isArray(track?.clips)
+      ? track.clips
+          .map((clip) => (typeof clip?.formula === 'string' ? clip.formula : ''))
+          .filter(Boolean)
+      : []
+  )
+}
+
+function collectVariableTrackFormulas(variableTracks) {
+  if (!Array.isArray(variableTracks)) {
+    return []
+  }
+
+  return variableTracks.flatMap((variableTrack) =>
+    Array.isArray(variableTrack?.clips)
+      ? variableTrack.clips
+          .map((clip) => (typeof clip?.formula === 'string' ? clip.formula : ''))
+          .filter(Boolean)
+      : []
+  )
 }
 
 function normalizeNumber(value, fallback) {

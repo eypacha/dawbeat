@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import {
+  DEFAULT_FORMULA_DROP_DURATION,
   clampClipPlacementStart,
   getClipGroupMoveBounds,
   clampClipResizeEnd,
@@ -72,7 +73,7 @@ import {
 } from '@/utils/timeUtils'
 import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
 import { TRACK_COLOR_PALETTE, getTrackColor } from '@/utils/colorUtils'
-import { getNextVariableTrackName } from '@/services/variableTrackService'
+import { DEFAULT_VARIABLE_CLIP_FORMULA, getNextVariableTrackName } from '@/services/variableTrackService'
 
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
 const MAX_HISTORY_ENTRIES = 100
@@ -1369,6 +1370,32 @@ export const useDawStore = defineStore('dawStore', {
         this.variableTracks.push(nextVariableTrack)
         return nextVariableTrack.name
       })
+    },
+
+    ensureInitializedVariableTracks(variableTrackInitializers = {}) {
+      if (!variableTrackInitializers || typeof variableTrackInitializers !== 'object') {
+        return []
+      }
+
+      const createdVariableTrackNames = []
+
+      for (const [variableTrackName, initializer] of Object.entries(variableTrackInitializers)) {
+        if (typeof variableTrackName !== 'string' || !variableTrackName || findVariableTrack(this.variableTracks, variableTrackName)) {
+          continue
+        }
+
+        const nextVariableTrack = createVariableTrack({ name: variableTrackName })
+        nextVariableTrack.clips.push(createVariableTrackClip({
+          duration: DEFAULT_FORMULA_DROP_DURATION,
+          formula: typeof initializer === 'string' && initializer.trim() ? initializer : DEFAULT_VARIABLE_CLIP_FORMULA,
+          start: 0
+        }))
+        sortVariableTrackClips(nextVariableTrack)
+        this.variableTracks.push(nextVariableTrack)
+        createdVariableTrackNames.push(variableTrackName)
+      }
+
+      return createdVariableTrackNames
     },
 
     removeVariableTrack(variableTrackName) {

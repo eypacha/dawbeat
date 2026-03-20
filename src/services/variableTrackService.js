@@ -1,4 +1,8 @@
+import { tokenizeFormula } from '@/utils/formulaTokenizer'
+
 const VARIABLE_TRACK_NAME_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/
+export const AUTO_VARIABLE_TRACK_NAMES = Object.freeze('abcdefghijklmnop'.split(''))
+const AUTO_VARIABLE_TRACK_NAME_SET = new Set(AUTO_VARIABLE_TRACK_NAMES)
 
 export const DEFAULT_VARIABLE_CLIP_FORMULA = '0'
 
@@ -27,6 +31,42 @@ export function getNextVariableTrackName(variableTracks = []) {
   }
 
   return getVariableTrackNameFromIndex(index)
+}
+
+export function getFormulaAllowedIdentifiers(variableTracks = []) {
+  const existingNames = Array.isArray(variableTracks)
+    ? variableTracks
+        .map((variableTrack) => normalizeVariableTrackName(variableTrack?.name, ''))
+        .filter(Boolean)
+    : []
+
+  return [...new Set([...existingNames, ...AUTO_VARIABLE_TRACK_NAMES])]
+}
+
+export function extractAutoVariableTrackNames(expression = '') {
+  const usedNames = new Set()
+
+  for (const token of tokenizeFormula(expression)) {
+    if (!AUTO_VARIABLE_TRACK_NAME_SET.has(token.value) || usedNames.has(token.value)) {
+      continue
+    }
+
+    usedNames.add(token.value)
+  }
+
+  return [...usedNames]
+}
+
+export function collectAutoVariableTrackNames(expressions = []) {
+  const usedNames = new Set()
+
+  for (const expression of expressions) {
+    for (const variableTrackName of extractAutoVariableTrackNames(expression)) {
+      usedNames.add(variableTrackName)
+    }
+  }
+
+  return [...usedNames]
 }
 
 export function resolveVariableClipFormula(clip) {

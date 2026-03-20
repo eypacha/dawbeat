@@ -282,11 +282,6 @@ function handleContextMenuSelect(action, item) {
     return
   }
 
-  if (action === 'add-variable-track') {
-    dawStore.addVariableTrack()
-    return
-  }
-
   if (action === 'edit-clip') {
     dawStore.setEditingClip(item.clipId)
     return
@@ -407,6 +402,8 @@ function closeFormulaDialog() {
 }
 
 function evaluateFormulaDialog(nextDraft) {
+  dawStore.ensureInitializedVariableTracks(nextDraft.variableInitializers)
+
   if (editingClipId.value) {
     dawStore.saveClipFormulaDraft(editingClipId.value, nextDraft)
     return
@@ -423,6 +420,7 @@ function evaluateFormulaDialog(nextDraft) {
 function saveFormulaDialog(nextDraft) {
   if (editingClipId.value) {
     dawStore.recordHistoryStep('save-clip-formula', () => {
+      dawStore.ensureInitializedVariableTracks(nextDraft.variableInitializers)
       dawStore.saveClipFormulaDraftAndName(editingClipId.value, nextDraft)
     })
     closeFormulaDialog()
@@ -431,6 +429,7 @@ function saveFormulaDialog(nextDraft) {
 
   if (editingFormulaId.value) {
     dawStore.recordHistoryStep('save-library-formula', () => {
+      dawStore.ensureInitializedVariableTracks(nextDraft.variableInitializers)
       dawStore.updateFormula(editingFormulaId.value, {
         code: nextDraft.code,
         name: nextDraft.name
