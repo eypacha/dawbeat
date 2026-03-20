@@ -1,4 +1,9 @@
 import { tokenizeFormula } from '@/utils/formulaTokenizer'
+import {
+  getBoundValueRollVariableNames,
+  getValueRollBoundVariableName,
+  getValueRollValueAtTime
+} from '@/services/valueRollService'
 
 const VARIABLE_TRACK_NAME_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/
 export const AUTO_VARIABLE_TRACK_NAMES = Object.freeze('abcdefghijklmnop'.split(''))
@@ -33,14 +38,15 @@ export function getNextVariableTrackName(variableTracks = []) {
   return getVariableTrackNameFromIndex(index)
 }
 
-export function getFormulaAllowedIdentifiers(variableTracks = []) {
+export function getFormulaAllowedIdentifiers(variableTracks = [], valueRollTracks = []) {
   const existingNames = Array.isArray(variableTracks)
     ? variableTracks
         .map((variableTrack) => normalizeVariableTrackName(variableTrack?.name, ''))
         .filter(Boolean)
     : []
+  const valueRollNames = getBoundValueRollVariableNames(valueRollTracks)
 
-  return [...new Set([...existingNames, ...AUTO_VARIABLE_TRACK_NAMES])]
+  return [...new Set([...existingNames, ...valueRollNames, ...AUTO_VARIABLE_TRACK_NAMES])]
 }
 
 export function extractAutoVariableTrackNames(expression = '') {
@@ -75,13 +81,34 @@ export function resolveVariableClipFormula(clip) {
     : DEFAULT_VARIABLE_CLIP_FORMULA
 }
 
-export function getActiveVariableDefinitions(timeTicks, variableTracks = []) {
-  return variableTracks
-    .filter((variableTrack) => typeof variableTrack?.name === 'string' && variableTrack.name)
-    .map((variableTrack) => ({
+export function getActiveVariableDefinitions(timeTicks, variableTracks = [], valueRollTracks = []) {
+  const definitionsByName = new Map()
+
+  for (const variableTrack of variableTracks) {
+    if (typeof variableTrack?.name !== 'string' || !variableTrack.name) {
+      continue
+    }
+
+    definitionsByName.set(variableTrack.name, {
       formula: resolveVariableTrackFormulaAtTime(timeTicks, variableTrack),
       name: variableTrack.name
-    }))
+    })
+  }
+
+  for (const valueRollTrack of valueRollTracks) {
+    const variableName = getValueRollBoundVariableName(valueRollTrack)
+
+    if (!variableName) {
+      continue
+    }
+
+    definitionsByName.set(variableName, {
+      formula: String(getValueRollValueAtTime(timeTicks, valueRollTrack, 0)),
+      name: variableName
+    })
+  }
+
+  return [...definitionsByName.values()]
 }
 
 export function prependVariableDefinitions(expression, variableDefinitions = []) {

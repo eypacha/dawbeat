@@ -15,6 +15,8 @@ import {
   createTrackClip,
   createVariableTrack,
   createVariableTrackClip,
+  createValueRollClip,
+  createValueRollTrack,
   findClip,
   findClipIndex,
   findTrack,
@@ -22,7 +24,11 @@ import {
   findTimelineClip,
   findVariableTrack,
   findVariableTrackIndex,
+  findValueRollTrack,
+  findValueRollTrackByVariableName,
+  findValueRollTrackIndex,
   sortTrackClips,
+  sortValueRollTrackClips,
   sortVariableTrackClips
 } from '@/services/dawStoreService'
 import {
@@ -74,6 +80,15 @@ import {
 import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
 import { TRACK_COLOR_PALETTE, getTrackColor } from '@/utils/colorUtils'
 import { DEFAULT_VARIABLE_CLIP_FORMULA, getNextVariableTrackName } from '@/services/variableTrackService'
+import {
+  createConstantValueRollValues,
+  createEmptyValueRollValues,
+  getNextValueRollTrackName,
+  isNumericValueRollInitializer,
+  normalizeValueRollValues,
+  normalizeValueRollTrackName,
+  resizeValueRollValues
+} from '@/services/valueRollService'
 
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
 const MAX_HISTORY_ENTRIES = 100
@@ -98,6 +113,7 @@ function createEmptyProject() {
     tickSize: BASE_TICK_SIZE,
     tracks: [createTrack()],
     variableTracks: [],
+    valueRollTracks: [],
     zoom: 1
   }
 }
@@ -130,6 +146,7 @@ function createInitialState() {
     tickSize: project.tickSize,
     tracks: project.tracks,
     variableTracks: project.variableTracks,
+    valueRollTracks: project.valueRollTracks,
     historyApplying: false,
     historyFuture: [],
     historyPast: [],
@@ -182,6 +199,7 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   store.tickSize = normalizedProject.tickSize
   store.tracks = normalizedProject.tracks
   store.variableTracks = normalizedProject.variableTracks
+  store.valueRollTracks = normalizedProject.valueRollTracks
   clearTransientSelectionState(store)
   store.playing = nextPlaying
   store.time = nextTime
@@ -228,12 +246,12 @@ function syncSelectedClipState(store, clipIds) {
   store.selectedClipId = nextSelectedClipIds[0] ?? null
 }
 
-function collectSelectedClipEntries(tracks, variableTracks, clipIds) {
+function collectSelectedClipEntries(tracks, variableTracks, valueRollTracks, clipIds) {
   const selectedClipIds = normalizeSelectedClipIds(clipIds)
   const entries = []
 
   for (const clipId of selectedClipIds) {
-    const result = findTimelineClip(tracks, variableTracks, clipId)
+    const result = findTimelineClip(tracks, variableTracks, valueRollTracks, clipId)
 
     if (!result) {
       continue
@@ -257,15 +275,22 @@ function collectSelectedClipEntries(tracks, variableTracks, clipIds) {
   return entries
 }
 
-function getLaneOrderMap(tracks, variableTracks) {
+function getLaneOrderMap(tracks, variableTracks, valueRollTracks) {
   return new Map([
     ...variableTracks.map((variableTrack, index) => [`variable:${variableTrack.name}`, index]),
-    ...tracks.map((track, index) => [`track:${track.id}`, variableTracks.length + index])
+    ...valueRollTracks.map((valueRollTrack, index) => [
+      `valueRoll:${valueRollTrack.id}`,
+      variableTracks.length + index
+    ]),
+    ...tracks.map((track, index) => [
+      `track:${track.id}`,
+      variableTracks.length + valueRollTracks.length + index
+    ])
   ])
 }
 
-function sortClipEntriesForClipboard(tracks, variableTracks, clipEntries) {
-  const laneOrderById = getLaneOrderMap(tracks, variableTracks)
+function sortClipEntriesForClipboard(tracks, variableTracks, valueRollTracks, clipEntries) {
+  const laneOrderById = getLaneOrderMap(tracks, variableTracks, valueRollTracks)
 
   return [...clipEntries].sort((leftEntry, rightEntry) => {
     const startDelta = leftEntry.clip.start - rightEntry.clip.start
@@ -281,12 +306,12 @@ function sortClipEntriesForClipboard(tracks, variableTracks, clipEntries) {
   })
 }
 
-function buildClipClipboard(entries, tracks, variableTracks, formulas) {
+function buildClipClipboard(entries, tracks, variableTracks, valueRollTracks, formulas) {
   if (!entries.length) {
     return null
   }
 
-  const sortedEntries = sortClipEntriesForClipboard(tracks, variableTracks, entries)
+  const sortedEntries = sortClipEntriesForClipboard(tracks, variableTracks, valueRollTracks, entries)
   const anchorStart = sortedEntries[0]?.clip.start ?? 0
   const anchorTickStart = Math.floor(Math.max(0, anchorStart))
 
@@ -304,6 +329,8 @@ function buildClipClipboard(entries, tracks, variableTracks, formulas) {
         formulaId: entry.laneType === 'track' ? referencedFormula?.id ?? null : null,
         formulaName:
           entry.laneType === 'track' ? referencedFormula?.name ?? entry.clip.formulaName ?? null : null,
+        stepSubdivision: entry.laneType === 'valueRoll' ? entry.clip.stepSubdivision : null,
+        values: entry.laneType === 'valueRoll' ? [...(entry.clip.values ?? [])] : null,
         sourceLaneId: entry.laneId,
         sourceLaneType: entry.laneType,
         sourceTrackId: entry.laneType === 'track' ? entry.laneId : null,
@@ -380,11 +407,28 @@ function resolvePasteTargetVariableTrack(store, sourceVariableTrackName) {
   return store.variableTracks[0] ?? null
 }
 
+function resolvePasteTargetValueRollTrack(store, sourceValueRollTrackId) {
+  const sourceValueRollTrack = findValueRollTrack(store.valueRollTracks, sourceValueRollTrackId)
+
+  if (sourceValueRollTrack) {
+    return sourceValueRollTrack
+  }
+
+  return store.valueRollTracks[0] ?? null
+}
+
 function resolvePasteTargetLane(store, clipboardClip) {
   if (clipboardClip?.sourceLaneType === 'variable') {
     return {
       lane: resolvePasteTargetVariableTrack(store, clipboardClip.sourceLaneId),
       laneType: 'variable'
+    }
+  }
+
+  if (clipboardClip?.sourceLaneType === 'valueRoll') {
+    return {
+      lane: resolvePasteTargetValueRollTrack(store, clipboardClip.sourceLaneId),
+      laneType: 'valueRoll'
     }
   }
 
@@ -404,7 +448,30 @@ function sortLaneClips(entry) {
     return
   }
 
+  if (entry.laneType === 'valueRoll') {
+    sortValueRollTrackClips(entry.lane)
+    return
+  }
+
   sortTrackClips(entry.lane)
+}
+
+function hasPasteTargetForClipboard(clipboard, tracks, variableTracks, valueRollTracks) {
+  if (!clipboard?.clips?.length) {
+    return false
+  }
+
+  return clipboard.clips.some((clipboardClip) => {
+    if (clipboardClip?.sourceLaneType === 'variable') {
+      return Boolean(variableTracks.length)
+    }
+
+    if (clipboardClip?.sourceLaneType === 'valueRoll') {
+      return Boolean(valueRollTracks.length)
+    }
+
+    return Boolean(tracks.length)
+  })
 }
 
 export const useDawStore = defineStore('dawStore', {
@@ -412,7 +479,12 @@ export const useDawStore = defineStore('dawStore', {
 
   getters: {
     canPasteClipsAtPlayhead: (state) =>
-      Boolean(state.clipClipboard?.clips?.length && (state.tracks.length || state.variableTracks.length)),
+      hasPasteTargetForClipboard(
+        state.clipClipboard,
+        state.tracks,
+        state.variableTracks,
+        state.valueRollTracks
+      ),
     getAutomationLaneByAudioEffectParam: (state) => (effectId, paramKey) =>
       getAutomationLaneByAudioEffectParam(state.automationLanes, effectId, paramKey),
     getAutomationLaneById: (state) => (laneId) => findAutomationLaneById(state.automationLanes, laneId),
@@ -1084,12 +1156,14 @@ export const useDawStore = defineStore('dawStore', {
       const selectedClipEntries = collectSelectedClipEntries(
         this.tracks,
         this.variableTracks,
+        this.valueRollTracks,
         this.selectedClipIds
       )
       const nextClipboard = buildClipClipboard(
         selectedClipEntries,
         this.tracks,
         this.variableTracks,
+        this.valueRollTracks,
         this.formulas
       )
 
@@ -1106,11 +1180,17 @@ export const useDawStore = defineStore('dawStore', {
         return this.copySelectedClips()
       }
 
-      const selectedClipEntries = collectSelectedClipEntries(this.tracks, this.variableTracks, [clipId])
+      const selectedClipEntries = collectSelectedClipEntries(
+        this.tracks,
+        this.variableTracks,
+        this.valueRollTracks,
+        [clipId]
+      )
       const nextClipboard = buildClipClipboard(
         selectedClipEntries,
         this.tracks,
         this.variableTracks,
+        this.valueRollTracks,
         this.formulas
       )
 
@@ -1130,7 +1210,10 @@ export const useDawStore = defineStore('dawStore', {
       return this.recordHistoryStep('paste-clips', () => {
         const clipboard = this.clipClipboard
 
-        if (!clipboard?.clips?.length || (!this.tracks.length && !this.variableTracks.length)) {
+        if (
+          !clipboard?.clips?.length ||
+          (!this.tracks.length && !this.variableTracks.length && !this.valueRollTracks.length)
+        ) {
           return []
         }
 
@@ -1165,6 +1248,13 @@ export const useDawStore = defineStore('dawStore', {
                 formula: clipboardClip.formula ?? null,
                 start: nextStart
               })
+            : targetEntry.laneType === 'valueRoll'
+              ? createValueRollClip({
+                  duration: clipboardClip.duration,
+                  start: nextStart,
+                  stepSubdivision: clipboardClip.stepSubdivision,
+                  values: clipboardClip.values
+                })
             : createTrackClip({
                 duration: clipboardClip.duration,
                 formula: referencedFormula ? null : clipboardClip.formula ?? null,
@@ -1372,6 +1462,72 @@ export const useDawStore = defineStore('dawStore', {
       })
     },
 
+    addValueRollTrack() {
+      return this.recordHistoryStep('add-value-roll-track', () => {
+        const nextValueRollTrack = createValueRollTrack({
+          name: getNextValueRollTrackName(this.valueRollTracks)
+        })
+
+        this.valueRollTracks.push(nextValueRollTrack)
+        return nextValueRollTrack.id
+      })
+    },
+
+    ensureInitializedValueRollTracks(valueRollInitializers = {}) {
+      if (!valueRollInitializers || typeof valueRollInitializers !== 'object') {
+        return []
+      }
+
+      const createdValueRollTrackIds = []
+
+      for (const [variableTrackName, initializer] of Object.entries(valueRollInitializers)) {
+        if (
+          typeof variableTrackName !== 'string' ||
+          !variableTrackName ||
+          !isNumericValueRollInitializer(initializer)
+        ) {
+          continue
+        }
+
+        const existingValueRollTrack = findValueRollTrackByVariableName(
+          this.valueRollTracks,
+          variableTrackName
+        )
+
+        if (existingValueRollTrack) {
+          if (!existingValueRollTrack.clips.some((clip) => clip.start === 0)) {
+            existingValueRollTrack.clips.push(createValueRollClip({
+              duration: DEFAULT_FORMULA_DROP_DURATION,
+              start: 0,
+              values: createConstantValueRollValues(initializer, DEFAULT_FORMULA_DROP_DURATION)
+            }))
+            sortValueRollTrackClips(existingValueRollTrack)
+          }
+
+          continue
+        }
+
+        const nextValueRollTrack = createValueRollTrack({
+          binding: {
+            type: 'variable',
+            variableName: variableTrackName
+          },
+          name: variableTrackName
+        })
+
+        nextValueRollTrack.clips.push(createValueRollClip({
+          duration: DEFAULT_FORMULA_DROP_DURATION,
+          start: 0,
+          values: createConstantValueRollValues(initializer, DEFAULT_FORMULA_DROP_DURATION)
+        }))
+        sortValueRollTrackClips(nextValueRollTrack)
+        this.valueRollTracks.unshift(nextValueRollTrack)
+        createdValueRollTrackIds.push(nextValueRollTrack.id)
+      }
+
+      return createdValueRollTrackIds
+    },
+
     ensureInitializedVariableTracks(variableTrackInitializers = {}) {
       if (!variableTrackInitializers || typeof variableTrackInitializers !== 'object') {
         return []
@@ -1380,7 +1536,12 @@ export const useDawStore = defineStore('dawStore', {
       const createdVariableTrackNames = []
 
       for (const [variableTrackName, initializer] of Object.entries(variableTrackInitializers)) {
-        if (typeof variableTrackName !== 'string' || !variableTrackName || findVariableTrack(this.variableTracks, variableTrackName)) {
+        if (
+          typeof variableTrackName !== 'string' ||
+          !variableTrackName ||
+          findVariableTrack(this.variableTracks, variableTrackName) ||
+          findValueRollTrackByVariableName(this.valueRollTracks, variableTrackName)
+        ) {
           continue
         }
 
@@ -1414,6 +1575,39 @@ export const useDawStore = defineStore('dawStore', {
         )
 
         if (removedVariableTrack.clips.some((clip) => clip.id === this.editingClipId)) {
+          this.editingClipId = null
+        }
+      })
+    },
+
+    renameValueRollTrack(valueRollTrackId, nextName) {
+      return this.recordHistoryStep('rename-value-roll-track', () => {
+        const valueRollTrack = findValueRollTrack(this.valueRollTracks, valueRollTrackId)
+
+        if (!valueRollTrack) {
+          return
+        }
+
+        valueRollTrack.name = normalizeValueRollTrackName(nextName, valueRollTrack.name)
+      })
+    },
+
+    removeValueRollTrack(valueRollTrackId) {
+      return this.recordHistoryStep('remove-value-roll-track', () => {
+        const valueRollTrackIndex = findValueRollTrackIndex(this.valueRollTracks, valueRollTrackId)
+
+        if (valueRollTrackIndex === -1) {
+          return
+        }
+
+        const [removedValueRollTrack] = this.valueRollTracks.splice(valueRollTrackIndex, 1)
+        const removedClipIds = new Set(removedValueRollTrack.clips.map((clip) => clip.id))
+
+        this.setSelectedClips(
+          this.selectedClipIds.filter((selectedClipId) => !removedClipIds.has(selectedClipId))
+        )
+
+        if (removedValueRollTrack.clips.some((clip) => clip.id === this.editingClipId)) {
           this.editingClipId = null
         }
       })
@@ -1597,6 +1791,26 @@ export const useDawStore = defineStore('dawStore', {
       return nextClip.id
     },
 
+    addValueRollClip(valueRollTrackId, clip) {
+      const valueRollTrack = findValueRollTrack(this.valueRollTracks, valueRollTrackId)
+
+      if (!valueRollTrack) {
+        return null
+      }
+
+      const nextClip = createValueRollClip({
+        ...clip,
+        values: clip.values ?? createEmptyValueRollValues(clip.duration, clip.stepSubdivision)
+      })
+
+      valueRollTrack.clips.push(nextClip)
+      sortValueRollTrackClips(valueRollTrack)
+      this.setSelectedClips([nextClip.id])
+      this.selectedTrackId = null
+      this.selectedFormulaId = null
+      return nextClip.id
+    },
+
     updateClip(trackId, clipId, updates) {
       const track = findTrack(this.tracks, trackId)
 
@@ -1636,8 +1850,36 @@ export const useDawStore = defineStore('dawStore', {
       this.selectedFormulaId = null
     },
 
+    updateValueRollClip(valueRollTrackId, clipId, updates) {
+      const valueRollTrack = findValueRollTrack(this.valueRollTracks, valueRollTrackId)
+
+      if (!valueRollTrack) {
+        return
+      }
+
+      const clip = findClip(valueRollTrack, clipId)
+
+      if (!clip) {
+        return
+      }
+
+      const nextDuration =
+        typeof updates?.duration !== 'undefined' ? updates.duration : clip.duration
+      const nextStepSubdivision =
+        typeof updates?.stepSubdivision !== 'undefined' ? updates.stepSubdivision : clip.stepSubdivision
+
+      Object.assign(clip, {
+        ...updates,
+        stepSubdivision: typeof nextStepSubdivision === 'number' ? nextStepSubdivision : clip.stepSubdivision,
+        values: Array.isArray(updates?.values)
+          ? normalizeValueRollValues(updates.values, nextDuration, nextStepSubdivision)
+          : clip.values
+      })
+      this.selectedFormulaId = null
+    },
+
     saveClipFormulaDraft(clipId, draft) {
-      const result = findTimelineClip(this.tracks, this.variableTracks, clipId)
+      const result = findTimelineClip(this.tracks, this.variableTracks, this.valueRollTracks, clipId)
 
       if (!result) {
         return
@@ -1646,6 +1888,10 @@ export const useDawStore = defineStore('dawStore', {
       const clip = result.clip
 
       if (!clip) {
+        return
+      }
+
+      if (result.laneType === 'valueRoll') {
         return
       }
 
@@ -1662,7 +1908,7 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     saveClipFormulaDraftAndName(clipId, draft) {
-      const result = findTimelineClip(this.tracks, this.variableTracks, clipId)
+      const result = findTimelineClip(this.tracks, this.variableTracks, this.valueRollTracks, clipId)
 
       if (!result) {
         return
@@ -1671,6 +1917,10 @@ export const useDawStore = defineStore('dawStore', {
       const clip = result.clip
 
       if (!clip) {
+        return
+      }
+
+      if (result.laneType === 'valueRoll') {
         return
       }
 
@@ -1688,6 +1938,20 @@ export const useDawStore = defineStore('dawStore', {
         clip.formula = draft.code
         clip.formulaName = draft.name
       }
+    },
+
+    saveValueRollClipDraft(clipId, draft) {
+      const result = findTimelineClip(this.tracks, this.variableTracks, this.valueRollTracks, clipId)
+
+      if (!result || result.laneType !== 'valueRoll' || !result.clip) {
+        return
+      }
+
+      result.clip.values = normalizeValueRollValues(
+        draft?.values,
+        result.clip.duration,
+        result.clip.stepSubdivision
+      )
     },
 
     setEditingFormula(formulaId) {
@@ -1728,10 +1992,28 @@ export const useDawStore = defineStore('dawStore', {
       clip.start = clampClipStart(variableTrack, clipId, snappedStart)
     },
 
+    moveValueRollClip(valueRollTrackId, clipId, nextStart, shouldSnap = true) {
+      const valueRollTrack = findValueRollTrack(this.valueRollTracks, valueRollTrackId)
+
+      if (!valueRollTrack) {
+        return
+      }
+
+      const clip = findClip(valueRollTrack, clipId)
+
+      if (!clip) {
+        return
+      }
+
+      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      clip.start = clampClipStart(valueRollTrack, clipId, snappedStart)
+    },
+
     moveSelectedClips(anchorClipId, nextStart, shouldSnap = true) {
       const selectedClipEntries = collectSelectedClipEntries(
         this.tracks,
         this.variableTracks,
+        this.valueRollTracks,
         this.selectedClipIds
       )
 
@@ -1795,6 +2077,7 @@ export const useDawStore = defineStore('dawStore', {
       const selectedClipEntries = collectSelectedClipEntries(
         this.tracks,
         this.variableTracks,
+        this.valueRollTracks,
         this.selectedClipIds
       )
 
@@ -1849,6 +2132,24 @@ export const useDawStore = defineStore('dawStore', {
       sortVariableTrackClips(variableTrack)
     },
 
+    placeValueRollClip(valueRollTrackId, clipId, nextStart, shouldSnap = true) {
+      const valueRollTrack = findValueRollTrack(this.valueRollTracks, valueRollTrackId)
+
+      if (!valueRollTrack) {
+        return
+      }
+
+      const clip = findClip(valueRollTrack, clipId)
+
+      if (!clip) {
+        return
+      }
+
+      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      clip.start = clampClipPlacementStart(valueRollTrack, snappedStart, clip.duration, clipId)
+      sortValueRollTrackClips(valueRollTrack)
+    },
+
     moveClipToTrack(sourceTrackId, targetTrackId, clipId, nextStart, shouldSnap = true) {
       const sourceTrack = findTrack(this.tracks, sourceTrackId)
       const targetTrack = findTrack(this.tracks, targetTrackId)
@@ -1877,6 +2178,34 @@ export const useDawStore = defineStore('dawStore', {
       targetTrack.clips.push(clip)
       sortTrackClips(targetTrack)
       this.selectedTrackId = targetTrackId
+    },
+
+    moveValueRollClipToTrack(sourceValueRollTrackId, targetValueRollTrackId, clipId, nextStart, shouldSnap = true) {
+      const sourceValueRollTrack = findValueRollTrack(this.valueRollTracks, sourceValueRollTrackId)
+      const targetValueRollTrack = findValueRollTrack(this.valueRollTracks, targetValueRollTrackId)
+
+      if (!sourceValueRollTrack || !targetValueRollTrack) {
+        return
+      }
+
+      const clipIndex = findClipIndex(sourceValueRollTrack, clipId)
+
+      if (clipIndex === -1) {
+        return
+      }
+
+      if (sourceValueRollTrackId === targetValueRollTrackId) {
+        this.moveValueRollClip(sourceValueRollTrackId, clipId, nextStart, shouldSnap)
+        return
+      }
+
+      const [clip] = sourceValueRollTrack.clips.splice(clipIndex, 1)
+      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      const clampedStart = clampClipPlacementStart(targetValueRollTrack, snappedStart, clip.duration)
+
+      clip.start = clampedStart
+      targetValueRollTrack.clips.push(clip)
+      sortValueRollTrackClips(targetValueRollTrack)
     },
 
     resizeClipStart(trackId, clipId, nextStart, shouldSnap = true) {
@@ -1921,6 +2250,36 @@ export const useDawStore = defineStore('dawStore', {
       clip.duration = clipEnd - clampedStart
     },
 
+    resizeValueRollClipStart(valueRollTrackId, clipId, nextStart, shouldSnap = true) {
+      const valueRollTrack = findValueRollTrack(this.valueRollTracks, valueRollTrackId)
+
+      if (!valueRollTrack) {
+        return
+      }
+
+      const clip = findClip(valueRollTrack, clipId)
+
+      if (!clip) {
+        return
+      }
+
+      const previousStart = clip.start
+      const previousDuration = clip.duration
+      const clipEnd = getClipEnd(clip)
+      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      const clampedStart = clampClipResizeStart(valueRollTrack, clipId, snappedStart)
+
+      clip.start = clampedStart
+      clip.duration = clipEnd - clampedStart
+      clip.values = resizeValueRollValues(clip.values, {
+        nextDuration: clip.duration,
+        nextStart: clip.start,
+        previousDuration,
+        previousStart,
+        stepSubdivision: clip.stepSubdivision
+      })
+    },
+
     resizeClipEnd(trackId, clipId, nextEnd, shouldSnap = true) {
       const track = findTrack(this.tracks, trackId)
 
@@ -1957,6 +2316,33 @@ export const useDawStore = defineStore('dawStore', {
       const clampedEnd = clampClipResizeEnd(variableTrack, clipId, snappedEnd)
 
       clip.duration = clampedEnd - clip.start
+    },
+
+    resizeValueRollClipEnd(valueRollTrackId, clipId, nextEnd, shouldSnap = true) {
+      const valueRollTrack = findValueRollTrack(this.valueRollTracks, valueRollTrackId)
+
+      if (!valueRollTrack) {
+        return
+      }
+
+      const clip = findClip(valueRollTrack, clipId)
+
+      if (!clip) {
+        return
+      }
+
+      const previousDuration = clip.duration
+      const snappedEnd = getDraggedTick(nextEnd, shouldSnap)
+      const clampedEnd = clampClipResizeEnd(valueRollTrack, clipId, snappedEnd)
+
+      clip.duration = clampedEnd - clip.start
+      clip.values = resizeValueRollValues(clip.values, {
+        nextDuration: clip.duration,
+        nextStart: clip.start,
+        previousDuration,
+        previousStart: clip.start,
+        stepSubdivision: clip.stepSubdivision
+      })
     },
 
     duplicateClip(trackId, clipId) {
@@ -2011,10 +2397,35 @@ export const useDawStore = defineStore('dawStore', {
       return duplicateClipId
     },
 
+    duplicateValueRollClip(valueRollTrackId, clipId) {
+      const valueRollTrack = findValueRollTrack(this.valueRollTracks, valueRollTrackId)
+
+      if (!valueRollTrack) {
+        return null
+      }
+
+      const sourceClip = findClip(valueRollTrack, clipId)
+
+      if (!sourceClip) {
+        return null
+      }
+
+      const duplicateClip = createDuplicateClip(sourceClip)
+      const duplicateClipId = duplicateClip.id
+
+      valueRollTrack.clips.push(duplicateClip)
+      sortValueRollTrackClips(valueRollTrack)
+      this.selectedTrackId = null
+      this.selectedFormulaId = null
+      this.setSelectedClips([duplicateClipId])
+      return duplicateClipId
+    },
+
     duplicateSelectedClips(anchorClipId) {
       const selectedClipEntries = collectSelectedClipEntries(
         this.tracks,
         this.variableTracks,
+        this.valueRollTracks,
         this.selectedClipIds
       )
 
@@ -2042,7 +2453,12 @@ export const useDawStore = defineStore('dawStore', {
 
       const duplicatedAnchorClipId = duplicatedClipIdBySourceId.get(anchorClipId) ?? duplicatedClipIds[0] ?? null
       const anchorEntry = duplicatedAnchorClipId
-        ? collectSelectedClipEntries(this.tracks, this.variableTracks, [duplicatedAnchorClipId])[0]
+        ? collectSelectedClipEntries(
+            this.tracks,
+            this.variableTracks,
+            this.valueRollTracks,
+            [duplicatedAnchorClipId]
+          )[0]
         : null
 
       if (anchorEntry) {
@@ -2139,7 +2555,7 @@ export const useDawStore = defineStore('dawStore', {
 
     removeClip(clipId) {
       return this.recordHistoryStep('remove-clip', () => {
-        const result = findTimelineClip(this.tracks, this.variableTracks, clipId)
+        const result = findTimelineClip(this.tracks, this.variableTracks, this.valueRollTracks, clipId)
 
         if (!result) {
           return
@@ -2160,7 +2576,12 @@ export const useDawStore = defineStore('dawStore', {
         }
 
         for (const clipId of selectedClipIds) {
-          const result = findTimelineClip(this.tracks, this.variableTracks, clipId)
+          const result = findTimelineClip(
+            this.tracks,
+            this.variableTracks,
+            this.valueRollTracks,
+            clipId
+          )
 
           if (!result) {
             continue

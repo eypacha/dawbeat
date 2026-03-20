@@ -22,6 +22,7 @@ import {
   normalizeWidth
 } from '@/services/audioEffectService'
 import { applyEvalEffects } from '@/services/evalEffectService'
+import { getValueRollEventTicks } from '@/services/valueRollService'
 import { DEFAULT_SAMPLE_RATE } from '@/utils/audioSettings'
 import { validateFormula } from '@/utils/formulaValidation'
 import { getClipEnd, samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
@@ -92,6 +93,7 @@ function renderTimelineChannels(
   const boundaries = collectTimelineBoundaries(
     state.tracks,
     state.variableTracks,
+    state.valueRollTracks,
     state.tickSize,
     totalSourceSamples
   )
@@ -127,7 +129,8 @@ function renderTimelineChannels(
       timeTicks,
       state.tracks,
       state.formulas,
-      state.variableTracks
+      state.variableTracks,
+      state.valueRollTracks
     )
     const expressions = getRenderableExpressions(activeFormula, state.evalEffects)
 
@@ -884,7 +887,7 @@ function applyMasterGainToChannelData(channelData, state, sampleRate) {
   })
 }
 
-function collectTimelineBoundaries(tracks, variableTracks, tickSize, totalSamples) {
+function collectTimelineBoundaries(tracks, variableTracks, valueRollTracks, tickSize, totalSamples) {
   const boundaries = new Set([0, totalSamples])
 
   for (const track of tracks) {
@@ -898,6 +901,17 @@ function collectTimelineBoundaries(tracks, variableTracks, tickSize, totalSample
     for (const clip of variableTrack.clips) {
       boundaries.add(clampSampleBoundary(ticksToSamples(clip.start, tickSize), totalSamples))
       boundaries.add(clampSampleBoundary(ticksToSamples(getClipEnd(clip), tickSize), totalSamples))
+    }
+  }
+
+  for (const valueRollTrack of valueRollTracks ?? []) {
+    for (const clip of valueRollTrack.clips) {
+      boundaries.add(clampSampleBoundary(ticksToSamples(clip.start, tickSize), totalSamples))
+      boundaries.add(clampSampleBoundary(ticksToSamples(getClipEnd(clip), tickSize), totalSamples))
+
+      for (const eventTick of getValueRollEventTicks(clip)) {
+        boundaries.add(clampSampleBoundary(ticksToSamples(eventTick, tickSize), totalSamples))
+      }
     }
   }
 

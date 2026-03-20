@@ -63,11 +63,22 @@
               Init {{ variableTrackName }}
             </span>
 
-            <Input
-              :model-value="getVariableInitializerDraft(variableTrackName)"
-              placeholder="0"
-              @update:model-value="setVariableInitializerDraft(variableTrackName, $event)"
-            />
+            <div class="flex items-center gap-2">
+              <Input
+                :model-value="getVariableInitializerDraft(variableTrackName)"
+                placeholder="0"
+                @update:model-value="setVariableInitializerDraft(variableTrackName, $event)"
+              />
+
+              <Button
+                v-if="canConvertInitializerToValueRoll(variableTrackName)"
+                variant="ghost"
+                size="xs"
+                @click="sendInitializerToValueRoll(variableTrackName)"
+              >
+                To Value Roll
+              </Button>
+            </div>
           </label>
         </div>
 
@@ -89,6 +100,7 @@ import Input from '@/components/ui/Input.vue'
 import Modal from '@/components/ui/Modal.vue'
 import { useDawStore } from '@/stores/dawStore'
 import { extractAutoVariableTrackNames, getFormulaAllowedIdentifiers } from '@/services/variableTrackService'
+import { isNumericValueRollInitializer } from '@/services/valueRollService'
 import { renderFormulaTokensToHtmlWithOptions } from '@/utils/formulaTokenizer'
 import { validateFormulaWithOptions } from '@/utils/formulaValidation'
 
@@ -122,16 +134,21 @@ const props = defineProps({
 const emit = defineEmits(['close', 'eval', 'save'])
 
 const dawStore = useDawStore()
-const { variableTracks } = storeToRefs(dawStore)
+const { valueRollTracks, variableTracks } = storeToRefs(dawStore)
 const draftName = ref(props.initialName)
 const draftValue = ref(props.initialValue)
 const formulaValid = ref(true)
 const highlightLayerElement = ref(null)
 const textareaElement = ref(null)
 const variableInitializerDrafts = ref({})
-const allowedIdentifiers = computed(() => getFormulaAllowedIdentifiers(variableTracks.value))
+const allowedIdentifiers = computed(() => getFormulaAllowedIdentifiers(variableTracks.value, valueRollTracks.value))
 const existingVariableTrackNames = computed(
-  () => new Set(variableTracks.value.map((variableTrack) => variableTrack.name).filter(Boolean))
+  () => new Set([
+    ...variableTracks.value.map((variableTrack) => variableTrack.name).filter(Boolean),
+    ...valueRollTracks.value
+      .map((valueRollTrack) => valueRollTrack?.binding?.type === 'variable' ? valueRollTrack.binding.variableName : '')
+      .filter(Boolean)
+  ])
 )
 const missingAutoVariableTrackNames = computed(() =>
   extractAutoVariableTrackNames(draftValue.value)
@@ -245,6 +262,22 @@ function setVariableInitializerDraft(variableTrackName, value) {
     ...variableInitializerDrafts.value,
     [variableTrackName]: value
   }
+}
+
+function canConvertInitializerToValueRoll(variableTrackName) {
+  return isNumericValueRollInitializer(getVariableInitializerDraft(variableTrackName))
+}
+
+function sendInitializerToValueRoll(variableTrackName) {
+  if (!canConvertInitializerToValueRoll(variableTrackName)) {
+    return
+  }
+
+  dawStore.recordHistoryStep('create-value-roll-from-formula-init', () => {
+    dawStore.ensureInitializedValueRollTracks({
+      [variableTrackName]: getVariableInitializerDraft(variableTrackName)
+    })
+  })
 }
 
 function syncFormulaValidity() {

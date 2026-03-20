@@ -8,7 +8,10 @@ import {
   createTrackId,
   createVariableTrack,
   createVariableTrackClip,
+  createValueRollClip,
+  createValueRollTrack,
   sortTrackClips,
+  sortValueRollTrackClips,
   sortVariableTrackClips
 } from '@/services/dawStoreService'
 import { createEvalEffect, createStereoOffsetEvalEffect } from '@/services/evalEffectService'
@@ -19,23 +22,30 @@ import {
   getNextVariableTrackName,
   normalizeVariableTrackName
 } from '@/services/variableTrackService'
+import {
+  getBoundValueRollVariableNames,
+  normalizeValueRollStepSubdivision,
+  normalizeValueRollTrackName,
+  normalizeValueRollValues
+} from '@/services/valueRollService'
 import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
 import { DEFAULT_TRACK_COLOR, getTrackColor } from '@/utils/colorUtils'
 import { BASE_TICK_SIZE, MAX_ZOOM, MIN_ZOOM, TIMELINE_SNAP_SUBDIVISIONS, clamp } from '@/utils/timeUtils'
 
 const PROJECT_STORAGE_KEY = 'dawbeat-project'
-const PROJECT_VERSION = 9
+const PROJECT_VERSION = 11
 const SAVE_DEBOUNCE_MS = 400
 const DEFAULT_LOOP_START = 0
 const DEFAULT_LOOP_END = 16
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
-const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, PROJECT_VERSION])
+const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, PROJECT_VERSION])
 
 export function serializeProject(state) {
   return normalizeProjectPayload({
     version: PROJECT_VERSION,
     tracks: state.tracks,
     variableTracks: state.variableTracks,
+    valueRollTracks: state.valueRollTracks,
     formulas: state.formulas,
     zoom: state.zoom,
     loopStart: state.loopStart,
@@ -184,6 +194,12 @@ function normalizeProjectPayload(project) {
         .map((variableTrack) => normalizeVariableTrack(variableTrack, usedVariableTrackNames))
         .filter(Boolean)
     : []
+  const valueRollTracks = Array.isArray(project.valueRollTracks)
+    ? project.valueRollTracks
+        .map((valueRollTrack) => normalizeValueRollTrack(valueRollTrack, project.version))
+        .filter(Boolean)
+    : []
+  const boundValueRollVariableNames = new Set(getBoundValueRollVariableNames(valueRollTracks))
   const requiredAutoVariableTrackNames = collectAutoVariableTrackNames([
     ...formulas.map((formula) => formula.code),
     ...collectTrackInlineFormulas(tracks),
@@ -191,7 +207,7 @@ function normalizeProjectPayload(project) {
   ])
 
   for (const variableTrackName of requiredAutoVariableTrackNames) {
-    if (usedVariableTrackNames.has(variableTrackName)) {
+    if (usedVariableTrackNames.has(variableTrackName) || boundValueRollVariableNames.has(variableTrackName)) {
       continue
     }
 
@@ -209,6 +225,7 @@ function normalizeProjectPayload(project) {
     version: PROJECT_VERSION,
     tracks,
     variableTracks,
+    valueRollTracks,
     formulas,
     zoom: clamp(normalizeNumber(project.zoom, 1), MIN_ZOOM, MAX_ZOOM),
     loopStart,
@@ -304,6 +321,26 @@ function normalizeVariableTrack(variableTrack, usedNames) {
   return nextVariableTrack
 }
 
+function normalizeValueRollTrack(valueRollTrack, projectVersion) {
+  if (!isRecord(valueRollTrack)) {
+    return null
+  }
+
+  const nextValueRollTrack = createValueRollTrack({
+    id: typeof valueRollTrack.id === 'string' && valueRollTrack.id ? valueRollTrack.id : undefined,
+    name: normalizeValueRollTrackName(valueRollTrack.name),
+    binding: valueRollTrack.binding,
+    clips: Array.isArray(valueRollTrack.clips)
+      ? valueRollTrack.clips
+          .map((clip) => normalizeValueRollClip(clip, projectVersion))
+          .filter(Boolean)
+      : []
+  })
+
+  sortValueRollTrackClips(nextValueRollTrack)
+  return nextValueRollTrack
+}
+
 function normalizeClip(clip, formulaIds) {
   if (!isRecord(clip)) {
     return null
@@ -333,6 +370,31 @@ function normalizeVariableClip(clip) {
     formula: typeof clip.formula === 'string' ? clip.formula : undefined,
     start: normalizeNonNegativeNumber(clip.start, 0),
     duration: normalizePositiveNumber(clip.duration, 4)
+  })
+}
+
+function normalizeValueRollClip(clip, projectVersion) {
+  if (!isRecord(clip)) {
+    return null
+  }
+
+  const duration = normalizePositiveNumber(clip.duration, 4)
+  const stepSubdivision = normalizeValueRollStepSubdivision(clip.stepSubdivision)
+  const values = normalizeValueRollValues(
+    clip.values,
+    duration,
+    stepSubdivision,
+    projectVersion === 10
+      ? { mode: 'legacyDense' }
+      : undefined
+  )
+
+  return createValueRollClip({
+    id: typeof clip.id === 'string' && clip.id ? clip.id : undefined,
+    start: normalizeNonNegativeNumber(clip.start, 0),
+    duration,
+    stepSubdivision,
+    values
   })
 }
 

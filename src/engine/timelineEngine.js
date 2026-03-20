@@ -4,7 +4,7 @@ import { normalizeTrackUnionOperator } from '@/services/trackUnionOperatorServic
 import { getActiveVariableDefinitions, prependVariableDefinitions } from '@/services/variableTrackService'
 import { getClipEnd } from '@/utils/timeUtils'
 
-export function getActiveFormula(timeTicks, tracks, formulas, variableTracks = []) {
+export function getActiveFormula(timeTicks, tracks, formulas, variableTracks = [], valueRollTracks = []) {
   const activeTracks = []
 
   for (const track of tracks) {
@@ -40,7 +40,7 @@ export function getActiveFormula(timeTicks, tracks, formulas, variableTracks = [
 
   return prependVariableDefinitions(
     combinedExpression,
-    getActiveVariableDefinitions(timeTicks, variableTracks)
+    getActiveVariableDefinitions(timeTicks, variableTracks, valueRollTracks)
   )
 }
 

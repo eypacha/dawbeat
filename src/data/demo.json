@@ -1,5 +1,5 @@
 {
-  "version": 9,
+  "version": 11,
   "tracks": [
     {
       "id": "c7f7a6b1-a6c7-4dac-bd13-c34a8051f9e6",
@@ -311,6 +311,7 @@
     }
   ],
   "variableTracks": [],
+  "valueRollTracks": [],
   "formulas": [
     {
       "id": "c196a3aa-6cf5-4aac-b199-9750ee6fbc59",

@@ -62,6 +62,25 @@
       @save="saveFormulaDialog"
     />
 
+    <ValueRollClipEditorDialog
+      :duration="editingValueRollClip?.duration ?? 1"
+      :initial-held-value="editingValueRollInitialHeldValue"
+      :initial-values="editingValueRollClip?.values ?? []"
+      :step-subdivision="editingValueRollClip?.stepSubdivision ?? 4"
+      :visible="isValueRollDialogVisible"
+      @close="closeValueRollDialog"
+      @save="saveValueRollDialog"
+    />
+
+    <TextInputDialog
+      :initial-value="valueRollTrackNameDialog.trackName"
+      label="Name"
+      title="Rename Value Roll"
+      :visible="valueRollTrackNameDialog.visible"
+      @cancel="closeValueRollTrackNameDialog"
+      @confirm="confirmValueRollTrackName"
+    />
+
     <SnackbarContainer />
   </div>
 </template>
@@ -80,11 +99,14 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import ContextMenu from '@/components/ui/ContextMenu.vue'
 import FormulaInputDialog from '@/components/ui/FormulaInputDialog.vue'
 import SnackbarContainer from '@/components/ui/SnackbarContainer.vue'
+import TextInputDialog from '@/components/ui/TextInputDialog.vue'
 import TrackPresentationDialog from '@/components/ui/TrackPresentationDialog.vue'
+import ValueRollClipEditorDialog from '@/components/ui/ValueRollClipEditorDialog.vue'
 import { provideContextMenu } from '@/composables/useContextMenu'
 import { getFormulaById, resolveClipFormula, resolveClipFormulaName } from '@/services/formulaService'
 import { initKeyboardShortcuts } from '@/services/keyboardShortcuts'
 import { findTimelineClip } from '@/services/dawStoreService'
+import { getValueRollValueAtTime } from '@/services/valueRollService'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
 import { TRACK_COLOR_PALETTE } from '@/utils/colorUtils'
@@ -99,6 +121,11 @@ const confirmDialog = reactive({
 const trackPresentationDialog = reactive({
   colors: TRACK_COLOR_PALETTE,
   trackColor: TRACK_COLOR_PALETTE[0],
+  trackId: null,
+  trackName: '',
+  visible: false
+})
+const valueRollTrackNameDialog = reactive({
   trackId: null,
   trackName: '',
   visible: false
@@ -118,6 +145,7 @@ const {
   selectedClipIds,
   showEvaluatedPanel,
   tracks,
+  valueRollTracks,
   variableTracks
 } = storeToRefs(dawStore)
 
@@ -126,11 +154,15 @@ const editingClipRecord = computed(() => {
     return null
   }
 
-  return findTimelineClip(tracks.value, variableTracks.value, editingClipId.value)
+  return findTimelineClip(tracks.value, variableTracks.value, valueRollTracks.value, editingClipId.value)
 })
 
 const editingClipFormula = computed(() => {
   if (!editingClipRecord.value?.clip) {
+    return ''
+  }
+
+  if (editingClipRecord.value.laneType === 'valueRoll') {
     return ''
   }
 
@@ -142,7 +174,7 @@ const editingClipFormula = computed(() => {
 })
 
 const editingClipFormulaName = computed(() => {
-  if (!editingClipRecord.value?.clip || editingClipRecord.value.laneType === 'variable') {
+  if (!editingClipRecord.value?.clip || editingClipRecord.value.laneType !== 'track') {
     return ''
   }
 
@@ -165,7 +197,26 @@ const editingLibraryFormulaName = computed(() => {
   return getFormulaById(formulas.value, editingFormulaId.value)?.name ?? ''
 })
 
-const isFormulaDialogVisible = computed(() => Boolean(editingClipId.value || editingFormulaId.value))
+const editingValueRollClip = computed(() =>
+  editingClipRecord.value?.laneType === 'valueRoll' ? editingClipRecord.value.clip : null
+)
+const editingValueRollInitialHeldValue = computed(() => {
+  if (editingClipRecord.value?.laneType !== 'valueRoll') {
+    return null
+  }
+
+  return getValueRollValueAtTime(
+    editingClipRecord.value.clip.start,
+    editingClipRecord.value.lane,
+    null
+  )
+})
+const isFormulaDialogVisible = computed(
+  () => Boolean(editingFormulaId.value || (editingClipId.value && editingClipRecord.value?.laneType !== 'valueRoll'))
+)
+const isValueRollDialogVisible = computed(
+  () => Boolean(editingClipId.value && editingClipRecord.value?.laneType === 'valueRoll')
+)
 
 const editingFormulaValue = computed(() => {
   if (editingClipId.value) {
@@ -282,6 +333,16 @@ function handleContextMenuSelect(action, item) {
     return
   }
 
+  if (action === 'create-value-roll-clip-at-position') {
+    dawStore.recordHistoryStep('create-value-roll-clip-at-position', () => {
+      dawStore.addValueRollClip(item.valueRollTrackId, {
+        duration: item.duration ?? 1,
+        start: item.start ?? 0
+      })
+    })
+    return
+  }
+
   if (action === 'edit-clip') {
     dawStore.setEditingClip(item.clipId)
     return
@@ -338,6 +399,11 @@ function handleContextMenuSelect(action, item) {
     return
   }
 
+  if (action === 'delete-value-roll-track') {
+    dawStore.removeValueRollTrack(item.valueRollTrackId)
+    return
+  }
+
   if (action === 'add-clip-formula-to-library') {
     dawStore.addClipFormulaToLibrary(item.trackId, item.clipId)
     return
@@ -358,6 +424,13 @@ function handleContextMenuSelect(action, item) {
     trackPresentationDialog.trackId = item.trackId
     trackPresentationDialog.trackName = item.trackName ?? ''
     trackPresentationDialog.visible = true
+    return
+  }
+
+  if (action === 'edit-value-roll-track-name') {
+    valueRollTrackNameDialog.trackId = item.valueRollTrackId ?? null
+    valueRollTrackNameDialog.trackName = item.valueRollTrackName ?? ''
+    valueRollTrackNameDialog.visible = true
     return
   }
 }
@@ -396,12 +469,31 @@ function confirmTrackPresentation(nextTrackPresentation) {
   closeTrackPresentationDialog()
 }
 
+function closeValueRollTrackNameDialog() {
+  valueRollTrackNameDialog.trackId = null
+  valueRollTrackNameDialog.trackName = ''
+  valueRollTrackNameDialog.visible = false
+}
+
+function confirmValueRollTrackName(nextName) {
+  if (valueRollTrackNameDialog.trackId) {
+    dawStore.renameValueRollTrack(valueRollTrackNameDialog.trackId, nextName)
+  }
+
+  closeValueRollTrackNameDialog()
+}
+
 function closeFormulaDialog() {
   dawStore.setEditingClip(null)
   dawStore.setEditingFormula(null)
 }
 
+function closeValueRollDialog() {
+  dawStore.setEditingClip(null)
+}
+
 function evaluateFormulaDialog(nextDraft) {
+  dawStore.ensureInitializedValueRollTracks(nextDraft.valueRollInitializers)
   dawStore.ensureInitializedVariableTracks(nextDraft.variableInitializers)
 
   if (editingClipId.value) {
@@ -420,6 +512,7 @@ function evaluateFormulaDialog(nextDraft) {
 function saveFormulaDialog(nextDraft) {
   if (editingClipId.value) {
     dawStore.recordHistoryStep('save-clip-formula', () => {
+      dawStore.ensureInitializedValueRollTracks(nextDraft.valueRollInitializers)
       dawStore.ensureInitializedVariableTracks(nextDraft.variableInitializers)
       dawStore.saveClipFormulaDraftAndName(editingClipId.value, nextDraft)
     })
@@ -429,6 +522,7 @@ function saveFormulaDialog(nextDraft) {
 
   if (editingFormulaId.value) {
     dawStore.recordHistoryStep('save-library-formula', () => {
+      dawStore.ensureInitializedValueRollTracks(nextDraft.valueRollInitializers)
       dawStore.ensureInitializedVariableTracks(nextDraft.variableInitializers)
       dawStore.updateFormula(editingFormulaId.value, {
         code: nextDraft.code,
@@ -437,6 +531,17 @@ function saveFormulaDialog(nextDraft) {
     })
     closeFormulaDialog()
   }
+}
+
+function saveValueRollDialog(nextDraft) {
+  if (!editingClipId.value) {
+    return
+  }
+
+  dawStore.recordHistoryStep('save-value-roll-clip', () => {
+    dawStore.saveValueRollClipDraft(editingClipId.value, nextDraft)
+  })
+  closeValueRollDialog()
 }
 
 onMounted(() => {

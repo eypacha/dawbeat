@@ -1,6 +1,13 @@
 import { DEFAULT_TRACK_COLOR } from '@/utils/colorUtils'
 import { DEFAULT_TRACK_UNION_OPERATOR } from '@/services/trackUnionOperatorService'
 import { DEFAULT_VARIABLE_CLIP_FORMULA, normalizeVariableTrackName } from '@/services/variableTrackService'
+import {
+  createDefaultValueRollBinding,
+  getValueRollBoundVariableName,
+  normalizeValueRollStepSubdivision,
+  normalizeValueRollTrackName,
+  normalizeValueRollValues
+} from '@/services/valueRollService'
 
 export function createClipId() {
   if (globalThis.crypto?.randomUUID) {
@@ -37,12 +44,25 @@ export function createVariableTrack(variableTrack = {}) {
   }
 }
 
+export function createValueRollTrack(valueRollTrack = {}) {
+  return {
+    id: valueRollTrack.id ?? createTrackId(),
+    name: normalizeValueRollTrackName(valueRollTrack.name),
+    binding: createDefaultValueRollBinding(valueRollTrack.binding),
+    clips: Array.isArray(valueRollTrack.clips) ? [...valueRollTrack.clips] : []
+  }
+}
+
 export function sortTrackClips(track) {
   track.clips.sort((leftClip, rightClip) => leftClip.start - rightClip.start)
 }
 
 export function sortVariableTrackClips(variableTrack) {
   sortTrackClips(variableTrack)
+}
+
+export function sortValueRollTrackClips(valueRollTrack) {
+  sortTrackClips(valueRollTrack)
 }
 
 export function findTrack(tracks, trackId) {
@@ -59,6 +79,20 @@ export function findVariableTrack(variableTracks, variableTrackName) {
 
 export function findVariableTrackIndex(variableTracks, variableTrackName) {
   return variableTracks.findIndex((variableTrack) => variableTrack.name === variableTrackName)
+}
+
+export function findValueRollTrack(valueRollTracks, valueRollTrackId) {
+  return valueRollTracks.find((valueRollTrack) => valueRollTrack.id === valueRollTrackId) ?? null
+}
+
+export function findValueRollTrackIndex(valueRollTracks, valueRollTrackId) {
+  return valueRollTracks.findIndex((valueRollTrack) => valueRollTrack.id === valueRollTrackId)
+}
+
+export function findValueRollTrackByVariableName(valueRollTracks, variableName) {
+  return valueRollTracks.find(
+    (valueRollTrack) => getValueRollBoundVariableName(valueRollTrack) === variableName
+  ) ?? null
 }
 
 export function findClip(track, clipId) {
@@ -107,7 +141,25 @@ export function findVariableTrackWithClip(variableTracks, clipId) {
   return null
 }
 
-export function findTimelineClip(tracks, variableTracks, clipId) {
+export function findValueRollTrackWithClip(valueRollTracks, clipId) {
+  for (const valueRollTrack of valueRollTracks) {
+    const clipIndex = findClipIndex(valueRollTrack, clipId)
+
+    if (clipIndex !== -1) {
+      return {
+        clipIndex,
+        track: valueRollTrack
+      }
+    }
+  }
+
+  return null
+}
+
+export function findTimelineClip(tracks, variableTracks, valueRollTracksOrClipId, maybeClipId) {
+  const hasExplicitValueRollTracks = Array.isArray(valueRollTracksOrClipId)
+  const valueRollTracks = hasExplicitValueRollTracks ? valueRollTracksOrClipId : []
+  const clipId = hasExplicitValueRollTracks ? maybeClipId : valueRollTracksOrClipId
   const trackResult = findTrackWithClip(tracks, clipId)
 
   if (trackResult) {
@@ -123,7 +175,19 @@ export function findTimelineClip(tracks, variableTracks, clipId) {
   const variableTrackResult = findVariableTrackWithClip(variableTracks, clipId)
 
   if (!variableTrackResult) {
-    return null
+    const valueRollTrackResult = findValueRollTrackWithClip(valueRollTracks, clipId)
+
+    if (!valueRollTrackResult) {
+      return null
+    }
+
+    return {
+      clip: valueRollTrackResult.track.clips[valueRollTrackResult.clipIndex] ?? null,
+      clipIndex: valueRollTrackResult.clipIndex,
+      lane: valueRollTrackResult.track,
+      laneId: valueRollTrackResult.track.id,
+      laneType: 'valueRoll'
+    }
   }
 
   return {
@@ -154,9 +218,27 @@ export function createVariableTrackClip(clip = {}) {
   })
 }
 
+export function createValueRollClip(clip = {}) {
+  const duration = Number.isFinite(Number(clip.duration)) ? Number(clip.duration) : 4
+  const stepSubdivision = normalizeValueRollStepSubdivision(clip.stepSubdivision)
+
+  return {
+    id: clip.id ?? createClipId(),
+    start: Number.isFinite(Number(clip.start)) ? Number(clip.start) : 0,
+    duration,
+    stepSubdivision,
+    values: normalizeValueRollValues(
+      clip.values,
+      duration,
+      stepSubdivision
+    )
+  }
+}
+
 export function createDuplicateClip(sourceClip) {
   return {
     ...sourceClip,
+    values: Array.isArray(sourceClip?.values) ? [...sourceClip.values] : sourceClip?.values,
     id: createClipId()
   }
 }

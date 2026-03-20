@@ -15,7 +15,7 @@ export function useTransportPlayback() {
   }
 
   const dawStore = useDawStore()
-  const { audioEffects, audioReady, automationLanes, evalEffects, formulas, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, variableTracks } =
+  const { audioEffects, audioReady, automationLanes, evalEffects, formulas, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, valueRollTracks, variableTracks } =
     storeToRefs(dawStore)
 
   let frameId = 0
@@ -50,7 +50,13 @@ export function useTransportPlayback() {
 
       try {
         const loopStartSample = ticksToSamples(loopStart.value, tickSize.value)
-        const loopFormula = getActiveFormula(loopStart.value, tracks.value, formulas.value, variableTracks.value)
+        const loopFormula = getActiveFormula(
+          loopStart.value,
+          tracks.value,
+          formulas.value,
+          variableTracks.value,
+          valueRollTracks.value
+        )
         const loopExpressions = applyEvalEffects(loopFormula, evalEffects.value)
 
         await bytebeatService.seekToSample(loopStartSample, loopExpressions)
@@ -79,7 +85,13 @@ export function useTransportPlayback() {
       }
     }
 
-    const activeFormula = getActiveFormula(timeTicks, tracks.value, formulas.value, variableTracks.value)
+    const activeFormula = getActiveFormula(
+      timeTicks,
+      tracks.value,
+      formulas.value,
+      variableTracks.value,
+      valueRollTracks.value
+    )
     const activeExpressions = applyEvalEffects(activeFormula, evalEffects.value)
 
     dawStore.setTime(timeTicks)
@@ -119,7 +131,13 @@ export function useTransportPlayback() {
 
       const resumeTime = dawStore.time
       const resumeFromPause = resumeTime > 0
-      const initialFormula = getActiveFormula(resumeTime, tracks.value, formulas.value, variableTracks.value)
+      const initialFormula = getActiveFormula(
+        resumeTime,
+        tracks.value,
+        formulas.value,
+        variableTracks.value,
+        valueRollTracks.value
+      )
       const initialExpressions = applyEvalEffects(initialFormula, evalEffects.value)
 
       if (resumeFromPause) {
@@ -200,7 +218,13 @@ export function useTransportPlayback() {
     const targetSample = ticksToSamples(normalizedTime, tickSize.value)
 
     if (playing.value) {
-      const activeFormula = getActiveFormula(normalizedTime, tracks.value, formulas.value, variableTracks.value)
+      const activeFormula = getActiveFormula(
+        normalizedTime,
+        tracks.value,
+        formulas.value,
+        variableTracks.value,
+        valueRollTracks.value
+      )
       const activeExpressions = applyEvalEffects(activeFormula, evalEffects.value)
 
       try {
