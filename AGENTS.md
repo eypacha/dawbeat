@@ -1,103 +1,160 @@
 # AGENTS.md
 
-Este documento define cómo debe trabajar un agente dentro de este repositorio.
+Este documento define como debe trabajar un agente dentro de este repositorio.
 
 El objetivo es mantener el desarrollo:
 
 - modular
 - mantenible
 - predecible
-- fácil de extender
+- facil de extender
 
 ## Estado real del proyecto
 
-El proyecto ya tiene una base funcional y varias áreas productivas.
+El proyecto ya no es una maqueta simple de timeline.
 
 Hoy existen:
 
-- reproducción bytebeat real en navegador
-- toolbar con `play`, `pause`, `stop`, `loop`, `new/open/save project` y `export WAV`
-- scrub del playhead
-- zoom horizontal del timeline
-- timeline con tracks, clips y loop region editable
-- creación, movimiento, resize y borrado de clips
-- drag entre tracks
+- pantalla inicial para desbloquear audio antes de entrar a la app
+- reproduccion bytebeat real en navegador con Web Audio + vendor `ByteBeat.js`
+- toolbar con `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, cambio de `sampleRate` y settings
+- scrub del playhead desde ruler y desde el playhead
+- zoom horizontal con `Ctrl/Cmd + wheel`
+- auto-scroll del timeline durante playback
+- timeline con cuatro tipos de lane:
+  - tracks de formula
+  - variable tracks
+  - value tracker tracks
+  - automation lanes
+- loop region editable
+- creacion de clips por drag en lanes vacios
+- mover clips dentro del lane y entre tracks compatibles
+- resize de inicio y fin
 - duplicado con `Alt/Option + drag`
 - bypass temporal de snap con `Shift + drag`
-- selección múltiple por marquee con `Shift + drag` en el timeline
+- seleccion multiple por marquee con `Shift + drag` en el timeline
 - mover y duplicar grupos de clips seleccionados
-- copy/paste de clips al playhead
+- copy/paste al playhead
 - nudge con flechas izquierda/derecha
-- undo/redo
+- undo/redo con historial en store
 - reorder y duplicado de tracks
-- mute, solo, rename, color, operador de unión y borrado de tracks
-- librería de fórmulas funcional
-- creación, edición, selección y borrado de fórmulas de librería
-- drag de fórmulas desde library al timeline y a clips existentes
-- clips con fórmula inline o referenciada por `formulaId`
-- waveform preview opcional dentro de clips
-- panel de fórmula evaluada opcional
-- efectos de fórmula y efectos de audio
-- persistencia automática en `localStorage`
+- rename, color, mute, solo, `unionOperator` y borrado de tracks
+- libreria de formulas funcional con alta, seleccion, edicion, borrado y drag and drop
+- clips con formula inline o referencia a `formulaId`
+- edicion de formulas por `FormulaInputDialog` para clips, formulas de libreria y variable clips
+- editor hex para value tracker clips mediante `ValueTrackerClipEditorDialog`
+- preview waveform opcional por clip
+- panel opcional de formula evaluada
+- eval effects: `Stereo Offset`, `T Replacement`
+- audio effects expuestos hoy: `EQ3`, `Distortion`, `Stereo Widener`, `Feedback Delay`, `Compressor`, `Limiter`, `Reverb` y `Master Gain`
+- automation lanes para `masterGain` y para parametros de audio effects
+- persistencia automatica en `localStorage`
 - import/export de proyecto JSON
-- export WAV offline
+- export WAV offline con render de timeline, eval effects, master gain, audio effects compatibles y automatizacion offline
+- keyboard override para value trackers con `0-9` y `A-F`
 
-No asumir que `FormulaLibrary.vue` sigue siendo placeholder: hoy es parte real del flujo.
+## Que no asumir
 
-No asumir tampoco que toda la edición ocurre inline en `TimelineClip.vue`: la edición de fórmulas se hace mediante `FormulaInputDialog`, tanto para clips como para fórmulas de librería.
+No asumir que el timeline solo maneja tracks de formula.
+Hoy tambien existen:
 
-No asumir que el timeline sólo maneja selección simple: hoy existe `selectedClipIds`, marquee selection y operaciones de grupo.
+- `variableTracks`
+- `valueTrackerTracks`
+- `automationLanes`
 
-## Objetivo actual
+No asumir que toda la edicion ocurre inline en `TimelineClip.vue`.
+Hoy existen dialogs y flujos separados para:
 
-La prioridad sigue siendo consolidar el flujo de composición sobre timeline sin degradar reproducción, edición ni persistencia.
+- formulas de clip y formulas de libreria via `FormulaInputDialog`
+- value tracker clips via `ValueTrackerClipEditorDialog`
+- nombre/color de track
+- rename de value tracker track
 
-El sistema debe seguir permitiendo:
-
-- crear clips vacíos y clips desde la librería
-- editar la fórmula de un clip
-- asignar y desasignar fórmulas de librería a clips
-- mover clips dentro del track y entre tracks
-- duplicar clips y grupos con modificadores
-- cambiar duración de clips
-- copiar y pegar clips en el playhead
-- reproducir el timeline
-- mover el playhead manualmente
-- cambiar la fórmula activa según la posición del tiempo
-- mutear o solear tracks sin romper playback
-- combinar tracks con su `unionOperator`
-- guardar, abrir y exportar proyectos
-
-## Qué no asumir
-
-No asumir que seguimos en una fase “sin audio”.
-Hoy sí hay audio bytebeat funcional y cualquier cambio de timeline, fórmulas o efectos puede afectar reproducción.
-
-No asumir que clip y fórmula son siempre la misma entidad.
-Un clip puede:
+No asumir que clip y formula son siempre la misma entidad.
+Hoy un clip de formula puede:
 
 - guardar `formula` inline
-- referenciar una fórmula compartida con `formulaId`
+- referenciar una formula compartida con `formulaId`
 
-No asumir que todos los cambios persistidos pertenecen sólo al dominio musical.
-Hoy también se persisten flags de UI como:
+No asumir que todas las entidades modeladas tengan un entrypoint UI dedicado y visible.
+`variableTracks` y `valueTrackerTracks` pueden aparecer por:
+
+- proyecto cargado
+- normalizacion de proyecto
+- inicializacion desde `FormulaInputDialog`
+
+Verificar siempre el entrypoint real antes de documentar o modificar un flujo.
+
+No asumir que el soporte de bindings implica integracion completa de hardware.
+Hoy `valueTrackerService` modela:
+
+- `keyboard`
+- `variable`
+- `midiCc`
+- `midiNote`
+
+pero la entrada en vivo cableada hoy en UI/shortcuts es:
+
+- keyboard override
+- resolucion por binding `variable`
+
+No asumir que un componente existente implica feature activa.
+Ejemplo concreto:
+
+- `AudioBitCrusherItem.vue` existe en el arbol
+- los audio effects realmente expuestos hoy son los conectados en `EffectsPanel.vue` + `audioEffectService.js`
+
+No asumir paridad automatica entre playback en vivo y export offline.
+Hoy ambos caminos soportan audio effects y automatizacion, pero viven en implementaciones separadas:
+
+- `bytebeatService` para vivo
+- `exportService` para offline
+
+Si una tarea toca audio, automatizacion o export, verificar ambos caminos por separado.
+
+No asumir que todos los cambios persistidos pertenecen solo al dominio musical.
+Hoy tambien se persisten flags de UI como:
 
 - `showClipWaveforms`
 - `showEvaluatedPanel`
 
-No asumir paridad completa entre reproducción en vivo y export offline.
-Hoy:
+## Objetivo actual
 
-- `bytebeatService` aplica la cadena de efectos de audio en vivo
-- `exportService` renderiza timeline + eval effects + `masterGain`
+La prioridad es consolidar un flujo de composicion que combine:
 
-Si una tarea toca export, verificar ese camino explícitamente.
+- formula tracks
+- variable tracks
+- value tracker tracks
+- automation lanes
+- playback bytebeat
+- persistencia
+- historial y utilidades de edicion
+
+sin degradar edicion, reproduccion, export ni restauracion de proyecto.
+
+El sistema debe seguir permitiendo:
+
+- crear y editar clips de formula
+- asignar y desasignar formulas de libreria a clips
+- mover clips dentro del track y entre tracks
+- duplicar clips y grupos con modificadores
+- editar formulas de variable clips
+- editar value tracker clips por pasos
+- crear o inicializar variables faltantes desde el editor de formula
+- convertir inicializadores numericos a value tracker desde el editor de formula
+- reproducir el timeline
+- mover el playhead manualmente
+- combinar tracks audibles con `unionOperator`
+- resolver variables activas segun el tiempo
+- aplicar live input de value tracker sin romper playback
+- automatizar `masterGain` y parametros de audio effects
+- guardar, abrir y exportar proyectos
 
 ## Principios de desarrollo
 
 ### DRY
 
-No duplicar lógica.
+No duplicar logica.
 
 Si algo se reutiliza, moverlo a:
 
@@ -106,31 +163,34 @@ Si algo se reutiliza, moverlo a:
 - `composables`
 - `stores`
 
-Nunca copiar y pegar lógica entre timeline, library, effects, settings o export.
+Nunca copiar y pegar logica entre timeline, library, automation, value tracker, effects, settings, export o persistence.
 
 ### Modularidad
 
-Preferir módulos pequeños y explícitos.
+Preferir modulos pequenos y explicitos.
 
-Si un archivo supera aproximadamente 200–300 líneas, considerar dividirlo.
+Si un archivo supera aproximadamente 200-300 lineas, considerar dividirlo.
 
 Especial cuidado con:
 
-- `TimelineClip.vue`
-- `TimelineTrack.vue`
 - `Timeline.vue`
+- `TimelineTrack.vue`
+- `TimelineClip.vue`
+- `TimelineVariableTrack.vue`
+- `TimelineValueTrackerTrack.vue`
+- `TimelineAutomationLane.vue`
 - `FormulaLibrary.vue`
 - `EffectsPanel.vue`
 - `dawStore.js`
 - `useTransportPlayback.js`
 
-porque concentran interacción y son candidatos naturales a crecer mal.
+porque concentran interaccion y pueden crecer mal.
 
-### Componentes pequeños
+### Componentes pequenos
 
 Cada componente Vue debe tener una responsabilidad clara.
 
-La UI debe seguir componiéndose con subcomponentes en lugar de concentrar timeline, library, transport, effects o dialogs en un solo archivo.
+La UI debe seguir componiendose con subcomponentes en lugar de concentrar timeline, library, transport, effects o dialogs en un solo archivo.
 
 ## Stack
 
@@ -147,20 +207,21 @@ Estado global:
 Audio:
 
 - Web Audio API
+- Tone.js para parte del render/export offline
 - vendor `ByteBeat.js`
 
-UI / iconografía:
+UI / iconografia:
 
 - `lucide-vue-next`
 
-No introducir dependencias pesadas sin justificación.
+No introducir dependencias pesadas sin justificacion.
 
 ## Dependencias prohibidas
 
 No usar:
 
 - Monaco Editor
-- librerías de timeline pesadas
+- librerias de timeline pesadas
 - frameworks UI completos
 
 La UI debe seguir siendo liviana y controlada por el proyecto.
@@ -180,17 +241,20 @@ Engine
 ↓
 Bytebeat Service / Export / Persistence
 ↓
-Web Audio / File APIs / localStorage
+Web Audio / Tone Offline / File APIs / localStorage
 ```
 
-Regla práctica:
+Regla practica:
 
-- la UI no debe contener lógica compleja de timeline, fórmulas, selección, history o efectos si puede vivir en `services` o `composables`
-- el store centraliza estado, acciones, clipboard e historial
-- `timelineEngine` decide fórmula activa y combina tracks audibles
-- `formulaService` resuelve fórmulas inline o referenciadas
+- la UI no debe contener logica compleja de timeline, formulas, variables, value trackers, automation, history o efectos si puede vivir en `services` o `composables`
+- el store centraliza estado, acciones, clipboard, seleccion e historial
+- `timelineEngine` decide la expresion activa y combina tracks audibles
+- `variableTrackService` resuelve variables formulaicas y variables provenientes de value trackers
+- `valueTrackerService` resuelve steps, holds, eventos y live input
+- `automationService` resuelve lanes de `masterGain` y parametros de audio effects
+- `formulaService` resuelve formulas inline o referenciadas
 - `formulaWaveformService` renderiza previews de waveform
-- `bytebeatService` maneja integración de audio en vivo
+- `bytebeatService` maneja integracion de audio en vivo
 - `projectPersistence` normaliza, serializa y restaura proyectos
 
 ## Estructura actual
@@ -202,12 +266,18 @@ src/
       StartScreen.vue
     effects/
       AudioBitCrusherItem.vue
+      AudioCompressorItem.vue
       AudioDelayItem.vue
+      AudioDistortionItem.vue
       AudioEqItem.vue
+      AudioLimiterItem.vue
       AudioMasterGainItem.vue
+      AudioReverbItem.vue
+      AudioStereoWidenerItem.vue
       EffectItem.vue
       EffectsPanel.vue
       EvalEffectItem.vue
+      EffectParamAutomationButton.vue
     evaluated/
       EvaluatedPanel.vue
     library/
@@ -216,11 +286,16 @@ src/
       Playhead.vue
       Timeline.vue
       TimelineAddTrackRow.vue
+      TimelineAutomationLane.vue
       TimelineClip.vue
       TimelineClipPreview.vue
       TimelineClipWaveform.vue
       TimelineLoopRegion.vue
       TimelineTrack.vue
+      TimelineValueTrackerClip.vue
+      TimelineValueTrackerTrack.vue
+      TimelineVariableClip.vue
+      TimelineVariableTrack.vue
       TrackColorPalette.vue
       TrackUnionOperatorMenu.vue
     transport/
@@ -243,6 +318,7 @@ src/
       TextInputDialog.vue
       Toolbar.vue
       TrackPresentationDialog.vue
+      ValueTrackerClipEditorDialog.vue
 
   composables/
     useContextMenu.js
@@ -256,6 +332,7 @@ src/
 
   services/
     audioEffectService.js
+    automationService.js
     bytebeatNodeLoader.js
     bytebeatService.js
     dawStoreService.js
@@ -270,6 +347,8 @@ src/
     timelineService.js
     trackPlaybackState.js
     trackUnionOperatorService.js
+    valueTrackerService.js
+    variableTrackService.js
 
   stores/
     dawStore.js
@@ -303,9 +382,12 @@ Campos relevantes hoy:
   loopStart: 0,
   loopEnd: 16,
   tracks: [],
+  variableTracks: [],
+  valueTrackerTracks: [],
   formulas: [],
   audioEffects: [],
   evalEffects: [],
+  automationLanes: [],
   masterGain: 1,
   showEvaluatedPanel: true,
   showClipWaveforms: true,
@@ -313,17 +395,20 @@ Campos relevantes hoy:
   selectedClipId: null,
   selectedTrackId: null,
   selectedFormulaId: null,
+  selectedValueTrackerTrackId: null,
+  selectedAutomationPoint: null,
   editingClipId: null,
   editingFormulaId: null,
   clipDragPreview: null,
   clipClipboard: null,
+  valueTrackerLiveInputs: {},
   historyPast: [],
   historyFuture: [],
   historyTransaction: null
 }
 ```
 
-Cada track debe modelarse así:
+Cada track de formula debe modelarse asi:
 
 ```js
 {
@@ -337,20 +422,70 @@ Cada track debe modelarse así:
 }
 ```
 
-Cada clip debe modelarse así:
+Cada clip de formula debe modelarse asi:
 
 ```js
 {
   id: "clip-id",
   formula: "t*(t>>5|t>>8)", // opcional
-  formulaId: "formula-id",   // opcional
-  formulaName: "Bass",       // opcional
+  formulaId: "formula-id",  // opcional
+  formulaName: "Bass",      // opcional
   start: 0,
   duration: 4
 }
 ```
 
-Cada fórmula de librería debe modelarse así:
+Cada variable track debe modelarse asi:
+
+```js
+{
+  name: "a",
+  clips: []
+}
+```
+
+Cada clip de variable debe modelarse asi:
+
+```js
+{
+  id: "clip-id",
+  formula: "0",
+  start: 0,
+  duration: 4
+}
+```
+
+Cada value tracker track debe modelarse asi:
+
+```js
+{
+  id: "value-track-id",
+  name: "Value Tracker 1",
+  binding: {
+    type: null, // o "variable", "keyboard", "midiCc", "midiNote"
+    deviceId: null,
+    channel: null,
+    controller: null,
+    note: null,
+    variableName: null
+  },
+  clips: []
+}
+```
+
+Cada clip de value tracker debe modelarse asi:
+
+```js
+{
+  id: "clip-id",
+  start: 0,
+  duration: 4,
+  stepSubdivision: 4,
+  values: [64, null, null, 96]
+}
+```
+
+Cada formula de libreria debe modelarse asi:
 
 ```js
 {
@@ -360,46 +495,71 @@ Cada fórmula de librería debe modelarse así:
 }
 ```
 
+Cada automation lane debe modelarse asi:
+
+```js
+{
+  id: "masterGain" || "audioEffect:<effectId>:<paramKey>",
+  type: "masterGain" || "audioEffectParam",
+  effectId: "audio-effect-id",   // solo para audioEffectParam
+  effectType: "delay",           // solo para audioEffectParam
+  paramKey: "wet",               // solo para audioEffectParam
+  points: [
+    { time: 0, value: 1 }
+  ]
+}
+```
+
 ## Timeline
 
-El timeline es el núcleo de la app.
+El timeline es el nucleo de la app.
 
 Debe seguir soportando:
 
 - grilla temporal
-- clips por track
-- selección simple y múltiple
+- formula tracks
+- variable tracks
+- value tracker tracks
+- automation lanes
+- seleccion simple y multiple de clips
 - marquee selection
 - drag dentro del track
-- drag entre tracks
+- drag entre tracks de formula
 - resize de inicio y fin
-- preview de drag entre tracks
-- creación de clips por drag
-- drop de fórmulas desde library
+- preview de drag
+- creacion de clips por drag
+- drop de formulas desde library
 - loop region editable
 - playhead y scrub
 - zoom horizontal
 - reorder de tracks
+- puntos de automatizacion
 
 ### Interacciones que ya existen y no deben romperse
 
 - drag normal con snap activo
 - `Shift + drag` para bypass temporal de snap
 - `Alt/Option + drag` para duplicar al soltar
-- `Shift + drag` sobre área vacía para marquee selection
-- drag de fórmula desde library a lane para crear clip
-- drag de fórmula desde library a clip para reasignar referencia
+- `Shift + drag` sobre area vacia para marquee selection
+- drag de formula desde library a lane para crear clip
+- drag de formula desde library a clip para reasignar referencia
+- double click en clip de formula para editar formula
+- double click en variable clip para editar formula de variable
+- double click en value tracker clip para abrir el editor hex
+- click en automation lane para crear punto
+- drag de automation point para moverlo
+- `Delete` / `Backspace` sobre automation point seleccionado para borrarlo
 - mute por track
 - solo por track
 - copy/paste de clips
 - nudge con flechas
 - undo/redo
-- borrado con `Delete` o `Backspace`
 - `Space` para play/pause
 - `L` para loop
 - `Ctrl/Cmd + wheel` para zoom
+- `0-9` y `A-F` para keyboard override del value tracker activo
 
-Si se modifica una interacción del timeline o de fórmulas, verificar siempre estos casos.
+Si se modifica una interaccion del timeline, de formulas o de automatizacion, verificar siempre estos casos.
 
 ## Playback
 
@@ -407,113 +567,127 @@ El playback actual usa bytebeat real.
 
 Reglas:
 
-- no eliminar ni degradar la integración con `bytebeatService`
-- cualquier cambio en clips, tracks, fórmulas, `unionOperator`, mute o solo debe mantener consistente la fórmula activa
+- no eliminar ni degradar la integracion con `bytebeatService`
+- cualquier cambio en clips, tracks, formulas, variables, value trackers, `unionOperator`, mute o solo debe mantener consistente la expresion activa
 - `timelineEngine.getActiveFormula` debe ignorar tracks no audibles
-- `formulaService` debe seguir resolviendo correctamente fórmulas inline y referenciadas
-- los eval effects deben seguir aplicándose antes de enviar expresiones al engine de reproducción
-- el panel evaluado debe seguir reflejando la expresión efectiva después de eval effects
+- `timelineEngine.getActiveFormula` debe prependear definiciones activas provenientes de `variableTracks` y `valueTrackerTracks`
+- `formulaService` debe seguir resolviendo correctamente formulas inline y referenciadas
+- los eval effects deben seguir aplicandose antes de enviar expresiones al playback
+- el panel evaluado debe seguir reflejando la expresion efectiva despues de eval effects
+- `valueTrackerLiveInputs` puede sobreescribir temporalmente el valor de un value tracker durante playback o scrub
 
-## Fórmulas y librería
+## Formulas, variables y value trackers
 
 Estado actual:
 
-- `FormulaLibrary.vue` ya no es placeholder
-- existe selección de fórmula de librería
-- existe alta, edición y borrado de fórmulas
-- los clips pueden vincularse a una fórmula compartida o separarse de ella
-- el doble click sobre clip abre la edición de fórmula del clip
-- el doble click sobre fórmula de librería abre la edición de esa fórmula
-- un clip inline puede promoverse a librería con `addClipFormulaToLibrary`
+- `FormulaLibrary.vue` es parte real del flujo
+- existe seleccion de formula de libreria
+- existe alta, edicion y borrado de formulas
+- los clips de formula pueden vincularse a una formula compartida o separarse de ella
+- los variable clips guardan formula inline y no usan `formulaId`
+- los value tracker clips guardan steps/values discretos
+- el double click sobre clip abre el editor correcto segun el `laneType`
+- `FormulaInputDialog` puede detectar variables faltantes
+- `FormulaInputDialog` puede inicializar variables faltantes como variable tracks
+- `FormulaInputDialog` puede convertir inicializadores numericos a value trackers con binding `variable`
+- un clip inline puede promoverse a libreria con `addClipFormulaToLibrary`
 
 Si se modifica este flujo:
 
-- no duplicar la lógica de resolución entre clip y librería
-- usar `formulaService` para resolver nombre y código
-- preservar el flujo `assignFormulaToClip`, `detachClipFormula` y `addClipFormulaToLibrary`
+- no duplicar la logica de resolucion entre clip y libreria
+- usar `formulaService`, `variableTrackService` y `valueTrackerService` donde corresponda
+- preservar los flujos `assignFormulaToClip`, `detachClipFormula`, `addClipFormulaToLibrary`, `ensureInitializedVariableTracks` y `ensureInitializedValueTrackerTracks`
 
-## Efectos
+## Efectos y automatizacion
 
-Hoy existen dos categorías:
+Hoy existen dos categorias de effects:
 
-- eval effects: transforman la expresión bytebeat antes de reproducir/renderizar
-- audio effects: transforman la señal de audio en vivo
+- eval effects: transforman la expresion bytebeat antes de reproducir/renderizar
+- audio effects: transforman la senal de audio en vivo y offline cuando el efecto esta soportado
 
-Actualmente están implementados:
+Actualmente estan implementados y expuestos:
 
-- `Stereo Offset`
-- `T Replacement`
-- `Delay`
-- `EQ`
-- `BitCrusher`
-- `Master Gain`
+- eval: `Stereo Offset`, `T Replacement`
+- audio: `EQ3`, `Distortion`, `Stereo Widener`, `Feedback Delay`, `Compressor`, `Limiter`, `Reverb`
+- ganancia master: `Master Gain`
 
-Si una tarea toca efectos:
+Automatizacion actual:
 
-- no mezclar efectos de fórmula con efectos de audio
-- validar impacto en reproducción en vivo
+- lane de `masterGain`
+- lanes por parametro de audio effects
+
+Si una tarea toca effects o automation:
+
+- no mezclar effects de formula con effects de audio
+- validar impacto en reproduccion en vivo
 - validar impacto en export offline por separado
-- no romper reorder, enable/disable ni expand/collapse de efectos
+- no romper reorder, enable/disable ni expand/collapse de effects
+- no romper creacion, edicion y borrado de automation lanes y points
 
 ## Persistencia y export
 
 Hoy existe:
 
-- guardado automático en `localStorage`
+- guardado automatico en `localStorage`
 - import de proyecto JSON
 - export de proyecto JSON
 - reset de storage local
 - export WAV offline
-- normalización de proyectos con `version: 5`
+- normalizacion de proyectos con `version: 12`
+- persistencia de `tracks`, `variableTracks`, `valueTrackerTracks`, `formulas`
+- persistencia de `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`
 - persistencia de `showClipWaveforms` y `showEvaluatedPanel`
 
 Si se cambia el shape del proyecto:
 
 - actualizar `projectPersistence`
-- preservar compatibilidad de normalización cuando sea razonable
+- preservar compatibilidad de normalizacion cuando sea razonable
 - revisar `demo.json`
 
 ## Responsabilidades del agente
 
 Cuando el agente implemente una funcionalidad:
 
-1. evaluar si requiere nuevos módulos
-2. evitar duplicación de lógica
+1. evaluar si requiere nuevos modulos
+2. evitar duplicacion de logica
 3. dividir componentes complejos
 4. mantener la arquitectura clara
-5. verificar impacto en playback, fórmulas, efectos, persistencia e historial
+5. verificar impacto en playback, formulas, variables, value trackers, automation, persistencia, export e historial
 
-## Qué NO hacer
+## Que NO hacer
 
 El agente no debe:
 
-- crear archivos monolíticos
-- duplicar lógica de drag, resize, selección, clipboard o resolución de fórmulas
+- crear archivos monoliticos
+- duplicar logica de drag, resize, seleccion, clipboard, automatizacion o resolucion de formulas
 - introducir dependencias innecesarias
-- mezclar UI con lógica compleja de timeline, audio, history o persistencia
+- mezclar UI con logica compleja de timeline, audio, history, automation o persistencia
 - romper playback bytebeat actual
-- documentar features como implementadas si siguen siendo parciales
-- asumir que export WAV replica exactamente la cadena de audio en vivo
+- documentar features como implementadas si siguen parciales o no estan cableadas
+- asumir que export offline y playback en vivo son el mismo camino interno
 
 ## Prioridades actuales
 
 Orden recomendado:
 
 1. consolidar timeline y transport existentes
-2. consolidar librería y flujo de fórmulas compartidas
-3. mantener integridad de playback
-4. mantener estable persistencia, import/export, historial y efectos
-5. extender edición y organización de tracks sin reescribir la base
+2. consolidar formulas compartidas, variables y value trackers
+3. consolidar automatizacion de audio effects y master gain
+4. mantener integridad de playback y export offline
+5. mantener estable persistencia, import/export, historial y efectos
 
 ## Objetivo de esta etapa
 
-Construir una base sólida para componer fórmulas en el tiempo, manteniendo alineadas:
+Construir una base solida para componer formulas y modulaciones en el tiempo, manteniendo alineadas:
 
-- interacción de timeline
+- interaccion de timeline
 - estado global
-- librería de fórmulas
+- libreria de formulas
+- variable tracks
+- value tracker tracks
+- automation lanes
 - playback bytebeat
 - persistencia de proyecto
-- historial, clipboard y utilidades de edición
+- historial, clipboard y utilidades de edicion
 
-Las próximas iteraciones deben apoyarse en esta estructura, no reemplazarla sin necesidad.
+Las proximas iteraciones deben apoyarse en esta estructura, no reemplazarla sin necesidad.
