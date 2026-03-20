@@ -12,7 +12,7 @@
     @dblclick.stop="handleEditStart"
     @pointerdown.stop="handleClipPointerDown"
   >
-    <div class="pointer-events-none absolute inset-x-0 bottom-0 top-0 flex items-end gap-px px-2 pb-2 pt-7 opacity-55">
+    <div class="pointer-events-none absolute inset-0 flex items-end gap-px px-2 pb-1 pt-2 opacity-60">
       <span
         v-for="bar in previewBars"
         :key="`${clip.id}:${bar.index}`"
@@ -38,9 +38,9 @@
       @pointerdown.stop="handleResizeEndPointerDown"
     />
 
-    <div class="relative z-[1]">
-      <span class="block truncate font-medium">Value Tracker</span>
-      <span class="mt-1 block truncate text-[10px] opacity-75">{{ eventCount }} sets</span>
+    <div class="pointer-events-none absolute left-2 right-2 top-1.5 z-[1]">
+      <span class="block truncate text-[11px] font-medium leading-none">Value Tracker</span>
+      <span class="mt-0.5 block truncate text-[9px] leading-none opacity-80">{{ eventCount }} sets</span>
     </div>
   </div>
 </template>
