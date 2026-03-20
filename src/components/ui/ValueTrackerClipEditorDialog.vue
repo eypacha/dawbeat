@@ -10,10 +10,7 @@
         </div>
 
         <div class="flex items-start gap-3">
-          <div class="text-right text-[11px] text-zinc-500">
-            <p>Hex tracker editor</p>
-            <p class="mt-1">Arrows navigate · `0-9` / `A-F` write · `Delete` clears</p>
-          </div>
+ 
 
           <IconButton label="Close" size="sm" @click="emit('close')">
             x
