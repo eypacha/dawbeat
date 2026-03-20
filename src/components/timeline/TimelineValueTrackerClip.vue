@@ -18,7 +18,7 @@
         :key="`${clip.id}:${bar.index}`"
         class="bg-amber-200/70"
         :style="{
-          height: `${bar.value === null ? 0 : Math.max(8, (bar.value / 255) * 100)}%`,
+          height: `${bar.heightPercent}%`,
           opacity: bar.value === null ? 0 : 1,
           width: `${100 / previewBars.length}%`
         }"
@@ -105,11 +105,30 @@ const resolvedValues = computed(() =>
       : null
   )
 )
+const previewValueRange = computed(() => {
+  const numericValues = resolvedValues.value
+    .filter((value) => value !== null)
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value))
+
+  if (!numericValues.length) {
+    return {
+      max: null,
+      min: null
+    }
+  }
+
+  return {
+    max: Math.max(...numericValues),
+    min: Math.min(...numericValues)
+  }
+})
 const previewBars = computed(() => {
   const values = resolvedValues.value
+  const { max: maxValue, min: minValue } = previewValueRange.value
 
   if (!values.length) {
-    return [{ index: 0, value: null }]
+    return [{ heightPercent: 0, index: 0, value: null }]
   }
 
   const barCount = Math.min(values.length, MAX_PREVIEW_BARS)
@@ -125,11 +144,24 @@ const previewBars = computed(() => {
       : null
 
     return {
+      heightPercent: getPreviewBarHeightPercent(average, minValue, maxValue),
       index,
       value: average
     }
   })
 })
+
+function getPreviewBarHeightPercent(value, minValue, maxValue) {
+  if (value === null || minValue === null || maxValue === null) {
+    return 0
+  }
+
+  if (maxValue <= minValue) {
+    return 100
+  }
+
+  return Math.max(8, ((value - minValue) / (maxValue - minValue)) * 100)
+}
 
 function handleSelect(payload = {}) {
   if (ignoreNextClick.value) {
