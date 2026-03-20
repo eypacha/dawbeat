@@ -9,8 +9,8 @@ export function getActiveFormula(
   tracks,
   formulas,
   variableTracks = [],
-  valueRollTracks = [],
-  valueRollLiveInputs = {}
+  valueTrackerTracks = [],
+  valueTrackerLiveInputs = {}
 ) {
   const activeTracks = []
 
@@ -47,7 +47,7 @@ export function getActiveFormula(
 
   return prependVariableDefinitions(
     combinedExpression,
-    getActiveVariableDefinitions(timeTicks, variableTracks, valueRollTracks, valueRollLiveInputs)
+    getActiveVariableDefinitions(timeTicks, variableTracks, valueTrackerTracks, valueTrackerLiveInputs)
   )
 }
 

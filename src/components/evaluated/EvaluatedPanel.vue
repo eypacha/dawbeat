@@ -28,7 +28,7 @@ import { useDawStore } from '@/stores/dawStore'
 import Panel from '@/components/ui/Panel.vue'
 
 const dawStore = useDawStore()
-const { evalEffects, formulas, time, tracks, valueRollLiveInputs, valueRollTracks, variableTracks } = storeToRefs(dawStore)
+const { evalEffects, formulas, time, tracks, valueTrackerLiveInputs, valueTrackerTracks, variableTracks } = storeToRefs(dawStore)
 
 const activeFormula = computed(() =>
   getActiveFormula(
@@ -36,8 +36,8 @@ const activeFormula = computed(() =>
     tracks.value,
     formulas.value,
     variableTracks.value,
-    valueRollTracks.value,
-    valueRollLiveInputs.value
+    valueTrackerTracks.value,
+    valueTrackerLiveInputs.value
   )
 )
 const evaluatedExpressions = computed(() => {

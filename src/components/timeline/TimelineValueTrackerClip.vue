@@ -1,6 +1,6 @@
 <template>
   <div
-    class="timeline-value-roll-clip absolute top-2 bottom-2 box-border overflow-hidden border px-2 py-1 text-left text-xs text-zinc-50 transition-colors"
+    class="timeline-value-tracker-clip absolute top-2 bottom-2 box-border overflow-hidden border px-2 py-1 text-left text-xs text-zinc-50 transition-colors"
     :class="buttonClassName"
     :style="clipStyle"
     :title="clipTitle"
@@ -27,19 +27,19 @@
 
     <span
       v-if="isSelected && !isEditing"
-      class="timeline-value-roll-clip-handle absolute inset-y-0 left-0 w-2 cursor-ew-resize border-r"
+      class="timeline-value-tracker-clip-handle absolute inset-y-0 left-0 w-2 cursor-ew-resize border-r"
       data-timeline-resize-handle="true"
       @pointerdown.stop="handleResizeStartPointerDown"
     />
     <span
       v-if="isSelected && !isEditing"
-      class="timeline-value-roll-clip-handle absolute inset-y-0 right-0 w-2 cursor-ew-resize border-l"
+      class="timeline-value-tracker-clip-handle absolute inset-y-0 right-0 w-2 cursor-ew-resize border-l"
       data-timeline-resize-handle="true"
       @pointerdown.stop="handleResizeEndPointerDown"
     />
 
     <div class="relative z-[1]">
-      <span class="block truncate font-medium">Value Roll</span>
+      <span class="block truncate font-medium">Value Tracker</span>
       <span class="mt-1 block truncate text-[10px] opacity-75">{{ eventCount }} sets</span>
     </div>
   </div>
@@ -51,10 +51,10 @@ import { storeToRefs } from 'pinia'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineClipInteraction } from '@/composables/useTimelineClipInteraction'
 import {
-  getValueRollEventCount,
-  getValueRollResolvedValues,
-  getValueRollValueAtTime
-} from '@/services/valueRollService'
+  getValueTrackerEventCount,
+  getValueTrackerResolvedValues,
+  getValueTrackerValueAtTime
+} from '@/services/valueTrackerService'
 import { useDawStore } from '@/stores/dawStore'
 import { ticksToPixels } from '@/utils/timeUtils'
 
@@ -66,7 +66,7 @@ const props = defineProps({
     type: Object,
     required: true
   },
-  valueRollTrackId: {
+  valueTrackerTrackId: {
     type: String,
     required: true
   }
@@ -74,7 +74,7 @@ const props = defineProps({
 
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
-const { editingClipId, pixelsPerTick, selectedClipIds, valueRollTracks } = storeToRefs(dawStore)
+const { editingClipId, pixelsPerTick, selectedClipIds, valueTrackerTracks } = storeToRefs(dawStore)
 const pendingShiftSelectionAction = ref(null)
 
 const clipWidth = computed(() =>
@@ -93,15 +93,15 @@ const isEditing = computed(() => editingClipId.value === props.clip.id)
 const isSelected = computed(() => selectedClipIds.value.includes(props.clip.id))
 const isPartOfMultipleSelection = computed(() => isSelected.value && selectedClipIds.value.length > 1)
 const stepCount = computed(() => Array.isArray(props.clip.values) ? props.clip.values.length : 0)
-const eventCount = computed(() => getValueRollEventCount(props.clip.values))
-const valueRollTrack = computed(() =>
-  valueRollTracks.value.find((track) => track.id === props.valueRollTrackId) ?? null
+const eventCount = computed(() => getValueTrackerEventCount(props.clip.values))
+const valueTrackerTrack = computed(() =>
+  valueTrackerTracks.value.find((track) => track.id === props.valueTrackerTrackId) ?? null
 )
 const resolvedValues = computed(() =>
-  getValueRollResolvedValues(
+  getValueTrackerResolvedValues(
     props.clip.values,
-    valueRollTrack.value
-      ? getValueRollValueAtTime(props.clip.start, valueRollTrack.value, null)
+    valueTrackerTrack.value
+      ? getValueTrackerValueAtTime(props.clip.start, valueTrackerTrack.value, null)
       : null
   )
 )
@@ -175,23 +175,23 @@ const {
 } = useTimelineClipInteraction({
   clip: props.clip,
   dawStore,
-  duplicateClipInLane: (laneId, clipId) => dawStore.duplicateValueRollClip(laneId, clipId),
+  duplicateClipInLane: (laneId, clipId) => dawStore.duplicateValueTrackerClip(laneId, clipId),
   editingClipId,
-  getLaneId: (valueRollTrack) => valueRollTrack.id,
-  laneId: props.valueRollTrackId,
-  lanes: valueRollTracks,
+  getLaneId: (valueTrackerTrack) => valueTrackerTrack.id,
+  laneId: props.valueTrackerTrackId,
+  lanes: valueTrackerTracks,
   moveClipInLane: (laneId, clipId, nextStart, shouldSnap) =>
-    dawStore.moveValueRollClip(laneId, clipId, nextStart, shouldSnap),
+    dawStore.moveValueTrackerClip(laneId, clipId, nextStart, shouldSnap),
   moveClipToLane: (laneId, targetLaneId, clipId, nextStart, shouldSnap) =>
-    dawStore.moveValueRollClipToTrack(laneId, targetLaneId, clipId, nextStart, shouldSnap),
+    dawStore.moveValueTrackerClipToTrack(laneId, targetLaneId, clipId, nextStart, shouldSnap),
   onSelect: handleSelect,
   pixelsPerTick,
   placeClipInLane: (laneId, clipId, nextStart, shouldSnap) =>
-    dawStore.placeValueRollClip(laneId, clipId, nextStart, shouldSnap),
+    dawStore.placeValueTrackerClip(laneId, clipId, nextStart, shouldSnap),
   resizeClipEndInLane: (laneId, clipId, nextEnd, shouldSnap) =>
-    dawStore.resizeValueRollClipEnd(laneId, clipId, nextEnd, shouldSnap),
+    dawStore.resizeValueTrackerClipEnd(laneId, clipId, nextEnd, shouldSnap),
   resizeClipStartInLane: (laneId, clipId, nextStart, shouldSnap) =>
-    dawStore.resizeValueRollClipStart(laneId, clipId, nextStart, shouldSnap),
+    dawStore.resizeValueTrackerClipStart(laneId, clipId, nextStart, shouldSnap),
   selectedClipIds
 })
 
@@ -203,23 +203,23 @@ function handleClipPointerDown(event) {
 
 const buttonClassName = computed(() => {
   if (isEditing.value) {
-    return 'timeline-value-roll-clip--editing'
+    return 'timeline-value-tracker-clip--editing'
   }
 
   if (isDragging.value || resizeMode.value) {
     if (duplicateDrag.value && isSelected.value) {
-      return 'timeline-value-roll-clip--selected'
+      return 'timeline-value-tracker-clip--selected'
     }
 
-    return 'timeline-value-roll-clip--dragging'
+    return 'timeline-value-tracker-clip--dragging'
   }
 
   return isSelected.value
-    ? 'timeline-value-roll-clip--selected'
-    : 'timeline-value-roll-clip--default'
+    ? 'timeline-value-tracker-clip--selected'
+    : 'timeline-value-tracker-clip--default'
 })
 
-const clipTitle = computed(() => `Value Roll · ${eventCount.value} sets · ${stepCount.value} steps`)
+const clipTitle = computed(() => `Value Tracker · ${eventCount.value} sets · ${stepCount.value} steps`)
 
 function handleEditStart() {
   handleSelect()
@@ -241,7 +241,7 @@ function handleContextMenu(event) {
       {
         action: 'edit-clip',
         clipId: props.clip.id,
-        label: 'Edit Value Roll'
+        label: 'Edit Value Tracker'
       },
       {
         action: 'delete-clip',
@@ -259,28 +259,28 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.timeline-value-roll-clip {
+.timeline-value-tracker-clip {
   background: rgba(251, 191, 36, 0.14);
   border-color: rgba(251, 191, 36, 0.26);
   cursor: grab;
 }
 
-.timeline-value-roll-clip--default {
+.timeline-value-tracker-clip--default {
   background: rgba(251, 191, 36, 0.16);
 }
 
-.timeline-value-roll-clip--selected,
-.timeline-value-roll-clip--editing {
+.timeline-value-tracker-clip--selected,
+.timeline-value-tracker-clip--editing {
   background: rgba(251, 191, 36, 0.24);
   box-shadow: 0 0 0 1px rgba(253, 224, 71, 0.28);
 }
 
-.timeline-value-roll-clip--dragging {
+.timeline-value-tracker-clip--dragging {
   background: rgba(251, 191, 36, 0.2);
   cursor: grabbing;
 }
 
-.timeline-value-roll-clip-handle {
+.timeline-value-tracker-clip-handle {
   background: rgba(253, 224, 71, 0.08);
   border-color: rgba(253, 224, 71, 0.16);
 }

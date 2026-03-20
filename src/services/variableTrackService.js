@@ -1,9 +1,9 @@
 import { tokenizeFormula } from '@/utils/formulaTokenizer'
 import {
-  getBoundValueRollVariableNames,
-  getValueRollBoundVariableName,
-  getValueRollValueAtTimeWithLiveInput
-} from '@/services/valueRollService'
+  getBoundValueTrackerVariableNames,
+  getValueTrackerBoundVariableName,
+  getValueTrackerValueAtTimeWithLiveInput
+} from '@/services/valueTrackerService'
 
 const VARIABLE_TRACK_NAME_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/
 export const AUTO_VARIABLE_TRACK_NAMES = Object.freeze('abcdefghijklmnop'.split(''))
@@ -38,15 +38,15 @@ export function getNextVariableTrackName(variableTracks = []) {
   return getVariableTrackNameFromIndex(index)
 }
 
-export function getFormulaAllowedIdentifiers(variableTracks = [], valueRollTracks = []) {
+export function getFormulaAllowedIdentifiers(variableTracks = [], valueTrackerTracks = []) {
   const existingNames = Array.isArray(variableTracks)
     ? variableTracks
         .map((variableTrack) => normalizeVariableTrackName(variableTrack?.name, ''))
         .filter(Boolean)
     : []
-  const valueRollNames = getBoundValueRollVariableNames(valueRollTracks)
+  const valueTrackerNames = getBoundValueTrackerVariableNames(valueTrackerTracks)
 
-  return [...new Set([...existingNames, ...valueRollNames, ...AUTO_VARIABLE_TRACK_NAMES])]
+  return [...new Set([...existingNames, ...valueTrackerNames, ...AUTO_VARIABLE_TRACK_NAMES])]
 }
 
 export function extractAutoVariableTrackNames(expression = '') {
@@ -84,8 +84,8 @@ export function resolveVariableClipFormula(clip) {
 export function getActiveVariableDefinitions(
   timeTicks,
   variableTracks = [],
-  valueRollTracks = [],
-  valueRollLiveInputs = {}
+  valueTrackerTracks = [],
+  valueTrackerLiveInputs = {}
 ) {
   const definitionsByName = new Map()
 
@@ -100,8 +100,8 @@ export function getActiveVariableDefinitions(
     })
   }
 
-  for (const valueRollTrack of valueRollTracks) {
-    const variableName = getValueRollBoundVariableName(valueRollTrack)
+  for (const valueTrackerTrack of valueTrackerTracks) {
+    const variableName = getValueTrackerBoundVariableName(valueTrackerTrack)
 
     if (!variableName) {
       continue
@@ -109,11 +109,11 @@ export function getActiveVariableDefinitions(
 
     definitionsByName.set(variableName, {
       formula: String(
-        getValueRollValueAtTimeWithLiveInput(
+        getValueTrackerValueAtTimeWithLiveInput(
           timeTicks,
-          valueRollTrack,
+          valueTrackerTrack,
           0,
-          valueRollLiveInputs?.[valueRollTrack.id] ?? null
+          valueTrackerLiveInputs?.[valueTrackerTrack.id] ?? null
         )
       ),
       name: variableName

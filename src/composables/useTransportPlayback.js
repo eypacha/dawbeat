@@ -15,7 +15,7 @@ export function useTransportPlayback() {
   }
 
   const dawStore = useDawStore()
-  const { audioEffects, audioReady, automationLanes, evalEffects, formulas, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, valueRollLiveInputs, valueRollTracks, variableTracks } =
+  const { audioEffects, audioReady, automationLanes, evalEffects, formulas, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, valueTrackerLiveInputs, valueTrackerTracks, variableTracks } =
     storeToRefs(dawStore)
 
   let frameId = 0
@@ -55,8 +55,8 @@ export function useTransportPlayback() {
           tracks.value,
           formulas.value,
           variableTracks.value,
-          valueRollTracks.value,
-          valueRollLiveInputs.value
+          valueTrackerTracks.value,
+          valueTrackerLiveInputs.value
         )
         const loopExpressions = applyEvalEffects(loopFormula, evalEffects.value)
 
@@ -91,8 +91,8 @@ export function useTransportPlayback() {
       tracks.value,
       formulas.value,
       variableTracks.value,
-      valueRollTracks.value,
-      valueRollLiveInputs.value
+      valueTrackerTracks.value,
+      valueTrackerLiveInputs.value
     )
     const activeExpressions = applyEvalEffects(activeFormula, evalEffects.value)
 
@@ -138,8 +138,8 @@ export function useTransportPlayback() {
         tracks.value,
         formulas.value,
         variableTracks.value,
-        valueRollTracks.value,
-        valueRollLiveInputs.value
+        valueTrackerTracks.value,
+        valueTrackerLiveInputs.value
       )
       const initialExpressions = applyEvalEffects(initialFormula, evalEffects.value)
 
@@ -226,8 +226,8 @@ export function useTransportPlayback() {
         tracks.value,
         formulas.value,
         variableTracks.value,
-        valueRollTracks.value,
-        valueRollLiveInputs.value
+        valueTrackerTracks.value,
+        valueTrackerLiveInputs.value
       )
       const activeExpressions = applyEvalEffects(activeFormula, evalEffects.value)
 

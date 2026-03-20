@@ -48,10 +48,10 @@ export function initKeyboardShortcuts({ dawStore, transport }) {
       return
     }
 
-    const keyboardValue = getKeyboardValueRollInput(event)
+    const keyboardValue = getKeyboardValueTrackerInput(event)
 
     if (keyboardValue !== null) {
-      const applied = dawStore.applyKeyboardValueToActiveValueRoll(keyboardValue)
+      const applied = dawStore.applyKeyboardValueToActiveValueTracker(keyboardValue)
 
       if (applied) {
         event.preventDefault()
@@ -108,7 +108,7 @@ export function initKeyboardShortcuts({ dawStore, transport }) {
   }
 }
 
-function getKeyboardValueRollInput(event) {
+function getKeyboardValueTrackerInput(event) {
   if (event.metaKey || event.ctrlKey || event.altKey) {
     return null
   }

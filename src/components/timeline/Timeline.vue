@@ -68,11 +68,11 @@
           :variable-track="variableTrack"
         />
 
-        <TimelineValueRollTrack
-          v-for="valueRollTrack in valueRollTracks"
-          :key="valueRollTrack.id"
+        <TimelineValueTrackerTrack
+          v-for="valueTrackerTrack in valueTrackerTracks"
+          :key="valueTrackerTrack.id"
           :timeline-width="timelineWidthStyle"
-          :value-roll-track="valueRollTrack"
+          :value-tracker-track="valueTrackerTrack"
         />
         
         <TimelineTrack
@@ -116,7 +116,7 @@ import TimelineAddTrackRow from '@/components/timeline/TimelineAddTrackRow.vue'
 import TimelineLoopRegion from '@/components/timeline/TimelineLoopRegion.vue'
 import TimelineTrack from '@/components/timeline/TimelineTrack.vue'
 import TimelineVariableTrack from '@/components/timeline/TimelineVariableTrack.vue'
-import TimelineValueRollTrack from '@/components/timeline/TimelineValueRollTrack.vue'
+import TimelineValueTrackerTrack from '@/components/timeline/TimelineValueTrackerTrack.vue'
 import { useTimelineMarqueeSelection } from '@/composables/useTimelineMarqueeSelection'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
@@ -134,7 +134,7 @@ const FIXED_TIMELINE_TICKS = 256
 
 const dawStore = useDawStore()
 const { seekToTime } = useTransportPlayback()
-const { automationLanes, editingClipId, loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, tickSize, time, tracks, valueRollTracks, variableTracks } =
+const { automationLanes, editingClipId, loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, tickSize, time, tracks, valueTrackerTracks, variableTracks } =
   storeToRefs(dawStore)
 const scrollContainer = ref(null)
 const timelineSurfaceElement = ref(null)

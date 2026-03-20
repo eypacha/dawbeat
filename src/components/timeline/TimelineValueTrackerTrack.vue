@@ -1,8 +1,8 @@
 <template>
   <div
     class="relative flex min-w-full w-max border-b border-zinc-800 bg-zinc-950/45"
-    :data-clip-lane-id="valueRollTrack.id"
-    :data-value-roll-track-id="valueRollTrack.id"
+    :data-clip-lane-id="valueTrackerTrack.id"
+    :data-value-tracker-track-id="valueTrackerTrack.id"
     :style="trackStyle"
   >
     <div
@@ -22,8 +22,8 @@
         <Keyboard class="h-3.5 w-3.5" />
       </button>
 
-      <span class="text-[10px] font-semibold uppercase tracking-[0.3em] text-amber-300/80">[VAL]</span>
-      <span class="mt-1 truncate text-sm text-zinc-100">{{ valueRollTrack.name }}</span>
+      <span class="text-[10px] font-semibold uppercase tracking-[0.3em] text-amber-300/80">[VTR]</span>
+      <span class="mt-1 truncate text-sm text-zinc-100">{{ valueTrackerTrack.name }}</span>
     </div>
 
     <div
@@ -48,11 +48,11 @@
         :duration="dragPreview.duration"
       />
 
-      <TimelineValueRollClip
-        v-for="clip in valueRollTrack.clips"
+      <TimelineValueTrackerClip
+        v-for="clip in valueTrackerTrack.clips"
         :key="clip.id"
         :clip="clip"
-        :value-roll-track-id="valueRollTrack.id"
+        :value-tracker-track-id="valueTrackerTrack.id"
       />
     </div>
   </div>
@@ -63,7 +63,7 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Keyboard } from 'lucide-vue-next'
 import TimelineClipPreview from '@/components/timeline/TimelineClipPreview.vue'
-import TimelineValueRollClip from '@/components/timeline/TimelineValueRollClip.vue'
+import TimelineValueTrackerClip from '@/components/timeline/TimelineValueTrackerClip.vue'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { buildCreatedClip, clampClipPlacementStart, getTrackCreateBounds } from '@/services/timelineService'
@@ -77,7 +77,7 @@ const props = defineProps({
     type: String,
     required: true
   },
-  valueRollTrack: {
+  valueTrackerTrack: {
     type: Object,
     required: true
   }
@@ -85,7 +85,7 @@ const props = defineProps({
 
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
-const { canPasteClipsAtPlayhead, clipDragPreview, pixelsPerTick, selectedValueRollTrackId } = storeToRefs(dawStore)
+const { canPasteClipsAtPlayhead, clipDragPreview, pixelsPerTick, selectedValueTrackerTrackId } = storeToRefs(dawStore)
 const laneElement = ref(null)
 const creationPreview = ref(null)
 
@@ -106,7 +106,7 @@ const laneStyle = computed(() => ({
   backgroundImage: 'linear-gradient(to right, rgba(63, 63, 70, 0.45) 1px, transparent 1px)',
   backgroundSize: `${ticksToPixels(visibleTickStep.value, pixelsPerTick.value)}px 100%`
 }))
-const isSelectedTrack = computed(() => selectedValueRollTrackId.value === props.valueRollTrack.id)
+const isSelectedTrack = computed(() => selectedValueTrackerTrackId.value === props.valueTrackerTrack.id)
 const selectedHeaderClassName = computed(() =>
   isSelectedTrack.value ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-900 text-zinc-200'
 )
@@ -122,7 +122,7 @@ const keyboardButtonClassName = computed(() => {
 })
 
 const dragPreview = computed(() => {
-  if (clipDragPreview.value?.targetLaneId !== props.valueRollTrack.id) {
+  if (clipDragPreview.value?.targetLaneId !== props.valueTrackerTrack.id) {
     return null
   }
 
@@ -137,22 +137,22 @@ function handleHeaderContextMenu(event) {
     y: event.clientY,
     items: [
       {
-        action: 'edit-value-roll-track-name',
-        label: 'Rename Value Roll',
-        valueRollTrackId: props.valueRollTrack.id,
-        valueRollTrackName: props.valueRollTrack.name
+        action: 'edit-value-tracker-track-name',
+        label: 'Rename Value Tracker',
+        valueTrackerTrackId: props.valueTrackerTrack.id,
+        valueTrackerTrackName: props.valueTrackerTrack.name
       },
       {
-        action: 'delete-value-roll-track',
-        label: 'Delete Value Roll',
-        valueRollTrackId: props.valueRollTrack.id
+        action: 'delete-value-tracker-track',
+        label: 'Delete Value Tracker',
+        valueTrackerTrackId: props.valueTrackerTrack.id
       }
     ]
   })
 }
 
 function handleKeyboardTargetToggle() {
-  dawStore.toggleValueRollTrackKeyboardTarget(props.valueRollTrack.id)
+  dawStore.toggleValueTrackerTrackKeyboardTarget(props.valueTrackerTrack.id)
 }
 
 function handleLaneContextMenu(event) {
@@ -166,14 +166,14 @@ function handleLaneContextMenu(event) {
 
   event.preventDefault()
 
-  const start = clampClipPlacementStart(props.valueRollTrack, getPointerTick(event), 1)
+  const start = clampClipPlacementStart(props.valueTrackerTrack, getPointerTick(event), 1)
   const items = [
     {
-      action: 'create-value-roll-clip-at-position',
+      action: 'create-value-tracker-clip-at-position',
       duration: 1,
-      label: 'New Value Roll Clip',
+      label: 'New Value Tracker Clip',
       start,
-      valueRollTrackId: props.valueRollTrack.id
+      valueTrackerTrackId: props.valueTrackerTrack.id
     }
   ]
 
@@ -203,14 +203,14 @@ function handleLanePointerDown(event) {
   dawStore.clearClipSelection()
 
   const pointerTick = getPointerTick(event)
-  const nextBounds = getTrackCreateBounds(props.valueRollTrack, pointerTick)
+  const nextBounds = getTrackCreateBounds(props.valueTrackerTrack, pointerTick)
 
   if (!nextBounds || !buildCreatedClip(pointerTick, pointerTick, nextBounds)) {
     return
   }
 
   event.preventDefault()
-  dawStore.beginHistoryTransaction('create-value-roll-clip')
+  dawStore.beginHistoryTransaction('create-value-tracker-clip')
   creationHistoryActive = Boolean(dawStore.historyTransaction)
 
   creationStartX = event.clientX
@@ -251,7 +251,7 @@ function handleCreationPointerUp() {
     return
   }
 
-  dawStore.addValueRollClip(props.valueRollTrack.id, creationPreview.value)
+  dawStore.addValueTrackerClip(props.valueTrackerTrack.id, creationPreview.value)
 
   if (creationHistoryActive) {
     dawStore.commitHistoryTransaction()
