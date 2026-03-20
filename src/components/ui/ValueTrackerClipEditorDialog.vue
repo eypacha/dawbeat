@@ -85,13 +85,17 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
+  playheadStepIndex: {
+    type: Number,
+    default: null
+  },
   stepSubdivision: {
     type: Number,
     required: true
   },
   title: {
     type: String,
-    default: 'Edit Value Tracker'
+    default: 'Hex editor'
   },
   visible: {
     type: Boolean,
@@ -136,6 +140,7 @@ const rows = computed(() =>
             ? String(resolvedValue).padStart(3, '0')
             : '---',
       className: {
+        'value-tracker-editor__row--playhead': props.playheadStepIndex === stepIndex,
         'value-tracker-editor__row--selected': selectedStepIndex.value === stepIndex,
         'value-tracker-editor__row--set': explicitValue !== null,
         'value-tracker-editor__row--held': explicitValue === null && resolvedValue !== null
@@ -193,6 +198,11 @@ watch(
       draftValues.value = normalizeValueTrackerValues(nextValues, props.duration, props.stepSubdivision)
     }
   }
+)
+
+watch(
+  () => props.playheadStepIndex,
+  () => {}
 )
 
 function handleRowClick(stepIndex, event) {
@@ -320,23 +330,7 @@ function clearPendingHex() {
 }
 
 function scrollSelectedStepIntoView() {
-  const viewport = viewportElement.value
-
-  if (!(viewport instanceof HTMLElement)) {
-    return
-  }
-
-  const selectedElement = viewport.querySelector(
-    `[data-step-index="${selectedStepIndex.value}"]`
-  )
-
-  if (!(selectedElement instanceof HTMLElement)) {
-    return
-  }
-
-  selectedElement.scrollIntoView({
-    block: 'nearest'
-  })
+  scrollStepIntoView(selectedStepIndex.value)
 }
 
 function getAnchorStepIndex(values) {
@@ -360,6 +354,26 @@ function getHexDigit(key) {
 function emitUpdate() {
   emit('update', {
     values: draftValues.value
+  })
+}
+
+function scrollStepIntoView(stepIndex) {
+  const viewport = viewportElement.value
+
+  if (!(viewport instanceof HTMLElement)) {
+    return
+  }
+
+  const rowElement = viewport.querySelector(
+    `[data-step-index="${stepIndex}"]`
+  )
+
+  if (!(rowElement instanceof HTMLElement)) {
+    return
+  }
+
+  rowElement.scrollIntoView({
+    block: 'nearest'
   })
 }
 </script>
@@ -427,6 +441,20 @@ function emitUpdate() {
   background: rgba(251, 191, 36, 0.12);
   box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.28);
   opacity: 1;
+}
+
+.value-tracker-editor__row--playhead {
+  background: rgba(14, 165, 233, 0.12);
+  box-shadow: inset 3px 0 0 rgba(56, 189, 248, 0.95);
+  opacity: 1;
+}
+
+.value-tracker-editor__row--playhead.value-tracker-editor__row--selected {
+  background:
+    linear-gradient(90deg, rgba(56, 189, 248, 0.16), rgba(251, 191, 36, 0.12));
+  box-shadow:
+    inset 3px 0 0 rgba(56, 189, 248, 0.95),
+    inset 0 0 0 1px rgba(251, 191, 36, 0.28);
 }
 
 .value-tracker-editor__step,

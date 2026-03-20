@@ -66,6 +66,7 @@
       :duration="editingValueTrackerClip?.duration ?? 1"
       :initial-held-value="editingValueTrackerInitialHeldValue"
       :initial-values="editingValueTrackerClip?.values ?? []"
+      :playhead-step-index="editingValueTrackerPlayheadStepIndex"
       :step-subdivision="editingValueTrackerClip?.stepSubdivision ?? 4"
       :visible="isValueTrackerDialogVisible"
       @close="closeValueTrackerDialog"
@@ -145,6 +146,7 @@ const {
   selectedClipId,
   selectedClipIds,
   showEvaluatedPanel,
+  time,
   tracks,
   valueTrackerTracks,
   variableTracks
@@ -210,6 +212,28 @@ const editingValueTrackerInitialHeldValue = computed(() => {
     editingClipRecord.value.clip.start,
     editingClipRecord.value.lane,
     null
+  )
+})
+const editingValueTrackerPlayheadStepIndex = computed(() => {
+  const clip = editingValueTrackerClip.value
+
+  if (!clip) {
+    return null
+  }
+
+  const stepSubdivision = Number(clip.stepSubdivision) || 1
+  const clipEnd = Number(clip.start) + (Number(clip.duration) || 0)
+
+  if (time.value < clip.start || time.value >= clipEnd) {
+    return null
+  }
+
+  return Math.max(
+    0,
+    Math.min(
+      Math.floor((time.value - clip.start) * stepSubdivision),
+      Math.max(0, (clip.values?.length ?? 1) - 1)
+    )
   )
 })
 const isFormulaDialogVisible = computed(

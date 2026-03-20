@@ -234,14 +234,14 @@ function handleContextMenu(event) {
     y: event.clientY,
     items: [
       {
+        action: 'edit-clip',
+        clipId: props.clip.id,
+        label: 'Hex Editor'
+      },
+      {
         action: 'copy-clip',
         clipId: props.clip.id,
         label: 'Copy'
-      },
-      {
-        action: 'edit-clip',
-        clipId: props.clip.id,
-        label: 'Edit Value Tracker'
       },
       {
         action: 'delete-clip',
