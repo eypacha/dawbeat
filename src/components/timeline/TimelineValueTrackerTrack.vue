@@ -30,6 +30,7 @@
         REC
       </span>
       <span class="mt-1 truncate text-sm text-zinc-100">{{ valueTrackerTrack.name }}</span>
+      <span class="mt-1 truncate text-[10px]" :class="bindingClassName">{{ bindingSummary }}</span>
     </div>
 
     <div
@@ -71,8 +72,10 @@ import { Keyboard } from 'lucide-vue-next'
 import TimelineClipPreview from '@/components/timeline/TimelineClipPreview.vue'
 import TimelineValueTrackerClip from '@/components/timeline/TimelineValueTrackerClip.vue'
 import { useContextMenu } from '@/composables/useContextMenu'
+import { getMidiInputDisplayName, midiState } from '@/services/midiInputService'
 import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { buildCreatedClip, clampClipPlacementStart, getTrackCreateBounds } from '@/services/timelineService'
+import { getValueTrackerBindingSummary } from '@/services/valueTrackerService'
 import { useDawStore } from '@/stores/dawStore'
 import { TRACK_LABEL_WIDTH, getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
 
@@ -139,6 +142,23 @@ const keyboardButtonClassName = computed(() => {
 
   return 'border-yellow-300/45 bg-zinc-900/70 text-zinc-400 hover:border-yellow-200 hover:text-zinc-200'
 })
+const bindingSummary = computed(() =>
+  getValueTrackerBindingSummary(props.valueTrackerTrack.binding, getMidiInputDisplayName)
+)
+const bindingClassName = computed(() => {
+  const bindingType = props.valueTrackerTrack.binding?.type
+
+  if (bindingType === 'midiCc' || bindingType === 'midiNote') {
+    if (!props.valueTrackerTrack.binding?.deviceId) {
+      return 'text-emerald-300/80'
+    }
+
+    const connected = midiState.inputs.some((midiInput) => midiInput.id === props.valueTrackerTrack.binding.deviceId)
+    return connected ? 'text-emerald-300/80' : 'text-amber-300/80'
+  }
+
+  return 'text-zinc-500'
+})
 
 const dragPreview = computed(() => {
   if (clipDragPreview.value?.targetLaneId !== props.valueTrackerTrack.id) {
@@ -158,6 +178,13 @@ function handleHeaderContextMenu(event) {
       {
         action: 'edit-value-tracker-track-name',
         label: 'Rename Value Tracker',
+        valueTrackerTrackId: props.valueTrackerTrack.id,
+        valueTrackerTrackName: props.valueTrackerTrack.name
+      },
+      {
+        action: 'edit-value-tracker-track-binding',
+        label: 'Edit Binding',
+        valueTrackerTrackBinding: props.valueTrackerTrack.binding,
         valueTrackerTrackId: props.valueTrackerTrack.id,
         valueTrackerTrackName: props.valueTrackerTrack.name
       },

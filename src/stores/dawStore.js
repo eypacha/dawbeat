@@ -83,9 +83,11 @@ import { TRACK_COLOR_PALETTE, getTrackColor } from '@/utils/colorUtils'
 import { DEFAULT_VARIABLE_CLIP_FORMULA, getNextVariableTrackName } from '@/services/variableTrackService'
 import {
   DEFAULT_VALUE_TRACKER_STEP_SUBDIVISION,
+  createDefaultValueTrackerBinding,
   createSparseRecordedValueTrackerValues,
   createConstantValueTrackerValues,
   createEmptyValueTrackerValues,
+  doesValueTrackerBindingMatchInput,
   getValueTrackerRecordedStepIndex,
   getValueTrackerValueAtTime,
   getNextValueTrackerTrackName,
@@ -197,6 +199,31 @@ function resolveActiveValueTrackerTrackForKeyboardInput(state) {
   return findValueTrackerTrack(state.valueTrackerTracks, state.selectedValueTrackerTrackId)
 }
 
+function resolveValueTrackerTracksForInput(state, input = {}) {
+  if (input?.source === 'keyboard' || !input?.source) {
+    const activeValueTrackerTrack = resolveActiveValueTrackerTrackForKeyboardInput(state)
+    return activeValueTrackerTrack ? [activeValueTrackerTrack] : []
+  }
+
+  if (input.source !== 'midiCc' && input.source !== 'midiNote') {
+    return []
+  }
+
+  const recordingTrackId = state.valueTrackerRecordingSession?.trackId
+
+  if (recordingTrackId) {
+    const recordingTrack = findValueTrackerTrack(state.valueTrackerTracks, recordingTrackId)
+
+    return recordingTrack && doesValueTrackerBindingMatchInput(recordingTrack.binding, input)
+      ? [recordingTrack]
+      : []
+  }
+
+  return state.valueTrackerTracks.filter((valueTrackerTrack) =>
+    doesValueTrackerBindingMatchInput(valueTrackerTrack.binding, input)
+  )
+}
+
 function createValueTrackerRecordingResult(ok, extras = {}) {
   return {
     ok,
@@ -236,6 +263,43 @@ function normalizeValueTrackerRecordingStopTick(
     startTick + MIN_VALUE_TRACKER_RECORDING_DURATION,
     normalizeValueTrackerRecordingTick(stopTick, stepSubdivision)
   )
+}
+
+function captureValueTrackerRecordingInput(store, recordingSession, value, timeTicks) {
+  if (!recordingSession) {
+    return true
+  }
+
+  if (
+    Number.isFinite(recordingSession.plannedStopTick) &&
+    timeTicks >= recordingSession.plannedStopTick
+  ) {
+    store.finishValueTrackerRecording({
+      stopTick: recordingSession.plannedStopTick
+    })
+    return true
+  }
+
+  if (timeTicks < recordingSession.startTick) {
+    return true
+  }
+
+  const stepIndex = getValueTrackerRecordedStepIndex(
+    timeTicks,
+    recordingSession.startTick,
+    recordingSession.stepSubdivision
+  )
+
+  if (stepIndex < 0) {
+    return true
+  }
+
+  recordingSession.capturedSteps = {
+    ...recordingSession.capturedSteps,
+    [stepIndex]: normalizeValueTrackerValue(value)
+  }
+  recordingSession.hasInput = true
+  return true
 }
 
 function applyProjectState(store, project, { preservePlaybackState = false } = {}) {
@@ -1260,9 +1324,9 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     ingestValueTrackerInput(input = {}) {
-      const activeValueTrackerTrack = this.activeValueTrackerTrackForKeyboardInput
+      const targetValueTrackerTracks = resolveValueTrackerTracksForInput(this.$state, input)
 
-      if (!activeValueTrackerTrack) {
+      if (!targetValueTrackerTracks.length) {
         return false
       }
 
@@ -1271,52 +1335,30 @@ export const useDawStore = defineStore('dawStore', {
         0,
         Number.isFinite(inputTimeTicks) ? inputTimeTicks : this.time
       )
-      const applied = this.setValueTrackerTrackLiveInput(
-        activeValueTrackerTrack.id,
-        input.value,
-        normalizedTimeTicks
-      )
+      let applied = false
 
-      if (!applied) {
-        return false
+      for (const targetValueTrackerTrack of targetValueTrackerTracks) {
+        if (!this.setValueTrackerTrackLiveInput(
+          targetValueTrackerTrack.id,
+          input.value,
+          normalizedTimeTicks
+        )) {
+          continue
+        }
+
+        applied = true
+
+        if (this.valueTrackerRecordingSession?.trackId === targetValueTrackerTrack.id) {
+          captureValueTrackerRecordingInput(
+            this,
+            this.valueTrackerRecordingSession,
+            input.value,
+            normalizedTimeTicks
+          )
+        }
       }
 
-      const recordingSession = this.valueTrackerRecordingSession
-
-      if (!recordingSession || recordingSession.trackId !== activeValueTrackerTrack.id) {
-        return true
-      }
-
-      if (
-        Number.isFinite(recordingSession.plannedStopTick) &&
-        normalizedTimeTicks >= recordingSession.plannedStopTick
-      ) {
-        this.finishValueTrackerRecording({
-          stopTick: recordingSession.plannedStopTick
-        })
-        return true
-      }
-
-      if (normalizedTimeTicks < recordingSession.startTick) {
-        return true
-      }
-
-      const stepIndex = getValueTrackerRecordedStepIndex(
-        normalizedTimeTicks,
-        recordingSession.startTick,
-        recordingSession.stepSubdivision
-      )
-
-      if (stepIndex < 0) {
-        return true
-      }
-
-      recordingSession.capturedSteps = {
-        ...recordingSession.capturedSteps,
-        [stepIndex]: normalizeValueTrackerValue(input.value)
-      }
-      recordingSession.hasInput = true
-      return true
+      return applied
     },
 
     finishValueTrackerRecording(options = {}) {
@@ -1902,6 +1944,18 @@ export const useDawStore = defineStore('dawStore', {
         }
 
         valueTrackerTrack.name = normalizeValueTrackerTrackName(nextName, valueTrackerTrack.name)
+      })
+    },
+
+    updateValueTrackerTrackBinding(valueTrackerTrackId, nextBinding) {
+      return this.recordHistoryStep('update-value-tracker-track-binding', () => {
+        const valueTrackerTrack = findValueTrackerTrack(this.valueTrackerTracks, valueTrackerTrackId)
+
+        if (!valueTrackerTrack) {
+          return
+        }
+
+        valueTrackerTrack.binding = createDefaultValueTrackerBinding(nextBinding)
       })
     },
 

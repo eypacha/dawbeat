@@ -13,14 +13,59 @@ export const VALUE_TRACKER_BINDING_TYPES = Object.freeze([
 
 export function createDefaultValueTrackerBinding(binding = {}) {
   const type = VALUE_TRACKER_BINDING_TYPES.includes(binding?.type) ? binding.type : null
-
-  return {
+  const normalizedBinding = {
     type,
     deviceId: normalizeNullableString(binding?.deviceId),
     channel: normalizeNullableInteger(binding?.channel),
     controller: normalizeNullableInteger(binding?.controller),
     note: normalizeNullableInteger(binding?.note),
     variableName: normalizeNullableString(binding?.variableName)
+  }
+
+  if (type === 'midiCc') {
+    return {
+      ...normalizedBinding,
+      note: null,
+      variableName: null
+    }
+  }
+
+  if (type === 'midiNote') {
+    return {
+      ...normalizedBinding,
+      controller: null,
+      variableName: null
+    }
+  }
+
+  if (type === 'variable') {
+    return {
+      ...normalizedBinding,
+      channel: null,
+      controller: null,
+      deviceId: null,
+      note: null
+    }
+  }
+
+  if (type === 'keyboard') {
+    return {
+      ...normalizedBinding,
+      channel: null,
+      controller: null,
+      deviceId: null,
+      note: null,
+      variableName: null
+    }
+  }
+
+  return {
+    type: null,
+    deviceId: null,
+    channel: null,
+    controller: null,
+    note: null,
+    variableName: null
   }
 }
 
@@ -360,6 +405,65 @@ export function createSparseRecordedValueTrackerValues(
   return nextValues
 }
 
+export function doesValueTrackerBindingMatchInput(binding, input = {}) {
+  const normalizedBinding = createDefaultValueTrackerBinding(binding)
+  const normalizedSource = normalizeNullableString(input?.source)
+
+  if (!normalizedBinding.type || !normalizedSource || normalizedBinding.type !== normalizedSource) {
+    return false
+  }
+
+  if (normalizedBinding.type === 'midiCc') {
+    return doesMidiValueTrackerBindingMatch(normalizedBinding, input, 'controller')
+  }
+
+  if (normalizedBinding.type === 'midiNote') {
+    return doesMidiValueTrackerBindingMatch(normalizedBinding, input, 'note')
+  }
+
+  if (normalizedBinding.type === 'keyboard') {
+    return true
+  }
+
+  if (normalizedBinding.type === 'variable') {
+    return normalizedBinding.variableName === normalizeNullableString(input?.variableName)
+  }
+
+  return false
+}
+
+export function getValueTrackerBindingSummary(binding, resolveDeviceName = null) {
+  const normalizedBinding = createDefaultValueTrackerBinding(binding)
+
+  if (normalizedBinding.type === 'keyboard') {
+    return 'Keyboard target'
+  }
+
+  if (normalizedBinding.type === 'variable') {
+    return normalizedBinding.variableName
+      ? `Variable · ${normalizedBinding.variableName}`
+      : 'Variable binding'
+  }
+
+  if (normalizedBinding.type === 'midiCc') {
+    return [
+      `MIDI CC ${normalizedBinding.controller ?? 'Any'}`,
+      normalizedBinding.channel ? `Ch ${normalizedBinding.channel}` : 'Any ch',
+      getValueTrackerBindingDeviceSummary(normalizedBinding.deviceId, resolveDeviceName)
+    ].filter(Boolean).join(' · ')
+  }
+
+  if (normalizedBinding.type === 'midiNote') {
+    return [
+      `MIDI Note ${normalizedBinding.note ?? 'Any'}`,
+      normalizedBinding.channel ? `Ch ${normalizedBinding.channel}` : 'Any ch',
+      getValueTrackerBindingDeviceSummary(normalizedBinding.deviceId, resolveDeviceName)
+    ].filter(Boolean).join(' · ')
+  }
+
+  return 'No binding'
+}
+
 export function getValueTrackerBoundVariableName(valueTrackerTrack) {
   if (valueTrackerTrack?.binding?.type !== 'variable') {
     return ''
@@ -388,6 +492,38 @@ function normalizeNullableString(value) {
 function normalizeNullableInteger(value) {
   const numericValue = Number(value)
   return Number.isInteger(numericValue) ? numericValue : null
+}
+
+function doesMidiValueTrackerBindingMatch(binding, input, valueKey) {
+  const inputDeviceId = normalizeNullableString(input?.deviceId)
+  const inputChannel = normalizeNullableInteger(input?.channel)
+  const inputValueKey = normalizeNullableInteger(input?.[valueKey])
+
+  if (binding.deviceId && binding.deviceId !== inputDeviceId) {
+    return false
+  }
+
+  if (binding.channel !== null && binding.channel !== inputChannel) {
+    return false
+  }
+
+  if (binding[valueKey] !== null && binding[valueKey] !== inputValueKey) {
+    return false
+  }
+
+  return true
+}
+
+function getValueTrackerBindingDeviceSummary(deviceId, resolveDeviceName) {
+  if (!deviceId) {
+    return 'Any device'
+  }
+
+  const resolvedDeviceName = typeof resolveDeviceName === 'function'
+    ? normalizeNullableString(resolveDeviceName(deviceId))
+    : null
+
+  return resolvedDeviceName || 'Specific device'
 }
 
 function normalizeValueTrackerLiveInput(liveInput) {

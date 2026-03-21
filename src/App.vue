@@ -82,6 +82,14 @@
       @confirm="confirmValueTrackerTrackName"
     />
 
+    <ValueTrackerBindingDialog
+      :initial-binding="valueTrackerTrackBindingDialog.binding"
+      :track-name="valueTrackerTrackBindingDialog.trackName"
+      :visible="valueTrackerTrackBindingDialog.visible"
+      @cancel="closeValueTrackerTrackBindingDialog"
+      @confirm="confirmValueTrackerTrackBinding"
+    />
+
     <SnackbarContainer />
   </div>
 </template>
@@ -102,10 +110,12 @@ import FormulaInputDialog from '@/components/ui/FormulaInputDialog.vue'
 import SnackbarContainer from '@/components/ui/SnackbarContainer.vue'
 import TextInputDialog from '@/components/ui/TextInputDialog.vue'
 import TrackPresentationDialog from '@/components/ui/TrackPresentationDialog.vue'
+import ValueTrackerBindingDialog from '@/components/ui/ValueTrackerBindingDialog.vue'
 import ValueTrackerClipEditorDialog from '@/components/ui/ValueTrackerClipEditorDialog.vue'
 import { provideContextMenu } from '@/composables/useContextMenu'
 import { getFormulaById, resolveClipFormula, resolveClipFormulaName } from '@/services/formulaService'
 import { initKeyboardShortcuts } from '@/services/keyboardShortcuts'
+import { disposeMidiInput } from '@/services/midiInputService'
 import { findTimelineClip } from '@/services/dawStoreService'
 import { getValueTrackerValueAtTime } from '@/services/valueTrackerService'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
@@ -127,6 +137,12 @@ const trackPresentationDialog = reactive({
   visible: false
 })
 const valueTrackerTrackNameDialog = reactive({
+  trackId: null,
+  trackName: '',
+  visible: false
+})
+const valueTrackerTrackBindingDialog = reactive({
+  binding: {},
   trackId: null,
   trackName: '',
   visible: false
@@ -458,6 +474,13 @@ function handleContextMenuSelect(action, item) {
     valueTrackerTrackNameDialog.visible = true
     return
   }
+
+  if (action === 'edit-value-tracker-track-binding') {
+    valueTrackerTrackBindingDialog.binding = item.valueTrackerTrackBinding ?? {}
+    valueTrackerTrackBindingDialog.trackId = item.valueTrackerTrackId ?? null
+    valueTrackerTrackBindingDialog.trackName = item.valueTrackerTrackName ?? ''
+    valueTrackerTrackBindingDialog.visible = true
+  }
 }
 
 function handleTrackUnionOperatorSelect(item, operator, close) {
@@ -506,6 +529,21 @@ function confirmValueTrackerTrackName(nextName) {
   }
 
   closeValueTrackerTrackNameDialog()
+}
+
+function closeValueTrackerTrackBindingDialog() {
+  valueTrackerTrackBindingDialog.binding = {}
+  valueTrackerTrackBindingDialog.trackId = null
+  valueTrackerTrackBindingDialog.trackName = ''
+  valueTrackerTrackBindingDialog.visible = false
+}
+
+function confirmValueTrackerTrackBinding(nextBinding) {
+  if (valueTrackerTrackBindingDialog.trackId) {
+    dawStore.updateValueTrackerTrackBinding(valueTrackerTrackBindingDialog.trackId, nextBinding)
+  }
+
+  closeValueTrackerTrackBindingDialog()
 }
 
 function closeFormulaDialog() {
@@ -598,6 +636,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('contextmenu', handleGlobalContextMenu)
   disposeKeyboardShortcuts?.()
   disposeKeyboardShortcuts = null
+  disposeMidiInput()
   void stop()
 })
 </script>

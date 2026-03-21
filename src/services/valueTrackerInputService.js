@@ -7,9 +7,8 @@ export function dispatchValueTrackerInput(input = {}) {
   const dawStore = useDawStore()
 
   return dawStore.ingestValueTrackerInput({
+    ...input,
     source: normalizeInputSource(input.source),
-    timeTicks: input.timeTicks,
-    value: input.value
   })
 }
 
