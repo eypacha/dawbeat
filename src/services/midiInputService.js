@@ -1,6 +1,7 @@
 import { reactive } from 'vue'
 import { dispatchValueTrackerInput } from '@/services/valueTrackerInputService'
 import { enqueueSnackbar } from '@/services/notifications'
+import { VALUE_TRACKER_MAX } from '@/services/valueTrackerService'
 
 const MIDI_NOTE_OFF = 0x80
 const MIDI_NOTE_ON = 0x90
@@ -362,7 +363,7 @@ function scaleMidi7BitValue(value) {
     return 0
   }
 
-  return Math.max(0, Math.min(255, Math.round((numericValue / 127) * 255)))
+  return Math.max(0, Math.min(VALUE_TRACKER_MAX, Math.round((numericValue / 127) * VALUE_TRACKER_MAX)))
 }
 
 function createMidiMessageId() {

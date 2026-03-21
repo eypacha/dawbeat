@@ -43,8 +43,20 @@
         >
           <span class="value-tracker-editor__step">{{ row.stepLabel }}</span>
           <span class="value-tracker-editor__state">{{ row.stateLabel }}</span>
-          <span class="value-tracker-editor__hex">{{ row.hexLabel }}</span>
-          <span class="value-tracker-editor__dec">{{ row.decLabel }}</span>
+          <span
+            class="value-tracker-editor__hex"
+            :class="row.hexCellClassName"
+            @click.stop="handleCellClick(row.stepIndex, VALUE_TRACKER_INPUT_CELL_HEX)"
+          >
+            {{ row.hexLabel }}
+          </span>
+          <span
+            class="value-tracker-editor__dec"
+            :class="row.decCellClassName"
+            @click.stop="handleCellClick(row.stepIndex, VALUE_TRACKER_INPUT_CELL_DEC)"
+          >
+            {{ row.decLabel }}
+          </span>
         </button>
       </div>
     </div>
@@ -60,6 +72,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import Modal from '@/components/ui/Modal.vue'
 import {
+  VALUE_TRACKER_MAX,
   getValueTrackerEventCount,
   getValueTrackerResolvedValues,
   getValueTrackerStepCount,
@@ -101,10 +114,17 @@ const props = defineProps({
 const emit = defineEmits(['close', 'update'])
 
 const ROWS_PER_JUMP = 8
+const VALUE_TRACKER_INPUT_CELL_HEX = 'hex'
+const VALUE_TRACKER_INPUT_CELL_DEC = 'dec'
+const VALUE_TRACKER_HEX_DIGIT_COUNT = VALUE_TRACKER_MAX.toString(16).length
+const VALUE_TRACKER_DEC_DIGIT_COUNT = String(VALUE_TRACKER_MAX).length
 
 const draftValues = ref([])
+const pendingDecimalBuffer = ref('')
+const pendingDecimalStepIndex = ref(null)
 const pendingHexBuffer = ref('')
 const pendingHexStepIndex = ref(null)
+const selectedInputCell = ref(VALUE_TRACKER_INPUT_CELL_HEX)
 const selectedStepIndex = ref(0)
 const viewportElement = ref(null)
 
@@ -118,25 +138,35 @@ const rows = computed(() =>
   Array.from({ length: stepCount.value }, (_entry, stepIndex) => {
     const explicitValue = normalizeValueTrackerEventValue(draftValues.value[stepIndex])
     const resolvedValue = normalizeValueTrackerEventValue(resolvedValues.value[stepIndex])
+    const previewValue = getPendingPreviewValue(stepIndex)
     const pendingHexLabel =
       pendingHexStepIndex.value === stepIndex && pendingHexBuffer.value
-        ? `${pendingHexBuffer.value.padEnd(2, '_')}`
+        ? formatPendingHex(pendingHexBuffer.value)
         : null
+    const pendingDecimalLabel =
+      pendingDecimalStepIndex.value === stepIndex && pendingDecimalBuffer.value
+        ? formatPendingDecimal(pendingDecimalBuffer.value)
+        : null
+    const displayValue = previewValue ?? explicitValue ?? resolvedValue
+    const rowSelected = selectedStepIndex.value === stepIndex
 
     return {
       stepIndex,
       stepLabel: String(stepIndex).padStart(3, '0'),
       stateLabel: explicitValue !== null ? 'SET' : resolvedValue !== null ? 'HOLD' : 'EMPTY',
-      hexLabel: pendingHexLabel ?? formatHex(explicitValue ?? resolvedValue),
-      decLabel:
-        explicitValue !== null
-          ? String(explicitValue).padStart(3, '0')
-          : resolvedValue !== null
-            ? String(resolvedValue).padStart(3, '0')
-            : '---',
+      hexCellClassName: {
+        'value-tracker-editor__cell--selected':
+          rowSelected && selectedInputCell.value === VALUE_TRACKER_INPUT_CELL_HEX
+      },
+      hexLabel: pendingHexLabel ?? formatHex(displayValue),
+      decCellClassName: {
+        'value-tracker-editor__cell--selected':
+          rowSelected && selectedInputCell.value === VALUE_TRACKER_INPUT_CELL_DEC
+      },
+      decLabel: pendingDecimalLabel ?? formatDecimal(displayValue),
       className: {
         'value-tracker-editor__row--playhead': props.playheadStepIndex === stepIndex,
-        'value-tracker-editor__row--selected': selectedStepIndex.value === stepIndex,
+        'value-tracker-editor__row--selected': rowSelected,
         'value-tracker-editor__row--set': explicitValue !== null,
         'value-tracker-editor__row--held': explicitValue === null && resolvedValue !== null
       }
@@ -148,26 +178,32 @@ const selectionStatus = computed(() => {
   const currentStepIndex = clamp(selectedStepIndex.value, 0, Math.max(0, stepCount.value - 1))
   const explicitValue = normalizeValueTrackerEventValue(draftValues.value[currentStepIndex])
   const resolvedValue = normalizeValueTrackerEventValue(resolvedValues.value[currentStepIndex])
+  const selectedCellLabel = selectedInputCell.value === VALUE_TRACKER_INPUT_CELL_DEC ? 'Dec' : 'Hex'
+
+  if (pendingDecimalStepIndex.value === currentStepIndex && pendingDecimalBuffer.value) {
+    return `Step ${currentStepIndex + 1} · ${selectedCellLabel} selected · typing ${formatPendingDecimal(pendingDecimalBuffer.value)}`
+  }
 
   if (pendingHexStepIndex.value === currentStepIndex && pendingHexBuffer.value) {
-    return `Step ${currentStepIndex + 1} · typing ${pendingHexBuffer.value.padEnd(2, '_')}`
+    return `Step ${currentStepIndex + 1} · ${selectedCellLabel} selected · typing ${formatPendingHex(pendingHexBuffer.value)}`
   }
 
   if (explicitValue !== null) {
-    return `Step ${currentStepIndex + 1} · Set ${explicitValue} · 0x${formatHex(explicitValue)}`
+    return `Step ${currentStepIndex + 1} · ${selectedCellLabel} selected · Set ${explicitValue} · 0x${formatHex(explicitValue)}`
   }
 
   if (resolvedValue !== null) {
-    return `Step ${currentStepIndex + 1} · Hold ${resolvedValue} · 0x${formatHex(resolvedValue)}`
+    return `Step ${currentStepIndex + 1} · ${selectedCellLabel} selected · Hold ${resolvedValue} · 0x${formatHex(resolvedValue)}`
   }
 
-  return `Step ${currentStepIndex + 1} · Empty`
+  return `Step ${currentStepIndex + 1} · ${selectedCellLabel} selected · Empty`
 })
 
 watch(
   () => props.visible,
   async (visible) => {
     if (!visible) {
+      clearPendingDecimal()
       clearPendingHex()
       return
     }
@@ -178,6 +214,8 @@ watch(
       props.stepSubdivision
     )
     selectedStepIndex.value = getAnchorStepIndex(draftValues.value)
+    selectedInputCell.value = VALUE_TRACKER_INPUT_CELL_HEX
+    clearPendingDecimal()
     clearPendingHex()
     await nextTick()
     viewportElement.value?.focus()
@@ -208,6 +246,10 @@ function handleRowClick(stepIndex, event) {
   selectStep(stepIndex)
 }
 
+function handleCellClick(stepIndex, cell) {
+  selectStep(stepIndex, cell)
+}
+
 function handleViewportKeydown(event) {
   if (event.metaKey || event.ctrlKey || event.altKey) {
     return
@@ -215,10 +257,33 @@ function handleViewportKeydown(event) {
 
   const stepIndex = clamp(selectedStepIndex.value, 0, Math.max(0, stepCount.value - 1))
   const hexDigit = getHexDigit(event.key)
+  const decimalDigit = getDecimalDigit(event.key)
 
-  if (hexDigit) {
+  if (event.key === 'Tab') {
+    event.preventDefault()
+    commitPendingInput()
+    selectedInputCell.value =
+      selectedInputCell.value === VALUE_TRACKER_INPUT_CELL_HEX
+        ? VALUE_TRACKER_INPUT_CELL_DEC
+        : VALUE_TRACKER_INPUT_CELL_HEX
+    return
+  }
+
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    commitPendingInput()
+    return
+  }
+
+  if (selectedInputCell.value === VALUE_TRACKER_INPUT_CELL_HEX && hexDigit) {
     event.preventDefault()
     applyHexDigit(stepIndex, hexDigit)
+    return
+  }
+
+  if (selectedInputCell.value === VALUE_TRACKER_INPUT_CELL_DEC && decimalDigit) {
+    event.preventDefault()
+    applyDecimalDigit(stepIndex, decimalDigit)
     return
   }
 
@@ -258,40 +323,84 @@ function handleViewportKeydown(event) {
     return
   }
 
-  if (event.key === 'Backspace' || event.key === 'Delete') {
+  if (event.key === 'Backspace') {
+    event.preventDefault()
+
+    if (selectedInputCell.value === VALUE_TRACKER_INPUT_CELL_HEX && pendingHexStepIndex.value === stepIndex && pendingHexBuffer.value) {
+      pendingHexBuffer.value = pendingHexBuffer.value.slice(0, -1)
+
+      if (!pendingHexBuffer.value) {
+        pendingHexStepIndex.value = null
+      }
+
+      return
+    }
+
+    if (selectedInputCell.value === VALUE_TRACKER_INPUT_CELL_DEC && pendingDecimalStepIndex.value === stepIndex && pendingDecimalBuffer.value) {
+      pendingDecimalBuffer.value = pendingDecimalBuffer.value.slice(0, -1)
+
+      if (!pendingDecimalBuffer.value) {
+        pendingDecimalStepIndex.value = null
+      }
+
+      return
+    }
+
+    clearEventAtStep(stepIndex)
+    return
+  }
+
+  if (event.key === 'Delete') {
     event.preventDefault()
     clearEventAtStep(stepIndex)
     return
   }
 
   if (event.key === 'Escape') {
+    clearPendingDecimal()
     clearPendingHex()
   }
 }
 
 function applyHexDigit(stepIndex, digit) {
+  if (pendingDecimalStepIndex.value !== null) {
+    clearPendingDecimal()
+  }
+
   if (pendingHexStepIndex.value !== stepIndex) {
     pendingHexBuffer.value = ''
   }
 
   pendingHexStepIndex.value = stepIndex
-  pendingHexBuffer.value = `${pendingHexBuffer.value}${digit}`.slice(0, 2)
+  pendingHexBuffer.value = `${pendingHexBuffer.value}${digit}`.slice(0, VALUE_TRACKER_HEX_DIGIT_COUNT)
 
-  if (pendingHexBuffer.value.length < 2) {
+  if (pendingHexBuffer.value.length < VALUE_TRACKER_HEX_DIGIT_COUNT) {
     return
   }
 
-  setEventAtStep(stepIndex, parseInt(pendingHexBuffer.value, 16))
-  clearPendingHex()
-
-  if (stepIndex < stepCount.value - 1) {
-    selectStep(stepIndex + 1)
-  }
+  commitPendingHex({ moveToNextStep: true })
 }
 
-function selectStep(stepIndex) {
+function applyDecimalDigit(stepIndex, digit) {
+  if (pendingHexStepIndex.value !== null) {
+    clearPendingHex()
+  }
+
+  if (pendingDecimalStepIndex.value !== stepIndex) {
+    pendingDecimalBuffer.value = ''
+  }
+
+  pendingDecimalStepIndex.value = stepIndex
+  pendingDecimalBuffer.value = `${pendingDecimalBuffer.value}${digit}`.slice(0, VALUE_TRACKER_DEC_DIGIT_COUNT)
+}
+
+function selectStep(stepIndex, cell = selectedInputCell.value, options = {}) {
+  if (options.commitPending !== false) {
+    commitPendingInput()
+  }
+
   selectedStepIndex.value = clamp(stepIndex, 0, Math.max(0, stepCount.value - 1))
-  clearPendingHex()
+  selectedInputCell.value = cell === VALUE_TRACKER_INPUT_CELL_DEC ? VALUE_TRACKER_INPUT_CELL_DEC : VALUE_TRACKER_INPUT_CELL_HEX
 
   nextTick(() => {
     viewportElement.value?.focus()
@@ -324,6 +433,45 @@ function clearPendingHex() {
   pendingHexStepIndex.value = null
 }
 
+function clearPendingDecimal() {
+  pendingDecimalBuffer.value = ''
+  pendingDecimalStepIndex.value = null
+}
+
+function commitPendingInput() {
+  return commitPendingHex() || commitPendingDecimal()
+}
+
+function commitPendingHex(options = {}) {
+  if (pendingHexStepIndex.value === null || !pendingHexBuffer.value) {
+    clearPendingHex()
+    return false
+  }
+
+  const stepIndex = pendingHexStepIndex.value
+  setEventAtStep(stepIndex, parseInt(pendingHexBuffer.value, 16))
+  clearPendingHex()
+
+  if (options.moveToNextStep && stepIndex < stepCount.value - 1) {
+    selectStep(stepIndex + 1, VALUE_TRACKER_INPUT_CELL_HEX, {
+      commitPending: false
+    })
+  }
+
+  return true
+}
+
+function commitPendingDecimal() {
+  if (pendingDecimalStepIndex.value === null || !pendingDecimalBuffer.value) {
+    clearPendingDecimal()
+    return false
+  }
+
+  setEventAtStep(pendingDecimalStepIndex.value, Number.parseInt(pendingDecimalBuffer.value, 10))
+  clearPendingDecimal()
+  return true
+}
+
 function scrollSelectedStepIntoView() {
   scrollStepIntoView(selectedStepIndex.value)
 }
@@ -338,12 +486,56 @@ function getAnchorStepIndex(values) {
 
 function formatHex(value) {
   const normalizedValue = normalizeValueTrackerEventValue(value)
-  return normalizedValue === null ? '--' : normalizedValue.toString(16).toUpperCase().padStart(2, '0')
+  return normalizedValue === null
+    ? formatGroupedHex('-'.repeat(VALUE_TRACKER_HEX_DIGIT_COUNT))
+    : formatGroupedHex(normalizedValue.toString(16).toUpperCase().padStart(VALUE_TRACKER_HEX_DIGIT_COUNT, '0'))
+}
+
+function formatDecimal(value) {
+  const normalizedValue = normalizeValueTrackerEventValue(value)
+  return normalizedValue === null
+    ? '-'.repeat(VALUE_TRACKER_DEC_DIGIT_COUNT)
+    : String(normalizedValue).padStart(VALUE_TRACKER_DEC_DIGIT_COUNT, '0')
+}
+
+function formatPendingHex(value) {
+  return formatGroupedHex(value.padEnd(VALUE_TRACKER_HEX_DIGIT_COUNT, '_'))
+}
+
+function formatPendingDecimal(value) {
+  return value.padEnd(VALUE_TRACKER_DEC_DIGIT_COUNT, '_')
+}
+
+function formatGroupedHex(value) {
+  const digits = typeof value === 'string' ? value.toUpperCase() : ''
+  const groups = []
+
+  for (let index = 0; index < VALUE_TRACKER_HEX_DIGIT_COUNT; index += 2) {
+    groups.push(digits.slice(index, index + 2).padEnd(2, '-'))
+  }
+
+  return groups.join(' ')
 }
 
 function getHexDigit(key) {
   const normalizedKey = typeof key === 'string' ? key.toUpperCase() : ''
   return /^[0-9A-F]$/.test(normalizedKey) ? normalizedKey : ''
+}
+
+function getDecimalDigit(key) {
+  return /^[0-9]$/.test(key) ? key : ''
+}
+
+function getPendingPreviewValue(stepIndex) {
+  if (pendingHexStepIndex.value === stepIndex && pendingHexBuffer.value) {
+    return normalizeValueTrackerEventValue(Number.parseInt(pendingHexBuffer.value, 16))
+  }
+
+  if (pendingDecimalStepIndex.value === stepIndex && pendingDecimalBuffer.value) {
+    return normalizeValueTrackerEventValue(Number.parseInt(pendingDecimalBuffer.value, 10))
+  }
+
+  return null
 }
 
 function emitUpdate() {
@@ -383,7 +575,7 @@ function scrollStepIntoView(stepIndex) {
 .value-tracker-editor__header,
 .value-tracker-editor__row {
   display: grid;
-  grid-template-columns: 5rem 5rem 5rem 5rem;
+  grid-template-columns: 5rem 5rem 6rem 6rem;
   gap: 1px;
   align-items: center;
   font-size: 0.75rem;
@@ -464,5 +656,15 @@ function scrollStepIntoView(stepIndex) {
 
 .value-tracker-editor__dec {
   color: rgb(228 228 231);
+}
+
+.value-tracker-editor__hex,
+.value-tracker-editor__dec {
+  cursor: text;
+}
+
+.value-tracker-editor__cell--selected {
+  background: rgba(251, 191, 36, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.32);
 }
 </style>

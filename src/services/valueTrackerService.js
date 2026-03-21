@@ -1,7 +1,7 @@
 import { TIMELINE_SNAP_SUBDIVISIONS, clamp } from '@/utils/timeUtils'
 
 export const VALUE_TRACKER_MIN = 0
-export const VALUE_TRACKER_MAX = 255
+export const VALUE_TRACKER_MAX = 0xFFFF
 export const DEFAULT_VALUE_TRACKER_STEP_SUBDIVISION = TIMELINE_SNAP_SUBDIVISIONS
 export const DEFAULT_VALUE_TRACKER_TRACK_NAME_PREFIX = 'Value Tracker'
 export const VALUE_TRACKER_BINDING_TYPES = Object.freeze([
