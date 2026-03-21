@@ -24,9 +24,10 @@
     </div>
   </Panel>
 
-  <Panel v-else class="flex h-full min-h-[320px] flex-col">
+  <Panel v-else :opaque="!showCollapseToggle" class="flex h-full min-h-[320px] flex-col">
     <div class="mb-4 flex items-center gap-3">
       <IconButton
+        v-if="showCollapseToggle"
         :icon="ChevronLeft"
         label="Collapse Library"
         size="sm"
@@ -119,6 +120,10 @@ defineProps({
   collapsed: {
     type: Boolean,
     default: false
+  },
+  showCollapseToggle: {
+    type: Boolean,
+    default: true
   }
 })
 

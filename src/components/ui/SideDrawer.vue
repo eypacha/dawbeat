@@ -1,31 +1,30 @@
 <template>
   <div
-    v-if="open"
     class="fixed inset-0 z-40"
-    :class="showBackdrop ? '' : 'pointer-events-none'"
+    :class="open ? '' : 'pointer-events-none'"
   >
     <Transition
-      enter-active-class="transition-opacity duration-200 ease-out"
+      enter-active-class="transition-opacity duration-220 ease-out"
       enter-from-class="opacity-0"
       enter-to-class="opacity-100"
-      leave-active-class="transition-opacity duration-150 ease-in"
+      leave-active-class="transition-opacity duration-180 ease-in"
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
       <button
-        v-if="showBackdrop"
-        class="absolute inset-0 bg-black/55"
+        v-if="open && showBackdrop"
+        class="absolute inset-0 bg-black/40 backdrop-blur-[1px]"
         type="button"
         @click="handleBackdropClick"
       />
     </Transition>
 
     <Transition
-      enter-active-class="transition-transform duration-220 ease-out"
+      enter-active-class="transition-all duration-260 ease-[cubic-bezier(0.22,1,0.36,1)]"
       :enter-from-class="drawerEnterFromClassName"
-      enter-to-class="translate-x-0"
-      leave-active-class="transition-transform duration-180 ease-in"
-      leave-from-class="translate-x-0"
+      enter-to-class="translate-x-0 opacity-100"
+      leave-active-class="transition-all duration-180 ease-in"
+      leave-from-class="translate-x-0 opacity-100"
       :leave-to-class="drawerEnterFromClassName"
     >
       <aside
@@ -71,7 +70,7 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 
 const drawerEnterFromClassName = computed(() =>
-  props.side === 'right' ? 'translate-x-full' : '-translate-x-full'
+  props.side === 'right' ? 'translate-x-12 opacity-0' : '-translate-x-12 opacity-0'
 )
 
 const drawerPositionClassName = computed(() =>

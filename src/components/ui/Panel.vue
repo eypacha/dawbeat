@@ -12,6 +12,10 @@ const props = defineProps({
     type: String,
     default: 'section'
   },
+  opaque: {
+    type: Boolean,
+    default: false
+  },
   padding: {
     type: String,
     default: 'md'
@@ -29,6 +33,10 @@ const panelClassName = computed(() => {
     paddingClassName = ''
   }
 
-  return ['border border-zinc-800 bg-zinc-900/80 shadow-lg shadow-black/20', paddingClassName]
+  return [
+    'border border-zinc-800 shadow-lg shadow-black/20',
+    props.opaque ? 'bg-zinc-900' : 'bg-zinc-900/80',
+    paddingClassName
+  ]
 })
 </script>

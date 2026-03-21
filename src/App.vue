@@ -45,11 +45,11 @@
     <SideDrawer
       :open="isCompactLayout && activeAuxiliaryDrawer === 'library'"
       panel-class="w-[min(calc(100vw-1rem),22rem)] p-4"
-      side="left"
+      side="right"
       :show-backdrop="false"
       @close="closeAuxiliaryDrawer"
     >
-      <FormulaLibrary :collapsed="false" @toggle-collapse="closeAuxiliaryDrawer" />
+      <FormulaLibrary :collapsed="false" :show-collapse-toggle="false" @toggle-collapse="closeAuxiliaryDrawer" />
     </SideDrawer>
 
     <SideDrawer
@@ -58,7 +58,7 @@
       side="right"
       @close="closeAuxiliaryDrawer"
     >
-      <EffectsPanel :collapsed="false" @toggle-collapse="closeAuxiliaryDrawer" />
+      <EffectsPanel :collapsed="false" :show-collapse-toggle="false" @toggle-collapse="closeAuxiliaryDrawer" />
     </SideDrawer>
 
     <ContextMenu
