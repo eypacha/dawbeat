@@ -21,8 +21,6 @@
       >
         <Keyboard class="h-3.5 w-3.5" />
       </button>
-
-      <span class="text-[10px] font-semibold uppercase tracking-[0.3em] text-amber-300/80">[VTR]</span>
       <span
         v-if="isRecordingTrack"
         class="mt-1 inline-flex w-fit items-center rounded border border-rose-400/40 bg-rose-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.24em] text-rose-200"
@@ -30,7 +28,13 @@
         REC
       </span>
       <span class="mt-1 truncate text-sm text-zinc-100">{{ valueTrackerTrack.name }}</span>
-      <span class="mt-1 truncate text-[10px]" :class="bindingClassName">{{ bindingSummary }}</span>
+      <span
+        v-if="showBindingSummary"
+        class="mt-1 truncate text-[10px]"
+        :class="bindingClassName"
+      >
+        {{ bindingSummary }}
+      </span>
     </div>
 
     <div
@@ -114,6 +118,7 @@ let creationHistoryActive = false
 let creationStartX = 0
 const visibleTickStep = computed(() => getVisibleTimelineTickStep(pixelsPerTick.value))
 const laneHeight = computed(() => props.valueTrackerTrack.height)
+const showBindingSummary = computed(() => laneHeight.value >= 72)
 
 const trackStyle = computed(() => ({
   '--track-color': '#f59e0b',

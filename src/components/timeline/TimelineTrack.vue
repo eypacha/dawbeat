@@ -14,10 +14,11 @@
     />
 
     <div
-      class="sticky left-0 z-20 flex shrink-0 flex-col justify-center border-r border-zinc-800 px-4 py-0"
+      class="sticky left-0 z-20 flex shrink-0 border-r border-zinc-800"
       data-context-menu-enabled="true"
       draggable="true"
       :class="[
+        headerLayoutClassName,
         track.id === selectedTrackId ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-900 text-zinc-300',
         isTrackReorderSource ? 'cursor-grabbing opacity-50' : 'cursor-grab'
       ]"
@@ -28,17 +29,17 @@
       @dragover.prevent="handleTrackHeaderDragOver"
       @drop.prevent="handleTrackHeaderDrop"
     >
-      <div class="min-w-0">
+      <div class="min-w-0 flex-1">
         <span class="block min-w-0 truncate text-sm transition-opacity" :class="isAudible ? '' : 'opacity-55'">
           {{ displayTrackName }}
         </span>
       </div>
 
-      <div class="mt-2 flex items-center justify-between gap-2">
+      <div :class="controlsRowClassName">
         <div class="flex items-center gap-1.5">
           <button
-            class="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-md border px-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors"
-            :class="muteButtonClassName"
+            class="flex shrink-0 items-center justify-center rounded-md border font-semibold uppercase tracking-[0.18em] transition-colors"
+            :class="[trackControlButtonSizeClassName, muteButtonClassName]"
             :title="isMuted ? 'Unmute track' : 'Mute track'"
             :aria-pressed="isMuted"
             type="button"
@@ -48,8 +49,8 @@
           </button>
 
           <button
-            class="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-md border px-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors"
-            :class="soloButtonClassName"
+            class="flex shrink-0 items-center justify-center rounded-md border font-semibold uppercase tracking-[0.18em] transition-colors"
+            :class="[trackControlButtonSizeClassName, soloButtonClassName]"
             :title="isSoloed ? 'Disable solo' : 'Solo track'"
             :aria-pressed="isSoloed"
             type="button"
@@ -59,7 +60,7 @@
           </button>
         </div>
 
-        <div class="flex justify-end">
+        <div v-if="showUnionOperator" class="flex justify-end">
           <span
             class="shrink-0 text-sm font-bold"
             :style="{ color: 'var(--track-color)' }"
@@ -186,6 +187,7 @@ let creationHistoryActive = false
 let creationStartX = 0
 const visibleTickStep = computed(() => getVisibleTimelineTickStep(pixelsPerTick.value))
 const laneHeight = computed(() => props.track.height)
+const isCompactHeader = computed(() => laneHeight.value < 68)
 
 const laneStyle = computed(() => ({
   height: `${laneHeight.value}px`,
@@ -193,6 +195,22 @@ const laneStyle = computed(() => ({
   backgroundImage: 'linear-gradient(to right, rgba(63, 63, 70, 0.5) 1px, transparent 1px)',
   backgroundSize: `${ticksToPixels(visibleTickStep.value, pixelsPerTick.value)}px 100%`
 }))
+const headerLayoutClassName = computed(() =>
+  isCompactHeader.value
+    ? 'items-center gap-2 px-3 py-0'
+    : 'flex-col justify-center px-4 py-3'
+)
+const controlsRowClassName = computed(() =>
+  isCompactHeader.value
+    ? 'flex shrink-0 items-center'
+    : 'mt-2 flex items-center justify-between gap-2'
+)
+const trackControlButtonSizeClassName = computed(() =>
+  isCompactHeader.value
+    ? 'h-5 min-w-5 px-1 text-[9px]'
+    : 'h-6 min-w-6 px-1.5 text-[10px]'
+)
+const showUnionOperator = computed(() => !isCompactHeader.value)
 
 const laneClassName = computed(() => {
   if (isFormulaDropTarget.value) {

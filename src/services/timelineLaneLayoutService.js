@@ -1,6 +1,6 @@
 import { clamp } from '@/utils/timeUtils'
 
-export const TRACK_LANE_MIN_HEIGHT = 68
+export const TRACK_LANE_MIN_HEIGHT = 44
 export const TRACK_LANE_DEFAULT_HEIGHT = 80
 export const TRACK_LANE_MAX_HEIGHT = 220
 
