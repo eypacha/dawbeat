@@ -147,6 +147,8 @@
               </template>
 
               <template v-else>
+                <FormulaEffectsVisualizer />
+
                 <div
                   v-for="effect in evalEffects"
                   :key="effect.id"
@@ -191,6 +193,7 @@ import AudioMasterGainItem from '@/components/effects/AudioMasterGainItem.vue'
 import AudioReverbItem from '@/components/effects/AudioReverbItem.vue'
 import AudioStereoWidenerItem from '@/components/effects/AudioStereoWidenerItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
+import FormulaEffectsVisualizer from '@/components/effects/FormulaEffectsVisualizer.vue'
 import Button from '@/components/ui/Button.vue'
 import Divider from '@/components/ui/Divider.vue'
 import IconButton from '@/components/ui/IconButton.vue'

@@ -43,11 +43,19 @@ function sanitizeRenderableExpressions(formula, evalEffects = []) {
     return [SILENT_FORMULA]
   }
 
-  const expressions = applyEvalEffects(formula, evalEffects)
+  return sanitizeRenderableExpressionList(
+    applyEvalEffects(formula, evalEffects)
+  )
+}
+
+function sanitizeRenderableExpressionList(expressions = []) {
+  const normalizedExpressions = Array.isArray(expressions)
+    ? expressions
     .filter((expression) => typeof expression === 'string' && expression.trim())
     .map((expression) => (validateFormula(expression) ? expression : SILENT_FORMULA))
+    : []
 
-  return expressions.length ? expressions : [SILENT_FORMULA]
+  return normalizedExpressions.length ? normalizedExpressions : [SILENT_FORMULA]
 }
 
 function mergeChannels(leftChannel, rightChannel) {
@@ -209,6 +217,73 @@ export async function renderFormulaWaveform({
     }
 
     return rememberCachedWaveform(cacheKey, waveform)
+  })
+
+  return renderQueue
+}
+
+export async function renderFormulaWaveformChannels({
+  expressions = [],
+  startSample = 0,
+  endSample = 1,
+  sampleCount = 64,
+  sampleRate = DEFAULT_SAMPLE_RATE
+}) {
+  const normalizedStartSample = normalizeTimeSample(startSample)
+  const normalizedEndSample = Math.max(
+    normalizedStartSample + 1,
+    normalizeTimeSample(endSample, normalizedStartSample + 1)
+  )
+  const normalizedSampleCount = normalizeSampleCount(sampleCount)
+  const normalizedSampleRate = Math.max(1, normalizeTimeSample(sampleRate, DEFAULT_SAMPLE_RATE))
+  const sanitizedExpressions = sanitizeRenderableExpressionList(expressions)
+  const cacheKey = JSON.stringify({
+    endSample: normalizedEndSample,
+    expressions: sanitizedExpressions,
+    mode: 'channels',
+    sampleCount: normalizedSampleCount,
+    sampleRate: normalizedSampleRate,
+    startSample: normalizedStartSample
+  })
+  const cachedWaveforms = previewCache.get(cacheKey)
+
+  if (cachedWaveforms) {
+    return cachedWaveforms
+  }
+
+  renderQueue = renderQueue.catch(() => {}).then(async () => {
+    const node = await initPreviewNode()
+
+    node.setDesiredSampleRate(normalizedSampleRate)
+    await node.setExpressions(sanitizedExpressions, true)
+
+    const channels = [
+      new Float32Array(
+        await readWaveformChannel(
+          node,
+          normalizedStartSample,
+          normalizedEndSample,
+          normalizedSampleCount,
+          0
+        )
+      )
+    ]
+
+    if (node.getNumChannels() > 1) {
+      channels.push(
+        new Float32Array(
+          await readWaveformChannel(
+            node,
+            normalizedStartSample,
+            normalizedEndSample,
+            normalizedSampleCount,
+            1
+          )
+        )
+      )
+    }
+
+    return rememberCachedWaveform(cacheKey, channels)
   })
 
   return renderQueue
