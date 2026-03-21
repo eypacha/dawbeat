@@ -13,6 +13,7 @@
             :icon="FilePlus"
             label="New Project"
             size="sm"
+            title="Create a new empty project"
             @click="newProjectConfirmVisible = true"
           />
 
@@ -20,6 +21,7 @@
             :icon="FolderOpen"
             label="Open JSON"
             size="sm"
+            title="Open a project from a JSON file"
             @click="triggerProjectOpen"
           />
 
@@ -27,6 +29,7 @@
             :icon="Download"
             label="Save JSON"
             size="sm"
+            title="Download the current project as JSON"
             @click="handleProjectDownload"
           />
         </div>
@@ -39,6 +42,7 @@
             :class="canUndo ? 'border-zinc-700 bg-zinc-950 text-zinc-200 hover:border-zinc-600' : 'border-zinc-800 bg-zinc-950 text-zinc-600'"
             :disabled="!canUndo"
             label="Undo"
+            title="Undo the last change"
             @click="dawStore.undo()"
           />
 
@@ -47,6 +51,7 @@
             :class="canRedo ? 'border-zinc-700 bg-zinc-950 text-zinc-200 hover:border-zinc-600' : 'border-zinc-800 bg-zinc-950 text-zinc-600'"
             :disabled="!canRedo"
             label="Redo"
+            title="Redo the last undone change"
             @click="dawStore.redo()"
           />
         </div>
@@ -56,6 +61,9 @@
         <IconButton
           :class="isValueTrackerRecording ? 'border-rose-400/70 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25' : 'border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-rose-500/50 hover:text-rose-200'"
           label="Record"
+          :title="isValueTrackerRecording
+            ? 'Stop Value Tracker recording'
+            : 'Record into the active Value Tracker track'"
           @click="toggleRecord"
         >
           <Circle class="h-4 w-4 fill-current" :stroke-width="2.25" />
@@ -66,6 +74,7 @@
           :class="playing ? 'border-zinc-800 bg-zinc-950 text-zinc-600' : 'border-emerald-500/60 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'"
           :disabled="playing"
           label="Play"
+          title="Start playback"
           @click="play"
         />
 
@@ -74,6 +83,7 @@
           :class="playing ? 'border-sky-400/60 bg-sky-400/10 text-sky-200 hover:bg-sky-400/20' : 'border-zinc-800 bg-zinc-950 text-zinc-600'"
           :disabled="!playing"
           label="Pause"
+          title="Pause playback"
           @click="pause"
         />
 
@@ -81,6 +91,7 @@
           :class="playing ? 'border-amber-400/60 bg-amber-400/10 text-amber-200 hover:bg-amber-400/20' : 'border-zinc-800 bg-zinc-950 text-zinc-600'"
           :disabled="!playing && time === 0"
           label="Stop"
+          title="Stop playback"
           @click="stop"
         >
           <Square class="h-4 w-4 fill-current" :stroke-width="2.25" />
@@ -90,6 +101,7 @@
           :icon="Repeat"
           :class="loopEnabled ? 'border-emerald-400/60 bg-emerald-400/10 text-emerald-200 hover:bg-emerald-400/20' : 'border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700'"
           label="Loop"
+          :title="loopEnabled ? 'Disable loop playback' : 'Enable loop playback'"
           @click="dawStore.toggleLoop()"
         />
       </div>
@@ -104,13 +116,17 @@
           >
             {{ transportDisplay }}
           </button>
-          <div class="flex items-center gap-2 border border-zinc-800 bg-zinc-950 px-2 py-1">
+          <div
+            class="flex items-center gap-2 border border-zinc-800 bg-zinc-950 px-2 py-1"
+            title="Set the playback sample rate"
+          >
             <input
               v-model="sampleRateDraft"
               class="w-14 bg-transparent text-right text-xs text-zinc-100 outline-none"
               :max="MAX_SAMPLE_RATE"
               :min="MIN_SAMPLE_RATE"
               step="1"
+              title="Set the playback sample rate"
               type="number"
               @blur="commitSampleRate"
               @keydown.enter.prevent="commitSampleRate"
@@ -129,6 +145,7 @@
             :class="activeDrawer === 'library' ? 'border-sky-500/60 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20' : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700 hover:text-zinc-100'"
             label="Toggle Library"
             size="sm"
+            :title="activeDrawer === 'library' ? 'Close the Library drawer' : 'Open the Library drawer'"
             @click="emit('toggle-library-drawer')"
           />
 
@@ -138,12 +155,14 @@
             :class="activeDrawer === 'effects' ? 'border-amber-500/60 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20' : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700 hover:text-zinc-100'"
             label="Toggle Effects"
             size="sm"
+            :title="activeDrawer === 'effects' ? 'Close the Effects drawer' : 'Open the Effects drawer'"
             @click="emit('toggle-effects-drawer')"
           />
 
           <button
             class="border border-zinc-800 bg-zinc-950 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-700 hover:text-zinc-100 disabled:cursor-default disabled:opacity-40"
             :disabled="exportingWav"
+            :title="exportingWav ? 'Rendering the project to WAV' : 'Export the current project as WAV audio'"
             type="button"
             @click="handleWavExport"
           >
@@ -154,6 +173,7 @@
             :icon="Settings2"
             label="Settings"
             size="sm"
+            title="Open app settings"
             @click="settingsVisible = true"
           />
         </div>
