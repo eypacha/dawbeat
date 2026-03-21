@@ -4,6 +4,10 @@ Experimental DAW for composing bytebeat formulas on a timeline with real browser
 
 The app is no longer just a mockup of formula clips. It now integrates bytebeat playback, formula tracks, variable tracks, value tracker tracks, automation lanes, a library, effects, persistence, and offline export.
 
+## Screenshot
+
+![DawBeat UI placeholder screenshot](docs/screenshots/dawbeat-ui.png)
+
 ## Current Status
 
 Implemented today:
