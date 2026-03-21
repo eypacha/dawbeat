@@ -66,6 +66,7 @@ import {
 } from '@/services/automationService'
 import { createEvalEffect, createStereoOffsetEvalEffect, mergeTReplacementParams } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
+import { DEFAULT_BPM_MEASURE, normalizeBpmMeasureExpression } from '@/services/bpmService'
 import {
   normalizeAutomationLaneHeight,
   normalizeTrackLaneHeight,
@@ -117,6 +118,7 @@ function createEmptyProject() {
   return {
     audioEffects: [],
     automationLanes: getDefaultAutomationLanes(),
+    bpmMeasure: DEFAULT_BPM_MEASURE,
     evalEffects: [],
     formulas: [],
     loopEnabled: false,
@@ -143,6 +145,7 @@ function createInitialState() {
     audioReady: false,
     audioEffects: project.audioEffects,
     automationLanes: project.automationLanes,
+    bpmMeasure: project.bpmMeasure,
     clipDragPreview: null,
     clipClipboard: null,
     evalEffects: project.evalEffects,
@@ -321,6 +324,7 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
 
   store.audioEffects = normalizedProject.audioEffects
   store.automationLanes = normalizedProject.automationLanes
+  store.bpmMeasure = normalizedProject.bpmMeasure
   store.evalEffects = normalizedProject.evalEffects
   store.formulas = normalizedProject.formulas
   store.loopEnabled = normalizedProject.loopEnabled
@@ -964,6 +968,12 @@ export const useDawStore = defineStore('dawStore', {
     setSampleRate(value) {
       return this.recordHistoryStep('set-sample-rate', () => {
         this.sampleRate = normalizeSampleRate(value, this.sampleRate)
+      })
+    },
+
+    setBpmMeasure(value) {
+      return this.recordHistoryStep('set-bpm-measure', () => {
+        this.bpmMeasure = normalizeBpmMeasureExpression(value, this.bpmMeasure)
       })
     },
 

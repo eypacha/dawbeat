@@ -10,7 +10,7 @@ Implementado hoy:
 
 - pantalla inicial para desbloquear audio antes de entrar a la app
 - reproduccion real con Web Audio + `public/vendors/ByteBeat.js`
-- toolbar con `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, settings y cambio de `sampleRate`
+- toolbar con `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, settings, cambio de `sampleRate` y calculo de BPM basado en una unidad tipo `t >> 4`
 - scrub del playhead desde ruler y desde el playhead
 - zoom horizontal con `Ctrl/Cmd + wheel`
 - auto-scroll del timeline durante playback
@@ -188,8 +188,8 @@ El export offline renderiza timeline, eval effects, master gain, audio effects c
 - al iniciar, la app intenta cargar el proyecto guardado en `localStorage`
 - si no existe uno guardado, parte de `src/data/demo.json`
 - `projectPersistence` normaliza proyectos importados y serializa el estado persistible
-- el proyecto actual serializa `version: 13`
-- se persisten `tracks`, `variableTracks`, `valueTrackerTracks`, `formulas`, `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`, `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate`, `tickSize`, `showClipWaveforms` y `showEvaluatedPanel`, incluyendo `height` dentro de tracks y lanes
+- el proyecto actual serializa `version: 14`
+- se persisten `tracks`, `variableTracks`, `valueTrackerTracks`, `formulas`, `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`, `bpmMeasure`, `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate`, `tickSize`, `showClipWaveforms` y `showEvaluatedPanel`, incluyendo `height` dentro de tracks y lanes
 - desde la toolbar se puede crear proyecto vacio, abrir JSON, guardar JSON y exportar WAV
 - desde Settings se puede resetear el storage local, togglear waveform/evaluated panel e inspeccionar MIDI
 

@@ -17,7 +17,7 @@ Hoy existen:
 
 - pantalla inicial para desbloquear audio antes de entrar a la app
 - reproduccion bytebeat real en navegador con Web Audio + vendor `ByteBeat.js`
-- toolbar con `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, cambio de `sampleRate` y settings
+- toolbar con `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, cambio de `sampleRate`, BPM derivado de una unidad tipo `t >> 4` y settings
 - scrub del playhead desde ruler y desde el playhead
 - zoom horizontal con `Ctrl/Cmd + wheel`
 - auto-scroll del timeline durante playback
@@ -409,6 +409,7 @@ Campos relevantes hoy:
   time: 0,
   zoom: 1,
   sampleRate: 8000,
+  bpmMeasure: "t >> 4",
   tickSize: 1024,
   loopEnabled: false,
   loopStart: 0,
@@ -676,10 +677,10 @@ Hoy existe:
 - export de proyecto JSON
 - reset de storage local
 - export WAV offline
-- normalizacion de proyectos con `version: 13`
+- normalizacion de proyectos con `version: 14`
 - persistencia de `tracks`, `variableTracks`, `valueTrackerTracks`, `formulas`
 - persistencia de `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`
-- persistencia de `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate` y `tickSize`
+- persistencia de `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate`, `bpmMeasure` y `tickSize`
 - persistencia de `height` dentro de formula tracks, variable tracks, value tracker tracks y automation lanes
 - persistencia de `showClipWaveforms` y `showEvaluatedPanel`
 

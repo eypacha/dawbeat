@@ -118,6 +118,24 @@
           </button>
           <div
             class="flex items-center gap-2 border border-zinc-800 bg-zinc-950 px-2 py-1"
+            :title="bpmMeasureHint"
+          >
+            <span class="whitespace-nowrap text-zinc-300">{{ bpmDisplay }}</span>
+            <span class="text-zinc-500">bpm</span>
+            <span class="h-4 w-px bg-zinc-800" />
+            <input
+              v-model="bpmMeasureDraft"
+              class="w-16 bg-transparent font-mono text-xs text-zinc-100 outline-none"
+              spellcheck="false"
+              title="Set the BPM unit with t >> n or t / n"
+              type="text"
+              @blur="commitBpmMeasure"
+              @keydown.enter.prevent="commitBpmMeasure"
+              @keydown.esc.prevent="resetBpmMeasureDraft"
+            >
+          </div>
+          <div
+            class="flex items-center gap-2 border border-zinc-800 bg-zinc-950 px-2 py-1"
             title="Set the playback sample rate"
           >
             <input
@@ -206,6 +224,13 @@ import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { BookOpen, Circle, Download, FilePlus, FolderOpen, Pause, Play, Redo2, Repeat, Settings2, SlidersHorizontal, Square, Undo2 } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
+import {
+  formatBpmValue,
+  getBpmFromSampleRate,
+  isBpmMeasureExpressionValid,
+  normalizeBpmMeasureExpression,
+  parseBpmMeasureExpression
+} from '@/services/bpmService'
 import { useDawStore } from '@/stores/dawStore'
 import { downloadProjectWav } from '@/services/exportService'
 import { downloadProjectFile, importProjectFile } from '@/services/projectPersistence'
@@ -233,7 +258,8 @@ const emit = defineEmits(['toggle-effects-drawer', 'toggle-library-drawer'])
 
 const dawStore = useDawStore()
 const { play, pause, stop, toggleRecord } = useTransportPlayback()
-const { canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, sampleRate, tickSize, time } = storeToRefs(dawStore)
+const { bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, sampleRate, tickSize, time } = storeToRefs(dawStore)
+const bpmMeasureDraft = ref(bpmMeasure.value)
 const projectFileInput = ref(null)
 const sampleRateDraft = ref(String(sampleRate.value))
 const settingsVisible = ref(false)
@@ -288,9 +314,25 @@ const transportDisplayHint = computed(() => {
 
   return 'Click to show raw ticks'
 })
+const bpmDisplay = computed(() =>
+  formatBpmValue(getBpmFromSampleRate(sampleRate.value, bpmMeasure.value))
+)
+const bpmMeasureHint = computed(() => {
+  const parsedMeasure = parseBpmMeasureExpression(bpmMeasure.value)
+
+  if (!parsedMeasure) {
+    return 'Set the BPM unit with t >> n or t / n'
+  }
+
+  return `Tempo derived from ${bpmMeasure.value}. One beat every ${formatBpmDivisor(parsedMeasure.divisor)} samples.`
+})
 
 watch(sampleRate, (nextSampleRate) => {
   sampleRateDraft.value = String(nextSampleRate)
+})
+
+watch(bpmMeasure, (nextBpmMeasure) => {
+  bpmMeasureDraft.value = nextBpmMeasure
 })
 
 function triggerProjectOpen() {
@@ -302,8 +344,25 @@ function commitSampleRate() {
   sampleRateDraft.value = String(sampleRate.value)
 }
 
+function commitBpmMeasure() {
+  if (!isBpmMeasureExpressionValid(bpmMeasureDraft.value)) {
+    enqueueSnackbar('Invalid BPM unit. Use t >> n or t / n.', {
+      variant: 'error'
+    })
+    bpmMeasureDraft.value = bpmMeasure.value
+    return
+  }
+
+  dawStore.setBpmMeasure(bpmMeasureDraft.value)
+  bpmMeasureDraft.value = normalizeBpmMeasureExpression(bpmMeasure.value)
+}
+
 function resetSampleRateDraft() {
   sampleRateDraft.value = String(sampleRate.value)
+}
+
+function resetBpmMeasureDraft() {
+  bpmMeasureDraft.value = bpmMeasure.value
 }
 
 function cycleTransportDisplayMode() {
@@ -334,6 +393,12 @@ function formatTransportClock(sampleTime, currentSampleRate) {
   const milliseconds = totalMilliseconds % 1000
 
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}:${String(milliseconds).padStart(3, '0')}`
+}
+
+function formatBpmDivisor(value) {
+  return Number.isInteger(value)
+    ? String(value)
+    : value.toFixed(3).replace(/\.?0+$/, '')
 }
 
 function handleProjectDownload() {
