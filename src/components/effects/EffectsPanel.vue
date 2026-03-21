@@ -24,7 +24,7 @@
     </div>
   </Panel>
 
-  <Panel v-else class="flex min-h-0 flex-col overflow-hidden">
+  <Panel v-else class="flex h-full min-h-0 flex-col overflow-hidden">
     <div class="flex items-start justify-between gap-4">
       <div>
         <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">Effects</p>

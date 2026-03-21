@@ -24,7 +24,7 @@
     </div>
   </Panel>
 
-  <Panel v-else class="flex min-h-[320px] flex-col">
+  <Panel v-else class="flex h-full min-h-[320px] flex-col">
     <div class="mb-4 flex items-center gap-3">
       <IconButton
         :icon="ChevronLeft"

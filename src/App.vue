@@ -3,16 +3,48 @@
 
   <div v-else class="h-screen overflow-hidden bg-zinc-950 text-zinc-200 font-mono">
     <div class="flex h-full w-full flex-col gap-4 overflow-hidden p-4">
-      <Toolbar />
+      <Toolbar
+        :active-drawer="activeAuxiliaryDrawer"
+        :compact-layout="isCompactLayout"
+        @toggle-effects-drawer="toggleAuxiliaryDrawer('effects')"
+        @toggle-library-drawer="toggleAuxiliaryDrawer('library')"
+      />
 
-      <main class="app-main-layout min-h-0 flex-1 gap-4 overflow-hidden" :style="mainLayoutStyle">
+      <main
+        v-if="!isCompactLayout"
+        class="app-main-layout min-h-0 flex-1 gap-4 overflow-hidden"
+        :style="mainLayoutStyle"
+      >
         <FormulaLibrary :collapsed="libraryCollapsed" @toggle-collapse="toggleLibraryCollapsed" />
         <Timeline />
         <EffectsPanel :collapsed="effectsCollapsed" @toggle-collapse="toggleEffectsCollapsed" />
       </main>
 
-      <EvaluatedPanel v-if="showEvaluatedPanel" />
+      <main v-else class="min-h-0 flex-1 overflow-hidden">
+        <Timeline />
+      </main>
+
+      <EvaluatedPanel v-if="showEvaluatedPanel && !isCompactLayout" />
     </div>
+
+    <SideDrawer
+      :open="isCompactLayout && activeAuxiliaryDrawer === 'library'"
+      panel-class="w-[min(calc(100vw-1rem),22rem)] p-4"
+      side="left"
+      :show-backdrop="false"
+      @close="closeAuxiliaryDrawer"
+    >
+      <FormulaLibrary :collapsed="false" @toggle-collapse="closeAuxiliaryDrawer" />
+    </SideDrawer>
+
+    <SideDrawer
+      :open="isCompactLayout && activeAuxiliaryDrawer === 'effects'"
+      panel-class="w-[min(calc(100vw-1rem),24rem)] p-4"
+      side="right"
+      @close="closeAuxiliaryDrawer"
+    >
+      <EffectsPanel :collapsed="false" @toggle-collapse="closeAuxiliaryDrawer" />
+    </SideDrawer>
 
     <ContextMenu
       :x="contextMenu.state.x"
@@ -108,6 +140,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import ContextMenu from '@/components/ui/ContextMenu.vue'
 import FormulaInputDialog from '@/components/ui/FormulaInputDialog.vue'
 import SnackbarContainer from '@/components/ui/SnackbarContainer.vue'
+import SideDrawer from '@/components/ui/SideDrawer.vue'
 import TextInputDialog from '@/components/ui/TextInputDialog.vue'
 import TrackPresentationDialog from '@/components/ui/TrackPresentationDialog.vue'
 import ValueTrackerBindingDialog from '@/components/ui/ValueTrackerBindingDialog.vue'
@@ -153,6 +186,8 @@ const transportPlayback = useTransportPlayback()
 const { enableAudio, stop } = transportPlayback
 const effectsCollapsed = ref(false)
 const libraryCollapsed = ref(false)
+const activeAuxiliaryDrawer = ref(null)
+const viewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWidth)
 const {
   audioReady,
   editingClipId,
@@ -285,10 +320,19 @@ const formulaDialogTitle = computed(() => {
     ? 'Edit Variable Formula'
     : 'Edit Clip Formula'
 })
+const isCompactLayout = computed(() => viewportWidth.value < 1280)
 const mainLayoutStyle = computed(() => ({
   '--effects-width': effectsCollapsed.value ? '56px' : '304px',
   '--library-width': libraryCollapsed.value ? '56px' : '320px'
 }))
+
+function syncViewportWidth() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  viewportWidth.value = window.innerWidth
+}
 
 async function handleStart() {
   await enableAudio()
@@ -302,9 +346,22 @@ function toggleEffectsCollapsed() {
   effectsCollapsed.value = !effectsCollapsed.value
 }
 
+function closeAuxiliaryDrawer() {
+  activeAuxiliaryDrawer.value = null
+}
+
+function toggleAuxiliaryDrawer(drawer) {
+  if (!isCompactLayout.value) {
+    return
+  }
+
+  activeAuxiliaryDrawer.value = activeAuxiliaryDrawer.value === drawer ? null : drawer
+}
+
 function handleKeydown(event) {
   if (event.key === 'Escape') {
     if (!editingClipId.value) {
+      closeAuxiliaryDrawer()
       dawStore.clearClipSelection()
       dawStore.clearAutomationPointSelection()
     }
@@ -573,6 +630,12 @@ watch(isValueTrackerDialogVisible, (visible) => {
   valueTrackerDialogHistoryActive.value = false
 })
 
+watch(isCompactLayout, (compactLayout) => {
+  if (!compactLayout) {
+    closeAuxiliaryDrawer()
+  }
+})
+
 function evaluateFormulaDialog(nextDraft) {
   dawStore.ensureInitializedValueTrackerTracks(nextDraft.valueTrackerInitializers)
   dawStore.ensureInitializedVariableTracks(nextDraft.variableInitializers)
@@ -623,6 +686,8 @@ function updateValueTrackerDialog(nextDraft) {
 }
 
 onMounted(() => {
+  syncViewportWidth()
+  window.addEventListener('resize', syncViewportWidth)
   window.addEventListener('keydown', handleKeydown)
   window.addEventListener('contextmenu', handleGlobalContextMenu)
   disposeKeyboardShortcuts = initKeyboardShortcuts({
@@ -632,6 +697,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', syncViewportWidth)
   window.removeEventListener('keydown', handleKeydown)
   window.removeEventListener('contextmenu', handleGlobalContextMenu)
   disposeKeyboardShortcuts?.()
