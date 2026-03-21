@@ -1,5 +1,7 @@
 import { tokenizeFormula } from '@/utils/formulaTokenizer'
 
+export const DEFAULT_STEREO_OFFSET_EXPRESSION = '128'
+
 export function createEvalEffectId() {
   if (globalThis.crypto?.randomUUID) {
     return globalThis.crypto.randomUUID()
@@ -26,7 +28,10 @@ export function createStereoOffsetEvalEffect(effect = {}) {
     enabled: effect.enabled ?? true,
     expanded: effect.expanded ?? false,
     params: {
-      offset: effect.params?.offset ?? 128
+      offset: normalizeStereoOffsetExpression(
+        effect.params?.offset,
+        DEFAULT_STEREO_OFFSET_EXPRESSION
+      )
     }
   }
 }
@@ -46,6 +51,35 @@ export function createTReplacementEvalEffect(effect = {}) {
         typeof effect.params?.rightExpression === 'string' ? effect.params.rightExpression : 't'
     }
   }
+}
+
+export function getEvalEffectExpressions(effect) {
+  if (!effect) {
+    return []
+  }
+
+  if (effect.type === 'stereoOffset') {
+    return [normalizeStereoOffsetExpression(effect.params?.offset, '')].filter(Boolean)
+  }
+
+  if (effect.type === 'tReplacement') {
+    const normalizedParams = createTReplacementEvalEffect({ params: effect.params }).params
+
+    if (!normalizedParams.stereo) {
+      return [normalizedParams.expression].filter(Boolean)
+    }
+
+    return [
+      normalizedParams.leftExpression,
+      normalizedParams.rightExpression
+    ].filter(Boolean)
+  }
+
+  return []
+}
+
+export function collectEvalEffectExpressions(evalEffects = []) {
+  return (Array.isArray(evalEffects) ? evalEffects : []).flatMap((effect) => getEvalEffectExpressions(effect))
 }
 
 export function mergeTReplacementParams(currentParams = {}, updates = {}) {
@@ -111,7 +145,7 @@ export function applyEvalEffect(expressions, effect) {
 
 export function stereoOffsetEffect(expressions, params = {}) {
   const sourceExpressions = Array.isArray(expressions) ? expressions : []
-  const offset = normalizeOffset(params.offset)
+  const offsetExpression = normalizeStereoOffsetExpression(params.offset, '0')
 
   if (!sourceExpressions.length || !sourceExpressions[0]) {
     return sourceExpressions
@@ -119,7 +153,7 @@ export function stereoOffsetEffect(expressions, params = {}) {
 
   if (sourceExpressions.length >= 2) {
     const nextExpressions = [...sourceExpressions]
-    nextExpressions[1] = replaceFormulaTime(nextExpressions[1], `t+${offset}`)
+    nextExpressions[1] = replaceFormulaTime(nextExpressions[1], `t+(${offsetExpression})`)
     return nextExpressions
   }
 
@@ -127,7 +161,7 @@ export function stereoOffsetEffect(expressions, params = {}) {
 
   return [
     leftExpression,
-    replaceFormulaTime(leftExpression, `t+${offset}`)
+    replaceFormulaTime(leftExpression, `t+(${offsetExpression})`)
   ]
 }
 
@@ -162,9 +196,19 @@ export function tReplacementEffect(expressions, params = {}) {
   ]
 }
 
-function normalizeOffset(offset) {
+export function normalizeStereoOffsetExpression(offset, fallback = DEFAULT_STEREO_OFFSET_EXPRESSION) {
+  if (typeof offset === 'string') {
+    const trimmedOffset = offset.trim()
+    return trimmedOffset || fallback
+  }
+
   const numericOffset = Number(offset)
-  return Number.isFinite(numericOffset) ? numericOffset : 0
+
+  if (!Number.isFinite(numericOffset)) {
+    return fallback
+  }
+
+  return String(numericOffset)
 }
 
 function normalizeReplacementExpression(expression, fallback = 't') {

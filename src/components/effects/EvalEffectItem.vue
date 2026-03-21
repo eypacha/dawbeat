@@ -49,12 +49,15 @@
           <div class="grid gap-3 pt-4">
               <template v-if="effect.type === 'stereoOffset'">
                 <label class="grid gap-2">
-                  <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Offset</span>
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Offset</span>
+                    <span class="text-[10px] text-zinc-500">Number or variable</span>
+                  </div>
                   <input
-                    class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
+                    class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
                     v-model="offsetDraft"
-                    min="0"
-                    type="number"
+                    placeholder="128 or myVar"
+                    type="text"
                     @blur="commitOffsetDraft"
                     @keydown.enter.prevent="commitOffsetDraft"
                     @keydown.esc.prevent="resetOffsetDraft"
@@ -214,11 +217,10 @@ function handleStereoToggle(nextStereo) {
 }
 
 function commitOffsetDraft() {
-  const nextOffset = Number(offsetDraft.value)
-  const normalizedOffset = Number.isFinite(nextOffset) ? nextOffset : 0
+  const normalizedOffset = offsetDraft.value.trim()
 
-  if (normalizedOffset === Number(props.effect.params.offset ?? 0)) {
-    offsetDraft.value = String(props.effect.params.offset ?? 0)
+  if (!normalizedOffset || normalizedOffset === String(props.effect.params.offset ?? '')) {
+    offsetDraft.value = String(props.effect.params.offset ?? '')
     return
   }
 

@@ -65,7 +65,13 @@ import {
   normalizeAutomationPointForLane,
   upsertAutomationPointForLane
 } from '@/services/automationService'
-import { createEvalEffect, createStereoOffsetEvalEffect, mergeTReplacementParams } from '@/services/evalEffectService'
+import {
+  collectEvalEffectExpressions,
+  createEvalEffect,
+  createStereoOffsetEvalEffect,
+  mergeTReplacementParams,
+  normalizeStereoOffsetExpression
+} from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
 import { DEFAULT_BPM_MEASURE, normalizeBpmMeasureExpression } from '@/services/bpmService'
 import {
@@ -89,7 +95,11 @@ import {
 } from '@/utils/timeUtils'
 import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
 import { TRACK_COLOR_PALETTE, getTrackColor } from '@/utils/colorUtils'
-import { DEFAULT_VARIABLE_CLIP_FORMULA, getNextVariableTrackName } from '@/services/variableTrackService'
+import {
+  collectAutoVariableTrackNames,
+  DEFAULT_VARIABLE_CLIP_FORMULA,
+  getNextVariableTrackName
+} from '@/services/variableTrackService'
 import {
   DEFAULT_VALUE_TRACKER_STEP_SUBDIVISION,
   createDefaultValueTrackerBinding,
@@ -1882,13 +1892,55 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       if (effect.type === 'stereoOffset' && typeof params.offset !== 'undefined') {
-        const offset = Number(params.offset)
-        effect.params.offset = Number.isFinite(offset) ? offset : 0
+        effect.params.offset = normalizeStereoOffsetExpression(params.offset, effect.params.offset)
+        const missingAutoVariableTrackNames = collectAutoVariableTrackNames(
+          collectEvalEffectExpressions([effect])
+        )
+
+        if (missingAutoVariableTrackNames.length) {
+          for (const variableTrackName of missingAutoVariableTrackNames) {
+            const existingValueTrackerTrack = findValueTrackerTrackByVariableName(
+              this.valueTrackerTracks,
+              variableTrackName
+            )
+
+            if (existingValueTrackerTrack) {
+              continue
+            }
+
+            const nextValueTrackerTrack = createValueTrackerTrack({
+              binding: {
+                type: 'variable',
+                variableName: variableTrackName
+              },
+              name: 'Stereo Offset'
+            })
+
+            nextValueTrackerTrack.clips.push(createValueTrackerClip({
+              duration: DEFAULT_FORMULA_DROP_DURATION,
+              start: 0,
+              values: createConstantValueTrackerValues('0', DEFAULT_FORMULA_DROP_DURATION)
+            }))
+            sortValueTrackerTrackClips(nextValueTrackerTrack)
+            this.valueTrackerTracks.unshift(nextValueTrackerTrack)
+          }
+        }
+
         return
       }
 
       if (effect.type === 'tReplacement') {
         effect.params = mergeTReplacementParams(effect.params, params)
+
+        const missingAutoVariableTrackNames = collectAutoVariableTrackNames(
+          collectEvalEffectExpressions([effect])
+        )
+
+        if (missingAutoVariableTrackNames.length) {
+          this.ensureInitializedVariableTracks(
+            Object.fromEntries(missingAutoVariableTrackNames.map((variableTrackName) => [variableTrackName, '0']))
+          )
+        }
       }
     },
 

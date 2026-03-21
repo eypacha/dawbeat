@@ -14,7 +14,11 @@ import {
   sortValueTrackerTrackClips,
   sortVariableTrackClips
 } from '@/services/dawStoreService'
-import { createEvalEffect, createStereoOffsetEvalEffect } from '@/services/evalEffectService'
+import {
+  createEvalEffect,
+  createStereoOffsetEvalEffect,
+  getEvalEffectExpressions
+} from '@/services/evalEffectService'
 import { createFormula } from '@/services/formulaService'
 import { DEFAULT_BPM_MEASURE, normalizeBpmMeasureExpression } from '@/services/bpmService'
 import {
@@ -29,11 +33,13 @@ import {
   normalizeVariableTrackName
 } from '@/services/variableTrackService'
 import {
+  createConstantValueTrackerValues,
   getBoundValueTrackerVariableNames,
   normalizeValueTrackerStepSubdivision,
   normalizeValueTrackerTrackName,
   normalizeValueTrackerValues
 } from '@/services/valueTrackerService'
+import { DEFAULT_FORMULA_DROP_DURATION } from '@/services/timelineService'
 import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
 import { DEFAULT_TRACK_COLOR, getTrackColor } from '@/utils/colorUtils'
 import { BASE_TICK_SIZE, MAX_ZOOM, MIN_ZOOM, TIMELINE_SNAP_SUBDIVISIONS, clamp } from '@/utils/timeUtils'
@@ -206,11 +212,45 @@ function normalizeProjectPayload(project) {
         .map((valueTrackerTrack) => normalizeValueTrackerTrack(valueTrackerTrack, project.version))
         .filter(Boolean)
     : []
+  const evalEffects = hasOwn(project, 'evalEffects')
+    ? normalizeEvalEffects(project.evalEffects)
+    : [createStereoOffsetEvalEffect({ id: 'fx1' })]
+  const stereoOffsetAutoVariableTrackNames = collectAutoVariableTrackNames(
+    evalEffects
+      .filter((effect) => effect?.type === 'stereoOffset')
+      .flatMap((effect) => getEvalEffectExpressions(effect))
+  )
+
+  for (const variableTrackName of stereoOffsetAutoVariableTrackNames) {
+    if (getBoundValueTrackerVariableNames(valueTrackerTracks).includes(variableTrackName)) {
+      continue
+    }
+
+    const nextValueTrackerTrack = createValueTrackerTrack({
+      binding: {
+        type: 'variable',
+        variableName: variableTrackName
+      },
+      name: 'Stereo Offset'
+    })
+
+    nextValueTrackerTrack.clips.push(createValueTrackerClip({
+      duration: DEFAULT_FORMULA_DROP_DURATION,
+      start: 0,
+      values: createConstantValueTrackerValues(0, DEFAULT_FORMULA_DROP_DURATION)
+    }))
+    sortValueTrackerTrackClips(nextValueTrackerTrack)
+    valueTrackerTracks.unshift(nextValueTrackerTrack)
+  }
+
   const boundValueTrackerVariableNames = new Set(getBoundValueTrackerVariableNames(valueTrackerTracks))
   const requiredAutoVariableTrackNames = collectAutoVariableTrackNames([
     ...formulas.map((formula) => formula.code),
     ...collectTrackInlineFormulas(tracks),
-    ...collectVariableTrackFormulas(variableTracks)
+    ...collectVariableTrackFormulas(variableTracks),
+    ...evalEffects
+      .filter((effect) => effect?.type === 'tReplacement')
+      .flatMap((effect) => getEvalEffectExpressions(effect))
   ])
 
   for (const variableTrackName of requiredAutoVariableTrackNames) {
@@ -241,9 +281,7 @@ function normalizeProjectPayload(project) {
     audioEffects: hasOwn(project, 'audioEffects')
       ? normalizeAudioEffects(project.audioEffects)
       : [],
-    evalEffects: hasOwn(project, 'evalEffects')
-      ? normalizeEvalEffects(project.evalEffects)
-      : [createStereoOffsetEvalEffect({ id: 'fx1' })],
+    evalEffects,
     automationLanes: normalizeProjectAutomationLanes(project),
     bpmMeasure: normalizeBpmMeasureExpression(project.bpmMeasure, DEFAULT_BPM_MEASURE),
     masterGain: normalizeMasterGain(project.masterGain),
