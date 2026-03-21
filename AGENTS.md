@@ -71,6 +71,7 @@ Hoy existen dialogs y flujos separados para:
 
 - formulas de clip y formulas de libreria via `FormulaInputDialog`
 - value tracker clips via `ValueTrackerClipEditorDialog`
+- bindings de value tracker via `ValueTrackerBindingDialog`
 - nombre/color de track
 - rename de value tracker track
 
@@ -670,7 +671,7 @@ Hoy existe:
 - persistencia de `tracks`, `variableTracks`, `valueTrackerTracks`, `formulas`
 - persistencia de `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`
 - persistencia de `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate` y `tickSize`
-- persistencia de `height` dentro de tracks y automation lanes
+- persistencia de `height` dentro de formula tracks, variable tracks, value tracker tracks y automation lanes
 - persistencia de `showClipWaveforms` y `showEvaluatedPanel`
 
 Si se cambia el shape del proyecto:

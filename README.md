@@ -22,7 +22,7 @@ Implementado hoy:
   - loop region editable
 - resize vertical de formula tracks, variable tracks, value tracker tracks y automation lanes
 - creacion de clips por drag sobre lanes vacios
-- mover clips dentro del lane y entre tracks de formula
+- mover clips dentro del lane y entre tracks compatibles
 - resize de inicio y fin de clip
 - duplicado con `Alt/Option + drag`
 - bypass temporal de snap con `Shift + drag`
@@ -99,7 +99,7 @@ pnpm preview
 - `Drag` sobre formula clip: mueve con snap activo
 - `Shift + drag` sobre clip: mueve sin snap
 - `Alt/Option + drag` sobre clip: duplica al soltar
-- `Drag` entre tracks de formula: mueve el clip al track destino
+- `Drag` entre tracks compatibles: mueve el clip al lane destino
 - `Drag` sobre handles laterales: resize
 - `Shift + drag` durante resize: resize sin snap
 - `Shift + drag` sobre un area vacia del timeline: seleccion multiple por marquee
