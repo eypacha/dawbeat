@@ -379,6 +379,7 @@ function handleAutomationCompanionHostMessage(connection, message) {
   }
 
   if (message.type === 'controller:unsubscribe') {
+    hostStore?.clearAutomationLiveOverride(message.laneId)
     endHostRemoteInteraction(controller, message.laneId)
     updateHostControllerSubscriptions(
       controller,
@@ -471,7 +472,10 @@ function getHostAutomationLanePayload(laneId) {
     laneId,
     max: laneConfig?.max ?? 1,
     min: laneConfig?.min ?? 0,
-    value: resolveAutomationLaneValueAtTime(hostStore?.time ?? 0, lane, laneConfig?.min ?? 0)
+    value:
+      typeof hostStore?.getAutomationValueAt === 'function'
+        ? hostStore.getAutomationValueAt(hostStore?.time ?? 0, laneId)
+        : resolveAutomationLaneValueAtTime(hostStore?.time ?? 0, lane, laneConfig?.min ?? 0)
   }
 }
 
@@ -497,10 +501,20 @@ function handleHostAutomationLaneValueMessage(controller, message) {
     return
   }
 
-  hostStore.setAutomationLaneValueAtTime(message.laneId, hostStore.time, normalizedValue)
+  if (hostStore.automationRecordingArmed) {
+    hostStore.clearAutomationLiveOverride(message.laneId)
+    hostStore.setAutomationLaneValueAtTime(message.laneId, hostStore.time, normalizedValue)
+    return
+  }
+
+  hostStore.setAutomationLiveOverride(message.laneId, normalizedValue)
 }
 
 function beginHostRemoteInteraction(controller, laneId) {
+  if (!hostStore?.automationRecordingArmed) {
+    return
+  }
+
   const interactionKey = getRemoteInteractionKey(controller.controllerId, laneId)
 
   if (activeRemoteInteractionKeys.has(interactionKey)) {
@@ -515,6 +529,10 @@ function beginHostRemoteInteraction(controller, laneId) {
 }
 
 function endHostRemoteInteraction(controller, laneId) {
+  if (!hostStore?.automationRecordingArmed) {
+    return
+  }
+
   const interactionKey = getRemoteInteractionKey(controller.controllerId, laneId)
 
   if (!activeRemoteInteractionKeys.has(interactionKey)) {
@@ -534,6 +552,7 @@ function cleanupHostController(controller, options = {}) {
   }
 
   for (const laneId of controller.laneIds) {
+    hostStore?.clearAutomationLiveOverride(laneId)
     endHostRemoteInteraction(controller, laneId)
   }
 
@@ -552,6 +571,10 @@ function syncAutomationCompanionHostControllers() {
     controllerId: controller.controllerId,
     laneIds: [...controller.laneIds]
   }))
+
+  if (!automationCompanionHostState.controllers.length) {
+    hostStore?.setAutomationRecordingArmed(false)
+  }
 }
 
 async function connectAutomationCompanionClient(controllerSession) {

@@ -22,11 +22,12 @@
               class="aspect-square h-full w-full object-contain"
             />
             <div v-else class="flex h-full w-full items-center justify-center border border-zinc-200/80 bg-zinc-100/80">
-              <div class="grid h-[72%] w-[72%] grid-cols-3 gap-2 opacity-45" aria-hidden="true">
+              <div class="grid h-[76%] w-[76%] grid-cols-9 gap-[2px] opacity-50" aria-hidden="true">
                 <span
-                  v-for="index in 9"
+                  v-for="(filled, index) in qrSkeletonCells"
                   :key="index"
-                  class="border border-zinc-400/60 bg-white"
+                  class="aspect-square"
+                  :class="filled ? 'bg-zinc-700' : 'bg-white'"
                 />
               </div>
             </div>
@@ -112,6 +113,18 @@ const emit = defineEmits(['close'])
 
 const qrCodeDataUrl = ref('')
 let qrGenerationToken = 0
+
+const qrSkeletonCells = [
+  1, 1, 1, 0, 1, 0, 1, 1, 1,
+  1, 0, 1, 0, 0, 0, 1, 0, 1,
+  1, 1, 1, 0, 1, 0, 1, 1, 1,
+  0, 0, 0, 1, 0, 1, 0, 0, 0,
+  1, 0, 1, 0, 1, 0, 1, 0, 1,
+  0, 1, 0, 1, 0, 1, 0, 1, 0,
+  1, 1, 1, 0, 1, 0, 1, 1, 1,
+  1, 0, 1, 0, 0, 1, 1, 0, 1,
+  1, 1, 1, 0, 1, 0, 1, 1, 1
+]
 
 const laneLabel = computed(() => getAutomationLaneConfig(props.lane)?.label ?? props.lane?.id ?? 'Automation')
 const shareUrl = computed(() => getAutomationCompanionShareUrl(props.lane?.id ?? null))

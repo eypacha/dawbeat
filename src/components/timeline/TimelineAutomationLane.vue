@@ -13,13 +13,13 @@
       </div>
 
       <button
-        class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border transition"
+        class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-[10px] transition-colors"
         :class="companionButtonClassName"
         :title="companionButtonTitle"
         type="button"
         @click.stop="openAutomationCompanionQr"
       >
-        <Smartphone class="h-4 w-4" />
+        <Smartphone class="h-3.5 w-3.5" />
       </button>
     </div>
 

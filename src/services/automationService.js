@@ -417,33 +417,40 @@ export function getAutomationValueAtTime(time, lane) {
 }
 
 export function resolveAutomationLaneValueAtTime(time, lane, fallbackValue = null) {
+  return resolveAutomationLaneValueAtTimeWithOverride(time, lane, fallbackValue)
+}
+
+export function resolveAutomationLaneValueAtTimeWithOverride(time, lane, fallbackValue = null, liveOverrides = null) {
+  const overrideValue = getAutomationLaneLiveOverrideValue(liveOverrides, lane?.id)
   const automationValue = getAutomationValueAtTime(time, lane)
   const config = getAutomationLaneConfig(lane)
 
   if (!config) {
-    return automationValue ?? fallbackValue
+    return overrideValue ?? automationValue ?? fallbackValue
   }
 
-  return config.normalize(automationValue ?? fallbackValue)
+  return config.normalize(overrideValue ?? automationValue ?? fallbackValue)
 }
 
-export function resolveMasterGainAtTime(time, automationLanes = [], fallbackGain = 1) {
-  return resolveAutomationLaneValueAtTime(
+export function resolveMasterGainAtTime(time, automationLanes = [], fallbackGain = 1, liveOverrides = null) {
+  return resolveAutomationLaneValueAtTimeWithOverride(
     time,
     getAutomationLaneById(automationLanes, MASTER_GAIN_AUTOMATION_LANE_ID),
-    fallbackGain
+    fallbackGain,
+    liveOverrides
   )
 }
 
-export function resolveAudioEffectParamValueAtTime(time, automationLanes = [], effect, paramKey) {
-  return resolveAutomationLaneValueAtTime(
+export function resolveAudioEffectParamValueAtTime(time, automationLanes = [], effect, paramKey, liveOverrides = null) {
+  return resolveAutomationLaneValueAtTimeWithOverride(
     time,
     getAutomationLaneByAudioEffectParam(automationLanes, effect?.id, paramKey),
-    effect?.params?.[paramKey]
+    effect?.params?.[paramKey],
+    liveOverrides
   )
 }
 
-export function resolveAudioEffectAtTime(time, automationLanes = [], effect) {
+export function resolveAudioEffectAtTime(time, automationLanes = [], effect, liveOverrides = null) {
   if (!effect?.params) {
     return effect
   }
@@ -455,7 +462,8 @@ export function resolveAudioEffectAtTime(time, automationLanes = [], effect) {
       time,
       automationLanes,
       effect,
-      paramKey
+      paramKey,
+      liveOverrides
     )
   }
 
@@ -467,4 +475,28 @@ export function resolveAudioEffectAtTime(time, automationLanes = [], effect) {
 
 export function resolveAudioEffectsAtTime(time, automationLanes = [], audioEffects = []) {
   return audioEffects.map((effect) => resolveAudioEffectAtTime(time, automationLanes, effect))
+}
+
+export function resolveAudioEffectsAtTimeWithOverrides(
+  time,
+  automationLanes = [],
+  audioEffects = [],
+  liveOverrides = null
+) {
+  return audioEffects.map((effect) =>
+    resolveAudioEffectAtTime(time, automationLanes, effect, liveOverrides)
+  )
+}
+
+export function getAutomationLaneLiveOverrideValue(liveOverrides = null, laneId = '') {
+  if (!liveOverrides || typeof liveOverrides !== 'object' || Array.isArray(liveOverrides)) {
+    return null
+  }
+
+  if (typeof laneId !== 'string' || !laneId || !Object.hasOwn(liveOverrides, laneId)) {
+    return null
+  }
+
+  const overrideValue = Number(liveOverrides[laneId])
+  return Number.isFinite(overrideValue) ? overrideValue : null
 }

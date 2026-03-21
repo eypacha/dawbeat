@@ -51,7 +51,7 @@
             </Button>
           </div>
 
-          <div class="mt-6">
+          <label class="mt-6 grid gap-2">
             <div class="flex items-end justify-between gap-3">
               <p class="text-4xl text-amber-300">{{ formatLaneValue(lane.value) }}</p>
 
@@ -61,23 +61,21 @@
               </div>
             </div>
 
-            <div class="mt-6">
-              <input
-                class="automation-slider min-w-0 flex-1 accent-amber-300"
-                :max="lane.max"
-                :min="lane.min"
-                :step="getLaneSliderStep(lane)"
-                :value="lane.value"
-                type="range"
-                @blur="handleLaneGestureEnd(lane.laneId)"
-                @change="handleLaneGestureEnd(lane.laneId)"
-                @input="handleLaneInput(lane.laneId, $event)"
-                @pointercancel="handleLaneGestureEnd(lane.laneId)"
-                @pointerdown="handleLaneGestureStart(lane.laneId)"
-                @pointerup="handleLaneGestureEnd(lane.laneId)"
-              />
-            </div>
-          </div>
+            <input
+              class="w-full accent-amber-300"
+              :max="lane.max"
+              :min="lane.min"
+              :step="getLaneSliderStep(lane)"
+              :value="lane.value"
+              type="range"
+              @blur="handleLaneGestureEnd(lane.laneId)"
+              @change="handleLaneGestureEnd(lane.laneId)"
+              @input="handleLaneInput(lane.laneId, $event)"
+              @pointercancel="handleLaneGestureEnd(lane.laneId)"
+              @pointerdown="handleLaneGestureStart(lane.laneId)"
+              @pointerup="handleLaneGestureEnd(lane.laneId)"
+            />
+          </label>
         </article>
       </div>
     </div>

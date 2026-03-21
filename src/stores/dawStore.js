@@ -145,7 +145,9 @@ function createInitialState() {
   return {
     audioReady: false,
     audioEffects: project.audioEffects,
+    automationLiveOverrides: {},
     automationLanes: project.automationLanes,
+    automationRecordingArmed: false,
     bpmMeasure: project.bpmMeasure,
     clipDragPreview: null,
     clipClipboard: null,
@@ -188,6 +190,8 @@ function getSnapshotKey(snapshot) {
 }
 
 function clearTransientSelectionState(store) {
+  store.automationLiveOverrides = {}
+  store.automationRecordingArmed = false
   store.clipDragPreview = null
   store.editingClipId = null
   store.editingFormulaId = null
@@ -629,8 +633,11 @@ export const useDawStore = defineStore('dawStore', {
       getAutomationLaneByAudioEffectParam(state.automationLanes, effectId, paramKey),
     getAutomationLaneById: (state) => (laneId) => findAutomationLaneById(state.automationLanes, laneId),
     getAutomationValueAt: (state) => (time, laneId) =>
-      getAutomationValueAtTime(time, findAutomationLaneById(state.automationLanes, laneId)),
+      Object.hasOwn(state.automationLiveOverrides, laneId)
+        ? Number(state.automationLiveOverrides[laneId])
+        : getAutomationValueAtTime(time, findAutomationLaneById(state.automationLanes, laneId)),
     activeValueTrackerTrackForKeyboardInput: (state) => resolveActiveValueTrackerTrackForKeyboardInput(state),
+    isAutomationRecordingArmed: (state) => Boolean(state.automationRecordingArmed),
     isValueTrackerRecording: (state) => Boolean(state.valueTrackerRecordingSession),
     pixelsPerTick: (state) => BASE_PIXELS_PER_TICK * state.zoom,
     canRedo: (state) => !state.playing && state.historyFuture.length > 0,
@@ -927,9 +934,54 @@ export const useDawStore = defineStore('dawStore', {
         }
 
         lane.points = nextLaneState.points
+        this.clearAutomationLiveOverride(laneId)
         this.selectAutomationPoint(laneId, nextLaneState.index)
         return nextLaneState.index
       })
+    },
+
+    setAutomationLiveOverride(laneId, value) {
+      const lane = this.getAutomationLaneById(laneId)
+
+      if (!lane) {
+        return false
+      }
+
+      const normalizedValue = normalizeAutomationPointForLane({ value }, lane, lane.points?.[0]).value
+
+      this.automationLiveOverrides = {
+        ...this.automationLiveOverrides,
+        [laneId]: normalizedValue
+      }
+
+      return true
+    },
+
+    clearAutomationLiveOverride(laneId) {
+      if (typeof laneId !== 'string' || !laneId || !Object.hasOwn(this.automationLiveOverrides, laneId)) {
+        return false
+      }
+
+      const nextOverrides = {
+        ...this.automationLiveOverrides
+      }
+
+      delete nextOverrides[laneId]
+      this.automationLiveOverrides = nextOverrides
+      return true
+    },
+
+    clearAllAutomationLiveOverrides() {
+      this.automationLiveOverrides = {}
+    },
+
+    setAutomationRecordingArmed(armed) {
+      this.automationRecordingArmed = Boolean(armed)
+    },
+
+    toggleAutomationRecordingArmed() {
+      this.automationRecordingArmed = !this.automationRecordingArmed
+      return this.automationRecordingArmed
     },
 
     setAutomationPointCurve(laneId, index, curve) {
@@ -982,6 +1034,7 @@ export const useDawStore = defineStore('dawStore', {
     removeAutomationLane(laneId) {
       return this.recordHistoryStep('remove-automation-lane', () => {
         this.automationLanes = this.automationLanes.filter((lane) => lane.id !== laneId)
+        this.clearAutomationLiveOverride(laneId)
 
         if (this.selectedAutomationPoint?.laneId === laneId) {
           this.clearAutomationPointSelection()

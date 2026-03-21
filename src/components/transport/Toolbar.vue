@@ -59,7 +59,7 @@
 
       <div :class="transportControlsGroupClassName">
         <IconButton
-          :class="isValueTrackerRecording ? 'border-rose-400/70 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25' : 'border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-rose-500/50 hover:text-rose-200'"
+          :class="recordButtonActive ? 'border-rose-400/70 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25' : 'border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-rose-500/50 hover:text-rose-200'"
           :disabled="recordButtonDisabled"
           label="Record"
           :title="recordButtonTitle"
@@ -250,6 +250,7 @@ import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { BookOpen, Circle, Download, FilePlus, FolderOpen, Pause, Play, Redo2, Repeat, Settings2, SlidersHorizontal, Square, Undo2 } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
+import { automationCompanionHostState } from '@/services/automationCompanionService'
 import {
   formatBpmValue,
   getBpmFromSampleRate,
@@ -286,7 +287,7 @@ const emit = defineEmits(['toggle-effects-drawer', 'toggle-library-drawer'])
 
 const dawStore = useDawStore()
 const { play, pause, stop, toggleRecord } = useTransportPlayback()
-const { bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, sampleRate, tickSize, time } = storeToRefs(dawStore)
+const { automationRecordingArmed, bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, sampleRate, tickSize, time } = storeToRefs(dawStore)
 const bpmDraft = ref(formatBpmValue(getBpmFromSampleRate(sampleRate.value, bpmMeasure.value)))
 const bpmMeasureDraft = ref(bpmMeasure.value)
 const projectFileInput = ref(null)
@@ -405,12 +406,22 @@ const midiClockStatusHint = computed(() => {
 
   return `${sourceName} is driving the transport at ${formatBpmValue(midiClockState.externalBpm)} bpm.`
 })
+const hasAutomationCompanionControllers = computed(() => automationCompanionHostState.controllers.length > 0)
+const recordButtonActive = computed(() => isValueTrackerRecording.value || automationRecordingArmed.value)
 const recordButtonDisabled = computed(() =>
-  midiClockLocked.value && !playing.value && !isValueTrackerRecording.value
+  hasAutomationCompanionControllers.value
+    ? false
+    : midiClockLocked.value && !playing.value && !isValueTrackerRecording.value
 )
 const recordButtonTitle = computed(() => {
   if (isValueTrackerRecording.value) {
     return 'Stop Value Tracker recording'
+  }
+
+  if (hasAutomationCompanionControllers.value) {
+    return automationRecordingArmed.value
+      ? 'Stop writing phone controller moves into automation lanes'
+      : 'Arm automation writing for phone controllers'
   }
 
   if (recordButtonDisabled.value) {

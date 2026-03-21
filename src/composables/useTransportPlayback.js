@@ -1,7 +1,8 @@
 import { storeToRefs } from 'pinia'
 import { computed, watch } from 'vue'
 import { getActiveFormula, getPlaybackEndTick } from '@/engine/timelineEngine'
-import { resolveAudioEffectsAtTime } from '@/services/automationService'
+import { resolveAudioEffectsAtTimeWithOverrides } from '@/services/automationService'
+import { automationCompanionHostState } from '@/services/automationCompanionService'
 import bytebeatService from '@/services/bytebeatService'
 import { applyEvalEffects } from '@/services/evalEffectService'
 import { midiClockState, refreshMidiClockDerivedState } from '@/services/midiClockService'
@@ -17,7 +18,7 @@ export function useTransportPlayback() {
   }
 
   const dawStore = useDawStore()
-  const { audioEffects, audioReady, automationLanes, bpmMeasure, evalEffects, formulas, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, valueTrackerLiveInputs, valueTrackerRecordingSession, valueTrackerTracks, variableTracks } =
+  const { audioEffects, audioReady, automationLanes, automationLiveOverrides, bpmMeasure, evalEffects, formulas, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, valueTrackerLiveInputs, valueTrackerRecordingSession, valueTrackerTracks, variableTracks } =
     storeToRefs(dawStore)
 
   let frameId = 0
@@ -45,7 +46,12 @@ export function useTransportPlayback() {
   }
 
   const getAudioEffectsAtTime = (timeTicks) =>
-    resolveAudioEffectsAtTime(timeTicks, dawStore.automationLanes, audioEffects.value)
+    resolveAudioEffectsAtTimeWithOverrides(
+      timeTicks,
+      dawStore.automationLanes,
+      audioEffects.value,
+      dawStore.automationLiveOverrides
+    )
 
   const syncAudioEffectsAtTime = async (timeTicks) => {
     await bytebeatService.syncAudioEffects(getAudioEffectsAtTime(timeTicks))
@@ -371,6 +377,16 @@ export function useTransportPlayback() {
   }
 
   const toggleRecord = async () => {
+    if (dawStore.isValueTrackerRecording) {
+      await record()
+      return
+    }
+
+    if (automationCompanionHostState.controllers.length) {
+      dawStore.toggleAutomationRecordingArmed()
+      return
+    }
+
     await record()
   }
 
@@ -426,6 +442,11 @@ export function useTransportPlayback() {
   })
 
   watch(automationLanes, () => {
+    void syncAudioEffectsAtTime(dawStore.time)
+    void syncMasterGainAtTime(dawStore.time)
+  }, { deep: true })
+
+  watch(automationLiveOverrides, () => {
     void syncAudioEffectsAtTime(dawStore.time)
     void syncMasterGainAtTime(dawStore.time)
   }, { deep: true })
