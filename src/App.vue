@@ -1,6 +1,21 @@
 <template>
   <StartScreen v-if="!audioReady" @start="handleStart" />
 
+  <section
+    v-else-if="isMobileLayout"
+    class="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-zinc-100"
+  >
+    <Panel class="w-full max-w-xl" padding="lg">
+      <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">DawBeat</p>
+      <h1 class="mt-4 text-3xl font-semibold text-zinc-50 sm:text-4xl">Mobile Mode Soon</h1>
+      <div class="mt-6 space-y-3 text-sm leading-6 text-zinc-300">
+        <p>Disponible para PC.</p>
+        <p>Soporte experimental para tablet.</p>
+        <p>Próximamente: modo controlador para celular.</p>
+      </div>
+    </Panel>
+  </section>
+
   <div v-else class="h-screen overflow-hidden bg-zinc-950 text-zinc-200 font-mono">
     <div class="flex h-full w-full flex-col gap-4 overflow-hidden p-4">
       <Toolbar
@@ -139,6 +154,7 @@ import Toolbar from '@/components/transport/Toolbar.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import ContextMenu from '@/components/ui/ContextMenu.vue'
 import FormulaInputDialog from '@/components/ui/FormulaInputDialog.vue'
+import Panel from '@/components/ui/Panel.vue'
 import SnackbarContainer from '@/components/ui/SnackbarContainer.vue'
 import SideDrawer from '@/components/ui/SideDrawer.vue'
 import TextInputDialog from '@/components/ui/TextInputDialog.vue'
@@ -320,7 +336,8 @@ const formulaDialogTitle = computed(() => {
     ? 'Edit Variable Formula'
     : 'Edit Clip Formula'
 })
-const isCompactLayout = computed(() => viewportWidth.value < 1280)
+const isMobileLayout = computed(() => viewportWidth.value < 768)
+const isCompactLayout = computed(() => viewportWidth.value >= 768 && viewportWidth.value < 1280)
 const mainLayoutStyle = computed(() => ({
   '--effects-width': effectsCollapsed.value ? '56px' : '304px',
   '--library-width': libraryCollapsed.value ? '56px' : '320px'
