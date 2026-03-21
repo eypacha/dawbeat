@@ -54,7 +54,7 @@
               <p class="text-sm text-zinc-300">Reset local storage</p>
               <p class="text-xs text-zinc-500">Clear the autosaved project and reload the demo state.</p>
             </div>
-            <Button size="xs" variant="danger" @click="handleResetProject">Reset</Button>
+            <Button size="xs" variant="danger" @click="resetConfirmVisible = true">Reset</Button>
           </div>
         </section>
 
@@ -206,14 +206,23 @@
         </section>
       </template>
     </Tabs>
-
   </Modal>
+
+  <ConfirmDialog
+    confirm-label="Reset Project"
+    message="This will delete the autosaved project in local storage and replace the current work with the demo state."
+    title="Reset Local Storage?"
+    :visible="resetConfirmVisible"
+    @cancel="resetConfirmVisible = false"
+    @confirm="handleResetProject"
+  />
 </template>
 
 <script setup>
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import Button from '@/components/ui/Button.vue'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import Modal from '@/components/ui/Modal.vue'
 import Tabs from '@/components/ui/Tabs.vue'
@@ -243,6 +252,7 @@ const dawStore = useDawStore()
 const { showClipWaveforms, showEvaluatedPanel } = storeToRefs(dawStore)
 const { stop } = useTransportPlayback()
 const activeTab = ref('general')
+const resetConfirmVisible = ref(false)
 const settingsTabs = [
   {
     id: 'general',
@@ -370,6 +380,7 @@ function formatNumberLabel(value) {
 }
 
 async function handleResetProject() {
+  resetConfirmVisible.value = false
   await stop()
   clearProjectStorage()
   dawStore.resetProject()
