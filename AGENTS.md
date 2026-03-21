@@ -48,6 +48,7 @@ Hoy existen:
 - grabacion de value tracker clips desde transport, con preview en lane y auto-creacion opcional de track destino
 - preview waveform opcional por clip
 - panel opcional de formula evaluada
+- copia de formulas evaluadas desde el footer para `Channel`, `Left Channel` y `Right Channel`
 - eval effects: `Stereo Offset`, `T Replacement`
 - visualizador de formula effects dentro del panel Formula, renderizado con `ByteBeat.js#getSamplesForTimeRange(...)`
 - audio effects expuestos hoy: `EQ3`, `Distortion`, `Stereo Widener`, `Feedback Delay`, `Compressor`, `Limiter`, `Reverb` y `Master Gain`

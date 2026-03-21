@@ -146,7 +146,7 @@ const displayChannels = computed(() => {
 
   return waveforms.map((waveform, index) => ({
     id: waveforms.length > 1 ? (index === 0 ? 'left' : 'right') : 'mono',
-    label: waveforms.length > 1 ? (index === 0 ? 'Left Channel' : 'Right Channel') : 'Channel',
+    label: waveforms.length > 1 ? (index === 0 ? 'L. Channel' : 'R. Channel') : 'Channel',
     path: buildWaveformPath(waveform)
   }))
 })

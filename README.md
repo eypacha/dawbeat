@@ -43,6 +43,7 @@ Implementado hoy:
 - inicializacion de variables faltantes desde el editor de formulas
 - conversion de inicializadores numericos a value tracker desde el editor de formulas
 - panel opcional de expresion evaluada en tiempo real
+- copia de formulas evaluadas desde el footer para `Channel`, `Left Channel` y `Right Channel`
 - preview waveform opcional por clip
 - formula effects: `Stereo Offset`, `T Replacement`
 - visualizador de formula effects dentro del panel Formula, renderizado con `ByteBeat.js#getSamplesForTimeRange(...)`

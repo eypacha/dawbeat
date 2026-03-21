@@ -9,8 +9,19 @@
         :key="expression.id"
         class="min-w-0 bg-zinc-950/70"
       >
-        <div class="border-b border-zinc-800 px-4 py-2 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-          {{ expression.label }}
+        <div class="flex items-center justify-between gap-3 border-b border-zinc-800 px-4 py-2">
+          <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+            {{ expression.label }}
+          </span>
+
+          <IconButton
+            :icon="Copy"
+            :label="`Copy ${expression.label}`"
+            size="sm"
+            title="Copy formula"
+            variant="plain"
+            @click="copyExpression(expression)"
+          />
         </div>
 
         <pre class="min-h-[4.5rem] overflow-auto px-4 py-3 text-xs leading-6 text-zinc-200 whitespace-pre-wrap break-words">{{ expression.code }}</pre>
@@ -22,10 +33,14 @@
 <script setup>
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
+import { Copy } from 'lucide-vue-next'
 import { getActiveFormula } from '@/engine/timelineEngine'
-import { applyEvalEffects } from '@/services/evalEffectService'
-import { useDawStore } from '@/stores/dawStore'
+import IconButton from '@/components/ui/IconButton.vue'
 import Panel from '@/components/ui/Panel.vue'
+import { copyTextToClipboard } from '@/services/clipboard'
+import { applyEvalEffects } from '@/services/evalEffectService'
+import { enqueueSnackbar } from '@/services/notifications'
+import { useDawStore } from '@/stores/dawStore'
 
 const dawStore = useDawStore()
 const { evalEffects, formulas, time, tracks, valueTrackerLiveInputs, valueTrackerTracks, variableTracks } = storeToRefs(dawStore)
@@ -86,17 +101,16 @@ const displayExpressions = computed(() => {
   ]
 })
 
-const formattedTime = computed(() => {
-  const normalizedTime = Number(time.value)
-
-  if (!Number.isFinite(normalizedTime)) {
-    return '0'
+async function copyExpression(expression) {
+  try {
+    await copyTextToClipboard(expression?.code ?? '')
+    enqueueSnackbar(`${expression?.label ?? 'Formula'} copied.`, {
+      variant: 'success'
+    })
+  } catch {
+    enqueueSnackbar('Could not copy formula.', {
+      variant: 'error'
+    })
   }
-
-  return normalizedTime.toFixed(2).replace(/\.00$/, '')
-})
-
-const channelSummary = computed(() => {
-  return displayExpressions.value.length > 1 ? 'Stereo' : 'Mono'
-})
+}
 </script>
