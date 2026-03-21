@@ -45,6 +45,15 @@
         @pointerdown.stop="handlePointPointerDown($event, point)"
       />
     </div>
+
+    <button
+      class="absolute inset-x-0 bottom-0 z-30 h-2 cursor-row-resize"
+      title="Resize automation lane height"
+      type="button"
+      @pointerdown.stop="handleResizePointerDown"
+    >
+      <span class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-zinc-700/80" />
+    </button>
   </div>
 </template>
 
@@ -52,12 +61,11 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useContextMenu } from '@/composables/useContextMenu'
+import { useTimelineLaneResize } from '@/composables/useTimelineLaneResize'
 import { getAutomationLaneConfig } from '@/services/automationService'
 import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { useDawStore } from '@/stores/dawStore'
 import { TRACK_LABEL_WIDTH, clamp, getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
-
-const LANE_HEIGHT = 52
 
 const props = defineProps({
   lane: {
@@ -81,11 +89,12 @@ let dragPointIndex = -1
 let dragStartPoint = null
 
 const laneConfig = computed(() => getAutomationLaneConfig(props.lane))
+const laneHeight = computed(() => props.lane.height)
 const visibleTickStep = computed(() => getVisibleTimelineTickStep(pixelsPerTick.value))
 const laneLabel = computed(() => laneConfig.value?.label ?? props.lane.id)
 const laneStyle = computed(() => ({
   width: props.timelineWidth,
-  height: `${LANE_HEIGHT}px`,
+  height: `${laneHeight.value}px`,
   backgroundImage: 'linear-gradient(to right, rgba(63, 63, 70, 0.4) 1px, transparent 1px)',
   backgroundSize: `${ticksToPixels(visibleTickStep.value, pixelsPerTick.value)}px 100%`
 }))
@@ -100,6 +109,16 @@ const selectedPointClassName =
   'border-emerald-200 bg-emerald-400 shadow-[0_0_0_3px_rgba(16,185,129,0.25)]'
 const unselectedPointClassName =
   'border-emerald-400/70 bg-zinc-950 text-emerald-200 hover:border-emerald-300 hover:bg-zinc-900'
+
+const { cleanupResize, handleResizePointerDown } = useTimelineLaneResize({
+  dawStore,
+  getHeight: () => laneHeight.value,
+  historyLabel: 'resize-automation-lane-height',
+  setHeight: (height) => {
+    dawStore.setAutomationLaneHeight(props.lane.id, height)
+  }
+})
+
 const renderedPoints = computed(() =>
   (props.lane.points ?? [])
     .map((point, index) => ({
@@ -225,7 +244,8 @@ function cleanupPointDrag() {
 function getPointFromEvent(event) {
   const laneRect = laneElement.value.getBoundingClientRect()
   const relativeX = Math.max(0, event.clientX - laneRect.left)
-  const relativeY = clamp(event.clientY - laneRect.top, 0, LANE_HEIGHT)
+  const normalizedLaneHeight = laneHeight.value
+  const relativeY = clamp(event.clientY - laneRect.top, 0, normalizedLaneHeight)
   const minValue = laneConfig.value?.min ?? 0
   const maxValue = laneConfig.value?.max ?? 1
   const valueRange = Math.max(0.0001, maxValue - minValue)
@@ -235,7 +255,7 @@ function getPointFromEvent(event) {
       pixelsToTicks(relativeX, pixelsPerTick.value),
       shouldSnapFromPointerEvent(event)
     ),
-    value: clamp(minValue + (1 - relativeY / LANE_HEIGHT) * valueRange, minValue, maxValue)
+    value: clamp(minValue + (1 - relativeY / normalizedLaneHeight) * valueRange, minValue, maxValue)
   }
 }
 
@@ -243,10 +263,12 @@ function valueToY(value) {
   const minValue = laneConfig.value?.min ?? 0
   const maxValue = laneConfig.value?.max ?? 1
   const valueRange = Math.max(0.0001, maxValue - minValue)
-  return clamp((1 - (value - minValue) / valueRange) * LANE_HEIGHT, 0, LANE_HEIGHT)
+  const normalizedLaneHeight = laneHeight.value
+  return clamp((1 - (value - minValue) / valueRange) * normalizedLaneHeight, 0, normalizedLaneHeight)
 }
 
 onBeforeUnmount(() => {
   cleanupPointDrag()
+  cleanupResize()
 })
 </script>

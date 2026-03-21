@@ -5,9 +5,9 @@
     :data-variable-track-name="variableTrack.name"
   >
     <div
-      class="sticky left-0 z-20 flex h-11 shrink-0 items-center border-r border-zinc-800 bg-zinc-900 px-4 py-0 text-zinc-200"
+      class="sticky left-0 z-20 flex shrink-0 items-center border-r border-zinc-800 bg-zinc-900 px-4 py-0 text-zinc-200"
       data-context-menu-enabled="true"
-      :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
+      :style="headerStyle"
       @contextmenu="handleHeaderContextMenu"
     >
       <span class="truncate text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-200">
@@ -17,7 +17,7 @@
 
     <div
       ref="laneElement"
-      class="relative z-0 h-11 shrink-0"
+      class="relative z-0 shrink-0"
       data-context-menu-enabled="true"
       data-timeline-track-lane="true"
       :style="laneStyle"
@@ -45,6 +45,15 @@
         :variable-track-name="variableTrack.name"
       />
     </div>
+
+    <button
+      class="absolute inset-x-0 bottom-0 z-30 h-2 cursor-row-resize"
+      title="Resize variable track height"
+      type="button"
+      @pointerdown.stop="handleResizePointerDown"
+    >
+      <span class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-zinc-700/80" />
+    </button>
   </div>
 </template>
 
@@ -54,6 +63,7 @@ import { storeToRefs } from 'pinia'
 import TimelineClipPreview from '@/components/timeline/TimelineClipPreview.vue'
 import TimelineVariableClip from '@/components/timeline/TimelineVariableClip.vue'
 import { useContextMenu } from '@/composables/useContextMenu'
+import { useTimelineLaneResize } from '@/composables/useTimelineLaneResize'
 import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { buildCreatedClip, clampClipPlacementStart, getTrackCreateBounds } from '@/services/timelineService'
 import { useDawStore } from '@/stores/dawStore'
@@ -83,8 +93,14 @@ let creationBounds = null
 let creationHistoryActive = false
 let creationStartX = 0
 const visibleTickStep = computed(() => getVisibleTimelineTickStep(pixelsPerTick.value))
+const laneHeight = computed(() => props.variableTrack.height)
+const headerStyle = computed(() => ({
+  height: `${laneHeight.value}px`,
+  width: `${TRACK_LABEL_WIDTH}px`
+}))
 
 const laneStyle = computed(() => ({
+  height: `${laneHeight.value}px`,
   width: props.timelineWidth,
   backgroundImage: 'linear-gradient(to right, rgba(63, 63, 70, 0.4) 1px, transparent 1px)',
   backgroundSize: `${ticksToPixels(visibleTickStep.value, pixelsPerTick.value)}px 100%`
@@ -96,6 +112,15 @@ const dragPreview = computed(() => {
   }
 
   return clipDragPreview.value
+})
+
+const { cleanupResize, handleResizePointerDown } = useTimelineLaneResize({
+  dawStore,
+  getHeight: () => laneHeight.value,
+  historyLabel: 'resize-variable-track-height',
+  setHeight: (height) => {
+    dawStore.setVariableTrackHeight(props.variableTrack.name, height)
+  }
 })
 
 function handleHeaderContextMenu(event) {
@@ -256,5 +281,6 @@ function cleanupCreation() {
 
 onBeforeUnmount(() => {
   cleanupCreation()
+  cleanupResize()
 })
 </script>

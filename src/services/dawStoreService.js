@@ -1,5 +1,10 @@
 import { DEFAULT_TRACK_COLOR } from '@/utils/colorUtils'
 import { DEFAULT_TRACK_UNION_OPERATOR } from '@/services/trackUnionOperatorService'
+import {
+  normalizeTrackLaneHeight,
+  normalizeValueTrackerTrackHeight,
+  normalizeVariableTrackHeight
+} from '@/services/timelineLaneLayoutService'
 import { DEFAULT_VARIABLE_CLIP_FORMULA, normalizeVariableTrackName } from '@/services/variableTrackService'
 import {
   createDefaultValueTrackerBinding,
@@ -25,21 +30,23 @@ export function createTrackId() {
   return `track-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-export function createTrack() {
+export function createTrack(track = {}) {
   return {
-    id: createTrackId(),
+    id: track.id ?? createTrackId(),
     color: DEFAULT_TRACK_COLOR,
     muted: false,
     soloed: false,
     unionOperator: DEFAULT_TRACK_UNION_OPERATOR,
-    name: undefined,
-    clips: []
+    name: typeof track.name === 'string' && track.name.trim() ? track.name.trim() : undefined,
+    height: normalizeTrackLaneHeight(track.height),
+    clips: Array.isArray(track.clips) ? [...track.clips] : []
   }
 }
 
 export function createVariableTrack(variableTrack = {}) {
   return {
     name: normalizeVariableTrackName(variableTrack.name),
+    height: normalizeVariableTrackHeight(variableTrack.height),
     clips: Array.isArray(variableTrack.clips) ? [...variableTrack.clips] : []
   }
 }
@@ -49,6 +56,7 @@ export function createValueTrackerTrack(valueTrackerTrack = {}) {
     id: valueTrackerTrack.id ?? createTrackId(),
     name: normalizeValueTrackerTrackName(valueTrackerTrack.name),
     binding: createDefaultValueTrackerBinding(valueTrackerTrack.binding),
+    height: normalizeValueTrackerTrackHeight(valueTrackerTrack.height),
     clips: Array.isArray(valueTrackerTrack.clips) ? [...valueTrackerTrack.clips] : []
   }
 }

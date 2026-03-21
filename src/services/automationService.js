@@ -12,6 +12,7 @@ import {
   normalizeWet,
   normalizeWidth
 } from '@/services/audioEffectService'
+import { normalizeAutomationLaneHeight } from '@/services/timelineLaneLayoutService'
 
 export const MASTER_GAIN_AUTOMATION_LANE_ID = 'masterGain'
 export const MASTER_GAIN_AUTOMATION_LANE_TYPE = 'masterGain'
@@ -68,6 +69,7 @@ const AUDIO_EFFECT_PARAM_CONFIGS = {
 export function createDefaultAutomationLane({ value = 1 } = {}) {
   return {
     id: MASTER_GAIN_AUTOMATION_LANE_ID,
+    height: normalizeAutomationLaneHeight(undefined),
     type: MASTER_GAIN_AUTOMATION_LANE_TYPE,
     points: [
       {
@@ -87,6 +89,7 @@ export function createAudioEffectParamAutomationLane(effect, paramKey) {
 
   return {
     id: getAudioEffectParamAutomationLaneId(effect.id, paramKey),
+    height: normalizeAutomationLaneHeight(undefined),
     type: AUDIO_EFFECT_PARAM_AUTOMATION_LANE_TYPE,
     effectId: effect.id,
     effectType: effect.type,
@@ -168,6 +171,7 @@ export function normalizeAutomationLane(lane = {}) {
   if (lane.id === MASTER_GAIN_AUTOMATION_LANE_ID || lane.type === MASTER_GAIN_AUTOMATION_LANE_TYPE) {
     const nextLane = {
       id: MASTER_GAIN_AUTOMATION_LANE_ID,
+      height: normalizeAutomationLaneHeight(lane.height),
       type: MASTER_GAIN_AUTOMATION_LANE_TYPE
     }
 
@@ -188,6 +192,7 @@ export function normalizeAutomationLane(lane = {}) {
       typeof lane.id === 'string' && lane.id
         ? lane.id
         : getAudioEffectParamAutomationLaneId(lane.effectId, lane.paramKey),
+    height: normalizeAutomationLaneHeight(lane.height),
     type: AUDIO_EFFECT_PARAM_AUTOMATION_LANE_TYPE,
     effectId: typeof lane.effectId === 'string' ? lane.effectId : '',
     effectType: typeof lane.effectType === 'string' ? lane.effectType : '',

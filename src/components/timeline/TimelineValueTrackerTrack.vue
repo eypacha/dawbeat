@@ -35,7 +35,7 @@
 
     <div
       ref="laneElement"
-      class="relative z-0 h-16 shrink-0"
+      class="relative z-0 shrink-0"
       data-context-menu-enabled="true"
       data-timeline-track-lane="true"
       :class="laneClassName"
@@ -62,6 +62,15 @@
         :value-tracker-track-id="valueTrackerTrack.id"
       />
     </div>
+
+    <button
+      class="absolute inset-x-0 bottom-0 z-30 h-2 cursor-row-resize"
+      title="Resize value tracker height"
+      type="button"
+      @pointerdown.stop="handleResizePointerDown"
+    >
+      <span class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-zinc-700/80" />
+    </button>
   </div>
 </template>
 
@@ -72,6 +81,7 @@ import { Keyboard } from 'lucide-vue-next'
 import TimelineClipPreview from '@/components/timeline/TimelineClipPreview.vue'
 import TimelineValueTrackerClip from '@/components/timeline/TimelineValueTrackerClip.vue'
 import { useContextMenu } from '@/composables/useContextMenu'
+import { useTimelineLaneResize } from '@/composables/useTimelineLaneResize'
 import { getMidiInputDisplayName, midiState } from '@/services/midiInputService'
 import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { buildCreatedClip, clampClipPlacementStart, getTrackCreateBounds } from '@/services/timelineService'
@@ -103,6 +113,7 @@ let creationBounds = null
 let creationHistoryActive = false
 let creationStartX = 0
 const visibleTickStep = computed(() => getVisibleTimelineTickStep(pixelsPerTick.value))
+const laneHeight = computed(() => props.valueTrackerTrack.height)
 
 const trackStyle = computed(() => ({
   '--track-color': '#f59e0b',
@@ -111,6 +122,7 @@ const trackStyle = computed(() => ({
 }))
 
 const laneStyle = computed(() => ({
+  height: `${laneHeight.value}px`,
   width: props.timelineWidth,
   backgroundImage: 'linear-gradient(to right, rgba(63, 63, 70, 0.45) 1px, transparent 1px)',
   backgroundSize: `${ticksToPixels(visibleTickStep.value, pixelsPerTick.value)}px 100%`
@@ -166,6 +178,15 @@ const dragPreview = computed(() => {
   }
 
   return clipDragPreview.value
+})
+
+const { cleanupResize, handleResizePointerDown } = useTimelineLaneResize({
+  dawStore,
+  getHeight: () => laneHeight.value,
+  historyLabel: 'resize-value-tracker-height',
+  setHeight: (height) => {
+    dawStore.setValueTrackerTrackHeight(props.valueTrackerTrack.id, height)
+  }
 })
 
 function handleHeaderContextMenu(event) {
@@ -333,5 +354,6 @@ function cleanupCreation() {
 
 onBeforeUnmount(() => {
   cleanupCreation()
+  cleanupResize()
 })
 </script>

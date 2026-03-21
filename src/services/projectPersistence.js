@@ -16,6 +16,11 @@ import {
 } from '@/services/dawStoreService'
 import { createEvalEffect, createStereoOffsetEvalEffect } from '@/services/evalEffectService'
 import { createFormula } from '@/services/formulaService'
+import {
+  normalizeTrackLaneHeight,
+  normalizeValueTrackerTrackHeight,
+  normalizeVariableTrackHeight
+} from '@/services/timelineLaneLayoutService'
 import { normalizeTrackUnionOperator } from '@/services/trackUnionOperatorService'
 import {
   collectAutoVariableTrackNames,
@@ -288,6 +293,7 @@ function normalizeTrack(track, formulaIds) {
     soloed: Boolean(track.soloed),
     unionOperator: normalizeTrackUnionOperator(track.unionOperator),
     name: typeof track.name === 'string' && track.name.trim() ? track.name.trim() : undefined,
+    height: normalizeTrackLaneHeight(track.height),
     clips: Array.isArray(track.clips)
       ? track.clips.map((clip) => normalizeClip(clip, formulaIds)).filter(Boolean)
       : []
@@ -311,6 +317,7 @@ function normalizeVariableTrack(variableTrack, usedNames) {
   usedNames.add(nextName)
 
   const nextVariableTrack = createVariableTrack({
+    height: normalizeVariableTrackHeight(variableTrack.height),
     name: nextName,
     clips: Array.isArray(variableTrack.clips)
       ? variableTrack.clips.map((clip) => normalizeVariableClip(clip)).filter(Boolean)
@@ -328,6 +335,7 @@ function normalizeValueTrackerTrack(valueTrackerTrack, projectVersion) {
 
   const nextValueTrackerTrack = createValueTrackerTrack({
     id: typeof valueTrackerTrack.id === 'string' && valueTrackerTrack.id ? valueTrackerTrack.id : undefined,
+    height: normalizeValueTrackerTrackHeight(valueTrackerTrack.height),
     name: normalizeValueTrackerTrackName(valueTrackerTrack.name),
     binding: valueTrackerTrack.binding,
     clips: Array.isArray(valueTrackerTrack.clips)

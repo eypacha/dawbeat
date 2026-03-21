@@ -65,6 +65,12 @@ import {
 } from '@/services/automationService'
 import { createEvalEffect, createStereoOffsetEvalEffect, mergeTReplacementParams } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
+import {
+  normalizeAutomationLaneHeight,
+  normalizeTrackLaneHeight,
+  normalizeValueTrackerTrackHeight,
+  normalizeVariableTrackHeight
+} from '@/services/timelineLaneLayoutService'
 import { normalizeTrackUnionOperator } from '@/services/trackUnionOperatorService'
 import demoProject from '@/data/demo.json'
 import { loadProject, normalizeProject, serializeProject } from '@/services/projectPersistence'
@@ -1228,6 +1234,50 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       this.time = time
+    },
+
+    setTrackHeight(trackId, height) {
+      const track = findTrack(this.tracks, trackId)
+
+      if (!track) {
+        return false
+      }
+
+      track.height = normalizeTrackLaneHeight(height, track.height)
+      return true
+    },
+
+    setVariableTrackHeight(variableTrackName, height) {
+      const variableTrack = findVariableTrack(this.variableTracks, variableTrackName)
+
+      if (!variableTrack) {
+        return false
+      }
+
+      variableTrack.height = normalizeVariableTrackHeight(height, variableTrack.height)
+      return true
+    },
+
+    setValueTrackerTrackHeight(valueTrackerTrackId, height) {
+      const valueTrackerTrack = findValueTrackerTrack(this.valueTrackerTracks, valueTrackerTrackId)
+
+      if (!valueTrackerTrack) {
+        return false
+      }
+
+      valueTrackerTrack.height = normalizeValueTrackerTrackHeight(height, valueTrackerTrack.height)
+      return true
+    },
+
+    setAutomationLaneHeight(laneId, height) {
+      const lane = this.getAutomationLaneById(laneId)
+
+      if (!lane) {
+        return false
+      }
+
+      lane.height = normalizeAutomationLaneHeight(height, lane.height)
+      return true
     },
 
     setValueTrackerTrackLiveInput(valueTrackerTrackId, value, time = this.time) {

@@ -73,7 +73,7 @@
 
     <div
       ref="laneElement"
-      class="relative z-0 h-20 shrink-0 transition-opacity"
+      class="relative z-0 shrink-0 transition-opacity"
       data-context-menu-enabled="true"
       data-timeline-track-lane="true"
       :class="laneClassName"
@@ -103,12 +103,22 @@
         :track-id="track.id"
       />
     </div>
+
+    <button
+      class="absolute inset-x-0 bottom-0 z-30 h-2 cursor-row-resize"
+      title="Resize track height"
+      type="button"
+      @pointerdown.stop="handleResizePointerDown"
+    >
+      <span class="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-zinc-700/80" />
+    </button>
   </div>
 </template>
 
 <script setup>
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useTimelineLaneResize } from '@/composables/useTimelineLaneResize'
 import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { isTrackAudible } from '@/services/trackPlaybackState'
 import { getTrackUnionOperatorOption, TRACK_UNION_OPERATOR_OPTIONS } from '@/services/trackUnionOperatorService'
@@ -175,8 +185,10 @@ let creationBounds = null
 let creationHistoryActive = false
 let creationStartX = 0
 const visibleTickStep = computed(() => getVisibleTimelineTickStep(pixelsPerTick.value))
+const laneHeight = computed(() => props.track.height)
 
 const laneStyle = computed(() => ({
+  height: `${laneHeight.value}px`,
   width: props.timelineWidth,
   backgroundImage: 'linear-gradient(to right, rgba(63, 63, 70, 0.5) 1px, transparent 1px)',
   backgroundSize: `${ticksToPixels(visibleTickStep.value, pixelsPerTick.value)}px 100%`
@@ -237,6 +249,15 @@ const soloButtonClassName = computed(() => {
   }
 
   return 'border-[var(--track-color-border)] bg-zinc-900/70 text-zinc-400 hover:border-[var(--track-color-light)] hover:text-zinc-200'
+})
+
+const { cleanupResize, handleResizePointerDown } = useTimelineLaneResize({
+  dawStore,
+  getHeight: () => laneHeight.value,
+  historyLabel: 'resize-track-height',
+  setHeight: (height) => {
+    dawStore.setTrackHeight(props.track.id, height)
+  }
 })
 
 function handleContextMenu(event) {
@@ -549,5 +570,6 @@ function getTrackReorderPlacement(event) {
 
 onBeforeUnmount(() => {
   cleanupCreation()
+  cleanupResize()
 })
 </script>
