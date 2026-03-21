@@ -1,14 +1,26 @@
 <template>
   <div class="relative flex min-w-full w-max border-b border-zinc-800 bg-zinc-950/45">
     <div
-      class="sticky left-0 z-20 flex shrink-0 flex-col justify-center border-r border-zinc-800 px-4 py-2 transition-colors"
+      class="sticky left-0 z-20 flex shrink-0 items-center justify-between gap-3 border-r border-zinc-800 px-4 py-2 transition-colors"
       data-context-menu-enabled="true"
       :class="selectedHeaderClassName"
       :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
       @contextmenu="handleContextMenu"
     >
-      <span class="text-[10px] font-semibold uppercase tracking-[0.3em] text-emerald-300/80">[AUT]</span>
-      <span class="mt-1 truncate text-sm text-zinc-100">{{ laneLabel }}</span>
+      <div class="min-w-0">
+        <span class="text-[10px] font-semibold uppercase tracking-[0.3em] text-emerald-300/80">[AUT]</span>
+        <span class="mt-1 block truncate text-sm text-zinc-100">{{ laneLabel }}</span>
+      </div>
+
+      <button
+        class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border transition"
+        :class="companionButtonClassName"
+        :title="companionButtonTitle"
+        type="button"
+        @click.stop="openAutomationCompanionQr"
+      >
+        <Smartphone class="h-4 w-4" />
+      </button>
     </div>
 
     <div
@@ -63,8 +75,13 @@
 <script setup>
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import { Smartphone } from 'lucide-vue-next'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineLaneResize } from '@/composables/useTimelineLaneResize'
+import {
+  isAutomationCompanionLaneControlled,
+  openAutomationCompanionModal
+} from '@/services/automationCompanionService'
 import {
   DEFAULT_AUTOMATION_CURVE,
   AUTOMATION_CURVE_LINEAR,
@@ -114,8 +131,19 @@ const timelineWidthPx = computed(() => Number.parseFloat(props.timelineWidth) ||
 const selectedPointIndex = computed(() =>
   selectedAutomationPoint.value?.laneId === props.lane.id ? selectedAutomationPoint.value.index : -1
 )
+const companionControlled = computed(() => isAutomationCompanionLaneControlled(props.lane.id))
 const selectedHeaderClassName = computed(() =>
   selectedPointIndex.value >= 0 ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-900 text-zinc-300'
+)
+const companionButtonClassName = computed(() =>
+  companionControlled.value
+    ? 'border-emerald-500/50 bg-emerald-500/12 text-emerald-200 hover:border-emerald-400/80 hover:bg-emerald-500/20'
+    : 'border-zinc-700 bg-zinc-950/90 text-zinc-400 hover:border-zinc-500 hover:text-zinc-100'
+)
+const companionButtonTitle = computed(() =>
+  companionControlled.value
+    ? 'Manage connected phone controllers'
+    : 'Open phone controller QR'
 )
 const selectedPointClassName =
   'border-emerald-200 bg-emerald-400 shadow-[0_0_0_3px_rgba(16,185,129,0.25)]'
@@ -289,6 +317,10 @@ function handlePointPointerCancel(event) {
   }
 
   cleanupPointDrag()
+}
+
+function openAutomationCompanionQr() {
+  openAutomationCompanionModal(props.lane.id)
 }
 
 function cleanupPointDrag() {

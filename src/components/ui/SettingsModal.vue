@@ -1,7 +1,7 @@
 <template>
   <Modal
     :open="visible"
-    panel-class="h-[710px]"
+    panel-class="h-[710px] rounded-none"
     size="lg"
     title="Settings"
     @close="emit('close')"
@@ -21,7 +21,7 @@
           v-if="activeTabId === 'general'"
           class="space-y-4"
         >
-          <label class="flex items-center justify-between gap-4 rounded border border-zinc-800 bg-zinc-950/70 p-4">
+          <label class="flex items-center justify-between gap-4 border border-zinc-800 bg-zinc-950/70 p-4">
             <div>
               <p class="text-sm text-zinc-200">Show clip waveforms</p>
               <p class="text-xs text-zinc-500">Render formula previews inside timeline clips.</p>
@@ -29,13 +29,13 @@
 
             <input
               :checked="showClipWaveforms"
-              class="h-4 w-4 rounded border-zinc-700 bg-zinc-950 text-zinc-100 focus:ring-zinc-500"
+              class="h-4 w-4 border-zinc-700 bg-zinc-950 text-zinc-100 focus:ring-zinc-500"
               type="checkbox"
               @change="handleShowClipWaveformsChange"
             >
           </label>
 
-          <label class="flex items-center justify-between gap-4 rounded border border-zinc-800 bg-zinc-950/70 p-4">
+          <label class="flex items-center justify-between gap-4 border border-zinc-800 bg-zinc-950/70 p-4">
             <div>
               <p class="text-sm text-zinc-200">Show evaluated panel</p>
               <p class="text-xs text-zinc-500">Display the real-time playback expression under the main layout.</p>
@@ -43,13 +43,13 @@
 
             <input
               :checked="showEvaluatedPanel"
-              class="h-4 w-4 rounded border-zinc-700 bg-zinc-950 text-zinc-100 focus:ring-zinc-500"
+              class="h-4 w-4 border-zinc-700 bg-zinc-950 text-zinc-100 focus:ring-zinc-500"
               type="checkbox"
               @change="handleShowEvaluatedPanelChange"
             >
           </label>
 
-          <div class="flex items-center justify-between gap-4 rounded border border-zinc-800 bg-zinc-950/70 p-4">
+          <div class="flex items-center justify-between gap-4 border border-zinc-800 bg-zinc-950/70 p-4">
             <div>
               <p class="text-sm text-zinc-300">Reset local storage</p>
               <p class="text-xs text-zinc-500">Clear the autosaved project and reload the demo state.</p>
@@ -62,12 +62,12 @@
           v-else-if="activeTabId === 'midi'"
           class="space-y-4"
         >
-          <div class="rounded border border-zinc-800 bg-zinc-900/60 p-4">
+          <div class="border border-zinc-800 bg-zinc-900/60 p-4">
             <div class="flex items-start justify-between gap-4">
               <div>
                 <div class="flex items-center gap-2">
                   <p class="text-sm text-zinc-200">MIDI input</p>
-                  <span class="rounded border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-zinc-400">
+                  <span class="border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-zinc-400">
                     {{ midiEnableLabel }}
                   </span>
                 </div>
@@ -104,12 +104,12 @@
             </p>
           </div>
 
-          <div class="rounded border border-zinc-800 bg-zinc-950/40 p-4">
+          <div class="border border-zinc-800 bg-zinc-950/40 p-4">
             <div class="flex items-start justify-between gap-4">
               <div class="min-w-0">
                 <div class="flex items-center gap-2">
                   <p class="text-sm text-zinc-200">MIDI Clock receive</p>
-                  <span class="rounded border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-zinc-400">
+                  <span class="border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-zinc-400">
                     {{ midiClockTransportState }}
                   </span>
                 </div>
@@ -120,7 +120,7 @@
 
               <input
                 :checked="midiClockState.enabled"
-                class="mt-1 h-4 w-4 rounded border-zinc-700 bg-zinc-950 text-zinc-100 focus:ring-zinc-500"
+                class="mt-1 h-4 w-4 border-zinc-700 bg-zinc-950 text-zinc-100 focus:ring-zinc-500"
                 :disabled="midiState.initializing || !midiState.supported"
                 type="checkbox"
                 @change="handleMidiClockEnabledChange"
@@ -147,22 +147,22 @@
             </label>
 
             <div class="mt-4 grid gap-3 text-xs text-zinc-400 sm:grid-cols-2">
-              <div class="rounded border border-zinc-800 bg-zinc-950/70 px-3 py-2">
+              <div class="border border-zinc-800 bg-zinc-950/70 px-3 py-2">
                 <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">State</p>
                 <p class="mt-1 text-sm text-zinc-200">{{ midiClockTransportState }}</p>
               </div>
 
-              <div class="rounded border border-zinc-800 bg-zinc-950/70 px-3 py-2">
+              <div class="border border-zinc-800 bg-zinc-950/70 px-3 py-2">
                 <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">BPM</p>
                 <p class="mt-1 text-sm text-zinc-200">{{ midiClockBpmLabel }}</p>
               </div>
 
-              <div class="rounded border border-zinc-800 bg-zinc-950/70 px-3 py-2">
+              <div class="border border-zinc-800 bg-zinc-950/70 px-3 py-2">
                 <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Effective Hz</p>
                 <p class="mt-1 text-sm text-zinc-200">{{ midiClockSampleRateLabel }}</p>
               </div>
 
-              <div class="rounded border border-zinc-800 bg-zinc-950/70 px-3 py-2">
+              <div class="border border-zinc-800 bg-zinc-950/70 px-3 py-2">
                 <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Source</p>
                 <p class="mt-1 text-sm text-zinc-200">{{ midiClockInputLabel }}</p>
               </div>
@@ -175,7 +175,7 @@
               <div
                 v-for="midiInput in midiState.inputs"
                 :key="midiInput.id"
-                class="rounded border border-zinc-800 bg-zinc-900/70 px-3 py-2"
+                class="border border-zinc-800 bg-zinc-900/70 px-3 py-2"
               >
                 <p class="text-sm text-zinc-200">{{ midiInput.name }}</p>
                 <p class="mt-1 text-xs text-zinc-500">
@@ -194,7 +194,7 @@
               <div
                 v-for="message in midiState.recentMessages"
                 :key="message.id"
-                class="rounded border border-zinc-800 bg-zinc-900/70 px-3 py-2"
+                class="border border-zinc-800 bg-zinc-900/70 px-3 py-2"
               >
                 <p class="text-sm text-zinc-200">{{ formatMidiDebugMessage(message) }}</p>
               </div>

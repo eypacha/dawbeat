@@ -62,7 +62,8 @@ import {
   getAutomationValueAtTime,
   getDefaultAutomationLanes,
   normalizeAutomationCurveType,
-  normalizeAutomationPointForLane
+  normalizeAutomationPointForLane,
+  upsertAutomationPointForLane
 } from '@/services/automationService'
 import { createEvalEffect, createStereoOffsetEvalEffect, mergeTReplacementParams } from '@/services/evalEffectService'
 import { createFormula, getFormulaById } from '@/services/formulaService'
@@ -906,6 +907,29 @@ export const useDawStore = defineStore('dawStore', {
       ) {
         this.selectAutomationPoint(laneId, index)
       }
+    },
+
+    setAutomationLaneValueAtTime(laneId, time, value) {
+      return this.recordHistoryStep('set-automation-lane-value-at-time', () => {
+        const lane = this.getAutomationLaneById(laneId)
+
+        if (!lane) {
+          return null
+        }
+
+        const nextLaneState = upsertAutomationPointForLane(lane, {
+          time,
+          value
+        })
+
+        if (!nextLaneState) {
+          return null
+        }
+
+        lane.points = nextLaneState.points
+        this.selectAutomationPoint(laneId, nextLaneState.index)
+        return nextLaneState.index
+      })
     },
 
     setAutomationPointCurve(laneId, index, curve) {

@@ -1,5 +1,7 @@
 <template>
-  <StartScreen v-if="!audioReady" @start="handleStart" />
+  <AutomationCompanionView v-if="isAutomationCompanionRoute" />
+
+  <StartScreen v-else-if="!audioReady" @start="handleStart" />
 
   <section
     v-else-if="isMobileLayout"
@@ -148,6 +150,12 @@
       @confirm="confirmValueTrackerTrackBinding"
     />
 
+    <AutomationCompanionModal
+      :lane="automationCompanionSelectedLane"
+      :open="automationCompanionModalState.open"
+      @close="closeAutomationCompanionModal"
+    />
+
     <SnackbarContainer />
   </div>
 </template>
@@ -156,6 +164,7 @@
 import { computed, reactive, ref, onBeforeUnmount, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import StartScreen from '@/components/boot/StartScreen.vue'
+import AutomationCompanionView from '@/components/companion/AutomationCompanionView.vue'
 import EffectsPanel from '@/components/effects/EffectsPanel.vue'
 import EvaluatedPanel from '@/components/evaluated/EvaluatedPanel.vue'
 import FormulaLibrary from '@/components/library/FormulaLibrary.vue'
@@ -166,6 +175,7 @@ import Toolbar from '@/components/transport/Toolbar.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import ContextMenu from '@/components/ui/ContextMenu.vue'
 import FormulaInputDialog from '@/components/ui/FormulaInputDialog.vue'
+import AutomationCompanionModal from '@/components/ui/AutomationCompanionModal.vue'
 import Panel from '@/components/ui/Panel.vue'
 import SnackbarContainer from '@/components/ui/SnackbarContainer.vue'
 import SideDrawer from '@/components/ui/SideDrawer.vue'
@@ -174,6 +184,14 @@ import TrackPresentationDialog from '@/components/ui/TrackPresentationDialog.vue
 import ValueTrackerBindingDialog from '@/components/ui/ValueTrackerBindingDialog.vue'
 import ValueTrackerClipEditorDialog from '@/components/ui/ValueTrackerClipEditorDialog.vue'
 import { provideContextMenu } from '@/composables/useContextMenu'
+import {
+  automationCompanionModalState,
+  closeAutomationCompanionModal,
+  disposeAutomationCompanionHost,
+  installAutomationCompanionHost,
+  isAutomationCompanionMode,
+  syncAutomationCompanionHostControllersFromStore
+} from '@/services/automationCompanionService'
 import { getFormulaById, resolveClipFormula, resolveClipFormulaName } from '@/services/formulaService'
 import { initKeyboardShortcuts } from '@/services/keyboardShortcuts'
 import { disposeMidiClock, registerMidiClockTransport } from '@/services/midiClockService'
@@ -220,6 +238,7 @@ const activeAuxiliaryDrawer = ref(null)
 const viewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWidth)
 const {
   audioReady,
+  automationLanes,
   editingClipId,
   editingFormulaId,
   formulas,
@@ -350,8 +369,14 @@ const formulaDialogTitle = computed(() => {
     ? 'Edit Variable Formula'
     : 'Edit Clip Formula'
 })
+const isAutomationCompanionRoute = computed(() => isAutomationCompanionMode())
 const isMobileLayout = computed(() => viewportWidth.value < 768)
 const isCompactLayout = computed(() => viewportWidth.value >= 768 && viewportWidth.value < 1280)
+const automationCompanionSelectedLane = computed(() =>
+  automationCompanionModalState.laneId
+    ? dawStore.getAutomationLaneById(automationCompanionModalState.laneId)
+    : null
+)
 const mainLayoutStyle = computed(() => ({
   '--effects-width': effectsCollapsed.value ? '56px' : '304px',
   '--library-width': libraryCollapsed.value ? '56px' : '320px'
@@ -687,6 +712,30 @@ watch(isCompactLayout, (compactLayout) => {
   }
 })
 
+watch(automationCompanionSelectedLane, (lane) => {
+  if (!automationCompanionModalState.open) {
+    return
+  }
+
+  if (!lane) {
+    closeAutomationCompanionModal()
+  }
+})
+
+watch(
+  automationLanes,
+  () => {
+    if (isAutomationCompanionRoute.value) {
+      return
+    }
+
+    syncAutomationCompanionHostControllersFromStore()
+  },
+  {
+    deep: true
+  }
+)
+
 function evaluateFormulaDialog(nextDraft) {
   dawStore.ensureInitializedValueTrackerTracks(nextDraft.valueTrackerInitializers)
   dawStore.ensureInitializedVariableTracks(nextDraft.variableInitializers)
@@ -737,6 +786,11 @@ function updateValueTrackerDialog(nextDraft) {
 }
 
 onMounted(() => {
+  if (isAutomationCompanionRoute.value) {
+    return
+  }
+
+  installAutomationCompanionHost(dawStore)
   syncViewportWidth()
   window.addEventListener('resize', syncViewportWidth)
   window.addEventListener('keydown', handleKeydown)
@@ -749,6 +803,11 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  if (isAutomationCompanionRoute.value) {
+    closeAutomationCompanionModal()
+    return
+  }
+
   window.removeEventListener('resize', syncViewportWidth)
   window.removeEventListener('keydown', handleKeydown)
   window.removeEventListener('contextmenu', handleGlobalContextMenu)
@@ -756,6 +815,7 @@ onBeforeUnmount(() => {
   disposeKeyboardShortcuts = null
   disposeMidiClockTransport?.()
   disposeMidiClockTransport = null
+  disposeAutomationCompanionHost()
   disposeMidiClock()
   disposeMidiInput()
   void stop()

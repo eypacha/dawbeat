@@ -19,6 +19,7 @@ export const MASTER_GAIN_AUTOMATION_LANE_ID = 'masterGain'
 export const MASTER_GAIN_AUTOMATION_LANE_TYPE = 'masterGain'
 export const MASTER_GAIN_AUTOMATION_MAX = 1
 export const AUDIO_EFFECT_PARAM_AUTOMATION_LANE_TYPE = 'audioEffectParam'
+export const AUTOMATION_POINT_TIME_EPSILON = 0.0001
 export const AUTOMATION_CURVE_LINEAR = 'linear'
 export const AUTOMATION_CURVE_EASE_IN = 'easeIn'
 export const AUTOMATION_CURVE_EASE_OUT = 'easeOut'
@@ -314,6 +315,66 @@ export function getAutomationLaneByAudioEffectParam(automationLanes = [], effect
 
 export function getSortedAutomationPoints(points = []) {
   return [...points].sort((leftPoint, rightPoint) => leftPoint.time - rightPoint.time)
+}
+
+export function findAutomationPointIndexAtTime(lane, time, epsilon = AUTOMATION_POINT_TIME_EPSILON) {
+  const normalizedTime = Math.max(0, Number(time) || 0)
+  const normalizedEpsilon = Math.max(0, Number(epsilon) || 0)
+
+  return (lane?.points ?? []).findIndex((point, index) => {
+    if (!point) {
+      return false
+    }
+
+    if (index === 0 && normalizedTime <= normalizedEpsilon) {
+      return true
+    }
+
+    return Math.abs((Number(point.time) || 0) - normalizedTime) <= normalizedEpsilon
+  })
+}
+
+export function upsertAutomationPointForLane(lane, point, options = {}) {
+  if (!lane) {
+    return null
+  }
+
+  const normalizedPoint = normalizeAutomationPointForLane(point, lane)
+  const pointIndex = findAutomationPointIndexAtTime(
+    lane,
+    normalizedPoint.time,
+    options.epsilon
+  )
+  const nextPoints = [...(lane.points ?? [])]
+
+  if (pointIndex >= 0) {
+    nextPoints[pointIndex] = pointIndex === 0
+      ? {
+          ...normalizedPoint,
+          time: 0
+        }
+      : normalizedPoint
+
+    return {
+      index: pointIndex,
+      points: nextPoints
+    }
+  }
+
+  const nextPoint = normalizedPoint.time <= (options.epsilon ?? AUTOMATION_POINT_TIME_EPSILON)
+    ? {
+        ...normalizedPoint,
+        time: 0
+      }
+    : normalizedPoint
+
+  nextPoints.push(nextPoint)
+  nextPoints.sort((leftPoint, rightPoint) => leftPoint.time - rightPoint.time)
+
+  return {
+    index: nextPoints.indexOf(nextPoint),
+    points: nextPoints
+  }
 }
 
 export function getAutomationValueAtTime(time, lane) {
