@@ -83,20 +83,20 @@ Implemented today:
 ## Running It
 
 ```bash
-pnpm install
-pnpm dev
+yarn install
+yarn dev
 ```
 
 Production build:
 
 ```bash
-pnpm build
+yarn build
 ```
 
 Local preview:
 
 ```bash
-pnpm preview
+yarn preview
 ```
 
 ## Current Interactions
