@@ -1,11 +1,11 @@
 <template>
-  <section class="automation-companion-view min-h-screen px-4 py-6 text-zinc-100">
+  <section class="min-h-screen bg-zinc-950 px-4 py-6 text-zinc-100">
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-5">
-      <header class="border border-white/10 bg-zinc-950/75 p-5 shadow-[0_30px_80px_rgba(0,0,0,0.35)] backdrop-blur">
+      <header class="border border-zinc-800 bg-zinc-900/80 p-5 shadow-lg shadow-black/20">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-3">
             <span
-              class="h-3 w-3 border"
+              class="h-3 w-3 rounded-full border"
               :class="statusDotClassName"
               :title="statusLabel"
             />
@@ -32,7 +32,7 @@
 
       <div
         v-if="!clientState.lanes.length"
-        class="border border-dashed border-zinc-700 bg-zinc-950/60 px-5 py-12 text-center text-sm leading-6 text-zinc-400"
+        class="border border-zinc-800 bg-zinc-900/80 px-5 py-12 text-center text-sm leading-6 text-zinc-400 shadow-lg shadow-black/20"
       >
         No controls added yet. Scan a QR from an automation lane header.
       </div>
@@ -41,7 +41,7 @@
         <article
           v-for="lane in clientState.lanes"
           :key="lane.laneId"
-          class="border border-white/10 bg-zinc-950/75 p-5 shadow-[0_20px_70px_rgba(0,0,0,0.25)] backdrop-blur"
+          class="border border-zinc-800 bg-zinc-900/80 p-5 shadow-lg shadow-black/20"
         >
           <div class="flex items-start justify-between gap-3">
             <h2 class="text-2xl text-zinc-50">{{ lane.label }}</h2>
@@ -51,9 +51,9 @@
             </Button>
           </div>
 
-          <div class="mt-6 border border-zinc-800 bg-black/30 p-4">
+          <div class="mt-6">
             <div class="flex items-end justify-between gap-3">
-              <p class="text-4xl text-zinc-50">{{ formatLaneValue(lane.value) }}</p>
+              <p class="text-4xl text-amber-300">{{ formatLaneValue(lane.value) }}</p>
 
               <div class="text-right text-[11px] leading-5 text-zinc-400">
                 <p>{{ formatLaneValue(lane.min) }}</p>
@@ -63,7 +63,7 @@
 
             <div class="mt-6">
               <input
-                class="automation-slider w-full"
+                class="automation-slider min-w-0 flex-1 accent-amber-300"
                 :max="lane.max"
                 :min="lane.min"
                 :step="getLaneSliderStep(lane)"
@@ -77,7 +77,6 @@
                 @pointerup="handleLaneGestureEnd(lane.laneId)"
               />
             </div>
-
           </div>
         </article>
       </div>
@@ -190,42 +189,3 @@ onBeforeUnmount(() => {
   disposeAutomationCompanionClient()
 })
 </script>
-
-<style scoped>
-.automation-companion-view {
-  background:
-    radial-gradient(circle at top, rgba(16, 185, 129, 0.22), transparent 36%),
-    radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.18), transparent 30%),
-    linear-gradient(180deg, #050816 0%, #09090b 38%, #111827 100%);
-}
-
-.automation-slider {
-  appearance: none;
-  height: 1rem;
-  background:
-    linear-gradient(90deg, rgba(16, 185, 129, 0.85), rgba(59, 130, 246, 0.9));
-  outline: none;
-}
-
-.automation-slider::-webkit-slider-thumb {
-  appearance: none;
-  width: 2.1rem;
-  height: 2.1rem;
-  border: 3px solid #d1fae5;
-  background: #09090b;
-  box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.18);
-}
-
-.automation-slider::-moz-range-thumb {
-  width: 2.1rem;
-  height: 2.1rem;
-  border: 3px solid #d1fae5;
-  background: #09090b;
-  box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.18);
-}
-
-.automation-slider::-moz-range-track {
-  height: 1rem;
-  background: transparent;
-}
-</style>
