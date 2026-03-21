@@ -47,6 +47,7 @@ Implementado hoy:
 - formula effects: `Stereo Offset`, `T Replacement`
 - audio effects expuestos hoy: `EQ3`, `Distortion`, `Stereo Widener`, `Feedback Delay`, `Compressor`, `Limiter`, `Reverb` y `Master Gain`
 - automation lanes para `masterGain` y parametros de audio effects
+- visualizador del audio final dentro de la card `Master Gain`
 - automation curves por segmento con opciones `Straight`, `Ease In`, `Ease Out` y `Ease In-Out` (`Ease In-Out` por defecto)
 - persistencia automatica en `localStorage`
 - import/export de proyecto JSON
@@ -198,6 +199,7 @@ src/
     boot/
       StartScreen.vue
     effects/
+      AudioOutputVisualizer.vue
       AudioBitCrusherItem.vue
       AudioCompressorItem.vue
       AudioDelayItem.vue

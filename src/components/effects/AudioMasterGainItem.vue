@@ -7,6 +7,8 @@
     </div>
 
     <div class="mt-4 grid gap-2">
+      <AudioOutputVisualizer />
+
       <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
         <div class="flex items-center gap-2">
           <EffectParamAutomationButton
@@ -40,6 +42,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import AudioOutputVisualizer from '@/components/effects/AudioOutputVisualizer.vue'
 import EffectParamAutomationButton from '@/components/effects/EffectParamAutomationButton.vue'
 
 const props = defineProps({

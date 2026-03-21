@@ -31,6 +31,7 @@ let currentAudioEffects = []
 let masterGainValue = 1
 let transportMuted = true
 let masterGainNode = null
+let outputAnalyserNode = null
 const audioEffectNodes = new Map()
 
 function safeDisconnect(node) {
@@ -69,8 +70,42 @@ function ensureMasterGainNode() {
   return masterGainNode
 }
 
+function ensureOutputAnalyserNode() {
+  if (!audioContext) {
+    return null
+  }
+
+  if (!outputAnalyserNode) {
+    outputAnalyserNode = new AnalyserNode(audioContext, {
+      fftSize: 2048,
+      maxDecibels: -18,
+      minDecibels: -96,
+      smoothingTimeConstant: 0.82
+    })
+  }
+
+  return outputAnalyserNode
+}
+
 function getOutputGainValue() {
   return transportMuted ? 0 : masterGainValue
+}
+
+function connectOutputNodeToDestination(outputNode) {
+  if (!audioContext || !outputNode) {
+    return
+  }
+
+  const analyserNode = ensureOutputAnalyserNode()
+
+  if (!analyserNode) {
+    outputNode.connect(audioContext.destination)
+    return
+  }
+
+  safeDisconnect(analyserNode)
+  outputNode.connect(analyserNode)
+  analyserNode.connect(audioContext.destination)
 }
 
 async function createAudioEffectNode(effect) {
@@ -266,7 +301,7 @@ async function connectAudioGraph(audioEffects = currentAudioEffects) {
 
   if (!nodes.length) {
     toneConnect(byteBeatNode, outputNode)
-    outputNode.connect(audioContext.destination)
+    connectOutputNodeToDestination(outputNode)
     return
   }
 
@@ -282,7 +317,7 @@ async function connectAudioGraph(audioEffects = currentAudioEffects) {
   }
 
   toneConnect(previousNode, outputNode)
-  outputNode.connect(audioContext.destination)
+  connectOutputNodeToDestination(outputNode)
 }
 
 function buildCompiledExpressions(expressions) {
@@ -539,6 +574,10 @@ const bytebeatService = {
   setSampleOffset(sample) {
     heldSample = null
     setSampleOffsetValue(Math.max(0, sample))
+  },
+
+  getOutputAnalyser() {
+    return ensureOutputAnalyserNode()
   }
 }
 
