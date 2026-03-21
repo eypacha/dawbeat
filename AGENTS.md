@@ -554,7 +554,7 @@ Debe seguir soportando:
 - seleccion simple y multiple de clips
 - marquee selection
 - drag dentro del track
-- drag entre tracks de formula
+- drag entre lanes compatibles
 - resize de inicio y fin
 - resize vertical de lanes
 - preview de drag
