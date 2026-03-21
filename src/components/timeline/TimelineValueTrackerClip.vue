@@ -1,7 +1,7 @@
 <template>
   <div
     class="timeline-value-tracker-clip absolute inset-y-0 box-border overflow-hidden border px-2 py-1 text-left text-xs text-zinc-50 transition-colors"
-    :class="buttonClassName"
+    :class="[buttonClassName, props.preview ? 'pointer-events-none' : '']"
     :style="clipStyle"
     :title="clipTitle"
     :data-clip-id="clip.id"
@@ -66,6 +66,10 @@ const props = defineProps({
     type: Object,
     required: true
   },
+  preview: {
+    type: Boolean,
+    default: false
+  },
   valueTrackerTrackId: {
     type: String,
     required: true
@@ -76,6 +80,10 @@ const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
 const { editingClipId, pixelsPerTick, selectedClipIds, valueTrackerTracks } = storeToRefs(dawStore)
 const pendingShiftSelectionAction = ref(null)
+let duplicateDrag = ref(false)
+let ignoreNextClick = ref(false)
+let isDragging = ref(false)
+let resizeMode = ref(null)
 
 const clipWidth = computed(() =>
   Math.max(
@@ -195,45 +203,60 @@ function handleSelect(payload = {}) {
   dawStore.selectFormula(null)
 }
 
-const {
-  duplicateDrag,
-  ignoreNextClick,
-  isDragging,
-  resizeMode,
-  cleanupInteraction,
-  handlePointerDown,
-  handleResizeEndPointerDown,
-  handleResizeStartPointerDown
-} = useTimelineClipInteraction({
-  clip: props.clip,
-  dawStore,
-  duplicateClipInLane: (laneId, clipId) => dawStore.duplicateValueTrackerClip(laneId, clipId),
-  editingClipId,
-  getLaneId: (valueTrackerTrack) => valueTrackerTrack.id,
-  laneId: props.valueTrackerTrackId,
-  lanes: valueTrackerTracks,
-  moveClipInLane: (laneId, clipId, nextStart, shouldSnap) =>
-    dawStore.moveValueTrackerClip(laneId, clipId, nextStart, shouldSnap),
-  moveClipToLane: (laneId, targetLaneId, clipId, nextStart, shouldSnap) =>
-    dawStore.moveValueTrackerClipToTrack(laneId, targetLaneId, clipId, nextStart, shouldSnap),
-  onSelect: handleSelect,
-  pixelsPerTick,
-  placeClipInLane: (laneId, clipId, nextStart, shouldSnap) =>
-    dawStore.placeValueTrackerClip(laneId, clipId, nextStart, shouldSnap),
-  resizeClipEndInLane: (laneId, clipId, nextEnd, shouldSnap) =>
-    dawStore.resizeValueTrackerClipEnd(laneId, clipId, nextEnd, shouldSnap),
-  resizeClipStartInLane: (laneId, clipId, nextStart, shouldSnap) =>
-    dawStore.resizeValueTrackerClipStart(laneId, clipId, nextStart, shouldSnap),
-  selectedClipIds
-})
+let cleanupInteraction = () => {}
+let handlePointerDown = () => {}
+let handleResizeEndPointerDown = () => {}
+let handleResizeStartPointerDown = () => {}
+
+if (!props.preview) {
+  const interaction = useTimelineClipInteraction({
+    clip: props.clip,
+    dawStore,
+    duplicateClipInLane: (laneId, clipId) => dawStore.duplicateValueTrackerClip(laneId, clipId),
+    editingClipId,
+    getLaneId: (valueTrackerTrack) => valueTrackerTrack.id,
+    laneId: props.valueTrackerTrackId,
+    lanes: valueTrackerTracks,
+    moveClipInLane: (laneId, clipId, nextStart, shouldSnap) =>
+      dawStore.moveValueTrackerClip(laneId, clipId, nextStart, shouldSnap),
+    moveClipToLane: (laneId, targetLaneId, clipId, nextStart, shouldSnap) =>
+      dawStore.moveValueTrackerClipToTrack(laneId, targetLaneId, clipId, nextStart, shouldSnap),
+    onSelect: handleSelect,
+    pixelsPerTick,
+    placeClipInLane: (laneId, clipId, nextStart, shouldSnap) =>
+      dawStore.placeValueTrackerClip(laneId, clipId, nextStart, shouldSnap),
+    resizeClipEndInLane: (laneId, clipId, nextEnd, shouldSnap) =>
+      dawStore.resizeValueTrackerClipEnd(laneId, clipId, nextEnd, shouldSnap),
+    resizeClipStartInLane: (laneId, clipId, nextStart, shouldSnap) =>
+      dawStore.resizeValueTrackerClipStart(laneId, clipId, nextStart, shouldSnap),
+    selectedClipIds
+  })
+
+  duplicateDrag = interaction.duplicateDrag
+  ignoreNextClick = interaction.ignoreNextClick
+  isDragging = interaction.isDragging
+  resizeMode = interaction.resizeMode
+  cleanupInteraction = interaction.cleanupInteraction
+  handlePointerDown = interaction.handlePointerDown
+  handleResizeEndPointerDown = interaction.handleResizeEndPointerDown
+  handleResizeStartPointerDown = interaction.handleResizeStartPointerDown
+}
 
 function handleClipPointerDown(event) {
+  if (props.preview) {
+    return
+  }
+
   pendingShiftSelectionAction.value =
     event.shiftKey === true ? (isSelected.value ? 'remove' : 'add') : null
   handlePointerDown(event)
 }
 
 const buttonClassName = computed(() => {
+  if (props.preview) {
+    return 'timeline-value-tracker-clip--recording'
+  }
+
   if (isEditing.value) {
     return 'timeline-value-tracker-clip--editing'
   }
@@ -251,14 +274,26 @@ const buttonClassName = computed(() => {
     : 'timeline-value-tracker-clip--default'
 })
 
-const clipTitle = computed(() => `Value Tracker · ${eventCount.value} sets · ${stepCount.value} steps`)
+const clipTitle = computed(() =>
+  props.preview
+    ? `Recording · ${eventCount.value} sets · ${stepCount.value} steps`
+    : `Value Tracker · ${eventCount.value} sets · ${stepCount.value} steps`
+)
 
 function handleEditStart() {
+  if (props.preview) {
+    return
+  }
+
   handleSelect()
   dawStore.setEditingClip(props.clip.id)
 }
 
 function handleContextMenu(event) {
+  if (props.preview) {
+    return
+  }
+
   handleSelect({ preserveMultiSelection: true })
 
   openContextMenu({
@@ -310,6 +345,12 @@ onBeforeUnmount(() => {
 .timeline-value-tracker-clip--dragging {
   background: rgba(251, 191, 36, 0.2);
   cursor: grabbing;
+}
+
+.timeline-value-tracker-clip--recording {
+  background: rgba(251, 191, 36, 0.18);
+  border-color: rgba(253, 224, 71, 0.4);
+  box-shadow: 0 0 0 1px rgba(253, 224, 71, 0.18);
 }
 
 .timeline-value-tracker-clip-handle {

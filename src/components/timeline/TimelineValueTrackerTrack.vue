@@ -60,6 +60,13 @@
       />
 
       <TimelineValueTrackerClip
+        v-if="recordingPreviewClip"
+        :clip="recordingPreviewClip"
+        preview
+        :value-tracker-track-id="valueTrackerTrack.id"
+      />
+
+      <TimelineValueTrackerClip
         v-for="clip in valueTrackerTrack.clips"
         :key="clip.id"
         :clip="clip"
@@ -89,7 +96,7 @@ import { useTimelineLaneResize } from '@/composables/useTimelineLaneResize'
 import { getMidiInputDisplayName, midiState } from '@/services/midiInputService'
 import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { buildCreatedClip, clampClipPlacementStart, getTrackCreateBounds } from '@/services/timelineService'
-import { getValueTrackerBindingSummary } from '@/services/valueTrackerService'
+import { createSparseRecordedValueTrackerValues, getValueTrackerBindingSummary } from '@/services/valueTrackerService'
 import { useDawStore } from '@/stores/dawStore'
 import { TRACK_LABEL_WIDTH, getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
 
@@ -108,7 +115,7 @@ const props = defineProps({
 
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
-const { canPasteClipsAtPlayhead, clipDragPreview, pixelsPerTick, selectedValueTrackerTrackId, valueTrackerRecordingSession } = storeToRefs(dawStore)
+const { canPasteClipsAtPlayhead, clipDragPreview, pixelsPerTick, selectedValueTrackerTrackId, time, valueTrackerRecordingSession } = storeToRefs(dawStore)
 const laneElement = ref(null)
 const creationPreview = ref(null)
 
@@ -183,6 +190,36 @@ const dragPreview = computed(() => {
   }
 
   return clipDragPreview.value
+})
+const recordingPreviewClip = computed(() => {
+  const recordingSession = valueTrackerRecordingSession.value
+
+  if (!recordingSession || recordingSession.trackId !== props.valueTrackerTrack.id) {
+    return null
+  }
+
+  const stepSubdivision = Math.max(1, Math.round(Number(recordingSession.stepSubdivision) || 0))
+  const plannedStopTick = Number(recordingSession.plannedStopTick)
+  const liveStopTick = Number.isFinite(plannedStopTick)
+    ? Math.min(Number(time.value) || recordingSession.startTick, plannedStopTick)
+    : Number(time.value) || recordingSession.startTick
+  const normalizedStopTick = Math.max(
+    recordingSession.startTick + 1,
+    Math.floor(Math.max(recordingSession.startTick, liveStopTick) * stepSubdivision) / stepSubdivision
+  )
+  const duration = normalizedStopTick - recordingSession.startTick
+
+  return {
+    duration,
+    id: `recording-preview:${props.valueTrackerTrack.id}`,
+    start: recordingSession.startTick,
+    stepSubdivision,
+    values: createSparseRecordedValueTrackerValues(recordingSession.capturedSteps, {
+      duration,
+      initialValue: recordingSession.initialHeldValue,
+      stepSubdivision
+    })
+  }
 })
 
 const { cleanupResize, handleResizePointerDown } = useTimelineLaneResize({
