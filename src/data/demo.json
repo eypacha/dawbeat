@@ -1,76 +1,21 @@
 {
-  "version": 11,
+  "version": 12,
   "tracks": [
     {
       "id": "c7f7a6b1-a6c7-4dac-bd13-c34a8051f9e6",
       "color": "#6366f1",
       "muted": false,
       "soloed": false,
-      "unionOperator": ">>",
+      "unionOperator": "|",
+      "name": "Bass",
       "clips": [
         {
-          "id": "478c793c-af78-400e-86bc-99cab09db9e5",
-          "formula": null,
-          "formulaId": "b190b32e-01db-4864-a55e-18b6b585424b",
-          "formulaName": null,
+          "id": "feea4311-5fb0-427f-b387-68666eaa15bd",
+          "formula": "t * a & 64",
+          "formulaId": null,
+          "formulaName": "",
           "start": 0,
           "duration": 16
-        },
-        {
-          "id": "9db70e34-acb4-4b59-8d0b-eae6827bb17f",
-          "formula": null,
-          "formulaId": "c196a3aa-6cf5-4aac-b199-9750ee6fbc59",
-          "formulaName": null,
-          "start": 16,
-          "duration": 32
-        },
-        {
-          "id": "293e6a40-247c-4a7a-b53c-3777cbd64153",
-          "formula": null,
-          "formulaId": "c196a3aa-6cf5-4aac-b199-9750ee6fbc59",
-          "formulaName": null,
-          "start": 48,
-          "duration": 2
-        },
-        {
-          "id": "6849022c-dd2f-4ad1-9170-180cb6ef9127",
-          "formula": null,
-          "formulaId": "c196a3aa-6cf5-4aac-b199-9750ee6fbc59",
-          "formulaName": null,
-          "start": 52,
-          "duration": 2
-        },
-        {
-          "id": "31e845f8-e055-46f0-877d-24d11be9f890",
-          "formula": null,
-          "formulaId": "c196a3aa-6cf5-4aac-b199-9750ee6fbc59",
-          "formulaName": null,
-          "start": 56,
-          "duration": 2
-        },
-        {
-          "id": "b84e9d39-0ac5-4561-922b-475e61b35688",
-          "formula": null,
-          "formulaId": "c196a3aa-6cf5-4aac-b199-9750ee6fbc59",
-          "formulaName": null,
-          "start": 60,
-          "duration": 2
-        },
-        {
-          "id": "e1628ea4-236f-4ba7-847b-41796c953c2b",
-          "formula": null,
-          "formulaId": "c196a3aa-6cf5-4aac-b199-9750ee6fbc59",
-          "formulaName": null,
-          "start": 64,
-          "duration": 31.25
-        },
-        {
-          "id": "49c6a9be-323a-4f3c-b6a6-156a992c20ed",
-          "formula": null,
-          "formulaId": "6ddc4581-7f55-491c-bf6c-00885426969d",
-          "formulaName": null,
-          "start": 96,
-          "duration": 8
         }
       ]
     },
@@ -80,22 +25,15 @@
       "muted": false,
       "soloed": false,
       "unionOperator": "|",
+      "name": "Kick",
       "clips": [
         {
-          "id": "6c8a2fbf-61be-4b13-96af-111ea46d36b9",
-          "formula": "3&t>>8",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 32,
+          "id": "5600f65c-0854-449f-8cc7-8fc8f6b92676",
+          "formula": null,
+          "formulaId": "6fa8e764-714e-40d5-a2e9-65b722d49ffe",
+          "formulaName": null,
+          "start": 0,
           "duration": 16
-        },
-        {
-          "id": "1a8d55bb-ffa9-46bb-9644-034160c371b8",
-          "formula": "3&t>>8",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 64,
-          "duration": 39.75
         }
       ]
     },
@@ -104,301 +42,241 @@
       "color": "#06b6d4",
       "muted": false,
       "soloed": false,
-      "unionOperator": "&",
+      "unionOperator": "|",
       "clips": [
         {
-          "id": "df083a1e-b897-48de-ad20-addb3d437efd",
-          "formula": "t>>(t&4096?3:4)",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 40,
-          "duration": 8
-        },
-        {
-          "id": "28fe2178-c698-47bc-9565-b29deb2e070a",
-          "formula": "t&63",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 49.5,
+          "id": "7369055f-635c-470f-8c22-16bd6e2b8768",
+          "formula": null,
+          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formulaName": null,
+          "start": 0,
           "duration": 0.25
         },
         {
-          "id": "266246f1-73f5-4b61-ac0c-e8a4cfcf6699",
-          "formula": "t&31",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 50.5,
+          "id": "b9d80400-049f-4914-b51a-7dfd5fd3857e",
+          "formula": null,
+          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formulaName": null,
+          "start": 1.5,
           "duration": 0.25
         },
         {
-          "id": "58a178a7-1afe-440b-aa6e-9c612b4ff5e1",
-          "formula": "t&31",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 51.5,
+          "id": "dcaf8dfc-2fef-4a2a-892e-ae6d09180a03",
+          "formula": null,
+          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formulaName": null,
+          "start": 3,
           "duration": 0.25
         },
         {
-          "id": "d0d9133d-dd96-40e8-ad23-a3d10c91c154",
-          "formula": "t&31",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 52.5,
+          "id": "24178e55-b00c-412a-b3bf-5219f1ca7059",
+          "formula": null,
+          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formulaName": null,
+          "start": 5,
           "duration": 0.25
         },
         {
-          "id": "9b6fc5e5-ecf9-405c-9626-6d0d4ba06f32",
-          "formula": "t&31",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 53.5,
+          "id": "f5922629-68df-4ea7-bd18-ecfef23ebccd",
+          "formula": null,
+          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formulaName": null,
+          "start": 6,
           "duration": 0.25
         },
         {
-          "id": "70738200-a1fe-43e3-8418-966eae327551",
-          "formula": "t&31",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 54.5,
+          "id": "d51cc6ed-16a4-40e1-ae87-a08503f38768",
+          "formula": null,
+          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formulaName": null,
+          "start": 8,
           "duration": 0.25
         },
         {
-          "id": "1b03884f-e33e-4cca-847e-61dc356aded0",
-          "formula": "t&31",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 55.5,
+          "id": "62840893-ef63-47bd-948c-d6c69f13687d",
+          "formula": null,
+          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formulaName": null,
+          "start": 9.5,
           "duration": 0.25
         },
         {
-          "id": "4577c7b8-da3b-4e71-8e2c-545531ef2fe6",
-          "formula": "t&31",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 56.5,
+          "id": "d348f587-3e2c-4671-8609-2f5358517216",
+          "formula": null,
+          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formulaName": null,
+          "start": 11,
           "duration": 0.25
         },
         {
-          "id": "a3b900f5-19ca-4afa-a30a-cb7eda31b7c3",
-          "formula": "t&63",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 57.5,
+          "id": "23a4b634-d7d5-43e4-b206-3d245cdef1c3",
+          "formula": null,
+          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formulaName": null,
+          "start": 13,
           "duration": 0.25
         },
         {
-          "id": "f21de91c-c637-4111-95d7-2e81c2f11728",
-          "formula": "t&31",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 58.5,
+          "id": "7da4db0b-ef64-4936-aeb9-626e63aee824",
+          "formula": null,
+          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formulaName": null,
+          "start": 14,
           "duration": 0.25
-        },
-        {
-          "id": "123f1268-5541-49ab-a6b9-1c9ebd7500fd",
-          "formula": "t&31",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 59.5,
-          "duration": 0.25
-        },
-        {
-          "id": "733461a2-fc4a-4dde-826a-98a2e7db4ef4",
-          "formula": "t&31",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 60.5,
-          "duration": 0.25
-        },
-        {
-          "id": "f4f9215b-c6c1-4d22-abb6-38ce14d5a6fb",
-          "formula": "t & 63",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 61.5,
-          "duration": 0.25
-        },
-        {
-          "id": "c4c08f66-e3d1-48db-b95c-5c524ca92772",
-          "formula": "t&31",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 62.5,
-          "duration": 0.25
-        },
-        {
-          "id": "8c581fe2-8e6f-475b-b423-1e94c38a5a29",
-          "formula": "t&31",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 63.5,
-          "duration": 0.25
-        },
-        {
-          "id": "d430b331-4fc9-4fa6-afde-d35b922011a3",
-          "formula": "t>>(t&4096?3:4)",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 72,
-          "duration": 32.25
         }
       ]
     },
     {
-      "id": "8650da8e-afd2-4d22-a17e-7ee95806bbef",
-      "color": "#10b981",
+      "id": "7afdcd24-5148-48e3-aa25-fbdeb90e3b49",
+      "color": "#6366f1",
       "muted": false,
       "soloed": false,
       "unionOperator": "|",
       "clips": [
         {
-          "id": "8ea7b325-fd32-434d-8da6-80cdbae0e624",
-          "formula": "t*t>>8",
+          "id": "dafdf0ae-20a5-4fb0-8fa5-5d3afedaa8ff",
+          "formula": "t*t>>11&25",
           "formulaId": null,
           "formulaName": "",
-          "start": 15,
-          "duration": 1
+          "start": 8,
+          "duration": 1.75
         },
         {
-          "id": "85f5e439-5533-4547-b873-9700398c8081",
-          "formula": "t*t>>8",
+          "id": "ce5019c1-0480-4b6b-9743-39dadb3af5ce",
+          "formula": "t*t>>11&25",
           "formulaId": null,
           "formulaName": "",
-          "start": 31.5,
-          "duration": 0.5
+          "start": 11,
+          "duration": 1.75
         },
         {
-          "id": "47d9d2b2-407f-4cfd-81d4-575bff0482c9",
-          "formula": "t*t>>8",
+          "id": "f80fea59-4dff-442b-8509-94e7ab359711",
+          "formula": "t*t>>11&25",
           "formulaId": null,
           "formulaName": "",
-          "start": 58,
-          "duration": 2
-        },
-        {
-          "id": "f2ad8865-1d94-4968-8d49-21bc5d00a69d",
-          "formula": "t*t>>8",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 62,
-          "duration": 2
-        },
-        {
-          "id": "ed0e7eae-7a8f-495c-b6c7-2b4b275efb2a",
-          "formula": "t&64",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 80,
-          "duration": 8
-        },
-        {
-          "id": "6c4a0a2d-a410-4ddc-aeb6-41da881ba51b",
-          "formula": "t&63",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 88,
-          "duration": 4
-        },
-        {
-          "id": "e5aa25a7-43f1-444e-9883-2cb7088129af",
-          "formula": "t&31",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 92,
-          "duration": 4
+          "start": 14,
+          "duration": 1.75
         }
       ]
     }
   ],
   "variableTracks": [],
-  "valueTrackerTracks": [],
-  "formulas": [
+  "valueTrackerTracks": [
     {
-      "id": "c196a3aa-6cf5-4aac-b199-9750ee6fbc59",
-      "name": "Melody",
-      "code": "t*((t&4096?6:16)+(1&t>>14))"
-    },
-    {
-      "id": "b190b32e-01db-4864-a55e-18b6b585424b",
-      "name": "Alien dungeon",
-      "code": "t*(t&16384?7:5)*(3+(3&t>>14))>>(3&t>>9)|t>>6"
-    },
-    {
-      "id": "6ddc4581-7f55-491c-bf6c-00885426969d",
-      "name": "Outro",
-      "code": "t*(256+(1&t>>14))"
-    },
-    {
-      "id": "c385cbf4-f971-46f7-bd59-4e0f7357744e",
-      "name": "The 42 melody",
-      "code": "t*(42&t>>10)"
-    },
-    {
-      "id": "b91718ab-ebc2-4c3d-b0a5-0b223cd1f1e1",
-      "name": "Bear",
-      "code": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)"
-    },
-    {
-      "id": "7bde4ab8-1c46-4846-8174-fd7466e6095f",
-      "name": "Awesome level",
-      "code": "t*(t&16384?6:5)*(3+(3&t>>(t&2048?7:14)))>>(3&t>>9)|t>>2"
-    },
-    {
-      "id": "64a7fa8b-ce00-4dfb-b148-5e01bdb19962",
-      "name": "Sierpinsky",
-      "code": "t&t>>8"
-    },
-    {
-      "id": "562db7ca-e236-4338-b1aa-66dd702451f9",
-      "name": "unknown",
-      "code": "t%(t/(t>>9|t>>13))"
-    },
-    {
-      "id": "e706493d-451e-4be1-a6b4-1620d144e8ef",
-      "name": "CA98",
-      "code": "t*(0xCA98CA98>>(t>>9&30)&15)|t>>8"
-    },
-    {
-      "id": "16d682a9-4fce-4a2e-a7c8-7c5f324a8279",
-      "name": "Mr Arpeggiator",
-      "code": "t/8>>(t>>9)*t/((t>>14&3)+4)"
-    },
-    {
-      "id": "5ed008e7-e02e-4862-827d-a2ad67507c4e",
-      "name": "Arcade game",
-      "code": "t*((t>>9|t>>13)&15)&129"
-    },
-    {
-      "id": "d3f953ea-2e97-4e36-bd62-c3bd2ee38204",
-      "name": "ONE MILLION alarms",
-      "code": "t*t/(t>>12&t>>8)<<7"
+      "id": "beb3003f-cfc1-4f27-bd98-f34dbeee9425",
+      "name": "Bass melody",
+      "binding": {
+        "type": "variable",
+        "deviceId": null,
+        "channel": 0,
+        "controller": 0,
+        "note": 0,
+        "variableName": "a"
+      },
+      "clips": [
+        {
+          "id": "de4eb092-51a0-4257-ba82-5a3e38c1fd3f",
+          "start": 0,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "values": [
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            3,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            null,
+            5,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            5,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        }
+      ]
     }
   ],
-  "zoom": 0.18740573342144468,
-  "loopStart": 64,
-  "loopEnd": 96,
-  "loopEnabled": false,
+  "formulas": [
+    {
+      "id": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+      "name": "",
+      "code": "t * t & 64"
+    },
+    {
+      "id": "6fa8e764-714e-40d5-a2e9-65b722d49ffe",
+      "name": "",
+      "code": "t >> 4"
+    }
+  ],
+  "zoom": 1.1874057334214445,
+  "loopStart": 0,
+  "loopEnd": 16,
+  "loopEnabled": true,
   "audioEffects": [
     {
       "id": "75f86f92-f8e9-46e4-8980-cef4dbefe964",
       "type": "eq",
-      "enabled": false,
+      "enabled": true,
       "expanded": true,
       "params": {
         "low": 4,
         "mid": 9,
-        "high": 0,
-        "lowFrequency": 400,
-        "highFrequency": 2500
-      }
-    },
-    {
-      "id": "01c647b0-8a46-4368-98a5-a32963baf09a",
-      "type": "stereoWidener",
-      "enabled": false,
-      "expanded": true,
-      "params": {
-        "width": 0.52
+        "high": 7,
+        "lowFrequency": 450,
+        "highFrequency": 6690
       }
     }
   ],
@@ -415,120 +293,19 @@
   ],
   "automationLanes": [
     {
-      "id": "masterGain",
-      "type": "masterGain",
+      "id": "audioEffect:75f86f92-f8e9-46e4-8980-cef4dbefe964:high",
+      "type": "audioEffectParam",
+      "effectId": "75f86f92-f8e9-46e4-8980-cef4dbefe964",
+      "effectType": "eq",
+      "paramKey": "high",
       "points": [
         {
           "time": 0,
-          "value": 0
-        },
-        {
-          "time": 4.25,
-          "value": 0.7547325721153846
+          "value": -24
         },
         {
           "time": 16,
-          "value": 0.7433143028846154
-        },
-        {
-          "time": 16.25,
-          "value": 0.42127403846153844
-        },
-        {
-          "time": 32.25,
-          "value": 0.44163161057692313
-        },
-        {
-          "time": 47.75,
-          "value": 0.8243689903846154
-        },
-        {
-          "time": 48,
-          "value": 0.47498497596153844
-        },
-        {
-          "time": 50,
-          "value": 0.45387620192307687
-        },
-        {
-          "time": 50,
-          "value": 1
-        },
-        {
-          "time": 52,
-          "value": 1
-        },
-        {
-          "time": 52,
-          "value": 0.42713341346153844
-        },
-        {
-          "time": 54,
-          "value": 0.4159405048076923
-        },
-        {
-          "time": 54,
-          "value": 0.9910606971153846
-        },
-        {
-          "time": 56,
-          "value": 0.9845252403846154
-        },
-        {
-          "time": 56,
-          "value": 0.42405348557692313
-        },
-        {
-          "time": 58,
-          "value": 0.4579326923076923
-        },
-        {
-          "time": 58,
-          "value": 1
-        },
-        {
-          "time": 60,
-          "value": 1
-        },
-        {
-          "time": 60,
-          "value": 0.46927584134615385
-        },
-        {
-          "time": 62,
-          "value": 0.5006009615384616
-        },
-        {
-          "time": 62,
-          "value": 1
-        },
-        {
-          "time": 64,
-          "value": 0.9358473557692307
-        },
-        {
-          "time": 64,
-          "value": 0.41871995192307687
-        },
-        {
-          "time": 72,
-          "value": 0.8382662259615384
-        },
-        {
-          "time": 80,
-          "value": 0.8089693509615384
-        },
-        {
-          "time": 80,
-          "value": 0.3759765625
-        },
-        {
-          "time": 95.25,
-          "value": 1
-        },
-        {
-          "time": 105.5,
-          "value": 0
+          "value": 17.53846153846154
         }
       ]
     }
