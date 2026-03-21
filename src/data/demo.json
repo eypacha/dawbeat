@@ -8,6 +8,7 @@
       "soloed": false,
       "unionOperator": "|",
       "name": "Bass",
+      "height": 80,
       "clips": [
         {
           "id": "feea4311-5fb0-427f-b387-68666eaa15bd",
@@ -26,6 +27,7 @@
       "soloed": false,
       "unionOperator": "|",
       "name": "Kick",
+      "height": 80,
       "clips": [
         {
           "id": "5600f65c-0854-449f-8cc7-8fc8f6b92676",
@@ -33,7 +35,15 @@
           "formulaId": "6fa8e764-714e-40d5-a2e9-65b722d49ffe",
           "formulaName": null,
           "start": 0,
-          "duration": 16
+          "duration": 15
+        },
+        {
+          "id": "cad814fc-7248-4c3b-bc54-39e605da79c6",
+          "formula": "t >> 3",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 15,
+          "duration": 1
         }
       ]
     },
@@ -43,6 +53,7 @@
       "muted": false,
       "soloed": false,
       "unionOperator": "|",
+      "height": 80,
       "clips": [
         {
           "id": "7369055f-635c-470f-8c22-16bd6e2b8768",
@@ -132,6 +143,7 @@
       "muted": false,
       "soloed": false,
       "unionOperator": "|",
+      "height": 80,
       "clips": [
         {
           "id": "dafdf0ae-20a5-4fb0-8fa5-5d3afedaa8ff",
@@ -163,16 +175,191 @@
   "variableTracks": [],
   "valueTrackerTracks": [
     {
+      "id": "35d9daff-e09a-4ecf-bb6f-5403fb9c583b",
+      "name": "Mod Filter",
+      "binding": {
+        "type": "variable",
+        "deviceId": null,
+        "channel": null,
+        "controller": null,
+        "note": null,
+        "variableName": "c"
+      },
+      "height": 52,
+      "clips": [
+        {
+          "id": "bc1a0e30-f85d-4820-99f4-2a3b910c00aa",
+          "start": 0,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            25,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "id": "0c08ddb9-6f4c-447a-af02-a48101aa8ba8",
+      "name": "Stereo Offset",
+      "binding": {
+        "type": "variable",
+        "deviceId": null,
+        "channel": null,
+        "controller": null,
+        "note": null,
+        "variableName": "b"
+      },
+      "height": 52,
+      "clips": [
+        {
+          "id": "fe522460-7aba-4c01-b740-6ca6fb6d580f",
+          "start": 0,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "values": [
+            0,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            128,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            512,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    {
       "id": "beb3003f-cfc1-4f27-bd98-f34dbeee9425",
       "name": "Bass melody",
       "binding": {
         "type": "variable",
         "deviceId": null,
-        "channel": 0,
-        "controller": 0,
-        "note": 0,
+        "channel": null,
+        "controller": null,
+        "note": null,
         "variableName": "a"
       },
+      "height": 52,
       "clips": [
         {
           "id": "de4eb092-51a0-4257-ba82-5a3e38c1fd3f",
@@ -261,7 +448,7 @@
       "code": "t >> 4"
     }
   ],
-  "zoom": 1.1874057334214445,
+  "zoom": 0.9818354632407423,
   "loopStart": 0,
   "loopEnd": 16,
   "loopEnabled": true,
@@ -287,31 +474,46 @@
       "enabled": true,
       "expanded": true,
       "params": {
-        "offset": 128
+        "offset": "b"
+      }
+    },
+    {
+      "id": "fx5",
+      "type": "tReplacement",
+      "enabled": true,
+      "expanded": true,
+      "params": {
+        "stereo": false,
+        "expression": "t+t%c",
+        "leftExpression": "t",
+        "rightExpression": "t"
       }
     }
   ],
   "automationLanes": [
     {
       "id": "audioEffect:75f86f92-f8e9-46e4-8980-cef4dbefe964:high",
+      "height": 52,
       "type": "audioEffectParam",
       "effectId": "75f86f92-f8e9-46e4-8980-cef4dbefe964",
       "effectType": "eq",
       "paramKey": "high",
       "points": [
         {
+          "curve": "easeInOut",
           "time": 0,
           "value": -24
         },
         {
+          "curve": "easeInOut",
           "time": 16,
           "value": 17.53846153846154
         }
       ]
     }
   ],
-  "masterGain": 1,
   "bpmMeasure": "t >> 4",
+  "masterGain": 1,
   "sampleRate": 8000,
   "tickSize": 1024,
   "showClipWaveforms": true,

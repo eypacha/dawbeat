@@ -1,5 +1,11 @@
 <template>
-  <Modal :open="visible" size="sm" :title="title" @close="emit('close')">
+  <FloatingWindow
+    :open="visible"
+    panel-class="rounded-none"
+    size="sm"
+    :title="title"
+    @close="emit('close')"
+  >
     <template #header>
       <div class="flex items-start justify-between gap-4">
         <div>
@@ -9,7 +15,7 @@
           </p>
         </div>
 
-        <div class="flex items-start gap-3">
+        <div class="flex items-start gap-3" data-window-no-drag="true">
           <IconButton label="Close" size="sm" @click="emit('close')">
             x
           </IconButton>
@@ -64,13 +70,13 @@
     <div class="mt-4 text-xs text-zinc-500">
       {{ selectionStatus }}
     </div>
-  </Modal>
+  </FloatingWindow>
 </template>
 
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
+import FloatingWindow from '@/components/ui/FloatingWindow.vue'
 import IconButton from '@/components/ui/IconButton.vue'
-import Modal from '@/components/ui/Modal.vue'
 import {
   VALUE_TRACKER_MAX,
   getValueTrackerEventCount,
