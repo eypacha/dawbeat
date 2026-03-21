@@ -17,7 +17,7 @@ Hoy existen:
 
 - pantalla inicial para desbloquear audio antes de entrar a la app
 - reproduccion bytebeat real en navegador con Web Audio + vendor `ByteBeat.js`
-- toolbar con `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, cambio de `sampleRate` y settings
+- toolbar con `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, cambio de `sampleRate` y settings
 - scrub del playhead desde ruler y desde el playhead
 - zoom horizontal con `Ctrl/Cmd + wheel`
 - auto-scroll del timeline durante playback
@@ -27,6 +27,7 @@ Hoy existen:
   - value tracker tracks
   - automation lanes
 - loop region editable
+- resize vertical de formula tracks, variable tracks, value tracker tracks y automation lanes
 - creacion de clips por drag en lanes vacios
 - mover clips dentro del lane y entre tracks compatibles
 - resize de inicio y fin
@@ -43,6 +44,8 @@ Hoy existen:
 - clips con formula inline o referencia a `formulaId`
 - edicion de formulas por `FormulaInputDialog` para clips, formulas de libreria y variable clips
 - editor hex para value tracker clips mediante `ValueTrackerClipEditorDialog`
+- dialogo de binding para value trackers mediante `ValueTrackerBindingDialog`, con `keyboard`, `variable`, `midiCc`, `midiNote` y MIDI Learn
+- grabacion de value tracker clips desde transport, con preview en lane y auto-creacion opcional de track destino
 - preview waveform opcional por clip
 - panel opcional de formula evaluada
 - eval effects: `Stereo Offset`, `T Replacement`
@@ -52,6 +55,7 @@ Hoy existen:
 - import/export de proyecto JSON
 - export WAV offline con render de timeline, eval effects, master gain, audio effects compatibles y automatizacion offline
 - keyboard override para value trackers con `0-9` y `A-F`
+- layout desktop completo, layout compacto con `SideDrawer` para Library/Effects y placeholder mobile actual
 
 ## Que no asumir
 
@@ -93,10 +97,21 @@ Hoy `valueTrackerService` modela:
 - `midiCc`
 - `midiNote`
 
-pero la entrada en vivo cableada hoy en UI/shortcuts es:
+pero la integracion efectiva hoy cubre:
 
 - keyboard override
 - resolucion por binding `variable`
+- input MIDI CC / MIDI Note via `midiInputService` + `ValueTrackerBindingDialog`
+
+No asumir que el tipo `keyboard` enruta input por binding dedicado.
+Hoy sigue dependiendo del target seleccionado en UI.
+
+No asumir que desktop, compact layout y mobile comparten la misma composicion visible.
+Hoy la app usa:
+
+- layout desktop con Library + Timeline + Effects
+- layout compacto con `SideDrawer` para Library y Effects
+- placeholder mobile actual en lugar de la app completa
 
 No asumir que un componente existente implica feature activa.
 Ejemplo concreto:
@@ -147,6 +162,8 @@ El sistema debe seguir permitiendo:
 - combinar tracks audibles con `unionOperator`
 - resolver variables activas segun el tiempo
 - aplicar live input de value tracker sin romper playback
+- grabar takes de value tracker desde keyboard/MIDI sin romper playback ni historial
+- editar bindings de value tracker y aprender MIDI sin romper el flujo de composicion
 - automatizar `masterGain` y parametros de audio effects
 - guardar, abrir y exportar proyectos
 
@@ -251,9 +268,11 @@ Regla practica:
 - `timelineEngine` decide la expresion activa y combina tracks audibles
 - `variableTrackService` resuelve variables formulaicas y variables provenientes de value trackers
 - `valueTrackerService` resuelve steps, holds, eventos y live input
+- `valueTrackerInputService` y `midiInputService` centralizan el ingreso de keyboard/MIDI hacia el store
 - `automationService` resuelve lanes de `masterGain` y parametros de audio effects
 - `formulaService` resuelve formulas inline o referenciadas
 - `formulaWaveformService` renderiza previews de waveform
+- `timelineLaneLayoutService` normaliza alturas persistibles por lane
 - `bytebeatService` maneja integracion de audio en vivo
 - `projectPersistence` normaliza, serializa y restaura proyectos
 
@@ -285,7 +304,6 @@ src/
     timeline/
       Playhead.vue
       Timeline.vue
-      TimelineAddTrackRow.vue
       TimelineAutomationLane.vue
       TimelineClip.vue
       TimelineClipPreview.vue
@@ -315,15 +333,18 @@ src/
       SettingsModal.vue
       SnackbarContainer.vue
       SnackbarItem.vue
+      SideDrawer.vue
       TextInputDialog.vue
       Toolbar.vue
       TrackPresentationDialog.vue
+      ValueTrackerBindingDialog.vue
       ValueTrackerClipEditorDialog.vue
 
   composables/
     useContextMenu.js
     usePointerEdgeAutoScroll.js
     useTimelineClipInteraction.js
+    useTimelineLaneResize.js
     useTimelineMarqueeSelection.js
     useTransportPlayback.js
 
@@ -341,12 +362,15 @@ src/
     formulaService.js
     formulaWaveformService.js
     keyboardShortcuts.js
+    midiInputService.js
     notifications.js
     projectPersistence.js
     snapService.js
+    timelineLaneLayoutService.js
     timelineService.js
     trackPlaybackState.js
     trackUnionOperatorService.js
+    valueTrackerInputService.js
     valueTrackerService.js
     variableTrackService.js
 
@@ -401,6 +425,7 @@ Campos relevantes hoy:
   editingFormulaId: null,
   clipDragPreview: null,
   clipClipboard: null,
+  valueTrackerRecordingSession: null,
   valueTrackerLiveInputs: {},
   historyPast: [],
   historyFuture: [],
@@ -418,6 +443,7 @@ Cada track de formula debe modelarse asi:
   soloed: false,
   unionOperator: "|",
   name: undefined,
+  height: 80,
   clips: []
 }
 ```
@@ -440,6 +466,7 @@ Cada variable track debe modelarse asi:
 ```js
 {
   name: "a",
+  height: 44,
   clips: []
 }
 ```
@@ -469,6 +496,7 @@ Cada value tracker track debe modelarse asi:
     note: null,
     variableName: null
   },
+  height: 64,
   clips: []
 }
 ```
@@ -504,6 +532,7 @@ Cada automation lane debe modelarse asi:
   effectId: "audio-effect-id",   // solo para audioEffectParam
   effectType: "delay",           // solo para audioEffectParam
   paramKey: "wet",               // solo para audioEffectParam
+  height: 52,
   points: [
     { time: 0, value: 1 }
   ]
@@ -526,6 +555,7 @@ Debe seguir soportando:
 - drag dentro del track
 - drag entre tracks de formula
 - resize de inicio y fin
+- resize vertical de lanes
 - preview de drag
 - creacion de clips por drag
 - drop de formulas desde library
@@ -587,6 +617,9 @@ Estado actual:
 - los variable clips guardan formula inline y no usan `formulaId`
 - los value tracker clips guardan steps/values discretos
 - el double click sobre clip abre el editor correcto segun el `laneType`
+- existe edicion de binding por `ValueTrackerBindingDialog`
+- `SettingsModal` expone enable/refresh de MIDI y mensajes recientes
+- existe grabacion de value trackers desde transport con `valueTrackerRecordingSession`
 - `FormulaInputDialog` puede detectar variables faltantes
 - `FormulaInputDialog` puede inicializar variables faltantes como variable tracks
 - `FormulaInputDialog` puede convertir inicializadores numericos a value trackers con binding `variable`
@@ -596,7 +629,7 @@ Si se modifica este flujo:
 
 - no duplicar la logica de resolucion entre clip y libreria
 - usar `formulaService`, `variableTrackService` y `valueTrackerService` donde corresponda
-- preservar los flujos `assignFormulaToClip`, `detachClipFormula`, `addClipFormulaToLibrary`, `ensureInitializedVariableTracks` y `ensureInitializedValueTrackerTracks`
+- preservar los flujos `assignFormulaToClip`, `detachClipFormula`, `addClipFormulaToLibrary`, `ensureInitializedVariableTracks`, `ensureInitializedValueTrackerTracks`, `updateValueTrackerTrackBinding`, `startValueTrackerRecording` y `finishValueTrackerRecording`
 
 ## Efectos y automatizacion
 
@@ -636,6 +669,8 @@ Hoy existe:
 - normalizacion de proyectos con `version: 12`
 - persistencia de `tracks`, `variableTracks`, `valueTrackerTracks`, `formulas`
 - persistencia de `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`
+- persistencia de `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate` y `tickSize`
+- persistencia de `height` dentro de tracks y automation lanes
 - persistencia de `showClipWaveforms` y `showEvaluatedPanel`
 
 Si se cambia el shape del proyecto:

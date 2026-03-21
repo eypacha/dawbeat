@@ -10,7 +10,7 @@ Implementado hoy:
 
 - pantalla inicial para desbloquear audio antes de entrar a la app
 - reproduccion real con Web Audio + `public/vendors/ByteBeat.js`
-- toolbar con `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, settings y cambio de `sampleRate`
+- toolbar con `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, settings y cambio de `sampleRate`
 - scrub del playhead desde ruler y desde el playhead
 - zoom horizontal con `Ctrl/Cmd + wheel`
 - auto-scroll del timeline durante playback
@@ -20,6 +20,7 @@ Implementado hoy:
   - value tracker tracks
   - automation lanes
   - loop region editable
+- resize vertical de formula tracks, variable tracks, value tracker tracks y automation lanes
 - creacion de clips por drag sobre lanes vacios
 - mover clips dentro del lane y entre tracks de formula
 - resize de inicio y fin de clip
@@ -37,6 +38,8 @@ Implementado hoy:
 - clips con formula inline o referencia a `formulaId`
 - edicion de formulas por dialogo para clips, formulas de libreria y variable clips
 - editor hex para value tracker clips
+- dialogo de binding para value trackers con `keyboard`, `variable`, `midiCc` y `midiNote`, incluido MIDI Learn
+- grabacion de value tracker clips desde transport con preview en lane y auto-creacion opcional de track destino
 - inicializacion de variables faltantes desde el editor de formulas
 - conversion de inicializadores numericos a value tracker desde el editor de formulas
 - panel opcional de expresion evaluada en tiempo real
@@ -47,11 +50,13 @@ Implementado hoy:
 - persistencia automatica en `localStorage`
 - import/export de proyecto JSON
 - export WAV offline
+- layout desktop completo, layout compacto con drawers laterales para Library/Effects y placeholder mobile actual
 
 ## Acotaciones importantes
 
 - el timeline ya no es solo de clips de formula; `variableTracks` y `valueTrackerTracks` participan en la expresion activa
-- los bindings de value tracker modelan `keyboard`, `variable`, `midiCc` y `midiNote`, pero la entrada en vivo cableada hoy es keyboard override y resolucion por binding `variable`
+- los bindings de value tracker modelan `keyboard`, `variable`, `midiCc` y `midiNote`; hoy estan cableados el keyboard override por target seleccionado, la resolucion por binding `variable` y la entrada MIDI CC/Note via `midiInputService`
+- el tipo de binding `keyboard` sigue dependiendo del target seleccionado; no enruta por binding dedicado como si lo hacen `midiCc` y `midiNote`
 - playback en vivo y export offline soportan audio effects y automatizacion, pero siguen siendo caminos internos separados; si tocas audio o export, hay que verificar ambos
 - el repo contiene algunos archivos que no necesariamente representan features expuestas en la UI actual; para el estado real, tomar como fuente `EffectsPanel.vue`, `dawStore.js` y `projectPersistence.js`
 
@@ -106,7 +111,10 @@ pnpm preview
 - `Double click` en Library: abre edicion de formula de libreria
 - `Click` en automation lane: crea automation point
 - `Drag` de automation point: mueve el punto
+- `Context menu` en header de value tracker: rename, delete o edit binding
 - `Click` en el boton de keyboard target de un value tracker: arma/desarma el track para keyboard override
+- `Settings > MIDI input`: habilita/refresca Web MIDI y muestra mensajes recientes
+- `Record`: inicia/finaliza grabacion de value tracker sobre el target activo; si no hay target, puede auto-crear uno
 - `0-9` y `A-F`: envian live input al value tracker activo para keyboard override
 - `Space`: play/pause
 - `L`: toggle loop
@@ -130,6 +138,7 @@ pnpm preview
 - `formulaService` resuelve clips inline y clips referenciados antes de aplicar eval effects
 - el panel evaluado muestra la expresion efectiva que llega al playback tras aplicar eval effects
 - `valueTrackerLiveInputs` permite live override de value trackers durante playback o scrub
+- durante recording, el input keyboard/MIDI puede capturarse a `valueTrackerRecordingSession` y consolidarse como clip al finalizar
 
 ## Formula editor, variables y value trackers
 
@@ -138,6 +147,8 @@ pnpm preview
 - un inicializador de texto crea un `variableTrack`
 - un inicializador numerico puede convertirse a `valueTrackerTrack` con binding `variable`
 - los value tracker clips editan una grilla hex por pasos con estados `SET`, `HOLD` y `EMPTY`
+- `ValueTrackerBindingDialog` permite editar binding, elegir dispositivo/canal/controlador/nota y usar MIDI Learn
+- `SettingsModal` expone enable/refresh de MIDI y debug de inputs/mensajes recientes
 - el panel evaluado y el playback usan el resultado combinado de tracks, variables y value trackers segun el tiempo actual
 
 ## Efectos y automatizacion
@@ -172,9 +183,9 @@ El export offline renderiza timeline, eval effects, master gain, audio effects c
 - si no existe uno guardado, parte de `src/data/demo.json`
 - `projectPersistence` normaliza proyectos importados y serializa el estado persistible
 - el proyecto actual serializa `version: 12`
-- se persisten `tracks`, `variableTracks`, `valueTrackerTracks`, `formulas`, `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`, `zoom`, `loop`, `sampleRate`, `tickSize`, `showClipWaveforms` y `showEvaluatedPanel`
+- se persisten `tracks`, `variableTracks`, `valueTrackerTracks`, `formulas`, `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`, `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate`, `tickSize`, `showClipWaveforms` y `showEvaluatedPanel`, incluyendo `height` dentro de tracks y lanes
 - desde la toolbar se puede crear proyecto vacio, abrir JSON, guardar JSON y exportar WAV
-- desde Settings se puede resetear el storage local y togglear waveform/evaluated panel
+- desde Settings se puede resetear el storage local, togglear waveform/evaluated panel e inspeccionar MIDI
 
 ## Estructura actual
 
@@ -204,7 +215,6 @@ src/
     timeline/
       Playhead.vue
       Timeline.vue
-      TimelineAddTrackRow.vue
       TimelineAutomationLane.vue
       TimelineClip.vue
       TimelineClipPreview.vue
@@ -234,14 +244,17 @@ src/
       SettingsModal.vue
       SnackbarContainer.vue
       SnackbarItem.vue
+      SideDrawer.vue
       TextInputDialog.vue
       Toolbar.vue
       TrackPresentationDialog.vue
+      ValueTrackerBindingDialog.vue
       ValueTrackerClipEditorDialog.vue
   composables/
     useContextMenu.js
     usePointerEdgeAutoScroll.js
     useTimelineClipInteraction.js
+    useTimelineLaneResize.js
     useTimelineMarqueeSelection.js
     useTransportPlayback.js
   engine/
@@ -257,12 +270,15 @@ src/
     formulaService.js
     formulaWaveformService.js
     keyboardShortcuts.js
+    midiInputService.js
     notifications.js
     projectPersistence.js
     snapService.js
+    timelineLaneLayoutService.js
     timelineService.js
     trackPlaybackState.js
     trackUnionOperatorService.js
+    valueTrackerInputService.js
     valueTrackerService.js
     variableTrackService.js
   stores/
@@ -298,6 +314,8 @@ Notas practicas:
 - `formulaService` resuelve nombre y codigo tanto para clips inline como referenciados
 - `variableTrackService` y `valueTrackerService` participan en la resolucion de definiciones prependidas a la formula activa
 - `automationService` resuelve `masterGain` y parametros de audio effects por tiempo
+- `timelineLaneLayoutService` normaliza alturas persistibles por lane
+- `valueTrackerInputService` y `midiInputService` centralizan el ingreso de keyboard/MIDI hacia el store
 - `bytebeatService` controla audio en vivo, sample rate, master gain y cadena de audio en tiempo real
 - `exportService` usa un camino offline separado con Tone.js para renderizar el WAV
 - `projectPersistence` normaliza, versiona y serializa proyectos
@@ -314,6 +332,7 @@ Track de formula:
   soloed: false,
   unionOperator: "|",
   name: undefined,
+  height: 80,
   clips: []
 }
 ```
@@ -336,7 +355,19 @@ Variable track:
 ```js
 {
   name: "a",
+  height: 44,
   clips: []
+}
+```
+
+Variable clip:
+
+```js
+{
+  id: "clip-id",
+  formula: "0",
+  start: 0,
+  duration: 4
 }
 ```
 
@@ -354,6 +385,7 @@ Value tracker track:
     note: null,
     variableName: null
   },
+  height: 64,
   clips: []
 }
 ```
@@ -386,6 +418,10 @@ Automation lane:
 {
   id: "masterGain" || "audioEffect:<effectId>:<paramKey>",
   type: "masterGain" || "audioEffectParam",
+  effectId: "audio-effect-id",   // solo para audioEffectParam
+  effectType: "delay",           // solo para audioEffectParam
+  paramKey: "wet",               // solo para audioEffectParam
+  height: 52,
   points: [{ time: 0, value: 1 }]
 }
 ```
