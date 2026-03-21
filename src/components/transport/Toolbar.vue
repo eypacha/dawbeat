@@ -120,12 +120,22 @@
             class="flex items-center gap-2 border border-zinc-800 bg-zinc-950 px-2 py-1"
             :title="bpmMeasureHint"
           >
-            <span class="whitespace-nowrap text-zinc-300">{{ bpmDisplay }}</span>
+            <input
+              v-model="bpmDraft"
+              class="w-14 bg-transparent text-right text-xs text-zinc-100 outline-none"
+              inputmode="decimal"
+              spellcheck="false"
+              title="Set the target BPM. This rewrites the sample rate for the current unit."
+              type="text"
+              @blur="commitBpm"
+              @keydown.enter.prevent="commitBpm"
+              @keydown.esc.prevent="resetBpmDraft"
+            >
             <span class="text-zinc-500">bpm</span>
             <span class="h-4 w-px bg-zinc-800" />
             <input
               v-model="bpmMeasureDraft"
-              class="w-16 bg-transparent font-mono text-xs text-zinc-100 outline-none"
+              class="w-16 bg-transparent text-center font-mono text-xs text-zinc-100 outline-none"
               spellcheck="false"
               title="Set the BPM unit with t >> n or t / n"
               type="text"
@@ -227,6 +237,7 @@ import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import {
   formatBpmValue,
   getBpmFromSampleRate,
+  getSampleRateFromBpm,
   isBpmMeasureExpressionValid,
   normalizeBpmMeasureExpression,
   parseBpmMeasureExpression
@@ -235,7 +246,7 @@ import { useDawStore } from '@/stores/dawStore'
 import { downloadProjectWav } from '@/services/exportService'
 import { downloadProjectFile, importProjectFile } from '@/services/projectPersistence'
 import { enqueueSnackbar } from '@/services/notifications'
-import { MAX_SAMPLE_RATE, MIN_SAMPLE_RATE } from '@/utils/audioSettings'
+import { MAX_SAMPLE_RATE, MIN_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
 import { ticksToSamples } from '@/utils/timeUtils'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import Divider from '@/components/ui/Divider.vue'
@@ -259,6 +270,7 @@ const emit = defineEmits(['toggle-effects-drawer', 'toggle-library-drawer'])
 const dawStore = useDawStore()
 const { play, pause, stop, toggleRecord } = useTransportPlayback()
 const { bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, sampleRate, tickSize, time } = storeToRefs(dawStore)
+const bpmDraft = ref(formatBpmValue(getBpmFromSampleRate(sampleRate.value, bpmMeasure.value)))
 const bpmMeasureDraft = ref(bpmMeasure.value)
 const projectFileInput = ref(null)
 const sampleRateDraft = ref(String(sampleRate.value))
@@ -324,15 +336,17 @@ const bpmMeasureHint = computed(() => {
     return 'Set the BPM unit with t >> n or t / n'
   }
 
-  return `Tempo derived from ${bpmMeasure.value}. One beat every ${formatBpmDivisor(parsedMeasure.divisor)} samples.`
+  return `Tempo derived from ${bpmMeasure.value}. In bytebeat mode the pattern wraps every 256 values, so one beat spans ${formatSampleCount(parsedMeasure.cycleSamples)} samples.`
 })
 
 watch(sampleRate, (nextSampleRate) => {
   sampleRateDraft.value = String(nextSampleRate)
+  bpmDraft.value = bpmDisplay.value
 })
 
 watch(bpmMeasure, (nextBpmMeasure) => {
   bpmMeasureDraft.value = nextBpmMeasure
+  bpmDraft.value = bpmDisplay.value
 })
 
 function triggerProjectOpen() {
@@ -342,6 +356,30 @@ function triggerProjectOpen() {
 function commitSampleRate() {
   dawStore.setSampleRate(sampleRateDraft.value)
   sampleRateDraft.value = String(sampleRate.value)
+}
+
+function commitBpm() {
+  const rawTargetSampleRate = getSampleRateFromBpm(bpmDraft.value, bpmMeasure.value)
+
+  if (!rawTargetSampleRate) {
+    enqueueSnackbar('Invalid BPM value. Use a number greater than 0.', {
+      variant: 'error'
+    })
+    bpmDraft.value = bpmDisplay.value
+    return
+  }
+
+  const normalizedTargetSampleRate = normalizeSampleRate(rawTargetSampleRate, sampleRate.value)
+  dawStore.setSampleRate(normalizedTargetSampleRate)
+  sampleRateDraft.value = String(sampleRate.value)
+  bpmDraft.value = bpmDisplay.value
+
+  if (rawTargetSampleRate < MIN_SAMPLE_RATE || rawTargetSampleRate > MAX_SAMPLE_RATE) {
+    enqueueSnackbar(
+      `That BPM needs a sample rate outside ${MIN_SAMPLE_RATE}-${MAX_SAMPLE_RATE} hz. Using ${normalizedTargetSampleRate} hz instead.`,
+      { variant: 'warning' }
+    )
+  }
 }
 
 function commitBpmMeasure() {
@@ -359,6 +397,10 @@ function commitBpmMeasure() {
 
 function resetSampleRateDraft() {
   sampleRateDraft.value = String(sampleRate.value)
+}
+
+function resetBpmDraft() {
+  bpmDraft.value = bpmDisplay.value
 }
 
 function resetBpmMeasureDraft() {
@@ -395,7 +437,7 @@ function formatTransportClock(sampleTime, currentSampleRate) {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}:${String(milliseconds).padStart(3, '0')}`
 }
 
-function formatBpmDivisor(value) {
+function formatSampleCount(value) {
   return Number.isInteger(value)
     ? String(value)
     : value.toFixed(3).replace(/\.?0+$/, '')
