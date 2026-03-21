@@ -60,10 +60,9 @@
       <div class="flex shrink-0 items-center justify-center gap-2 text-xs text-zinc-400">
         <IconButton
           :class="isValueTrackerRecording ? 'border-rose-400/70 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25' : 'border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-rose-500/50 hover:text-rose-200'"
+          :disabled="recordButtonDisabled"
           label="Record"
-          :title="isValueTrackerRecording
-            ? 'Stop Value Tracker recording'
-            : 'Record into the active Value Tracker track'"
+          :title="recordButtonTitle"
           @click="toggleRecord"
         >
           <Circle class="h-4 w-4 fill-current" :stroke-width="2.25" />
@@ -72,26 +71,26 @@
         <IconButton
           :icon="Play"
           :class="playing ? 'border-zinc-800 bg-zinc-950 text-zinc-600' : 'border-emerald-500/60 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'"
-          :disabled="playing"
+          :disabled="playing || transportControlsLocked"
           label="Play"
-          title="Start playback"
+          :title="transportControlTitle('Start playback')"
           @click="play"
         />
 
         <IconButton
           :icon="Pause"
           :class="playing ? 'border-sky-400/60 bg-sky-400/10 text-sky-200 hover:bg-sky-400/20' : 'border-zinc-800 bg-zinc-950 text-zinc-600'"
-          :disabled="!playing"
+          :disabled="!playing || transportControlsLocked"
           label="Pause"
-          title="Pause playback"
+          :title="transportControlTitle('Pause playback')"
           @click="pause"
         />
 
         <IconButton
           :class="playing ? 'border-amber-400/60 bg-amber-400/10 text-amber-200 hover:bg-amber-400/20' : 'border-zinc-800 bg-zinc-950 text-zinc-600'"
-          :disabled="!playing && time === 0"
+          :disabled="transportControlsLocked || (!playing && time === 0)"
           label="Stop"
-          title="Stop playback"
+          :title="transportControlTitle('Stop playback')"
           @click="stop"
         >
           <Square class="h-4 w-4 fill-current" :stroke-width="2.25" />
@@ -117,15 +116,26 @@
             {{ transportDisplay }}
           </button>
           <div
+            v-if="midiClockEnabled"
+            class="flex items-center gap-2 border border-zinc-800 bg-zinc-950 px-2 py-1 text-[10px] uppercase tracking-[0.18em]"
+            :title="midiClockStatusHint"
+          >
+            <span :class="midiClockLocked ? 'text-emerald-300' : 'text-amber-300'">Clock</span>
+            <span class="text-zinc-400">{{ midiClockStatusLabel }}</span>
+          </div>
+          <div
             class="flex items-center gap-2 border border-zinc-800 bg-zinc-950 px-2 py-1"
             :title="bpmMeasureHint"
           >
             <input
               v-model="bpmDraft"
-              class="w-14 bg-transparent text-right text-xs text-zinc-100 outline-none"
+              :class="['w-14 bg-transparent text-right text-xs text-zinc-100 outline-none', midiClockControlsLocked ? 'cursor-not-allowed text-zinc-500' : '']"
+              :readonly="midiClockControlsLocked"
               inputmode="decimal"
               spellcheck="false"
-              title="Set the target BPM. This rewrites the sample rate for the current unit."
+              :title="midiClockControlsLocked
+                ? 'Tempo is currently locked to external MIDI Clock.'
+                : 'Set the target BPM. This rewrites the sample rate for the current unit.'"
               type="text"
               @blur="commitBpm"
               @keydown.enter.prevent="commitBpm"
@@ -135,9 +145,12 @@
             <span class="h-4 w-px bg-zinc-800" />
             <input
               v-model="bpmMeasureDraft"
-              class="w-16 bg-transparent text-center font-mono text-xs text-zinc-100 outline-none"
+              :class="['w-16 bg-transparent text-center font-mono text-xs text-zinc-100 outline-none', midiClockControlsLocked ? 'cursor-not-allowed text-zinc-500' : '']"
+              :readonly="midiClockControlsLocked"
               spellcheck="false"
-              title="Set the BPM unit with t >> n or t / n"
+              :title="midiClockControlsLocked
+                ? 'BPM unit is currently locked to external MIDI Clock.'
+                : 'Set the BPM unit with t >> n or t / n'"
               type="text"
               @blur="commitBpmMeasure"
               @keydown.enter.prevent="commitBpmMeasure"
@@ -150,11 +163,14 @@
           >
             <input
               v-model="sampleRateDraft"
-              class="w-14 bg-transparent text-right text-xs text-zinc-100 outline-none"
+              :class="['w-14 bg-transparent text-right text-xs text-zinc-100 outline-none', midiClockControlsLocked ? 'cursor-not-allowed text-zinc-500' : '']"
               :max="MAX_SAMPLE_RATE"
               :min="MIN_SAMPLE_RATE"
-              step="1"
-              title="Set the playback sample rate"
+              :readonly="midiClockControlsLocked"
+              step="any"
+              :title="midiClockControlsLocked
+                ? 'Sample rate is currently locked to external MIDI Clock.'
+                : 'Set the playback sample rate'"
               type="number"
               @blur="commitSampleRate"
               @keydown.enter.prevent="commitSampleRate"
@@ -242,6 +258,7 @@ import {
   normalizeBpmMeasureExpression,
   parseBpmMeasureExpression
 } from '@/services/bpmService'
+import { midiClockState } from '@/services/midiClockService'
 import { useDawStore } from '@/stores/dawStore'
 import { downloadProjectWav } from '@/services/exportService'
 import { downloadProjectFile, importProjectFile } from '@/services/projectPersistence'
@@ -304,13 +321,26 @@ const transportSampleTime = computed(() => {
   return Math.max(0, Math.floor(sampleTime))
 })
 const transportTime = computed(() => time.value.toFixed(2))
+const midiClockEnabled = computed(() => midiClockState.enabled)
+const midiClockLocked = computed(() =>
+  midiClockState.enabled && midiClockState.locked && Number.isFinite(midiClockState.effectiveSampleRate)
+)
+const midiClockControlsLocked = computed(() => midiClockLocked.value)
+const transportControlsLocked = computed(() => midiClockLocked.value)
+const displayedSampleRate = computed(() => {
+  if (midiClockLocked.value) {
+    return midiClockState.effectiveSampleRate
+  }
+
+  return sampleRate.value
+})
 const transportDisplay = computed(() => {
   if (transportDisplayMode.value === 'ticks') {
     return `tick=${transportTime.value}`
   }
 
   if (transportDisplayMode.value === 'clock') {
-    return formatTransportClock(transportSampleTime.value, sampleRate.value)
+    return formatTransportClock(transportSampleTime.value, displayedSampleRate.value)
   }
 
   return `t=${transportSampleTime.value}`
@@ -327,9 +357,16 @@ const transportDisplayHint = computed(() => {
   return 'Click to show raw ticks'
 })
 const bpmDisplay = computed(() =>
-  formatBpmValue(getBpmFromSampleRate(sampleRate.value, bpmMeasure.value))
+  midiClockLocked.value && Number.isFinite(midiClockState.externalBpm)
+    ? formatBpmValue(midiClockState.externalBpm)
+    : formatBpmValue(getBpmFromSampleRate(sampleRate.value, bpmMeasure.value))
 )
 const bpmMeasureHint = computed(() => {
+  if (midiClockLocked.value) {
+    const sourceName = midiClockState.syncSourceName || 'external MIDI Clock'
+    return `Tempo is locked to ${sourceName}. BPM, unit and sample rate are read-only until sync is released.`
+  }
+
   const parsedMeasure = parseBpmMeasureExpression(bpmMeasure.value)
 
   if (!parsedMeasure) {
@@ -338,15 +375,50 @@ const bpmMeasureHint = computed(() => {
 
   return `Tempo derived from ${bpmMeasure.value}. In bytebeat mode the pattern wraps every 256 values, so one beat spans ${formatSampleCount(parsedMeasure.cycleSamples)} samples.`
 })
+const midiClockStatusLabel = computed(() => {
+  if (!midiClockEnabled.value) {
+    return ''
+  }
 
-watch(sampleRate, (nextSampleRate) => {
-  sampleRateDraft.value = String(nextSampleRate)
-  bpmDraft.value = bpmDisplay.value
+  if (!midiClockLocked.value) {
+    return 'Waiting'
+  }
+
+  const bpmLabel = formatBpmValue(midiClockState.externalBpm)
+  return midiClockState.running ? `${bpmLabel} bpm / Run` : `${bpmLabel} bpm / Stop`
+})
+const midiClockStatusHint = computed(() => {
+  if (!midiClockEnabled.value) {
+    return ''
+  }
+
+  const sourceName = midiClockState.syncSourceName || 'No input selected'
+
+  if (!midiClockLocked.value) {
+    return `Waiting for MIDI Clock from ${sourceName}.`
+  }
+
+  return `${sourceName} is driving the transport at ${formatBpmValue(midiClockState.externalBpm)} bpm.`
+})
+const recordButtonDisabled = computed(() =>
+  midiClockLocked.value && !playing.value && !isValueTrackerRecording.value
+)
+const recordButtonTitle = computed(() => {
+  if (isValueTrackerRecording.value) {
+    return 'Stop Value Tracker recording'
+  }
+
+  if (recordButtonDisabled.value) {
+    return 'Start the external MIDI transport before recording.'
+  }
+
+  return 'Record into the active Value Tracker track'
 })
 
-watch(bpmMeasure, (nextBpmMeasure) => {
-  bpmMeasureDraft.value = nextBpmMeasure
+watch([sampleRate, bpmMeasure, midiClockLocked, () => midiClockState.effectiveSampleRate, () => midiClockState.externalBpm], () => {
+  sampleRateDraft.value = formatSampleRateValue(displayedSampleRate.value)
   bpmDraft.value = bpmDisplay.value
+  bpmMeasureDraft.value = bpmMeasure.value
 })
 
 function triggerProjectOpen() {
@@ -354,11 +426,21 @@ function triggerProjectOpen() {
 }
 
 function commitSampleRate() {
+  if (midiClockControlsLocked.value) {
+    sampleRateDraft.value = formatSampleRateValue(displayedSampleRate.value)
+    return
+  }
+
   dawStore.setSampleRate(sampleRateDraft.value)
-  sampleRateDraft.value = String(sampleRate.value)
+  sampleRateDraft.value = formatSampleRateValue(sampleRate.value)
 }
 
 function commitBpm() {
+  if (midiClockControlsLocked.value) {
+    bpmDraft.value = bpmDisplay.value
+    return
+  }
+
   const rawTargetSampleRate = getSampleRateFromBpm(bpmDraft.value, bpmMeasure.value)
 
   if (!rawTargetSampleRate) {
@@ -383,6 +465,11 @@ function commitBpm() {
 }
 
 function commitBpmMeasure() {
+  if (midiClockControlsLocked.value) {
+    bpmMeasureDraft.value = bpmMeasure.value
+    return
+  }
+
   if (!isBpmMeasureExpressionValid(bpmMeasureDraft.value)) {
     enqueueSnackbar('Invalid BPM unit. Use t >> n or t / n.', {
       variant: 'error'
@@ -396,7 +483,7 @@ function commitBpmMeasure() {
 }
 
 function resetSampleRateDraft() {
-  sampleRateDraft.value = String(sampleRate.value)
+  sampleRateDraft.value = formatSampleRateValue(displayedSampleRate.value)
 }
 
 function resetBpmDraft() {
@@ -441,6 +528,29 @@ function formatSampleCount(value) {
   return Number.isInteger(value)
     ? String(value)
     : value.toFixed(3).replace(/\.?0+$/, '')
+}
+
+function formatSampleRateValue(value) {
+  const normalizedValue = Number(value)
+
+  if (!Number.isFinite(normalizedValue) || normalizedValue <= 0) {
+    return '0'
+  }
+
+  if (Number.isInteger(normalizedValue)) {
+    return String(normalizedValue)
+  }
+
+  return normalizedValue
+    .toFixed(2)
+    .replace(/\.00$/, '')
+    .replace(/(\.\d)0$/, '$1')
+}
+
+function transportControlTitle(defaultTitle) {
+  return transportControlsLocked.value
+    ? 'Transport is currently controlled by external MIDI Clock.'
+    : defaultTitle
 }
 
 function handleProjectDownload() {

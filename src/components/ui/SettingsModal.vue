@@ -70,6 +70,66 @@
         {{ midiState.error }}
       </p>
 
+      <div class="mt-4 rounded border border-zinc-800 bg-zinc-900/60 p-3">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-sm text-zinc-200">MIDI Clock receive</p>
+            <p class="mt-1 text-xs text-zinc-500">
+              {{ midiClockStatusText }}
+            </p>
+          </div>
+
+          <input
+            :checked="midiClockState.enabled"
+            class="mt-1 h-4 w-4 rounded border-zinc-700 bg-zinc-950 text-zinc-100 focus:ring-zinc-500"
+            :disabled="midiState.initializing || !midiState.supported"
+            type="checkbox"
+            @change="handleMidiClockEnabledChange"
+          >
+        </div>
+
+        <label class="mt-4 block">
+          <span class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Clock input</span>
+          <select
+            class="mt-2 w-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none"
+            :disabled="!midiClockState.enabled || !midiState.inputs.length"
+            :value="midiClockState.selectedInputId"
+            @change="handleMidiClockInputChange"
+          >
+            <option value="">Select MIDI input</option>
+            <option
+              v-for="midiInput in midiState.inputs"
+              :key="midiInput.id"
+              :value="midiInput.id"
+            >
+              {{ midiInput.name }}
+            </option>
+          </select>
+        </label>
+
+        <div class="mt-4 grid gap-3 text-xs text-zinc-400 sm:grid-cols-2">
+          <div class="rounded border border-zinc-800 bg-zinc-950/70 px-3 py-2">
+            <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">State</p>
+            <p class="mt-1 text-sm text-zinc-200">{{ midiClockTransportState }}</p>
+          </div>
+
+          <div class="rounded border border-zinc-800 bg-zinc-950/70 px-3 py-2">
+            <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">BPM</p>
+            <p class="mt-1 text-sm text-zinc-200">{{ midiClockBpmLabel }}</p>
+          </div>
+
+          <div class="rounded border border-zinc-800 bg-zinc-950/70 px-3 py-2">
+            <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Effective Hz</p>
+            <p class="mt-1 text-sm text-zinc-200">{{ midiClockSampleRateLabel }}</p>
+          </div>
+
+          <div class="rounded border border-zinc-800 bg-zinc-950/70 px-3 py-2">
+            <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Source</p>
+            <p class="mt-1 text-sm text-zinc-200">{{ midiClockInputLabel }}</p>
+          </div>
+        </div>
+      </div>
+
       <div class="mt-4">
         <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Inputs</p>
         <div v-if="midiState.inputs.length" class="mt-2 space-y-2">
@@ -121,6 +181,8 @@ import Button from '@/components/ui/Button.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import Modal from '@/components/ui/Modal.vue'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
+import { formatBpmValue } from '@/services/bpmService'
+import { midiClockState, setMidiClockInput, setMidiClockReceiveEnabled } from '@/services/midiClockService'
 import {
   enableMidiInput,
   formatMidiDebugMessage,
@@ -161,6 +223,51 @@ const midiStatusText = computed(() => {
 
   return `${midiState.inputs.length} MIDI input${midiState.inputs.length === 1 ? '' : 's'} available.`
 })
+const midiClockTransportState = computed(() => {
+  if (!midiClockState.enabled) {
+    return 'Disabled'
+  }
+
+  if (!midiClockState.locked) {
+    return 'Unlocked'
+  }
+
+  return midiClockState.running ? 'Running' : 'Stopped'
+})
+const midiClockStatusText = computed(() => {
+  if (!midiState.supported) {
+    return 'This browser does not support Web MIDI.'
+  }
+
+  if (!midiClockState.enabled) {
+    return 'Enable receive mode to slave the app to an external MIDI Clock input.'
+  }
+
+  if (!midiClockState.selectedInputId) {
+    return 'Select a single MIDI input to listen for clock.'
+  }
+
+  if (!midiClockState.locked) {
+    return 'Waiting for timing clock from the selected MIDI input.'
+  }
+
+  return midiClockState.running
+    ? 'External MIDI Clock is locked and currently driving transport.'
+    : 'External MIDI Clock is locked and transport is stopped.'
+})
+const midiClockBpmLabel = computed(() =>
+  midiClockState.locked && Number.isFinite(midiClockState.externalBpm)
+    ? formatBpmValue(midiClockState.externalBpm)
+    : '--'
+)
+const midiClockSampleRateLabel = computed(() =>
+  midiClockState.locked && Number.isFinite(midiClockState.effectiveSampleRate)
+    ? formatNumberLabel(midiClockState.effectiveSampleRate)
+    : '--'
+)
+const midiClockInputLabel = computed(() =>
+  midiClockState.syncSourceName || 'No input selected'
+)
 
 function handleShowClipWaveformsChange(event) {
   dawStore.setShowClipWaveforms(event.target.checked)
@@ -174,6 +281,18 @@ async function handleMidiEnable() {
   await enableMidiInput()
 }
 
+async function handleMidiClockEnabledChange(event) {
+  const enabled = await setMidiClockReceiveEnabled(event.target.checked)
+
+  if (!enabled) {
+    event.target.checked = false
+  }
+}
+
+function handleMidiClockInputChange(event) {
+  setMidiClockInput(event.target.value)
+}
+
 function handleMidiRefresh() {
   if (!refreshMidiInputs()) {
     void enableMidiInput()
@@ -183,6 +302,23 @@ function handleMidiRefresh() {
 function formatMidiInputMeta(midiInput) {
   const manufacturer = midiInput.manufacturer || 'Unknown manufacturer'
   return `${manufacturer} · ${midiInput.state} · ${midiInput.connection}`
+}
+
+function formatNumberLabel(value) {
+  const normalizedValue = Number(value)
+
+  if (!Number.isFinite(normalizedValue) || normalizedValue <= 0) {
+    return '--'
+  }
+
+  if (Number.isInteger(normalizedValue)) {
+    return String(normalizedValue)
+  }
+
+  return normalizedValue
+    .toFixed(2)
+    .replace(/\.00$/, '')
+    .replace(/(\.\d)0$/, '$1')
 }
 
 async function handleResetProject() {

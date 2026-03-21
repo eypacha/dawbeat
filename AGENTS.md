@@ -17,7 +17,7 @@ Hoy existen:
 
 - pantalla inicial para desbloquear audio antes de entrar a la app
 - reproduccion bytebeat real en navegador con Web Audio + vendor `ByteBeat.js`
-- toolbar con `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, cambio de `sampleRate`, BPM editable, BPM derivado de una unidad tipo `t >> 4` y settings
+- toolbar con `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, cambio de `sampleRate`, BPM editable, BPM derivado de una unidad tipo `t >> 4`, badge/lock de `MIDI Clock` y settings
 - scrub del playhead desde ruler y desde el playhead
 - zoom horizontal con `Ctrl/Cmd + wheel`
 - auto-scroll del timeline durante playback
@@ -45,6 +45,7 @@ Hoy existen:
 - edicion de formulas por `FormulaInputDialog` para clips, formulas de libreria y variable clips
 - editor hex para value tracker clips mediante `ValueTrackerClipEditorDialog`
 - dialogo de binding para value trackers mediante `ValueTrackerBindingDialog`, con `keyboard`, `variable`, `midiCc`, `midiNote` y MIDI Learn
+- `MIDI Clock receive` opcional desde un solo input MIDI seleccionado, con BPM/hz efectivos en runtime y transporte esclavo (`Start`, `Continue`, `Stop`)
 - grabacion de value tracker clips desde transport, con preview en lane y auto-creacion opcional de track destino
 - preview waveform opcional por clip
 - panel opcional de formula evaluada
@@ -144,6 +145,13 @@ Hoy el flujo real es:
 
 - editar `bpmMeasure` (`t >> n` o `t / n`) recalcula el BPM mostrado y mantiene `sampleRate`
 - editar el valor numerico de BPM recalcula `sampleRate` para esa unidad
+
+No asumir que `sampleRate` visible en toolbar siempre coincide con `store.sampleRate`.
+Hoy, si `MIDI Clock receive` esta lockeado:
+
+- la toolbar muestra `BPM`, `bpmMeasure` y `hz` efectivos del clock externo en modo solo lectura
+- el override de `hz` vive solo en runtime
+- no se escribe historial ni persistencia del proyecto por cada pulso de clock
 
 ## Objetivo actual
 

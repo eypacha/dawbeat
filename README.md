@@ -10,7 +10,7 @@ Implementado hoy:
 
 - pantalla inicial para desbloquear audio antes de entrar a la app
 - reproduccion real con Web Audio + `public/vendors/ByteBeat.js`
-- toolbar con `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, settings, cambio de `sampleRate`, BPM editable y calculo de BPM basado en una unidad tipo `t >> 4`
+- toolbar con `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, settings, cambio de `sampleRate`, BPM editable, calculo de BPM basado en una unidad tipo `t >> 4` y badge/lock de `MIDI Clock`
 - scrub del playhead desde ruler y desde el playhead
 - zoom horizontal con `Ctrl/Cmd + wheel`
 - auto-scroll del timeline durante playback
@@ -39,6 +39,7 @@ Implementado hoy:
 - edicion de formulas por dialogo para clips, formulas de libreria y variable clips
 - editor hex para value tracker clips
 - dialogo de binding para value trackers con `keyboard`, `variable`, `midiCc` y `midiNote`, incluido MIDI Learn
+- `MIDI Clock receive` opcional desde un input MIDI seleccionado, con BPM/hz efectivos en runtime y transporte esclavo (`Start`, `Continue`, `Stop`)
 - grabacion de value tracker clips desde transport con preview en lane y auto-creacion opcional de track destino
 - inicializacion de variables faltantes desde el editor de formulas
 - conversion de inicializadores numericos a value tracker desde el editor de formulas
@@ -118,10 +119,11 @@ pnpm preview
 - `Context menu` en automation point: cambia la curva del segmento siguiente o elimina el punto
 - `Context menu` en header de value tracker: rename, delete o edit binding
 - `Click` en el boton de keyboard target de un value tracker: arma/desarma el track para keyboard override
-- `Settings > MIDI input`: habilita/refresca Web MIDI y muestra mensajes recientes
+- `Settings > MIDI input`: habilita/refresca Web MIDI, muestra mensajes recientes y permite configurar `MIDI Clock receive`
 - `Record`: inicia/finaliza grabacion de value tracker sobre el target activo; si no hay target, puede auto-crear uno
 - editar `BPM`: recalcula `sampleRate` para la unidad actual (`t >> n` o `t / n`)
 - editar la unidad BPM (`t >> n` o `t / n`): recalcula el BPM manteniendo `sampleRate`
+- con `MIDI Clock` lockeado: `BPM`, unidad y `hz` pasan a solo lectura y muestran los valores efectivos externos
 - `0-9` y `A-F`: envian live input al value tracker activo para keyboard override
 - `Space`: play/pause
 - `L`: toggle loop
@@ -192,6 +194,7 @@ El export offline renderiza timeline, eval effects, master gain, audio effects c
 - `projectPersistence` normaliza proyectos importados y serializa el estado persistible
 - el proyecto actual serializa `version: 14`
 - se persisten `tracks`, `variableTracks`, `valueTrackerTracks`, `formulas`, `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`, `bpmMeasure`, `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate`, `tickSize`, `showClipWaveforms` y `showEvaluatedPanel`, incluyendo `height` dentro de tracks y lanes
+- `MIDI Clock receive` no se serializa en el proyecto y no escribe `sampleRate` persistido; solo aplica un override runtime del motor en vivo
 - desde la toolbar se puede crear proyecto vacio, abrir JSON, guardar JSON y exportar WAV
 - desde Settings se puede resetear el storage local, togglear waveform/evaluated panel e inspeccionar MIDI
 

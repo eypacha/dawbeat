@@ -1,4 +1,5 @@
 import { TIMELINE_SNAP_SUBDIVISIONS } from '@/utils/timeUtils'
+import { midiClockState } from '@/services/midiClockService'
 import { dispatchValueTrackerInput } from '@/services/valueTrackerInputService'
 
 function isTyping() {
@@ -19,6 +20,11 @@ export function initKeyboardShortcuts({ dawStore, transport }) {
   const clipNudgeStep = 1 / TIMELINE_SNAP_SUBDIVISIONS
   const shortcuts = {
     Space: async (event) => {
+      if (midiClockState.enabled && midiClockState.locked) {
+        event.preventDefault()
+        return
+      }
+
       event.preventDefault()
       await transport.togglePlay()
     },

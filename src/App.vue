@@ -176,6 +176,7 @@ import ValueTrackerClipEditorDialog from '@/components/ui/ValueTrackerClipEditor
 import { provideContextMenu } from '@/composables/useContextMenu'
 import { getFormulaById, resolveClipFormula, resolveClipFormulaName } from '@/services/formulaService'
 import { initKeyboardShortcuts } from '@/services/keyboardShortcuts'
+import { disposeMidiClock, registerMidiClockTransport } from '@/services/midiClockService'
 import { disposeMidiInput } from '@/services/midiInputService'
 import { findTimelineClip } from '@/services/dawStoreService'
 import { getValueTrackerValueAtTime } from '@/services/valueTrackerService'
@@ -210,6 +211,7 @@ const valueTrackerTrackBindingDialog = reactive({
 })
 const valueTrackerDialogHistoryActive = ref(false)
 let disposeKeyboardShortcuts = null
+let disposeMidiClockTransport = null
 const transportPlayback = useTransportPlayback()
 const { enableAudio, stop } = transportPlayback
 const effectsCollapsed = ref(false)
@@ -739,6 +741,7 @@ onMounted(() => {
   window.addEventListener('resize', syncViewportWidth)
   window.addEventListener('keydown', handleKeydown)
   window.addEventListener('contextmenu', handleGlobalContextMenu)
+  disposeMidiClockTransport = registerMidiClockTransport(transportPlayback)
   disposeKeyboardShortcuts = initKeyboardShortcuts({
     dawStore,
     transport: transportPlayback
@@ -751,6 +754,9 @@ onBeforeUnmount(() => {
   window.removeEventListener('contextmenu', handleGlobalContextMenu)
   disposeKeyboardShortcuts?.()
   disposeKeyboardShortcuts = null
+  disposeMidiClockTransport?.()
+  disposeMidiClockTransport = null
+  disposeMidiClock()
   disposeMidiInput()
   void stop()
 })

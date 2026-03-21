@@ -1,9 +1,10 @@
 import { storeToRefs } from 'pinia'
-import { watch } from 'vue'
+import { computed, watch } from 'vue'
 import { getActiveFormula, getPlaybackEndTick } from '@/engine/timelineEngine'
 import { resolveAudioEffectsAtTime } from '@/services/automationService'
 import bytebeatService from '@/services/bytebeatService'
 import { applyEvalEffects } from '@/services/evalEffectService'
+import { midiClockState, refreshMidiClockDerivedState } from '@/services/midiClockService'
 import { enqueueSnackbar } from '@/services/notifications'
 import { useDawStore } from '@/stores/dawStore'
 import { samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
@@ -16,12 +17,19 @@ export function useTransportPlayback() {
   }
 
   const dawStore = useDawStore()
-  const { audioEffects, audioReady, automationLanes, evalEffects, formulas, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, valueTrackerLiveInputs, valueTrackerRecordingSession, valueTrackerTracks, variableTracks } =
+  const { audioEffects, audioReady, automationLanes, bpmMeasure, evalEffects, formulas, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, valueTrackerLiveInputs, valueTrackerRecordingSession, valueTrackerTracks, variableTracks } =
     storeToRefs(dawStore)
 
   let frameId = 0
   let loopJumpInProgress = false
   let playbackEndStopDisabled = false
+  const effectiveSampleRate = computed(() => {
+    if (midiClockState.enabled && midiClockState.locked && Number.isFinite(midiClockState.effectiveSampleRate)) {
+      return midiClockState.effectiveSampleRate
+    }
+
+    return sampleRate.value
+  })
 
   const cancelLoop = () => {
     if (!frameId) {
@@ -175,7 +183,7 @@ export function useTransportPlayback() {
 
     await bytebeatService.init()
     await bytebeatService.unlock()
-    bytebeatService.setDesiredSampleRate(sampleRate.value)
+    bytebeatService.setDesiredSampleRate(effectiveSampleRate.value)
     await syncAudioEffectsAtTime(dawStore.time)
     await syncMasterGainAtTime(dawStore.time)
     await bytebeatService.setExpressions([''], true, true)
@@ -190,7 +198,7 @@ export function useTransportPlayback() {
 
     try {
       await enableAudio()
-      bytebeatService.setDesiredSampleRate(sampleRate.value)
+      bytebeatService.setDesiredSampleRate(effectiveSampleRate.value)
       await syncAudioEffectsAtTime(dawStore.time)
 
       const resumeTime = dawStore.time
@@ -333,6 +341,13 @@ export function useTransportPlayback() {
       return
     }
 
+    if (midiClockState.enabled && midiClockState.locked && !playing.value) {
+      enqueueSnackbar('Use external MIDI Start to begin recording.', {
+        variant: 'error'
+      })
+      return
+    }
+
     const startTick = await normalizeRecordingStartTime()
     const startResult = dawStore.startValueTrackerRecording({ startTick })
 
@@ -359,13 +374,36 @@ export function useTransportPlayback() {
     await record()
   }
 
+  const startFromExternalClock = async () => {
+    await seekToTime(0)
+
+    if (!playing.value) {
+      await play()
+    }
+  }
+
+  const continueFromExternalClock = async () => {
+    if (!playing.value) {
+      await play()
+    }
+  }
+
+  const stopFromExternalClock = async () => {
+    if (playing.value) {
+      await pause()
+    }
+  }
+
   transportPlayback = {
+    continueFromExternalClock,
     play,
     enableAudio,
     getCurrentTime,
     pause,
     record,
     seekToTime,
+    startFromExternalClock,
+    stopFromExternalClock,
     toggleRecord,
     togglePlay,
     stop
@@ -392,7 +430,11 @@ export function useTransportPlayback() {
     void syncMasterGainAtTime(dawStore.time)
   }, { deep: true })
 
-  watch(sampleRate, (nextSampleRate) => {
+  watch(bpmMeasure, () => {
+    refreshMidiClockDerivedState()
+  })
+
+  watch(effectiveSampleRate, (nextSampleRate) => {
     bytebeatService.setDesiredSampleRate(nextSampleRate)
   })
 

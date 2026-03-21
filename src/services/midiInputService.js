@@ -22,6 +22,7 @@ let activeLearnSession = null
 let midiAccess = null
 let midiEnablePromise = null
 const midiInputHandlers = new Map()
+const midiMessageSubscribers = new Set()
 
 export async function enableMidiInput() {
   if (!midiState.supported) {
@@ -124,6 +125,18 @@ export function getMidiInputDisplayName(deviceId) {
   return midiState.inputs.find((input) => input.id === deviceId)?.name ?? ''
 }
 
+export function subscribeMidiMessageEvents(callback) {
+  if (typeof callback !== 'function') {
+    return () => {}
+  }
+
+  midiMessageSubscribers.add(callback)
+
+  return () => {
+    midiMessageSubscribers.delete(callback)
+  }
+}
+
 export function formatMidiDebugMessage(message) {
   if (!message) {
     return ''
@@ -188,7 +201,15 @@ function syncMidiInputs() {
 }
 
 function handleMidiMessage(event, input) {
-  const normalizedMessage = normalizeMidiMessage(event, input)
+  const normalizedEvent = normalizeMidiEvent(event, input)
+
+  if (!normalizedEvent) {
+    return
+  }
+
+  notifyMidiMessageSubscribers(normalizedEvent)
+
+  const normalizedMessage = normalizeMidiMessage(normalizedEvent)
 
   if (!normalizedMessage) {
     return
@@ -206,6 +227,16 @@ function handleMidiMessage(event, input) {
   dispatchValueTrackerInput(normalizedMessage)
 }
 
+function notifyMidiMessageSubscribers(message) {
+  for (const subscriber of midiMessageSubscribers) {
+    try {
+      subscriber(message)
+    } catch (error) {
+      console.error('No se pudo despachar el mensaje MIDI', error)
+    }
+  }
+}
+
 function maybeCompleteMidiLearn(message) {
   if (!activeLearnSession) {
     return
@@ -221,20 +252,39 @@ function maybeCompleteMidiLearn(message) {
   callback(createMidiLearnBinding(message), message)
 }
 
-function normalizeMidiMessage(event, input) {
+function normalizeMidiEvent(event, input) {
   const data = Array.from(event?.data ?? [])
+
+  if (!data.length) {
+    return null
+  }
+
+  const [status, data1 = null, data2 = null] = data
+
+  return {
+    data,
+    data1,
+    data2,
+    deviceId: input?.id ?? null,
+    deviceName: input?.name || 'Unknown device',
+    receivedAt: Number(event?.timeStamp) || globalThis.performance?.now?.() || Date.now(),
+    status
+  }
+}
+
+function normalizeMidiMessage(event) {
+  const { data, data1, data2, deviceId, deviceName, status } = event
 
   if (data.length < 3) {
     return null
   }
 
-  const [status, data1, data2] = data
   const command = status & 0xF0
   const channel = (status & 0x0F) + 1
   const baseMessage = {
     channel,
-    deviceId: input?.id ?? null,
-    deviceName: input?.name || 'Unknown device',
+    deviceId,
+    deviceName,
     rawValue: data2,
     timeTicks: undefined
   }
