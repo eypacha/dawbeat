@@ -120,6 +120,7 @@ pnpm preview
 - `Context menu` en header de value tracker: rename, delete o edit binding
 - `Click` en el boton de keyboard target de un value tracker: arma/desarma el track para keyboard override
 - `Settings > MIDI input`: habilita/refresca Web MIDI, muestra mensajes recientes y permite configurar `MIDI Clock receive`
+- `Settings`: usa tabs; `MIDI` vive como tab dedicada con inputs, clock y debug
 - `Record`: inicia/finaliza grabacion de value tracker sobre el target activo; si no hay target, puede auto-crear uno
 - editar `BPM`: recalcula `sampleRate` para la unidad actual (`t >> n` o `t / n`)
 - editar la unidad BPM (`t >> n` o `t / n`): recalcula el BPM manteniendo `sampleRate`

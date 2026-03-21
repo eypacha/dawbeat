@@ -14,7 +14,7 @@
         </slot>
       </header>
 
-      <div>
+      <div class="min-h-0 flex-1">
         <slot />
       </div>
 
@@ -41,6 +41,10 @@ const props = defineProps({
     type: Boolean,
     required: true
   },
+  panelClass: {
+    type: String,
+    default: ''
+  },
   size: {
     type: String,
     default: 'md'
@@ -64,7 +68,13 @@ const panelClassName = computed(() => {
     widthClassName = 'max-w-6xl'
   }
 
-  return `relative w-full ${widthClassName} rounded border border-zinc-700 bg-zinc-900 p-4 shadow-lg shadow-black/40`
+  return [
+    'relative flex max-h-[calc(100vh-2rem)] w-full flex-col rounded border border-zinc-700 bg-zinc-900 p-4 shadow-lg shadow-black/40',
+    widthClassName,
+    props.panelClass
+  ]
+    .filter(Boolean)
+    .join(' ')
 })
 
 function handleBackdropClick() {

@@ -46,6 +46,7 @@ Hoy existen:
 - editor hex para value tracker clips mediante `ValueTrackerClipEditorDialog`
 - dialogo de binding para value trackers mediante `ValueTrackerBindingDialog`, con `keyboard`, `variable`, `midiCc`, `midiNote` y MIDI Learn
 - `MIDI Clock receive` opcional desde un solo input MIDI seleccionado, con BPM/hz efectivos en runtime y transporte esclavo (`Start`, `Continue`, `Stop`)
+- `SettingsModal` usa tabs; `MIDI` ya no es un bloque embebido sino una tab completa
 - grabacion de value tracker clips desde transport, con preview en lane y auto-creacion opcional de track destino
 - preview waveform opcional por clip
 - panel opcional de formula evaluada
