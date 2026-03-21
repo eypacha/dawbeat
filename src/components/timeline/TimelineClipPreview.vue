@@ -31,9 +31,9 @@ const { pixelsPerTick } = storeToRefs(dawStore)
 const MIN_CLIP_RENDER_TICKS = 0.5
 
 const previewStyle = computed(() => ({
-  bottom: props.compact ? '0.25rem' : '0.75rem',
+  bottom: '0',
   left: `${ticksToPixels(props.start, pixelsPerTick.value)}px`,
-  top: props.compact ? '0.25rem' : '0.75rem',
+  top: '0',
   width: `${Math.max(
     ticksToPixels(props.duration, pixelsPerTick.value),
     ticksToPixels(MIN_CLIP_RENDER_TICKS, pixelsPerTick.value)

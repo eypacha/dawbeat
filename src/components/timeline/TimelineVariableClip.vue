@@ -1,6 +1,6 @@
 <template>
   <div
-    class="timeline-variable-clip absolute top-1 bottom-1 box-border overflow-hidden border px-1.5 py-0 text-left text-[10px] text-zinc-50 transition-colors"
+    class="timeline-variable-clip absolute inset-y-0 box-border overflow-hidden border px-1.5 py-0 text-left text-[10px] text-zinc-50 transition-colors"
     :class="buttonClassName"
     :style="clipStyle"
     :title="clipTitle"

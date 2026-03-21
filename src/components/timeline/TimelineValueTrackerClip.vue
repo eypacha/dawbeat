@@ -1,6 +1,6 @@
 <template>
   <div
-    class="timeline-value-tracker-clip absolute top-2 bottom-2 box-border overflow-hidden border px-2 py-1 text-left text-xs text-zinc-50 transition-colors"
+    class="timeline-value-tracker-clip absolute inset-y-0 box-border overflow-hidden border px-2 py-1 text-left text-xs text-zinc-50 transition-colors"
     :class="buttonClassName"
     :style="clipStyle"
     :title="clipTitle"
