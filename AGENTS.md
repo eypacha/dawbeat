@@ -51,6 +51,7 @@ Hoy existen:
 - eval effects: `Stereo Offset`, `T Replacement`
 - audio effects expuestos hoy: `EQ3`, `Distortion`, `Stereo Widener`, `Feedback Delay`, `Compressor`, `Limiter`, `Reverb` y `Master Gain`
 - automation lanes para `masterGain` y para parametros de audio effects
+- automation curves por segmento con opciones `Straight`, `Ease In`, `Ease Out` y `Ease In-Out` (`Ease In-Out` por defecto)
 - persistencia automatica en `localStorage`
 - import/export de proyecto JSON
 - export WAV offline con render de timeline, eval effects, master gain, audio effects compatibles y automatizacion offline
@@ -74,6 +75,7 @@ Hoy existen dialogs y flujos separados para:
 - bindings de value tracker via `ValueTrackerBindingDialog`
 - nombre/color de track
 - rename de value tracker track
+- curvas de automation point via context menu
 
 No asumir que clip y formula son siempre la misma entidad.
 Hoy un clip de formula puede:
@@ -303,6 +305,7 @@ src/
     library/
       FormulaLibrary.vue
     timeline/
+      AutomationCurveMenu.vue
       Playhead.vue
       Timeline.vue
       TimelineAutomationLane.vue
@@ -579,6 +582,7 @@ Debe seguir soportando:
 - double click en value tracker clip para abrir el editor hex
 - click en automation lane para crear punto
 - drag de automation point para moverlo
+- context menu en automation point para cambiar curva del segmento siguiente
 - `Delete` / `Backspace` sobre automation point seleccionado para borrarlo
 - mute por track
 - solo por track
@@ -649,6 +653,7 @@ Automatizacion actual:
 
 - lane de `masterGain`
 - lanes por parametro de audio effects
+- curvas por segmento: `Straight`, `Ease In`, `Ease Out`, `Ease In-Out` (`Ease In-Out` por defecto)
 
 Si una tarea toca effects o automation:
 
@@ -667,7 +672,7 @@ Hoy existe:
 - export de proyecto JSON
 - reset de storage local
 - export WAV offline
-- normalizacion de proyectos con `version: 12`
+- normalizacion de proyectos con `version: 13`
 - persistencia de `tracks`, `variableTracks`, `valueTrackerTracks`, `formulas`
 - persistencia de `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`
 - persistencia de `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate` y `tickSize`

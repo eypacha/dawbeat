@@ -61,6 +61,7 @@ import {
   getAutomationLaneById as findAutomationLaneById,
   getAutomationValueAtTime,
   getDefaultAutomationLanes,
+  normalizeAutomationCurveType,
   normalizeAutomationPointForLane
 } from '@/services/automationService'
 import { createEvalEffect, createStereoOffsetEvalEffect, mergeTReplacementParams } from '@/services/evalEffectService'
@@ -901,6 +902,23 @@ export const useDawStore = defineStore('dawStore', {
       ) {
         this.selectAutomationPoint(laneId, index)
       }
+    },
+
+    setAutomationPointCurve(laneId, index, curve) {
+      return this.recordHistoryStep('set-automation-point-curve', () => {
+        const lane = this.getAutomationLaneById(laneId)
+
+        if (!lane || !Number.isInteger(index) || index < 0 || index >= lane.points.length) {
+          return
+        }
+
+        lane.points[index] = {
+          ...lane.points[index],
+          curve: normalizeAutomationCurveType(curve, lane.points[index]?.curve)
+        }
+
+        this.selectAutomationPoint(laneId, index)
+      })
     },
 
     removeAutomationPoint(laneId, index) {

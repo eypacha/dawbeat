@@ -39,9 +39,12 @@
           left: `${point.x}px`,
           top: `${point.y}px`
         }"
-        :title="`${point.point.time.toFixed(2)} / ${Number(point.point.value ?? 0).toFixed(2)}`"
+        :title="point.hasNextPoint
+          ? `${point.point.time.toFixed(2)} / ${Number(point.point.value ?? 0).toFixed(2)} · ${point.curveLabel}`
+          : `${point.point.time.toFixed(2)} / ${Number(point.point.value ?? 0).toFixed(2)}`"
         data-automation-point="true"
         type="button"
+        @contextmenu.stop.prevent="handlePointContextMenu($event, point)"
         @pointerdown.stop="handlePointPointerDown($event, point)"
       />
     </div>
@@ -62,10 +65,19 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineLaneResize } from '@/composables/useTimelineLaneResize'
-import { getAutomationLaneConfig } from '@/services/automationService'
+import {
+  DEFAULT_AUTOMATION_CURVE,
+  AUTOMATION_CURVE_LINEAR,
+  AUTOMATION_CURVE_OPTIONS,
+  getAutomationCurveLabel,
+  getAutomationLaneConfig,
+  interpolateAutomationSegmentValue
+} from '@/services/automationService'
 import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { useDawStore } from '@/stores/dawStore'
 import { TRACK_LABEL_WIDTH, clamp, getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
+
+const CURVED_SEGMENT_SAMPLE_COUNT = 12
 
 const props = defineProps({
   lane: {
@@ -120,7 +132,7 @@ const { cleanupResize, handleResizePointerDown } = useTimelineLaneResize({
 })
 
 const renderedPoints = computed(() =>
-  (props.lane.points ?? [])
+  [...(props.lane.points ?? [])
     .map((point, index) => ({
       index,
       point,
@@ -128,14 +140,24 @@ const renderedPoints = computed(() =>
       y: valueToY(point.value)
     }))
     .sort((leftPoint, rightPoint) => leftPoint.point.time - rightPoint.point.time)
+  ].map((point, index, points) => ({
+    ...point,
+    curveLabel: getAutomationCurveLabel(point.point.curve),
+    hasNextPoint: index < points.length - 1
+  }))
 )
 const pathData = computed(() => {
   if (!renderedPoints.value.length) {
     return ''
   }
 
-  const pathSegments = renderedPoints.value
-    .map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`)
+  const [firstPoint, ...restPoints] = renderedPoints.value
+  const pathSegments = [`M ${firstPoint.x} ${firstPoint.y}`]
+
+  for (let index = 0; index < restPoints.length; index += 1) {
+    appendAutomationSegmentPath(pathSegments, renderedPoints.value[index], restPoints[index])
+  }
+
   const lastPoint = renderedPoints.value[renderedPoints.value.length - 1]
 
   if (timelineWidthPx.value <= lastPoint.x) {
@@ -172,6 +194,44 @@ function handleContextMenu(event) {
         laneId: props.lane.id
       }
     ]
+  })
+}
+
+function handlePointContextMenu(event, point) {
+  event.preventDefault()
+  dawStore.selectAutomationPoint(props.lane.id, point.index)
+
+  const items = []
+
+  if (point.hasNextPoint) {
+    items.push({
+      action: 'set-automation-point-curve',
+      label: 'Segment Curve',
+      laneId: props.lane.id,
+      options: AUTOMATION_CURVE_OPTIONS,
+      pointIndex: point.index,
+      selectedCurve: point.point.curve ?? DEFAULT_AUTOMATION_CURVE,
+      type: 'submenu'
+    })
+  }
+
+  if (point.index > 0) {
+    items.push({
+      action: 'delete-automation-point',
+      label: 'Delete Point',
+      laneId: props.lane.id,
+      pointIndex: point.index
+    })
+  }
+
+  if (!items.length) {
+    return
+  }
+
+  openContextMenu({
+    x: event.clientX,
+    y: event.clientY,
+    items
   })
 }
 
@@ -239,6 +299,32 @@ function cleanupPointDrag() {
   window.removeEventListener('pointermove', handlePointPointerMove)
   window.removeEventListener('pointerup', handlePointPointerUp)
   window.removeEventListener('pointercancel', handlePointPointerCancel)
+}
+
+function appendAutomationSegmentPath(pathSegments, currentPoint, nextPoint) {
+  if (!currentPoint || !nextPoint) {
+    return
+  }
+
+  const segmentDuration = nextPoint.x - currentPoint.x
+
+  if (segmentDuration <= 0 || currentPoint.point.curve === AUTOMATION_CURVE_LINEAR) {
+    pathSegments.push(`L ${nextPoint.x} ${nextPoint.y}`)
+    return
+  }
+
+  for (let step = 1; step <= CURVED_SEGMENT_SAMPLE_COUNT; step += 1) {
+    const interpolation = step / CURVED_SEGMENT_SAMPLE_COUNT
+    const x = currentPoint.x + interpolation * segmentDuration
+    const y = interpolateAutomationSegmentValue(
+      currentPoint.y,
+      nextPoint.y,
+      interpolation,
+      currentPoint.point.curve
+    )
+
+    pathSegments.push(`L ${x} ${y}`)
+  }
 }
 
 function getPointFromEvent(event) {

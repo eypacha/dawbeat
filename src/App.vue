@@ -75,8 +75,14 @@
       @select="handleContextMenuSelect"
     >
       <template #submenu="{ item, close }">
+        <AutomationCurveMenu
+          v-if="item.action === 'set-automation-point-curve'"
+          :options="item.options"
+          :selected-curve="item.selectedCurve"
+          @select="handleAutomationCurveSelect(item, $event, close)"
+        />
         <TrackUnionOperatorMenu
-          v-if="item.action === 'set-track-union-operator'"
+          v-else-if="item.action === 'set-track-union-operator'"
           :options="item.options"
           :selected-operator="item.selectedOperator"
           @select="handleTrackUnionOperatorSelect(item, $event, close)"
@@ -153,6 +159,7 @@ import StartScreen from '@/components/boot/StartScreen.vue'
 import EffectsPanel from '@/components/effects/EffectsPanel.vue'
 import EvaluatedPanel from '@/components/evaluated/EvaluatedPanel.vue'
 import FormulaLibrary from '@/components/library/FormulaLibrary.vue'
+import AutomationCurveMenu from '@/components/timeline/AutomationCurveMenu.vue'
 import Timeline from '@/components/timeline/Timeline.vue'
 import TrackUnionOperatorMenu from '@/components/timeline/TrackUnionOperatorMenu.vue'
 import Toolbar from '@/components/transport/Toolbar.vue'
@@ -524,6 +531,11 @@ function handleContextMenuSelect(action, item) {
     return
   }
 
+  if (action === 'delete-automation-point') {
+    dawStore.removeAutomationPoint(item.laneId, item.pointIndex)
+    return
+  }
+
   if (action === 'delete-variable-track') {
     dawStore.removeVariableTrack(item.variableTrackName)
     return
@@ -574,6 +586,11 @@ function handleContextMenuSelect(action, item) {
 
 function handleTrackUnionOperatorSelect(item, operator, close) {
   dawStore.setTrackUnionOperator(item.trackId, operator)
+  close()
+}
+
+function handleAutomationCurveSelect(item, curve, close) {
+  dawStore.setAutomationPointCurve(item.laneId, item.pointIndex, curve)
   close()
 }
 

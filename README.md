@@ -47,6 +47,7 @@ Implementado hoy:
 - formula effects: `Stereo Offset`, `T Replacement`
 - audio effects expuestos hoy: `EQ3`, `Distortion`, `Stereo Widener`, `Feedback Delay`, `Compressor`, `Limiter`, `Reverb` y `Master Gain`
 - automation lanes para `masterGain` y parametros de audio effects
+- automation curves por segmento con opciones `Straight`, `Ease In`, `Ease Out` y `Ease In-Out` (`Ease In-Out` por defecto)
 - persistencia automatica en `localStorage`
 - import/export de proyecto JSON
 - export WAV offline
@@ -111,6 +112,7 @@ pnpm preview
 - `Double click` en Library: abre edicion de formula de libreria
 - `Click` en automation lane: crea automation point
 - `Drag` de automation point: mueve el punto
+- `Context menu` en automation point: cambia la curva del segmento siguiente o elimina el punto
 - `Context menu` en header de value tracker: rename, delete o edit binding
 - `Click` en el boton de keyboard target de un value tracker: arma/desarma el track para keyboard override
 - `Settings > MIDI input`: habilita/refresca Web MIDI y muestra mensajes recientes
@@ -173,6 +175,7 @@ Automatizacion actual:
 
 - lane de `masterGain`
 - lanes por parametro de audio effect
+- curvas por segmento en automation points: `Straight`, `Ease In`, `Ease Out`, `Ease In-Out` (`Ease In-Out` por defecto)
 
 El playback en vivo resuelve automatizacion por tiempo.
 El export offline renderiza timeline, eval effects, master gain, audio effects compatibles y automatizacion offline del proyecto actual.
@@ -182,7 +185,7 @@ El export offline renderiza timeline, eval effects, master gain, audio effects c
 - al iniciar, la app intenta cargar el proyecto guardado en `localStorage`
 - si no existe uno guardado, parte de `src/data/demo.json`
 - `projectPersistence` normaliza proyectos importados y serializa el estado persistible
-- el proyecto actual serializa `version: 12`
+- el proyecto actual serializa `version: 13`
 - se persisten `tracks`, `variableTracks`, `valueTrackerTracks`, `formulas`, `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`, `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate`, `tickSize`, `showClipWaveforms` y `showEvaluatedPanel`, incluyendo `height` dentro de tracks y lanes
 - desde la toolbar se puede crear proyecto vacio, abrir JSON, guardar JSON y exportar WAV
 - desde Settings se puede resetear el storage local, togglear waveform/evaluated panel e inspeccionar MIDI
@@ -213,6 +216,7 @@ src/
     library/
       FormulaLibrary.vue
     timeline/
+      AutomationCurveMenu.vue
       Playhead.vue
       Timeline.vue
       TimelineAutomationLane.vue

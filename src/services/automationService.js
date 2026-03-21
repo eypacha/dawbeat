@@ -13,11 +13,44 @@ import {
   normalizeWidth
 } from '@/services/audioEffectService'
 import { normalizeAutomationLaneHeight } from '@/services/timelineLaneLayoutService'
+import { clamp } from '@/utils/timeUtils'
 
 export const MASTER_GAIN_AUTOMATION_LANE_ID = 'masterGain'
 export const MASTER_GAIN_AUTOMATION_LANE_TYPE = 'masterGain'
 export const MASTER_GAIN_AUTOMATION_MAX = 1
 export const AUDIO_EFFECT_PARAM_AUTOMATION_LANE_TYPE = 'audioEffectParam'
+export const AUTOMATION_CURVE_LINEAR = 'linear'
+export const AUTOMATION_CURVE_EASE_IN = 'easeIn'
+export const AUTOMATION_CURVE_EASE_OUT = 'easeOut'
+export const AUTOMATION_CURVE_EASE_IN_OUT = 'easeInOut'
+
+export const AUTOMATION_CURVE_OPTIONS = Object.freeze([
+  {
+    label: 'Straight',
+    value: AUTOMATION_CURVE_LINEAR
+  },
+  {
+    label: 'Ease In',
+    value: AUTOMATION_CURVE_EASE_IN
+  },
+  {
+    label: 'Ease Out',
+    value: AUTOMATION_CURVE_EASE_OUT
+  },
+  {
+    label: 'Ease In-Out',
+    value: AUTOMATION_CURVE_EASE_IN_OUT
+  }
+])
+export const DEFAULT_AUTOMATION_CURVE = AUTOMATION_CURVE_EASE_IN_OUT
+
+const VALID_AUTOMATION_CURVES = new Set(AUTOMATION_CURVE_OPTIONS.map((option) => option.value))
+const AUTOMATION_CURVE_LABELS = Object.freeze(
+  AUTOMATION_CURVE_OPTIONS.reduce((labels, option) => {
+    labels[option.value] = option.label
+    return labels
+  }, {})
+)
 
 const AUDIO_EFFECT_TYPE_LABELS = {
   compressor: 'Compressor',
@@ -73,6 +106,7 @@ export function createDefaultAutomationLane({ value = 1 } = {}) {
     type: MASTER_GAIN_AUTOMATION_LANE_TYPE,
     points: [
       {
+        curve: DEFAULT_AUTOMATION_CURVE,
         time: 0,
         value: normalizeMasterGain(value)
       }
@@ -96,6 +130,7 @@ export function createAudioEffectParamAutomationLane(effect, paramKey) {
     paramKey,
     points: [
       {
+        curve: DEFAULT_AUTOMATION_CURVE,
         time: 0,
         value: config.normalize(effect.params?.[paramKey])
       }
@@ -143,12 +178,54 @@ export function getAutomationLaneConfig(lane) {
   }
 }
 
+export function normalizeAutomationCurveType(curve, fallback = DEFAULT_AUTOMATION_CURVE) {
+  const normalizedFallback = VALID_AUTOMATION_CURVES.has(fallback)
+    ? fallback
+    : DEFAULT_AUTOMATION_CURVE
+
+  return VALID_AUTOMATION_CURVES.has(curve) ? curve : normalizedFallback
+}
+
+export function getAutomationCurveLabel(curve) {
+  const normalizedCurve = normalizeAutomationCurveType(curve)
+  return AUTOMATION_CURVE_LABELS[normalizedCurve] ?? AUTOMATION_CURVE_LABELS[DEFAULT_AUTOMATION_CURVE]
+}
+
+export function getAutomationCurveProgress(curve, interpolation) {
+  const normalizedInterpolation = clamp(Number(interpolation) || 0, 0, 1)
+  const normalizedCurve = normalizeAutomationCurveType(curve)
+
+  if (normalizedCurve === AUTOMATION_CURVE_EASE_IN) {
+    return normalizedInterpolation ** 2
+  }
+
+  if (normalizedCurve === AUTOMATION_CURVE_EASE_OUT) {
+    return 1 - (1 - normalizedInterpolation) ** 2
+  }
+
+  if (normalizedCurve === AUTOMATION_CURVE_EASE_IN_OUT) {
+    if (normalizedInterpolation < 0.5) {
+      return 2 * normalizedInterpolation ** 2
+    }
+
+    return 1 - ((-2 * normalizedInterpolation + 2) ** 2) / 2
+  }
+
+  return normalizedInterpolation
+}
+
+export function interpolateAutomationSegmentValue(startValue, endValue, interpolation, curve) {
+  const curveProgress = getAutomationCurveProgress(curve, interpolation)
+  return startValue + curveProgress * (endValue - startValue)
+}
+
 export function normalizeAutomationPoint(point = {}, fallback = {}) {
   return normalizeAutomationPointForLane(point, createDefaultAutomationLane(), fallback)
 }
 
 export function normalizeAutomationPointForLane(point = {}, lane, fallback = {}) {
   const config = getAutomationLaneConfig(lane)
+  const fallbackCurve = normalizeAutomationCurveType(fallback.curve)
   const fallbackTime = Number.isFinite(Number(fallback.time)) ? Number(fallback.time) : 0
   const fallbackValue = Number.isFinite(Number(fallback.value)) ? Number(fallback.value) : 0
   const time = Number(point.time)
@@ -156,12 +233,14 @@ export function normalizeAutomationPointForLane(point = {}, lane, fallback = {})
 
   if (!config) {
     return {
+      curve: normalizeAutomationCurveType(point.curve, fallbackCurve),
       time: Math.max(0, Number.isFinite(time) ? time : fallbackTime),
       value: Number.isFinite(value) ? value : fallbackValue
     }
   }
 
   return {
+    curve: normalizeAutomationCurveType(point.curve, fallbackCurve),
     time: Math.max(0, Number.isFinite(time) ? time : fallbackTime),
     value: config.normalize(Number.isFinite(value) ? value : fallbackValue)
   }
@@ -265,7 +344,12 @@ export function getAutomationValueAtTime(time, lane) {
     }
 
     const interpolation = (time - currentPoint.time) / (nextPoint.time - currentPoint.time)
-    return currentPoint.value + interpolation * (nextPoint.value - currentPoint.value)
+    return interpolateAutomationSegmentValue(
+      currentPoint.value,
+      nextPoint.value,
+      interpolation,
+      currentPoint.curve
+    )
   }
 
   return null

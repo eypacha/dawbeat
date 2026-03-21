@@ -1,9 +1,12 @@
 import { Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, connect as toneConnect } from 'tone'
 import { getActiveFormula } from '@/engine/timelineEngine'
 import {
+  AUTOMATION_CURVE_LINEAR,
   getAutomationLaneByAudioEffectParam,
   getAutomationLaneById,
   getSortedAutomationPoints,
+  interpolateAutomationSegmentValue,
+  normalizeAutomationCurveType,
   resolveAudioEffectAtTime,
   resolveMasterGainAtTime,
   MASTER_GAIN_AUTOMATION_LANE_ID
@@ -30,6 +33,8 @@ import { getClipEnd, samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 const SILENT_EVALUATOR = () => 0
 const DEFAULT_EXPORT_WAV_SAMPLE_RATE = 44100
 const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter']
+const MIN_AUTOMATION_CURVE_SAMPLES = 16
+const MAX_AUTOMATION_CURVE_SAMPLES = 128
 const MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS = {
   distortion: ['drive'],
   reverb: ['decay', 'preDelay']
@@ -474,28 +479,32 @@ function scheduleOfflineParamAutomation(
   }
 
   target.setValueAtTime(normalizedInitialValue, 0)
+  if (!points.length) {
+    return
+  }
 
-  let lastTimeSeconds = 0
+  for (let index = 0; index < points.length; index += 1) {
+    const currentPoint = points[index]
+    const currentTimeSeconds = ticksToSeconds(currentPoint.time, tickSize, sourceSampleRate)
+    const currentValue = normalizeValue(currentPoint.value)
 
-  for (const point of points) {
-    const timeSeconds = ticksToSeconds(point.time, tickSize, sourceSampleRate)
-    const normalizedValue = normalizeValue(point.value)
+    if (currentTimeSeconds <= 0) {
+      target.setValueAtTime(currentValue, 0)
+    } else if (index === 0) {
+      target.setValueAtTime(currentValue, currentTimeSeconds)
+    }
 
-    if (timeSeconds <= 0) {
-      target.setValueAtTime(normalizedValue, 0)
+    const nextPoint = points[index + 1]
+
+    if (!nextPoint) {
       continue
     }
 
-    if (
-      typeof target.linearRampToValueAtTime === 'function' &&
-      timeSeconds > lastTimeSeconds
-    ) {
-      target.linearRampToValueAtTime(normalizedValue, timeSeconds)
-    } else {
-      target.setValueAtTime(normalizedValue, timeSeconds)
-    }
-
-    lastTimeSeconds = timeSeconds
+    scheduleOfflineParamAutomationSegment(target, currentPoint, nextPoint, {
+      normalizeValue,
+      sourceSampleRate,
+      tickSize
+    })
   }
 }
 
@@ -511,21 +520,24 @@ function collectManualOfflineAutomationCheckpoints(
   for (const entry of manualEntries) {
     for (const paramKey of entry.manualParamKeys) {
       const lane = getAutomationLaneByAudioEffectParam(automationLanes, entry.effect.id, paramKey)
-      const points = getSortedAutomationPoints(lane?.points ?? [])
+      const checkpointTimes = collectAutomationLaneCheckpointTimes(lane, {
+        sourceSampleRate,
+        tickSize
+      })
 
-      for (const point of points) {
-        if (point.time <= 0) {
+      for (const timeTicks of checkpointTimes) {
+        if (timeTicks <= 0) {
           continue
         }
 
-        const timeSeconds = ticksToSeconds(point.time, tickSize, sourceSampleRate)
+        const timeSeconds = ticksToSeconds(timeTicks, tickSize, sourceSampleRate)
 
         if (timeSeconds <= 0 || timeSeconds >= durationSeconds) {
           continue
         }
 
-        checkpoints.set(point.time, {
-          timeTicks: point.time,
+        checkpoints.set(timeTicks, {
+          timeTicks,
           timeSeconds
         })
       }
@@ -537,6 +549,104 @@ function collectManualOfflineAutomationCheckpoints(
 
 function getManualOfflineAutomationParamKeys(effectType) {
   return MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS[effectType] ?? []
+}
+
+function scheduleOfflineParamAutomationSegment(
+  target,
+  currentPoint,
+  nextPoint,
+  { normalizeValue, sourceSampleRate, tickSize }
+) {
+  const startTimeSeconds = ticksToSeconds(currentPoint.time, tickSize, sourceSampleRate)
+  const endTimeSeconds = ticksToSeconds(nextPoint.time, tickSize, sourceSampleRate)
+  const startValue = normalizeValue(currentPoint.value)
+  const endValue = normalizeValue(nextPoint.value)
+  const durationSeconds = endTimeSeconds - startTimeSeconds
+
+  if (durationSeconds <= 0) {
+    target.setValueAtTime(endValue, Math.max(0, endTimeSeconds))
+    return
+  }
+
+  const curve = normalizeAutomationCurveType(currentPoint.curve)
+
+  if (
+    curve !== AUTOMATION_CURVE_LINEAR &&
+    typeof target.setValueCurveAtTime === 'function'
+  ) {
+    target.setValueAtTime(startValue, Math.max(0, startTimeSeconds))
+    target.setValueCurveAtTime(
+      buildAutomationCurveValues(startValue, endValue, curve, durationSeconds),
+      Math.max(0, startTimeSeconds),
+      durationSeconds
+    )
+    target.setValueAtTime(endValue, endTimeSeconds)
+    return
+  }
+
+  if (typeof target.linearRampToValueAtTime === 'function') {
+    target.linearRampToValueAtTime(endValue, endTimeSeconds)
+    return
+  }
+
+  target.setValueAtTime(endValue, endTimeSeconds)
+}
+
+function buildAutomationCurveValues(startValue, endValue, curve, durationSeconds) {
+  const sampleCount = getAutomationCurveSampleCount(durationSeconds)
+
+  return Float32Array.from({ length: sampleCount }, (_entry, index) => {
+    const interpolation = sampleCount <= 1 ? 1 : index / (sampleCount - 1)
+    return interpolateAutomationSegmentValue(startValue, endValue, interpolation, curve)
+  })
+}
+
+function getAutomationCurveSampleCount(durationSeconds) {
+  const normalizedDuration = Math.max(0, Number(durationSeconds) || 0)
+  return Math.max(
+    MIN_AUTOMATION_CURVE_SAMPLES,
+    Math.min(MAX_AUTOMATION_CURVE_SAMPLES, Math.ceil(normalizedDuration * 60))
+  )
+}
+
+function collectAutomationLaneCheckpointTimes(lane, { sourceSampleRate, tickSize }) {
+  const points = getSortedAutomationPoints(lane?.points ?? [])
+  const checkpointTimes = new Set()
+
+  for (let index = 0; index < points.length; index += 1) {
+    const currentPoint = points[index]
+
+    if (index > 0) {
+      checkpointTimes.add(currentPoint.time)
+    }
+
+    const nextPoint = points[index + 1]
+
+    if (!nextPoint || nextPoint.time <= currentPoint.time) {
+      continue
+    }
+
+    const curve = normalizeAutomationCurveType(currentPoint.curve)
+
+    if (curve === AUTOMATION_CURVE_LINEAR) {
+      continue
+    }
+
+    const segmentDurationSeconds = ticksToSeconds(
+      nextPoint.time - currentPoint.time,
+      tickSize,
+      sourceSampleRate
+    )
+    const sampleCount = getAutomationCurveSampleCount(segmentDurationSeconds)
+
+    for (let step = 1; step < sampleCount; step += 1) {
+      checkpointTimes.add(
+        currentPoint.time + ((nextPoint.time - currentPoint.time) * step) / sampleCount
+      )
+    }
+  }
+
+  return [...checkpointTimes].sort((leftTime, rightTime) => leftTime - rightTime)
 }
 
 function getOfflineAudioEffectAutomationTarget(node, effectType, paramKey) {
