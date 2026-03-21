@@ -116,7 +116,7 @@ import { DEFAULT_FORMULA_DROP_DURATION } from '@/services/timelineService'
 import { useDawStore } from '@/stores/dawStore'
 import { ticksToPixels } from '@/utils/timeUtils'
 
-defineProps({
+const props = defineProps({
   collapsed: {
     type: Boolean,
     default: false
@@ -127,7 +127,7 @@ defineProps({
   }
 })
 
-const emit = defineEmits(['toggle-collapse'])
+const emit = defineEmits(['formula-drag-start', 'toggle-collapse'])
 
 const dawStore = useDawStore()
 const { formulas, pixelsPerTick, selectedFormulaId } = storeToRefs(dawStore)
@@ -172,6 +172,10 @@ function handleDragStart(event, formulaId) {
     requestAnimationFrame(() => {
       dragImage.remove()
     })
+  }
+
+  if (!props.showCollapseToggle) {
+    emit('formula-drag-start')
   }
 }
 

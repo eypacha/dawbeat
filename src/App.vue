@@ -49,7 +49,12 @@
       :show-backdrop="false"
       @close="closeAuxiliaryDrawer"
     >
-      <FormulaLibrary :collapsed="false" :show-collapse-toggle="false" @toggle-collapse="closeAuxiliaryDrawer" />
+      <FormulaLibrary
+        :collapsed="false"
+        :show-collapse-toggle="false"
+        @formula-drag-start="handleTabletLibraryFormulaDragStart"
+        @toggle-collapse="closeAuxiliaryDrawer"
+      />
     </SideDrawer>
 
     <SideDrawer
@@ -373,6 +378,16 @@ function toggleAuxiliaryDrawer(drawer) {
   }
 
   activeAuxiliaryDrawer.value = activeAuxiliaryDrawer.value === drawer ? null : drawer
+}
+
+function handleTabletLibraryFormulaDragStart() {
+  if (!isCompactLayout.value || activeAuxiliaryDrawer.value !== 'library') {
+    return
+  }
+
+  window.requestAnimationFrame(() => {
+    closeAuxiliaryDrawer()
+  })
 }
 
 function handleKeydown(event) {
