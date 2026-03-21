@@ -2,27 +2,24 @@
   <section class="automation-companion-view min-h-screen px-4 py-6 text-zinc-100">
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-5">
       <header class="border border-white/10 bg-zinc-950/75 p-5 shadow-[0_30px_80px_rgba(0,0,0,0.35)] backdrop-blur">
-        <div class="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p class="text-[10px] uppercase tracking-[0.34em] text-emerald-300/70">DawBeat Companion</p>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <span
+              class="h-3 w-3 border"
+              :class="statusDotClassName"
+              :title="statusLabel"
+            />
+            <h1 class="text-xl text-zinc-50">DawBeat Companion</h1>
           </div>
 
-          <div class="border border-zinc-800 bg-black/35 px-4 py-3 text-right">
-            <p class="text-[10px] uppercase tracking-[0.3em] text-zinc-500">Status</p>
-            <p class="mt-2 text-sm text-zinc-100">{{ statusLabel }}</p>
-            <p class="mt-2 max-w-[16rem] break-all text-[11px] leading-5 text-zinc-400">
-              {{ hostPeerLabel }}
-            </p>
+          <div class="flex flex-wrap gap-2">
+            <Button variant="ghost" @click="reconnectAutomationCompanionClient">
+              Reconnect
+            </Button>
+            <Button variant="ghost" @click="clearAutomationCompanionSession">
+              Forget Session
+            </Button>
           </div>
-        </div>
-
-        <div class="mt-5 flex flex-wrap gap-2">
-          <Button variant="ghost" @click="reconnectAutomationCompanionClient">
-            Reconnect
-          </Button>
-          <Button variant="ghost" @click="clearAutomationCompanionSession">
-            Forget Session
-          </Button>
         </div>
 
         <div
@@ -47,11 +44,7 @@
           class="border border-white/10 bg-zinc-950/75 p-5 shadow-[0_20px_70px_rgba(0,0,0,0.25)] backdrop-blur"
         >
           <div class="flex items-start justify-between gap-3">
-            <div>
-              <p class="text-[10px] uppercase tracking-[0.3em] text-zinc-500">Automation</p>
-              <h2 class="mt-2 text-2xl text-zinc-50">{{ lane.label }}</h2>
-              <p class="mt-2 break-all text-[11px] leading-5 text-zinc-400">{{ lane.laneId }}</p>
-            </div>
+            <h2 class="text-2xl text-zinc-50">{{ lane.label }}</h2>
 
             <Button size="sm" variant="ghost" @click="removeAutomationCompanionLane(lane.laneId)">
               Remove
@@ -60,14 +53,11 @@
 
           <div class="mt-6 border border-zinc-800 bg-black/30 p-4">
             <div class="flex items-end justify-between gap-3">
-              <div>
-                <p class="text-[10px] uppercase tracking-[0.3em] text-zinc-500">Value</p>
-                <p class="mt-2 text-4xl text-zinc-50">{{ formatLaneValue(lane.value) }}</p>
-              </div>
+              <p class="text-4xl text-zinc-50">{{ formatLaneValue(lane.value) }}</p>
 
               <div class="text-right text-[11px] leading-5 text-zinc-400">
-                <p>{{ formatLaneValue(lane.min) }} min</p>
-                <p>{{ formatLaneValue(lane.max) }} max</p>
+                <p>{{ formatLaneValue(lane.min) }}</p>
+                <p>{{ formatLaneValue(lane.max) }}</p>
               </div>
             </div>
 
@@ -88,9 +78,6 @@
               />
             </div>
 
-            <div v-if="!lane.available" class="mt-4 text-xs leading-5 text-amber-200/80">
-              Waiting for this lane configuration from the host.
-            </div>
           </div>
         </article>
       </div>
@@ -131,11 +118,21 @@ const statusLabel = computed(() => {
   return 'Idle'
 })
 
-const hostPeerLabel = computed(() =>
-  clientState.hostPeerId
-    ? `Host ${clientState.hostPeerId}`
-    : 'Scan a QR from DawBeat to start a session.'
-)
+const statusDotClassName = computed(() => {
+  if (clientState.status === 'connecting') {
+    return 'border-amber-300 bg-amber-400/80'
+  }
+
+  if (clientState.connected) {
+    return 'border-emerald-200 bg-emerald-400/90'
+  }
+
+  if (clientState.status === 'error') {
+    return 'border-red-200 bg-red-400/90'
+  }
+
+  return 'border-zinc-500 bg-zinc-700'
+})
 
 function handleLaneGestureStart(laneId) {
   if (activeGestureLaneIds.has(laneId)) {
