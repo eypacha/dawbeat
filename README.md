@@ -1,69 +1,69 @@
 # DawBeat
 
-DAW experimental para componer formulas bytebeat sobre un timeline con reproduccion real en navegador.
+Experimental DAW for composing bytebeat formulas on a timeline with real browser playback.
 
-La app ya no es una maqueta de clips de formula solamente. Hoy integra playback bytebeat, formula tracks, variable tracks, value tracker tracks, automation lanes, libreria, efectos, persistencia y export offline.
+The app is no longer just a mockup of formula clips. It now integrates bytebeat playback, formula tracks, variable tracks, value tracker tracks, automation lanes, a library, effects, persistence, and offline export.
 
-## Estado actual
+## Current Status
 
-Implementado hoy:
+Implemented today:
 
-- pantalla inicial para desbloquear audio antes de entrar a la app
-- reproduccion real con Web Audio + `public/vendors/ByteBeat.js`
-- toolbar con `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, settings, cambio de `sampleRate`, BPM editable, calculo de BPM basado en una unidad tipo `t >> 4` y badge/lock de `MIDI Clock`
-- scrub del playhead desde ruler y desde el playhead
-- zoom horizontal con `Ctrl/Cmd + wheel`
-- auto-scroll del timeline durante playback
-- timeline con:
-  - tracks de formula
+- start screen to unlock audio before entering the app
+- real playback with Web Audio + `public/vendors/ByteBeat.js`
+- toolbar with `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, settings, `sampleRate` editing, editable BPM, BPM calculation based on a unit like `t >> 4`, and `MIDI Clock` badge/lock state
+- playhead scrubbing from the ruler and from the playhead itself
+- horizontal zoom with `Ctrl/Cmd + wheel`
+- timeline auto-scroll during playback
+- timeline with:
+  - formula tracks
   - variable tracks
   - value tracker tracks
   - automation lanes
-  - loop region editable
-- resize vertical de formula tracks, variable tracks, value tracker tracks y automation lanes
-- creacion de clips por drag sobre lanes vacios
-- mover clips dentro del lane y entre tracks compatibles
-- resize de inicio y fin de clip
-- duplicado con `Alt/Option + drag`
-- bypass temporal de snap con `Shift + drag`
-- seleccion multiple por marquee con `Shift + drag`
-- mover y duplicar grupos de clips seleccionados
-- copy/paste de clips al playhead
-- nudge de clips seleccionados con flechas izquierda/derecha
-- undo/redo con historial en store
-- reorder y duplicado de tracks
-- rename, color, mute, solo y borrado de tracks
-- operador de union por track (`|`, `+`, `-`, `*`, `<<`, `>>`, `&`, `^`, `%`)
-- libreria de formulas funcional con alta, seleccion, edicion, borrado y drag and drop
-- clips con formula inline o referencia a `formulaId`
-- edicion de formulas por dialogo para clips, formulas de libreria y variable clips
-- editor hex para value tracker clips
-- dialogo de binding para value trackers con `keyboard`, `variable`, `midiCc` y `midiNote`, incluido MIDI Learn
-- `MIDI Clock receive` opcional desde un input MIDI seleccionado, con BPM/hz efectivos en runtime y transporte esclavo (`Start`, `Continue`, `Stop`)
-- grabacion de value tracker clips desde transport con preview en lane y auto-creacion opcional de track destino
-- inicializacion de variables faltantes desde el editor de formulas
-- conversion de inicializadores numericos a value tracker desde el editor de formulas
-- panel opcional de expresion evaluada en tiempo real
-- copia de formulas evaluadas desde el footer para `Channel`, `Left Channel` y `Right Channel`
-- preview waveform opcional por clip
+  - editable loop region
+- vertical resizing for formula tracks, variable tracks, value tracker tracks, and automation lanes
+- clip creation by dragging over empty lanes
+- moving clips within a lane and across compatible tracks
+- clip start/end resize
+- duplication with `Alt/Option + drag`
+- temporary snap bypass with `Shift + drag`
+- marquee multi-selection with `Shift + drag`
+- moving and duplicating groups of selected clips
+- copy/paste of clips at the playhead
+- nudging selected clips with left/right arrows
+- undo/redo with store history
+- track reorder and duplication
+- track rename, color, mute, solo, and delete
+- per-track union operator (`|`, `+`, `-`, `*`, `<<`, `>>`, `&`, `^`, `%`)
+- fully working formula library with create, select, edit, delete, and drag and drop
+- clips with inline formula or `formulaId` reference
+- formula editing via dialog for clips, library formulas, and variable clips
+- hex editor for value tracker clips
+- binding dialog for value trackers with `keyboard`, `variable`, `midiCc`, and `midiNote`, including MIDI Learn
+- optional `MIDI Clock receive` from a selected MIDI input, with runtime effective BPM/hz and slave transport (`Start`, `Continue`, `Stop`)
+- value tracker clip recording from transport with lane preview and optional auto-creation of the destination track
+- initialization of missing variables from the formula editor
+- conversion of numeric initializers into value trackers from the formula editor
+- optional real-time evaluated expression panel
+- copy of evaluated formulas from the footer for `Channel`, `Left Channel`, and `Right Channel`
+- optional waveform preview per clip
 - formula effects: `Stereo Offset`, `T Replacement`
-- capa de formula effects dentro del visualizador de `Master Gain`, renderizada con `ByteBeat.js#getSamplesForTimeRange(...)`
-- audio effects expuestos hoy: `EQ3`, `Distortion`, `Stereo Widener`, `Feedback Delay`, `Compressor`, `Limiter`, `Reverb` y `Master Gain`
-- automation lanes para `masterGain` y parametros de audio effects
-- visualizador del audio final dentro de la card `Master Gain`
-- automation curves por segmento con opciones `Straight`, `Ease In`, `Ease Out` y `Ease In-Out` (`Ease In-Out` por defecto)
-- persistencia automatica en `localStorage`
-- import/export de proyecto JSON
-- export WAV offline
-- layout desktop completo, layout compacto con drawers laterales para Library/Effects y placeholder mobile actual
+- formula effects layer inside the `Master Gain` visualizer, rendered with `ByteBeat.js#getSamplesForTimeRange(...)`
+- currently exposed audio effects: `EQ3`, `Distortion`, `Stereo Widener`, `Feedback Delay`, `Compressor`, `Limiter`, `Reverb`, and `Master Gain`
+- automation lanes for `masterGain` and audio effect parameters
+- final audio visualizer inside the `Master Gain` card
+- per-segment automation curves with `Straight`, `Ease In`, `Ease Out`, and `Ease In-Out` (`Ease In-Out` by default)
+- automatic persistence in `localStorage`
+- JSON project import/export
+- offline WAV export
+- full desktop layout, compact layout with side drawers for Library/Effects, and the current mobile placeholder
 
-## Acotaciones importantes
+## Important Notes
 
-- el timeline ya no es solo de clips de formula; `variableTracks` y `valueTrackerTracks` participan en la expresion activa
-- los bindings de value tracker modelan `keyboard`, `variable`, `midiCc` y `midiNote`; hoy estan cableados el keyboard override por target seleccionado, la resolucion por binding `variable` y la entrada MIDI CC/Note via `midiInputService`
-- el tipo de binding `keyboard` sigue dependiendo del target seleccionado; no enruta por binding dedicado como si lo hacen `midiCc` y `midiNote`
-- playback en vivo y export offline soportan audio effects y automatizacion, pero siguen siendo caminos internos separados; si tocas audio o export, hay que verificar ambos
-- el repo contiene algunos archivos que no necesariamente representan features expuestas en la UI actual; para el estado real, tomar como fuente `EffectsPanel.vue`, `dawStore.js` y `projectPersistence.js`
+- the timeline is no longer only about formula clips; `variableTracks` and `valueTrackerTracks` participate in the active expression
+- value tracker bindings model `keyboard`, `variable`, `midiCc`, and `midiNote`; today the wired paths are keyboard override for the selected target, `variable` binding resolution, and MIDI CC/Note input through `midiInputService`
+- the `keyboard` binding type still depends on the selected target; it does not route through a dedicated binding path the way `midiCc` and `midiNote` do
+- live playback and offline export both support audio effects and automation, but they are still separate internal paths; if you touch audio or export, verify both
+- the repo contains some files that do not necessarily represent features currently exposed in the UI; for the real state, use `EffectsPanel.vue`, `dawStore.js`, and `projectPersistence.js` as source of truth
 
 ## Stack
 
@@ -72,103 +72,103 @@ Implementado hoy:
 - Tailwind CSS 4
 - Pinia
 - Web Audio API
-- Tone.js para parte del render offline
+- Tone.js for part of the offline render path
 - `public/vendors/ByteBeat.js`
 - `lucide-vue-next`
 
-## Como correrlo
+## Running It
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-Build de produccion:
+Production build:
 
 ```bash
 pnpm build
 ```
 
-Preview local:
+Local preview:
 
 ```bash
 pnpm preview
 ```
 
-## Interacciones actuales
+## Current Interactions
 
-- `Click` sobre formula clip: selecciona clip
-- `Double click` sobre formula clip: abre edicion de formula del clip
-- `Double click` sobre variable clip: abre edicion de formula de variable
-- `Double click` sobre value tracker clip: abre el editor hex del clip
-- `Drag` sobre formula clip: mueve con snap activo
-- `Shift + drag` sobre clip: mueve sin snap
-- `Alt/Option + drag` sobre clip: duplica al soltar
-- `Drag` entre tracks compatibles: mueve el clip al lane destino
-- `Drag` sobre handles laterales: resize
-- `Shift + drag` durante resize: resize sin snap
-- `Shift + drag` sobre un area vacia del timeline: seleccion multiple por marquee
-- `Drag` en espacio vacio de un lane: crea clip del tipo de ese lane
-- `Drag` de una formula desde Library al lane: crea clip referenciando esa formula
-- `Drag` de una formula desde Library a un clip: reasigna la formula del clip
-- `Drag` del header del track: reordena tracks
-- `Click` en Library: selecciona formula
-- `Double click` en Library: abre edicion de formula de libreria
-- `Click` en automation lane: crea automation point
-- `Drag` de automation point: mueve el punto
-- `Context menu` en automation point: cambia la curva del segmento siguiente o elimina el punto
-- `Context menu` en header de value tracker: rename, delete o edit binding
-- `Click` en el boton de keyboard target de un value tracker: arma/desarma el track para keyboard override
-- `Settings > MIDI input`: habilita/refresca Web MIDI, muestra mensajes recientes y permite configurar `MIDI Clock receive`
-- `Settings`: usa tabs; `MIDI` vive como tab dedicada con inputs, clock y debug
-- `Record`: inicia/finaliza grabacion de value tracker sobre el target activo; si no hay target, puede auto-crear uno
-- editar `BPM`: recalcula `sampleRate` para la unidad actual (`t >> n` o `t / n`)
-- editar la unidad BPM (`t >> n` o `t / n`): recalcula el BPM manteniendo `sampleRate`
-- con `MIDI Clock` lockeado: `BPM`, unidad y `hz` pasan a solo lectura y muestran los valores efectivos externos
-- `0-9` y `A-F`: envian live input al value tracker activo para keyboard override
+- `Click` on formula clip: selects the clip
+- `Double click` on formula clip: opens formula editing for that clip
+- `Double click` on variable clip: opens variable formula editing
+- `Double click` on value tracker clip: opens the clip hex editor
+- `Drag` on formula clip: moves it with snap enabled
+- `Shift + drag` on clip: moves it without snap
+- `Alt/Option + drag` on clip: duplicates on drop
+- `Drag` across compatible tracks: moves the clip to the destination lane
+- `Drag` on side handles: resize
+- `Shift + drag` during resize: resize without snap
+- `Shift + drag` on an empty timeline area: marquee multi-selection
+- `Drag` on empty space in a lane: creates a clip of that lane type
+- `Drag` a formula from Library to a lane: creates a clip referencing that formula
+- `Drag` a formula from Library to a clip: reassigns the clip formula
+- `Drag` the track header: reorders tracks
+- `Click` in Library: selects a formula
+- `Double click` in Library: opens library formula editing
+- `Click` on automation lane: creates an automation point
+- `Drag` an automation point: moves the point
+- `Context menu` on automation point: changes the following segment curve or removes the point
+- `Context menu` on value tracker header: rename, delete, or edit binding
+- `Click` on the keyboard target button of a value tracker: arms/disarms the track for keyboard override
+- `Settings > MIDI input`: enables/refreshes Web MIDI, shows recent messages, and allows configuring `MIDI Clock receive`
+- `Settings`: uses tabs; `MIDI` lives as a dedicated tab with inputs, clock, and debug
+- `Record`: starts/ends value tracker recording on the active target; if there is no target, it can auto-create one
+- editing `BPM`: recalculates `sampleRate` for the current unit (`t >> n` or `t / n`)
+- editing the BPM unit (`t >> n` or `t / n`): recalculates BPM while keeping `sampleRate`
+- with `MIDI Clock` locked: `BPM`, unit, and `hz` become read-only and show the effective external values
+- `0-9` and `A-F`: send live input to the active value tracker for keyboard override
 - `Space`: play/pause
 - `L`: toggle loop
-- `Cmd/Ctrl + C`: copia clips seleccionados
-- `Cmd/Ctrl + V`: pega clips en el playhead
+- `Cmd/Ctrl + C`: copy selected clips
+- `Cmd/Ctrl + V`: paste clips at the playhead
 - `Cmd/Ctrl + Z`: undo
-- `Cmd/Ctrl + Shift + Z` o `Ctrl + Y`: redo
-- `ArrowLeft` / `ArrowRight`: nudge de clips seleccionados
-- `Delete` o `Backspace`: borra clip(s) seleccionados o automation point seleccionado
-- `Esc`: limpia seleccion cuando no hay un editor abierto
+- `Cmd/Ctrl + Shift + Z` or `Ctrl + Y`: redo
+- `ArrowLeft` / `ArrowRight`: nudge selected clips
+- `Delete` or `Backspace`: delete selected clip(s) or the selected automation point
+- `Esc`: clears selection when no editor is open
 
-## Reglas de playback
+## Playback Rules
 
-- el snap a grid esta activo por defecto
-- `Shift` desactiva el snap solo durante el gesto actual
-- `Alt/Option` confirma la duplicacion en `pointerup`
-- los tracks muteados no participan en la expresion activa
-- si existe al menos un track en solo, solo los tracks `soloed` participan en la expresion activa
-- `timelineEngine` combina los clips activos audibles usando el `unionOperator` de cada track
-- despues prependea definiciones activas provenientes de `variableTracks` y `valueTrackerTracks`
-- `formulaService` resuelve clips inline y clips referenciados antes de aplicar eval effects
-- el panel evaluado muestra la expresion efectiva que llega al playback tras aplicar eval effects
-- `valueTrackerLiveInputs` permite live override de value trackers durante playback o scrub
-- durante recording, el input keyboard/MIDI puede capturarse a `valueTrackerRecordingSession` y consolidarse como clip al finalizar
+- snap to grid is enabled by default
+- `Shift` disables snap only during the current gesture
+- `Alt/Option` confirms duplication on `pointerup`
+- muted tracks do not participate in the active expression
+- if at least one track is soloed, only `soloed` tracks participate in the active expression
+- `timelineEngine` combines active audible clips using each track’s `unionOperator`
+- then it prepends active definitions coming from `variableTracks` and `valueTrackerTracks`
+- `formulaService` resolves inline and referenced clips before applying eval effects
+- the evaluated panel shows the effective expression that reaches playback after eval effects are applied
+- `valueTrackerLiveInputs` allows live value tracker override during playback or scrub
+- during recording, keyboard/MIDI input can be captured into `valueTrackerRecordingSession` and consolidated as a clip when recording ends
 
-## Formula editor, variables y value trackers
+## Formula Editor, Variables, and Value Trackers
 
-- `FormulaInputDialog` valida y resalta tokens de formula
-- si una formula usa variables faltantes, el dialog puede inicializarlas
-- un inicializador de texto crea un `variableTrack`
-- un inicializador numerico puede convertirse a `valueTrackerTrack` con binding `variable`
-- los value tracker clips editan una grilla hex por pasos con estados `SET`, `HOLD` y `EMPTY`
-- `ValueTrackerBindingDialog` permite editar binding, elegir dispositivo/canal/controlador/nota y usar MIDI Learn
-- `SettingsModal` expone enable/refresh de MIDI y debug de inputs/mensajes recientes
-- el panel evaluado y el playback usan el resultado combinado de tracks, variables y value trackers segun el tiempo actual
+- `FormulaInputDialog` validates and highlights formula tokens
+- if a formula uses missing variables, the dialog can initialize them
+- a text initializer creates a `variableTrack`
+- a numeric initializer can be converted into a `valueTrackerTrack` with `variable` binding
+- value tracker clips edit a per-step hex grid with `SET`, `HOLD`, and `EMPTY` states
+- `ValueTrackerBindingDialog` allows editing the binding, choosing device/channel/controller/note, and using MIDI Learn
+- `SettingsModal` exposes MIDI enable/refresh and debug for inputs/recent messages
+- the evaluated panel and playback use the combined result of tracks, variables, and value trackers according to the current time
 
-## Efectos y automatizacion
+## Effects and Automation
 
-Eval effects actuales:
+Current eval effects:
 
 - `Stereo Offset`
 - `T Replacement`
 
-Audio effects actuales expuestos:
+Currently exposed audio effects:
 
 - `EQ3`
 - `Distortion`
@@ -179,27 +179,27 @@ Audio effects actuales expuestos:
 - `Reverb`
 - `Master Gain`
 
-Automatizacion actual:
+Current automation:
 
-- lane de `masterGain`
-- lanes por parametro de audio effect
-- curvas por segmento en automation points: `Straight`, `Ease In`, `Ease Out`, `Ease In-Out` (`Ease In-Out` por defecto)
+- `masterGain` lane
+- per-audio-effect-parameter lanes
+- per-segment curves on automation points: `Straight`, `Ease In`, `Ease Out`, `Ease In-Out` (`Ease In-Out` by default)
 
-El playback en vivo resuelve automatizacion por tiempo.
-El export offline renderiza timeline, eval effects, master gain, audio effects compatibles y automatizacion offline del proyecto actual.
+Live playback resolves automation by time.
+Offline export renders the timeline, eval effects, master gain, supported audio effects, and offline automation for the current project.
 
-## Persistencia
+## Persistence
 
-- al iniciar, la app intenta cargar el proyecto guardado en `localStorage`
-- si no existe uno guardado, parte de `src/data/demo.json`
-- `projectPersistence` normaliza proyectos importados y serializa el estado persistible
-- el proyecto actual serializa `version: 14`
-- se persisten `tracks`, `variableTracks`, `valueTrackerTracks`, `formulas`, `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`, `bpmMeasure`, `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate`, `tickSize`, `showClipWaveforms` y `showEvaluatedPanel`, incluyendo `height` dentro de tracks y lanes
-- `MIDI Clock receive` no se serializa en el proyecto y no escribe `sampleRate` persistido; solo aplica un override runtime del motor en vivo
-- desde la toolbar se puede crear proyecto vacio, abrir JSON, guardar JSON y exportar WAV
-- desde Settings se puede resetear el storage local, togglear waveform/evaluated panel e inspeccionar MIDI
+- on startup, the app tries to load the project saved in `localStorage`
+- if none exists, it starts from `src/data/demo.json`
+- `projectPersistence` normalizes imported projects and serializes the persistable state
+- the current project serializes `version: 14`
+- persisted fields include `tracks`, `variableTracks`, `valueTrackerTracks`, `formulas`, `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`, `bpmMeasure`, `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate`, `tickSize`, `showClipWaveforms`, and `showEvaluatedPanel`, including `height` inside tracks and lanes
+- `MIDI Clock receive` is not serialized into the project and does not write persisted `sampleRate`; it only applies a runtime override to the live engine
+- from the toolbar you can create an empty project, open JSON, save JSON, and export WAV
+- from Settings you can reset local storage, toggle waveform/evaluated panel, and inspect MIDI
 
-## Estructura actual
+## Current Structure
 
 ```text
 src/
@@ -306,7 +306,7 @@ src/
     timeUtils.js
 ```
 
-## Arquitectura actual
+## Current Architecture
 
 ```text
 UI
@@ -322,21 +322,21 @@ Bytebeat Service / Export / Persistence
 Web Audio / Tone Offline / File APIs / localStorage
 ```
 
-Notas practicas:
+Practical notes:
 
-- `timelineEngine` decide la expresion activa segun tiempo, tracks audibles, variables activas y value trackers activos
-- `formulaService` resuelve nombre y codigo tanto para clips inline como referenciados
-- `variableTrackService` y `valueTrackerService` participan en la resolucion de definiciones prependidas a la formula activa
-- `automationService` resuelve `masterGain` y parametros de audio effects por tiempo
-- `timelineLaneLayoutService` normaliza alturas persistibles por lane
-- `valueTrackerInputService` y `midiInputService` centralizan el ingreso de keyboard/MIDI hacia el store
-- `bytebeatService` controla audio en vivo, sample rate, master gain y cadena de audio en tiempo real
-- `exportService` usa un camino offline separado con Tone.js para renderizar el WAV
-- `projectPersistence` normaliza, versiona y serializa proyectos
+- `timelineEngine` decides the active expression based on time, audible tracks, active variables, and active value trackers
+- `formulaService` resolves name and code for both inline and referenced clips
+- `variableTrackService` and `valueTrackerService` participate in resolving definitions prepended to the active formula
+- `automationService` resolves `masterGain` and audio effect parameters by time
+- `timelineLaneLayoutService` normalizes persistable lane heights
+- `valueTrackerInputService` and `midiInputService` centralize keyboard/MIDI input into the store
+- `bytebeatService` controls live audio, sample rate, master gain, and the real-time audio chain
+- `exportService` uses a separate offline Tone.js path to render WAV
+- `projectPersistence` normalizes, versions, and serializes projects
 
-## Modelos principales
+## Main Models
 
-Track de formula:
+Formula track:
 
 ```js
 {
@@ -351,14 +351,14 @@ Track de formula:
 }
 ```
 
-Clip de formula:
+Formula clip:
 
 ```js
 {
   id: "clip-id",
-  formula: "t*(t>>5|t>>8)", // opcional si no referencia libreria
-  formulaId: "formula-id",  // opcional
-  formulaName: "Bass",      // opcional
+  formula: "t*(t>>5|t>>8)", // optional if not referencing the library
+  formulaId: "formula-id",  // optional
+  formulaName: "Bass",      // optional
   start: 0,
   duration: 4
 }
@@ -432,9 +432,9 @@ Automation lane:
 {
   id: "masterGain" || "audioEffect:<effectId>:<paramKey>",
   type: "masterGain" || "audioEffectParam",
-  effectId: "audio-effect-id",   // solo para audioEffectParam
-  effectType: "delay",           // solo para audioEffectParam
-  paramKey: "wet",               // solo para audioEffectParam
+  effectId: "audio-effect-id",   // only for audioEffectParam
+  effectType: "delay",           // only for audioEffectParam
+  paramKey: "wet",               // only for audioEffectParam
   height: 52,
   points: [{ time: 0, value: 1 }]
 }
