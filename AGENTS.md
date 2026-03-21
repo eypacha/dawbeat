@@ -17,7 +17,7 @@ Hoy existen:
 
 - pantalla inicial para desbloquear audio antes de entrar a la app
 - reproduccion bytebeat real en navegador con Web Audio + vendor `ByteBeat.js`
-- toolbar con `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, cambio de `sampleRate`, BPM derivado de una unidad tipo `t >> 4` y settings
+- toolbar con `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, cambio de `sampleRate`, BPM editable, BPM derivado de una unidad tipo `t >> 4` y settings
 - scrub del playhead desde ruler y desde el playhead
 - zoom horizontal con `Ctrl/Cmd + wheel`
 - auto-scroll del timeline durante playback
@@ -138,6 +138,12 @@ Hoy tambien se persisten flags de UI como:
 
 - `showClipWaveforms`
 - `showEvaluatedPanel`
+
+No asumir que el BPM en toolbar es solo lectura.
+Hoy el flujo real es:
+
+- editar `bpmMeasure` (`t >> n` o `t / n`) recalcula el BPM mostrado y mantiene `sampleRate`
+- editar el valor numerico de BPM recalcula `sampleRate` para esa unidad
 
 ## Objetivo actual
 

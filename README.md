@@ -10,7 +10,7 @@ Implementado hoy:
 
 - pantalla inicial para desbloquear audio antes de entrar a la app
 - reproduccion real con Web Audio + `public/vendors/ByteBeat.js`
-- toolbar con `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, settings, cambio de `sampleRate` y calculo de BPM basado en una unidad tipo `t >> 4`
+- toolbar con `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, settings, cambio de `sampleRate`, BPM editable y calculo de BPM basado en una unidad tipo `t >> 4`
 - scrub del playhead desde ruler y desde el playhead
 - zoom horizontal con `Ctrl/Cmd + wheel`
 - auto-scroll del timeline durante playback
@@ -120,6 +120,8 @@ pnpm preview
 - `Click` en el boton de keyboard target de un value tracker: arma/desarma el track para keyboard override
 - `Settings > MIDI input`: habilita/refresca Web MIDI y muestra mensajes recientes
 - `Record`: inicia/finaliza grabacion de value tracker sobre el target activo; si no hay target, puede auto-crear uno
+- editar `BPM`: recalcula `sampleRate` para la unidad actual (`t >> n` o `t / n`)
+- editar la unidad BPM (`t >> n` o `t / n`): recalcula el BPM manteniendo `sampleRate`
 - `0-9` y `A-F`: envian live input al value tracker activo para keyboard override
 - `Space`: play/pause
 - `L`: toggle loop
