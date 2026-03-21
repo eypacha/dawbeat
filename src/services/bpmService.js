@@ -75,6 +75,17 @@ export function getBpmFromSampleRate(sampleRate, measureExpression = DEFAULT_BPM
   return (normalizedSampleRate * 60) / parsedExpression.cycleSamples
 }
 
+export function getSampleRateFromBpm(bpmValue, measureExpression = DEFAULT_BPM_MEASURE) {
+  const parsedExpression = parseBpmMeasureExpression(measureExpression)
+  const normalizedBpmValue = Number(bpmValue)
+
+  if (!parsedExpression || !Number.isFinite(normalizedBpmValue) || normalizedBpmValue <= 0) {
+    return null
+  }
+
+  return (normalizedBpmValue * parsedExpression.cycleSamples) / 60
+}
+
 export function formatBpmValue(value) {
   const normalizedValue = Number(value)
 
