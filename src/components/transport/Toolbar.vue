@@ -57,7 +57,7 @@
         </div>
       </div>
 
-      <div class="flex shrink-0 items-center justify-center gap-2 text-xs text-zinc-400">
+      <div :class="transportControlsGroupClassName">
         <IconButton
           :class="isValueTrackerRecording ? 'border-rose-400/70 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25' : 'border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-rose-500/50 hover:text-rose-200'"
           :disabled="recordButtonDisabled"
@@ -298,17 +298,22 @@ const transportDisplayMode = ref('sample')
 const toolbarLayoutClassName = computed(() =>
   props.compactLayout
     ? 'flex flex-wrap items-center justify-between gap-3 px-4 py-3'
-    : 'flex items-center justify-between gap-4 px-4 py-1'
+    : 'grid grid-cols-[max-content_minmax(0,1fr)_max-content_minmax(0,1fr)_max-content] items-center gap-4 px-4 py-1'
 )
 const leftGroupClassName = computed(() =>
   props.compactLayout
     ? 'flex min-w-0 flex-wrap items-center gap-3'
-    : 'flex min-w-0 flex-1 items-center gap-4'
+    : 'col-[1] flex min-w-0 items-center gap-4'
+)
+const transportControlsGroupClassName = computed(() =>
+  props.compactLayout
+    ? 'flex shrink-0 items-center justify-center gap-2 text-xs text-zinc-400'
+    : 'col-[3] flex shrink-0 items-center justify-center gap-2 text-xs text-zinc-400'
 )
 const rightGroupClassName = computed(() =>
   props.compactLayout
     ? 'flex min-w-0 flex-wrap items-center justify-end gap-3'
-    : 'flex min-w-0 flex-1 items-center justify-end gap-4'
+    : 'col-[5] flex min-w-0 items-center justify-end gap-4'
 )
 
 const transportSampleTime = computed(() => {
