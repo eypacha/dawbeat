@@ -213,3 +213,178 @@ export async function renderFormulaWaveform({
 
   return renderQueue
 }
+
+export async function renderFormulaWaveformSegments({
+  segments = [],
+  evalEffects = [],
+  sampleCount = 64,
+  sampleRate = DEFAULT_SAMPLE_RATE
+}) {
+  const normalizedSegments = normalizeWaveformSegments(segments)
+  const normalizedSampleCount = normalizeSampleCount(sampleCount)
+
+  if (!normalizedSegments.length) {
+    return new Float32Array(0)
+  }
+
+  if (normalizedSegments.length === 1) {
+    const [segment] = normalizedSegments
+
+    return renderFormulaWaveform({
+      endSample: segment.endSample,
+      evalEffects,
+      formula: segment.formula,
+      sampleCount: normalizedSampleCount,
+      sampleRate,
+      startSample: segment.startSample
+    })
+  }
+
+  const segmentSampleCounts = getWaveformSegmentSampleCounts(normalizedSegments, normalizedSampleCount)
+  const renderedSegments = []
+
+  for (let index = 0; index < normalizedSegments.length; index += 1) {
+    const segment = normalizedSegments[index]
+    const waveform = await renderFormulaWaveform({
+      endSample: segment.endSample,
+      evalEffects,
+      formula: segment.formula,
+      sampleCount: segmentSampleCounts[index],
+      sampleRate,
+      startSample: segment.startSample
+    })
+
+    renderedSegments.push(waveform)
+  }
+
+  return resampleWaveform(
+    mergeRenderedWaveformSegments(renderedSegments),
+    normalizedSampleCount
+  )
+}
+
+function normalizeWaveformSegments(segments) {
+  if (!Array.isArray(segments)) {
+    return []
+  }
+
+  return segments.flatMap((segment) => {
+    const formula = typeof segment?.formula === 'string' && segment.formula.trim()
+      ? segment.formula
+      : SILENT_FORMULA
+    const startSample = normalizeTimeSample(segment?.startSample)
+    const endSample = Math.max(
+      startSample + 1,
+      normalizeTimeSample(segment?.endSample, startSample + 1)
+    )
+
+    if (endSample <= startSample) {
+      return []
+    }
+
+    return [{
+      endSample,
+      formula,
+      startSample
+    }]
+  })
+}
+
+function getWaveformSegmentSampleCounts(segments, totalSampleCount) {
+  const durations = segments.map((segment) => Math.max(1, segment.endSample - segment.startSample))
+  const totalDuration = durations.reduce((sum, duration) => sum + duration, 0)
+  const allocations = durations.map((duration, index) => {
+    const exactCount = totalDuration > 0
+      ? (duration / totalDuration) * totalSampleCount
+      : totalSampleCount / segments.length
+
+    return {
+      exactCount,
+      fractionalPart: exactCount - Math.floor(exactCount),
+      index,
+      sampleCount: Math.max(1, Math.floor(exactCount))
+    }
+  })
+
+  let allocatedSampleCount = allocations.reduce((sum, allocation) => sum + allocation.sampleCount, 0)
+
+  if (allocatedSampleCount < totalSampleCount) {
+    for (const allocation of [...allocations].sort((left, right) => right.fractionalPart - left.fractionalPart)) {
+      if (allocatedSampleCount >= totalSampleCount) {
+        break
+      }
+
+      allocation.sampleCount += 1
+      allocatedSampleCount += 1
+    }
+  } else if (allocatedSampleCount > totalSampleCount) {
+    for (const allocation of [...allocations].sort((left, right) => left.fractionalPart - right.fractionalPart)) {
+      if (allocatedSampleCount <= totalSampleCount) {
+        break
+      }
+
+      if (allocation.sampleCount <= 1) {
+        continue
+      }
+
+      allocation.sampleCount -= 1
+      allocatedSampleCount -= 1
+    }
+  }
+
+  return allocations
+    .sort((left, right) => left.index - right.index)
+    .map((allocation) => allocation.sampleCount)
+}
+
+function mergeRenderedWaveformSegments(renderedSegments) {
+  const totalLength = renderedSegments.reduce(
+    (sum, waveform) => sum + (waveform?.length ?? 0),
+    0
+  )
+  const mergedWaveform = new Float32Array(totalLength)
+  let writeOffset = 0
+
+  for (const waveform of renderedSegments) {
+    if (!waveform?.length) {
+      continue
+    }
+
+    mergedWaveform.set(waveform, writeOffset)
+    writeOffset += waveform.length
+  }
+
+  return mergedWaveform
+}
+
+function resampleWaveform(waveform, sampleCount) {
+  const normalizedSampleCount = normalizeSampleCount(sampleCount)
+
+  if (!waveform?.length) {
+    return new Float32Array(0)
+  }
+
+  if (waveform.length === normalizedSampleCount) {
+    return waveform
+  }
+
+  if (normalizedSampleCount === 1) {
+    return new Float32Array([waveform[0]])
+  }
+
+  const resampledWaveform = new Float32Array(normalizedSampleCount)
+  const maxSourceIndex = waveform.length - 1
+
+  for (let index = 0; index < normalizedSampleCount; index += 1) {
+    const sourcePosition = (index / (normalizedSampleCount - 1)) * maxSourceIndex
+    const leftIndex = Math.floor(sourcePosition)
+    const rightIndex = Math.min(maxSourceIndex, Math.ceil(sourcePosition))
+    const interpolation = sourcePosition - leftIndex
+    const leftSample = waveform[leftIndex] ?? 0
+    const rightSample = waveform[rightIndex] ?? leftSample
+
+    resampledWaveform[index] = leftSample + (rightSample - leftSample) * interpolation
+  }
+
+  return resampledWaveform
+}

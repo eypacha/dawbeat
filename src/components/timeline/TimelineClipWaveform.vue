@@ -19,8 +19,13 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { renderFormulaWaveform } from '@/services/formulaWaveformService'
-import { getActiveVariableDefinitions, prependVariableDefinitions } from '@/services/variableTrackService'
+import { renderFormulaWaveformSegments } from '@/services/formulaWaveformService'
+import {
+  collectFormulaReferencedVariableNames,
+  getActiveVariableDefinitions,
+  getVariableDefinitionChangeTicksInRange,
+  prependVariableDefinitions
+} from '@/services/variableTrackService'
 import { useDawStore } from '@/stores/dawStore'
 import { ticksToSamples } from '@/utils/timeUtils'
 
@@ -50,7 +55,7 @@ const props = defineProps({
 })
 
 const dawStore = useDawStore()
-const { evalEffects, sampleRate, tickSize, valueTrackerLiveInputs, valueTrackerTracks, variableTracks } = storeToRefs(dawStore)
+const { evalEffects, sampleRate, tickSize, valueTrackerTracks, variableTracks } = storeToRefs(dawStore)
 const waveformSamples = ref(null)
 
 let requestVersion = 0
@@ -59,16 +64,23 @@ const svgWidth = computed(() => Math.max(1, Math.round(props.width)))
 const previewPointCount = computed(() =>
   Math.max(MIN_PREVIEW_POINTS, Math.min(MAX_PREVIEW_POINTS, Math.round(props.width * 1.5)))
 )
-const renderableFormula = computed(() =>
-  prependVariableDefinitions(
+const referencedVariableNames = computed(() =>
+  collectFormulaReferencedVariableNames(
     props.formula,
-    getActiveVariableDefinitions(
-      props.start,
-      variableTracks.value,
-      valueTrackerTracks.value,
-      valueTrackerLiveInputs.value
-    )
-  ) ?? props.formula
+    variableTracks.value,
+    valueTrackerTracks.value
+  )
+)
+const waveformSegments = computed(() =>
+  getRenderableWaveformSegments({
+    duration: props.duration,
+    formula: props.formula,
+    referencedVariableNames: referencedVariableNames.value,
+    start: props.start,
+    tickSize: tickSize.value,
+    valueTrackerTracks: valueTrackerTracks.value,
+    variableTracks: variableTracks.value
+  })
 )
 
 const waveformPath = computed(() => {
@@ -92,31 +104,25 @@ watch(
   () => ({
     duration: props.duration,
     evalEffectsKey: JSON.stringify(evalEffects.value),
-    formula: renderableFormula.value,
+    segmentsKey: JSON.stringify(waveformSegments.value),
     sampleRate: sampleRate.value,
-    start: props.start,
-    tickSize: tickSize.value,
     width: props.width
   }),
-  async ({ duration, formula, sampleRate: nextSampleRate, start, tickSize: nextTickSize, width }) => {
+  async ({ duration, sampleRate: nextSampleRate, width }) => {
     const nextRequestVersion = requestVersion + 1
     requestVersion = nextRequestVersion
 
-    if (!formula.trim() || width < MIN_VISIBLE_WIDTH || duration <= 0) {
+    if (!waveformSegments.value.length || width < MIN_VISIBLE_WIDTH || duration <= 0) {
       waveformSamples.value = null
       return
     }
 
     try {
-      const startSample = ticksToSamples(start, nextTickSize)
-      const endSample = ticksToSamples(start + duration, nextTickSize)
-      const waveform = await renderFormulaWaveform({
-        endSample,
+      const waveform = await renderFormulaWaveformSegments({
         evalEffects: evalEffects.value,
-        formula,
         sampleCount: previewPointCount.value,
         sampleRate: nextSampleRate,
-        startSample
+        segments: waveformSegments.value
       })
 
       if (requestVersion !== nextRequestVersion) {
@@ -138,6 +144,75 @@ watch(
 onBeforeUnmount(() => {
   requestVersion += 1
 })
+
+function getRenderableWaveformSegments({
+  duration,
+  formula,
+  referencedVariableNames,
+  start,
+  tickSize,
+  valueTrackerTracks,
+  variableTracks
+}) {
+  const trimmedFormula = typeof formula === 'string' ? formula.trim() : ''
+  const clipStart = Number(start)
+  const clipDuration = Number(duration)
+  const clipEnd = clipStart + clipDuration
+
+  if (!trimmedFormula || !Number.isFinite(clipStart) || !Number.isFinite(clipDuration) || clipDuration <= 0) {
+    return []
+  }
+
+  const changeTicks = getVariableDefinitionChangeTicksInRange(
+    clipStart,
+    clipEnd,
+    variableTracks,
+    valueTrackerTracks,
+    referencedVariableNames
+  )
+  const boundaries = [clipStart, ...changeTicks, clipEnd]
+  const referencedVariableNameSet = new Set(referencedVariableNames)
+  const segments = []
+
+  for (let index = 0; index < boundaries.length - 1; index += 1) {
+    const segmentStartTick = boundaries[index]
+    const segmentEndTick = boundaries[index + 1]
+
+    if (!(segmentEndTick > segmentStartTick)) {
+      continue
+    }
+
+    const variableDefinitions = getActiveVariableDefinitions(
+      segmentStartTick,
+      variableTracks,
+      valueTrackerTracks,
+      {}
+    ).filter((variableDefinition) =>
+      !referencedVariableNameSet.size || referencedVariableNameSet.has(variableDefinition.name)
+    )
+    const renderableFormula = prependVariableDefinitions(trimmedFormula, variableDefinitions) ?? trimmedFormula
+    const segmentStartSample = ticksToSamples(segmentStartTick, tickSize)
+    const segmentEndSample = ticksToSamples(segmentEndTick, tickSize)
+    const previousSegment = segments[segments.length - 1]
+
+    if (
+      previousSegment &&
+      previousSegment.formula === renderableFormula &&
+      previousSegment.endSample === segmentStartSample
+    ) {
+      previousSegment.endSample = segmentEndSample
+      continue
+    }
+
+    segments.push({
+      endSample: segmentEndSample,
+      formula: renderableFormula,
+      startSample: segmentStartSample
+    })
+  }
+
+  return segments
+}
 </script>
 
 <style scoped>

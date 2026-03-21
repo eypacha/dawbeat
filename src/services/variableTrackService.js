@@ -1,6 +1,7 @@
-import { tokenizeFormula } from '@/utils/formulaTokenizer'
+import { tokenizeFormulaWithOptions } from '@/utils/formulaTokenizer'
 import {
   getBoundValueTrackerVariableNames,
+  getValueTrackerEventTicks,
   getValueTrackerBoundVariableName,
   getValueTrackerValueAtTimeWithLiveInput
 } from '@/services/valueTrackerService'
@@ -52,7 +53,7 @@ export function getFormulaAllowedIdentifiers(variableTracks = [], valueTrackerTr
 export function extractAutoVariableTrackNames(expression = '') {
   const usedNames = new Set()
 
-  for (const token of tokenizeFormula(expression)) {
+  for (const token of tokenizeFormulaWithOptions(expression)) {
     if (!AUTO_VARIABLE_TRACK_NAME_SET.has(token.value) || usedNames.has(token.value)) {
       continue
     }
@@ -73,6 +74,116 @@ export function collectAutoVariableTrackNames(expressions = []) {
   }
 
   return [...usedNames]
+}
+
+export function collectFormulaReferencedVariableNames(
+  expression = '',
+  variableTracks = [],
+  valueTrackerTracks = []
+) {
+  const allowedIdentifiers = getFormulaAllowedIdentifiers(variableTracks, valueTrackerTracks)
+  const variableTrackByName = new Map(
+    (Array.isArray(variableTracks) ? variableTracks : [])
+      .filter((variableTrack) => typeof variableTrack?.name === 'string' && variableTrack.name)
+      .map((variableTrack) => [variableTrack.name, variableTrack])
+  )
+  const boundValueTrackerNames = new Set(getBoundValueTrackerVariableNames(valueTrackerTracks))
+  const pendingNames = [...getExpressionReferencedVariableNames(expression, allowedIdentifiers)]
+  const referencedNames = new Set()
+
+  while (pendingNames.length) {
+    const variableName = pendingNames.pop()
+
+    if (referencedNames.has(variableName)) {
+      continue
+    }
+
+    referencedNames.add(variableName)
+
+    const variableTrack = variableTrackByName.get(variableName)
+
+    if (!variableTrack) {
+      continue
+    }
+
+    for (const clip of variableTrack.clips ?? []) {
+      for (const nextVariableName of getExpressionReferencedVariableNames(
+        resolveVariableClipFormula(clip),
+        allowedIdentifiers
+      )) {
+        if (!referencedNames.has(nextVariableName)) {
+          pendingNames.push(nextVariableName)
+        }
+      }
+    }
+  }
+
+  return [...referencedNames].filter((variableName) =>
+    variableTrackByName.has(variableName) || boundValueTrackerNames.has(variableName)
+  )
+}
+
+export function getVariableDefinitionChangeTicksInRange(
+  startTick,
+  endTick,
+  variableTracks = [],
+  valueTrackerTracks = [],
+  variableNames = []
+) {
+  const normalizedStartTick = Number(startTick)
+  const normalizedEndTick = Number(endTick)
+
+  if (
+    !Number.isFinite(normalizedStartTick) ||
+    !Number.isFinite(normalizedEndTick) ||
+    normalizedEndTick <= normalizedStartTick
+  ) {
+    return []
+  }
+
+  const trackedVariableNames = new Set(
+    (Array.isArray(variableNames) ? variableNames : []).filter(
+      (variableName) => typeof variableName === 'string' && variableName
+    )
+  )
+
+  if (!trackedVariableNames.size) {
+    return []
+  }
+
+  const changeTicks = new Set()
+
+  for (const variableTrack of variableTracks ?? []) {
+    if (!trackedVariableNames.has(variableTrack?.name)) {
+      continue
+    }
+
+    for (const clip of variableTrack.clips ?? []) {
+      const clipStart = Number(clip?.start)
+
+      if (clipStart > normalizedStartTick && clipStart < normalizedEndTick) {
+        changeTicks.add(clipStart)
+      }
+    }
+  }
+
+  for (const valueTrackerTrack of valueTrackerTracks ?? []) {
+    const variableName = getValueTrackerBoundVariableName(valueTrackerTrack)
+
+    if (!trackedVariableNames.has(variableName)) {
+      continue
+    }
+
+    for (const clip of valueTrackerTrack.clips ?? []) {
+      for (const eventTick of getValueTrackerEventTicks(clip)) {
+        if (eventTick > normalizedStartTick && eventTick < normalizedEndTick) {
+          changeTicks.add(eventTick)
+        }
+      }
+    }
+  }
+
+  return [...changeTicks].sort((leftTick, rightTick) => leftTick - rightTick)
 }
 
 export function resolveVariableClipFormula(clip) {
@@ -133,6 +244,18 @@ export function prependVariableDefinitions(expression, variableDefinitions = [])
     .join(',')
 
   return definitionsPrefix ? `${definitionsPrefix},${expression}` : expression
+}
+
+function getExpressionReferencedVariableNames(expression, allowedIdentifiers) {
+  const referencedNames = new Set()
+
+  for (const token of tokenizeFormulaWithOptions(expression, { allowedIdentifiers })) {
+    if (token.type === 'identifier') {
+      referencedNames.add(token.value)
+    }
+  }
+
+  return [...referencedNames]
 }
 
 function resolveVariableTrackFormulaAtTime(timeTicks, variableTrack) {
