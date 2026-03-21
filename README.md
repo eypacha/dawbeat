@@ -56,17 +56,22 @@ Implemented today:
 - automation lanes for `masterGain` and audio effect parameters
 - final audio visualizer inside the `Master Gain` card
 - per-segment automation curves with `Straight`, `Ease In`, `Ease Out`, and `Ease In-Out` (`Ease In-Out` by default)
+- phone automation companion via PeerJS, opened from each automation lane header with a QR modal
+- companion sessions persisted in `localStorage`, allowing the same phone to accumulate multiple automation lanes from the same host
 - automatic persistence in `localStorage`
 - JSON project import/export
 - offline WAV export
-- full desktop layout, compact layout with side drawers for Library/Effects, and the current mobile placeholder
+- full desktop layout, compact layout with side drawers for Library/Effects, a general mobile placeholder for the main DAW UI, and a dedicated mobile automation companion route
 
 ## Important Notes
 
 - the timeline is no longer only about formula clips; `variableTracks` and `valueTrackerTracks` participate in the active expression
 - value tracker bindings model `keyboard`, `variable`, `midiCc`, and `midiNote`; today the wired paths are keyboard override for the selected target, `variable` binding resolution, and MIDI CC/Note input through `midiInputService`
 - the `keyboard` binding type still depends on the selected target; it does not route through a dedicated binding path the way `midiCc` and `midiNote` do
+- the main DAW still shows a placeholder on phones, but automation companion mode is already available on mobile through the dedicated QR flow
+- remote automation control has two modes: with `Record` disarmed it applies a live override; with `Record` armed it writes points into the lane at the current playhead time
 - live playback and offline export both support audio effects and automation, but they are still separate internal paths; if you touch audio or export, verify both
+- the automation companion session is stored separately from the project, and runtime-only remote override state is not serialized into project JSON
 - the repo contains some files that do not necessarily represent features currently exposed in the UI; for the real state, use `EffectsPanel.vue`, `dawStore.js`, and `projectPersistence.js` as source of truth
 
 ## Stack
@@ -75,6 +80,8 @@ Implemented today:
 - Vite
 - Tailwind CSS 4
 - Pinia
+- PeerJS
+- qrcode
 - Web Audio API
 - Tone.js for part of the offline render path
 - `public/vendors/ByteBeat.js`
@@ -121,11 +128,13 @@ yarn preview
 - `Click` on automation lane: creates an automation point
 - `Drag` an automation point: moves the point
 - `Context menu` on automation point: changes the following segment curve or removes the point
+- `Click` on the phone button in an automation lane header: opens the QR modal for the automation companion
 - `Context menu` on value tracker header: rename, delete, or edit binding
 - `Click` on the keyboard target button of a value tracker: arms/disarms the track for keyboard override
 - `Settings > MIDI input`: enables/refreshes Web MIDI, shows recent messages, and allows configuring `MIDI Clock receive`
 - `Settings`: uses tabs; `MIDI` lives as a dedicated tab with inputs, clock, and debug
-- `Record`: starts/ends value tracker recording on the active target; if there is no target, it can auto-create one
+- scanning another automation QR on the same phone adds that lane to the existing companion session for the same host
+- `Record`: starts/ends value tracker recording on the active target; if phone controllers are connected, it instead arms/disarms writing their moves into automation lanes
 - editing `BPM`: recalculates `sampleRate` for the current unit (`t >> n` or `t / n`)
 - editing the BPM unit (`t >> n` or `t / n`): recalculates BPM while keeping `sampleRate`
 - with `MIDI Clock` locked: `BPM`, unit, and `hz` become read-only and show the effective external values
@@ -188,6 +197,9 @@ Current automation:
 - `masterGain` lane
 - per-audio-effect-parameter lanes
 - per-segment curves on automation points: `Straight`, `Ease In`, `Ease Out`, `Ease In-Out` (`Ease In-Out` by default)
+- remote phone controllers per automation lane through PeerJS + QR
+- with `Record` disarmed, remote phone moves apply live runtime overrides
+- with `Record` armed, remote phone moves write automation points and participate in history transactions
 
 Live playback resolves automation by time.
 Offline export renders the timeline, eval effects, master gain, supported audio effects, and offline automation for the current project.
@@ -199,6 +211,8 @@ Offline export renders the timeline, eval effects, master gain, supported audio 
 - `projectPersistence` normalizes imported projects and serializes the persistable state
 - the current project serializes `version: 14`
 - persisted fields include `tracks`, `variableTracks`, `valueTrackerTracks`, `formulas`, `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`, `bpmMeasure`, `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate`, `tickSize`, `showClipWaveforms`, and `showEvaluatedPanel`, including `height` inside tracks and lanes
+- the automation companion stores its own controller session separately in `localStorage` so the same phone can reconnect and retain subscribed lanes for the same host
+- `automationLiveOverrides` and `automationRecordingArmed` are runtime-only and are not serialized into the project
 - `MIDI Clock receive` is not serialized into the project and does not write persisted `sampleRate`; it only applies a runtime override to the live engine
 - from the toolbar you can create an empty project, open JSON, save JSON, and export WAV
 - from Settings you can reset local storage, toggle waveform/evaluated panel, and inspect MIDI
@@ -210,6 +224,8 @@ src/
   components/
     boot/
       StartScreen.vue
+    companion/
+      AutomationCompanionView.vue
     effects/
       AudioOutputVisualizer.vue
       AudioBitCrusherItem.vue
@@ -248,6 +264,7 @@ src/
     transport/
       Toolbar.vue
     ui/
+      AutomationCompanionModal.vue
       Button.vue
       CollapseTransition.vue
       ConfirmDialog.vue
@@ -279,6 +296,7 @@ src/
     timelineEngine.js
   services/
     audioEffectService.js
+    automationCompanionService.js
     automationService.js
     bytebeatNodeLoader.js
     bytebeatService.js
@@ -332,6 +350,7 @@ Practical notes:
 - `formulaService` resolves name and code for both inline and referenced clips
 - `variableTrackService` and `valueTrackerService` participate in resolving definitions prepended to the active formula
 - `automationService` resolves `masterGain` and audio effect parameters by time
+- `automationCompanionService` owns PeerJS host/client state, QR routes, multi-lane controller sessions, and remote automation messages
 - `timelineLaneLayoutService` normalizes persistable lane heights
 - `valueTrackerInputService` and `midiInputService` centralize keyboard/MIDI input into the store
 - `bytebeatService` controls live audio, sample rate, master gain, and the real-time audio chain

@@ -57,11 +57,13 @@ Today it includes:
 - automation lanes for `masterGain` and audio effect parameters
 - final audio visualizer inside the `Master Gain` card
 - per-segment automation curves with `Straight`, `Ease In`, `Ease Out`, and `Ease In-Out` (`Ease In-Out` by default)
+- phone automation companion via PeerJS, opened from each automation lane header with a QR modal
+- companion sessions persisted in `localStorage`, allowing the same phone to accumulate multiple automation lanes from the same host
 - automatic persistence in `localStorage`
 - JSON project import/export
 - offline WAV export with timeline render, eval effects, master gain, supported audio effects, and offline automation
 - keyboard override for value trackers with `0-9` and `A-F`
-- full desktop layout, compact layout with `SideDrawer` for Library/Effects, and the current mobile placeholder
+- full desktop layout, compact layout with `SideDrawer` for Library/Effects, a general mobile placeholder for the main DAW UI, and a dedicated mobile automation companion route
 
 ## What Not To Assume
 
@@ -119,7 +121,8 @@ Today the app uses:
 
 - desktop layout with Library + Timeline + Effects
 - compact layout with `SideDrawer` for Library and Effects
-- the current mobile placeholder instead of the full app
+- the current mobile placeholder instead of the full app for the main DAW route
+- a dedicated automation companion route on mobile for phone-based remote automation control
 
 Do not assume an existing component means an active feature.
 Concrete example:
@@ -242,6 +245,11 @@ Global state:
 
 - Pinia
 
+Realtime controller connectivity:
+
+- PeerJS
+- `qrcode`
+
 Audio:
 
 - Web Audio API
@@ -291,6 +299,7 @@ Practical rule:
 - `valueTrackerService` resolves steps, holds, events, and live input
 - `valueTrackerInputService` and `midiInputService` centralize keyboard/MIDI input into the store
 - `automationService` resolves `masterGain` lanes and audio effect parameters
+- `automationCompanionService` owns PeerJS host/client state, QR routes, multi-lane controller sessions, and remote automation messages
 - `formulaService` resolves inline and referenced formulas
 - `formulaWaveformService` renders waveform previews
 - `timelineLaneLayoutService` normalizes persistable lane heights
@@ -304,6 +313,8 @@ src/
   components/
     boot/
       StartScreen.vue
+    companion/
+      AutomationCompanionView.vue
     effects/
       AudioOutputVisualizer.vue
       AudioBitCrusherItem.vue
@@ -342,6 +353,7 @@ src/
     transport/
       Toolbar.vue
     ui/
+      AutomationCompanionModal.vue
       Button.vue
       CollapseTransition.vue
       ConfirmDialog.vue
@@ -376,6 +388,7 @@ src/
 
   services/
     audioEffectService.js
+    automationCompanionService.js
     automationService.js
     bytebeatNodeLoader.js
     bytebeatService.js
@@ -436,6 +449,8 @@ Relevant fields today:
   audioEffects: [],
   evalEffects: [],
   automationLanes: [],
+  automationLiveOverrides: {},
+  automationRecordingArmed: false,
   masterGain: 1,
   showEvaluatedPanel: true,
   showClipWaveforms: true,
@@ -603,6 +618,7 @@ It must continue supporting:
 - click on automation lane to create a point
 - drag automation point to move it
 - context menu on automation point to change the following segment curve
+- click on the phone button in an automation lane header to open the QR modal for the automation companion
 - `Delete` / `Backspace` on the selected automation point to delete it
 - mute per track
 - solo per track
@@ -630,6 +646,7 @@ Rules:
 - eval effects must continue applying before sending expressions to playback
 - the evaluated panel must continue reflecting the effective expression after eval effects
 - `valueTrackerLiveInputs` can temporarily override the value of a value tracker during playback or scrub
+- `automationLiveOverrides` can temporarily override an automation lane value during playback when a phone controller is connected and automation writing is not armed
 
 ## Formulas, Variables, and Value Trackers
 
@@ -674,6 +691,10 @@ Current automation:
 - `masterGain` lane
 - per-audio-effect-parameter lanes
 - per-segment curves: `Straight`, `Ease In`, `Ease Out`, `Ease In-Out` (`Ease In-Out` by default)
+- remote phone controllers per automation lane through PeerJS + QR
+- companion sessions can retain multiple subscribed lanes for the same host across rescans on the same phone
+- with `Record` disarmed, remote phone moves apply live runtime overrides
+- with `Record` armed, remote phone moves write automation points and participate in history transactions
 
 If a task touches effects or automation:
 
@@ -682,12 +703,14 @@ If a task touches effects or automation:
 - validate impact on offline export separately
 - do not break effect reorder, enable/disable, or expand/collapse
 - do not break creation, editing, and deletion of automation lanes and points
+- do not serialize runtime-only remote override state into the project unless the project model explicitly changes
 
 ## Persistence and Export
 
 Today there is:
 
 - automatic save in `localStorage`
+- separate `localStorage` persistence for automation companion controller sessions
 - JSON project import
 - JSON project export
 - local storage reset
@@ -698,6 +721,7 @@ Today there is:
 - persistence of `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate`, `bpmMeasure`, and `tickSize`
 - persistence of `height` inside formula tracks, variable tracks, value tracker tracks, and automation lanes
 - persistence of `showClipWaveforms` and `showEvaluatedPanel`
+- `automationLiveOverrides` and `automationRecordingArmed` are runtime-only and are not part of project serialization
 
 If the project shape changes:
 
