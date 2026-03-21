@@ -1,7 +1,7 @@
 <template>
   <div
     class="fixed inset-0 z-40"
-    :class="open ? '' : 'pointer-events-none'"
+    :class="rootClassName"
   >
     <Transition
       enter-active-class="transition-opacity duration-220 ease-out"
@@ -29,6 +29,7 @@
     >
       <aside
         v-if="open"
+        ref="panelElement"
         :class="[drawerPositionClassName, panelClass, 'pointer-events-auto absolute inset-y-0']"
       >
         <slot />
@@ -38,7 +39,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
 const props = defineProps({
   closeOnBackdrop: {
@@ -68,6 +69,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close'])
+const panelElement = ref(null)
 
 const drawerEnterFromClassName = computed(() =>
   props.side === 'right' ? 'translate-x-12 opacity-0' : '-translate-x-12 opacity-0'
@@ -76,9 +78,32 @@ const drawerEnterFromClassName = computed(() =>
 const drawerPositionClassName = computed(() =>
   props.side === 'right' ? 'right-0' : 'left-0'
 )
+const rootClassName = computed(() => {
+  if (!props.open) {
+    return 'pointer-events-none'
+  }
+
+  return props.showBackdrop ? '' : 'pointer-events-none'
+})
 
 function handleBackdropClick() {
   if (!props.closeOnBackdrop) {
+    return
+  }
+
+  emit('close')
+}
+
+function handleGlobalPointerDown(event) {
+  if (!props.open || props.showBackdrop) {
+    return
+  }
+
+  if (!(event.target instanceof Node)) {
+    return
+  }
+
+  if (panelElement.value?.contains(event.target)) {
     return
   }
 
@@ -98,15 +123,18 @@ watch(
   (open) => {
     if (open) {
       window.addEventListener('keydown', handleKeydown)
+      window.addEventListener('pointerdown', handleGlobalPointerDown, true)
       return
     }
 
     window.removeEventListener('keydown', handleKeydown)
+    window.removeEventListener('pointerdown', handleGlobalPointerDown, true)
   },
   { immediate: true }
 )
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeydown)
+  window.removeEventListener('pointerdown', handleGlobalPointerDown, true)
 })
 </script>
