@@ -50,7 +50,7 @@ Hoy existen:
 - panel opcional de formula evaluada
 - copia de formulas evaluadas desde el footer para `Channel`, `Left Channel` y `Right Channel`
 - eval effects: `Stereo Offset`, `T Replacement`
-- visualizador de formula effects dentro del panel Formula, renderizado con `ByteBeat.js#getSamplesForTimeRange(...)`
+- capa de formula effects dentro del visualizador de `Master Gain`, renderizada con `ByteBeat.js#getSamplesForTimeRange(...)`
 - audio effects expuestos hoy: `EQ3`, `Distortion`, `Stereo Widener`, `Feedback Delay`, `Compressor`, `Limiter`, `Reverb` y `Master Gain`
 - automation lanes para `masterGain` y para parametros de audio effects
 - visualizador del audio final dentro de la card `Master Gain`
@@ -296,7 +296,6 @@ src/
       AudioDelayItem.vue
       AudioDistortionItem.vue
       AudioEqItem.vue
-      FormulaEffectsVisualizer.vue
       AudioLimiterItem.vue
       AudioMasterGainItem.vue
       AudioReverbItem.vue

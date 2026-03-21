@@ -1033,9 +1033,9 @@ export const useDawStore = defineStore('dawStore', {
       })
     },
 
-    reorderAudioEffect(effectId, targetEffectId) {
+    reorderAudioEffect(effectId, targetEffectId, placement = 'before') {
       return this.recordHistoryStep('reorder-audio-effect', () => {
-        this.audioEffects = reorderEntries(this.audioEffects, effectId, targetEffectId)
+        this.audioEffects = reorderEntries(this.audioEffects, effectId, targetEffectId, placement)
       })
     },
 
@@ -1758,9 +1758,9 @@ export const useDawStore = defineStore('dawStore', {
       })
     },
 
-    reorderEvalEffect(effectId, targetEffectId) {
+    reorderEvalEffect(effectId, targetEffectId, placement = 'before') {
       return this.recordHistoryStep('reorder-eval-effect', () => {
-        this.evalEffects = reorderEntries(this.evalEffects, effectId, targetEffectId)
+        this.evalEffects = reorderEntries(this.evalEffects, effectId, targetEffectId, placement)
       })
     },
 

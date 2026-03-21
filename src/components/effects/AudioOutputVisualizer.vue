@@ -5,17 +5,38 @@
   >
     <canvas ref="canvasElement" class="block h-full w-full" />
 
-    <div class="pointer-events-none absolute inset-x-3 top-2 flex items-center justify-between gap-3">
-      <span class="text-[10px] uppercase tracking-[0.24em] text-amber-200/70">Final Output</span>
+    <div class="pointer-events-none absolute inset-x-3 top-2 flex items-center justify-end">
       <span class="text-[10px] uppercase tracking-[0.18em] text-amber-100/60">{{ levelLabel }}</span>
+    </div>
+
+    <div class="pointer-events-none absolute inset-x-3 bottom-2 flex items-center gap-4 text-[10px] uppercase tracking-[0.16em] text-zinc-500">
+      <span class="inline-flex items-center gap-1.5">
+        <span class="h-px w-4 bg-amber-300/85" />
+        Audio
+      </span>
+      <span class="inline-flex items-center gap-1.5">
+        <span class="h-px w-4 bg-sky-300/75" />
+        Formula
+      </span>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
+import { getActiveFormula } from '@/engine/timelineEngine'
 import bytebeatService from '@/services/bytebeatService'
+import { applyEvalEffects } from '@/services/evalEffectService'
+import { renderFormulaWaveformChannels } from '@/services/formulaWaveformService'
+import { useDawStore } from '@/stores/dawStore'
+import { clamp, ticksToSamples } from '@/utils/timeUtils'
 
+const FORMULA_PREVIEW_MAX_SPAN_SAMPLES = 8192
+const FORMULA_PREVIEW_MIN_SPAN_SAMPLES = 1024
+const FORMULA_PREVIEW_SAMPLE_COUNT = 192
+const FORMULA_PREVIEW_WINDOW_SECONDS = 0.5
+const FORMULA_PREVIEW_WINDOW_STEP_DIVISOR = 2
 const MAX_BAR_COUNT = 48
 const MIN_BAR_COUNT = 18
 const TARGET_BAR_WIDTH = 10
@@ -23,13 +44,64 @@ const WAVEFORM_SAMPLE_STEP = 4
 
 const canvasElement = ref(null)
 const containerElement = ref(null)
+const formulaWaveforms = ref([])
 const level = ref(0)
 
 let animationFrameId = 0
 let canvasContext = null
 let frequencyData = null
+let formulaPreviewRequestVersion = 0
 let timeDomainData = null
 let resizeObserver = null
+
+const dawStore = useDawStore()
+const {
+  evalEffects,
+  formulas,
+  sampleRate,
+  tickSize,
+  time,
+  tracks,
+  valueTrackerLiveInputs,
+  valueTrackerTracks,
+  variableTracks
+} = storeToRefs(dawStore)
+
+const activeFormula = computed(() =>
+  getActiveFormula(
+    time.value,
+    tracks.value,
+    formulas.value,
+    variableTracks.value,
+    valueTrackerTracks.value,
+    valueTrackerLiveInputs.value
+  )
+)
+const evaluatedExpressions = computed(() => {
+  if (typeof activeFormula.value !== 'string' || !activeFormula.value.trim()) {
+    return []
+  }
+
+  return applyEvalEffects(activeFormula.value, evalEffects.value)
+    .filter((expression) => typeof expression === 'string' && expression.trim())
+})
+const renderExpressions = computed(() => evaluatedExpressions.value.length ? evaluatedExpressions.value : ['0'])
+const formulaPreviewSpanSamples = computed(() =>
+  clamp(
+    Math.round((Number(sampleRate.value) || 0) * FORMULA_PREVIEW_WINDOW_SECONDS),
+    FORMULA_PREVIEW_MIN_SPAN_SAMPLES,
+    FORMULA_PREVIEW_MAX_SPAN_SAMPLES
+  )
+)
+const formulaPreviewStartSample = computed(() => {
+  const currentSample = Number.isFinite(Number(time.value))
+    ? ticksToSamples(time.value, tickSize.value)
+    : 0
+  const step = Math.max(128, Math.floor(formulaPreviewSpanSamples.value / FORMULA_PREVIEW_WINDOW_STEP_DIVISOR))
+
+  return Math.max(0, Math.floor(currentSample / step) * step)
+})
+const formulaPreviewEndSample = computed(() => formulaPreviewStartSample.value + formulaPreviewSpanSamples.value)
 
 const levelLabel = computed(() => {
   const normalizedLevel = Math.max(0, Math.min(1, level.value))
@@ -60,8 +132,45 @@ onBeforeUnmount(() => {
     cancelAnimationFrame(animationFrameId)
   }
 
+  formulaPreviewRequestVersion += 1
   resizeObserver?.disconnect()
 })
+
+watch(
+  () => ({
+    endSample: formulaPreviewEndSample.value,
+    expressionsKey: JSON.stringify(renderExpressions.value),
+    sampleRate: sampleRate.value,
+    startSample: formulaPreviewStartSample.value
+  }),
+  async ({ endSample, sampleRate: nextSampleRate, startSample }) => {
+    const nextRequestVersion = formulaPreviewRequestVersion + 1
+    formulaPreviewRequestVersion = nextRequestVersion
+
+    try {
+      const waveforms = await renderFormulaWaveformChannels({
+        endSample,
+        expressions: renderExpressions.value,
+        sampleCount: FORMULA_PREVIEW_SAMPLE_COUNT,
+        sampleRate: nextSampleRate,
+        startSample
+      })
+
+      if (formulaPreviewRequestVersion !== nextRequestVersion) {
+        return
+      }
+
+      formulaWaveforms.value = Array.isArray(waveforms) ? waveforms : []
+    } catch {
+      if (formulaPreviewRequestVersion !== nextRequestVersion) {
+        return
+      }
+
+      formulaWaveforms.value = []
+    }
+  },
+  { immediate: true }
+)
 
 function renderFrame() {
   drawVisualizer()
@@ -126,6 +235,7 @@ function drawVisualizer() {
   const analyser = bytebeatService.getOutputAnalyser()
   ensureDataBuffers(analyser)
   drawBackground(ctx, width, height)
+  drawFormulaOverlay(ctx, width, height, formulaWaveforms.value)
 
   if (!analyser || !frequencyData || !timeDomainData) {
     level.value = 0
@@ -197,6 +307,57 @@ function drawFrequencyBars(ctx, width, height, spectrum) {
     ctx.fillStyle = `rgba(251, 191, 36, ${alpha})`
     ctx.fillRect(x, y, barWidth, barHeight)
   }
+}
+
+function drawFormulaOverlay(ctx, width, height, waveforms) {
+  if (!Array.isArray(waveforms) || !waveforms.length) {
+    return
+  }
+
+  const offsets = waveforms.length > 1 ? [-height * 0.065, height * 0.065] : [0]
+  const colors = waveforms.length > 1
+    ? ['rgba(56, 189, 248, 0.82)', 'rgba(125, 211, 252, 0.62)']
+    : ['rgba(56, 189, 248, 0.82)']
+
+  waveforms.forEach((waveform, index) => {
+    drawFormulaChannelWaveform(
+      ctx,
+      width,
+      height,
+      waveform,
+      offsets[index] ?? 0,
+      colors[index] ?? colors[0]
+    )
+  })
+}
+
+function drawFormulaChannelWaveform(ctx, width, height, waveform, centerOffset, strokeStyle) {
+  if (!waveform?.length) {
+    return
+  }
+
+  const centerY = height * 0.54 + centerOffset
+  const amplitude = height * 0.14
+  const lastIndex = Math.max(1, waveform.length - 1)
+
+  ctx.strokeStyle = strokeStyle
+  ctx.lineWidth = 1.15
+  ctx.beginPath()
+
+  for (let index = 0; index < waveform.length; index += 1) {
+    const normalizedValue = clamp(waveform[index] ?? 0, -1, 1)
+    const x = (index / lastIndex) * width
+    const y = centerY - normalizedValue * amplitude
+
+    if (index === 0) {
+      ctx.moveTo(x, y)
+      continue
+    }
+
+    ctx.lineTo(x, y)
+  }
+
+  ctx.stroke()
 }
 
 function drawWaveform(ctx, width, height, waveform) {

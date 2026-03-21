@@ -110,8 +110,16 @@
           <div class="mt-4 min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-1">
             <div class="grid gap-3">
 	              <template v-if="activeSection === 'audio'">
+                <AudioMasterGainItem
+                  :gain="displayMasterGain"
+                  @create-automation="dawStore.enableMasterGainAutomationLane()"
+                  @interaction-end="handleContinuousInteractionEnd"
+                  @interaction-start="handleMasterGainInteractionStart"
+                  @update:gain="dawStore.setMasterGain($event)"
+                />
+
 	                <div
-	                  v-for="effect in displayAudioEffects"
+	                  v-for="effect in displayAudioEffectsByVisualOrder"
                   :key="effect.id"
                   class="rounded transition-shadow"
                   :class="dropTargetSection === 'audio' && dropTargetEffectId === effect.id
@@ -136,21 +144,11 @@
                     @update-param="handleUpdateAudioEffectParam"
                   />
                 </div>
-
-                <AudioMasterGainItem
-                  :gain="displayMasterGain"
-                  @create-automation="dawStore.enableMasterGainAutomationLane()"
-                  @interaction-end="handleContinuousInteractionEnd"
-                  @interaction-start="handleMasterGainInteractionStart"
-                  @update:gain="dawStore.setMasterGain($event)"
-                />
               </template>
 
               <template v-else>
-                <FormulaEffectsVisualizer />
-
                 <div
-                  v-for="effect in evalEffects"
+                  v-for="effect in displayEvalEffectsByVisualOrder"
                   :key="effect.id"
                   class="rounded transition-shadow"
                   :class="dropTargetSection === 'formula' && dropTargetEffectId === effect.id
@@ -193,7 +191,6 @@ import AudioMasterGainItem from '@/components/effects/AudioMasterGainItem.vue'
 import AudioReverbItem from '@/components/effects/AudioReverbItem.vue'
 import AudioStereoWidenerItem from '@/components/effects/AudioStereoWidenerItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
-import FormulaEffectsVisualizer from '@/components/effects/FormulaEffectsVisualizer.vue'
 import Button from '@/components/ui/Button.vue'
 import Divider from '@/components/ui/Divider.vue'
 import IconButton from '@/components/ui/IconButton.vue'
@@ -267,6 +264,7 @@ const availableAudioEffects = [
   }
 ]
 const totalEffects = computed(() => audioEffects.value.length + evalEffects.value.length)
+const displayEvalEffectsByVisualOrder = computed(() => [...evalEffects.value].reverse())
 const displayAudioEffects = computed(() => audioEffects.value.map((effect) => {
   if (activeContinuousInteractionLabel.value === `update-audio-effect-${effect.id}`) {
     return effect
@@ -274,6 +272,7 @@ const displayAudioEffects = computed(() => audioEffects.value.map((effect) => {
 
   return resolveAudioEffectAtTime(time.value, dawStore.automationLanes, effect)
 }))
+const displayAudioEffectsByVisualOrder = computed(() => [...displayAudioEffects.value].reverse())
 const displayMasterGain = computed(() => {
   if (activeContinuousInteractionLabel.value === 'update-master-gain') {
     return masterGain.value
@@ -411,9 +410,9 @@ function handleDrop(section, effectIdToTarget) {
   }
 
   if (section === 'formula') {
-    dawStore.reorderEvalEffect(draggingEffectId.value, effectIdToTarget)
+    dawStore.reorderEvalEffect(draggingEffectId.value, effectIdToTarget, 'after')
   } else {
-    dawStore.reorderAudioEffect(draggingEffectId.value, effectIdToTarget)
+    dawStore.reorderAudioEffect(draggingEffectId.value, effectIdToTarget, 'after')
   }
 
   if (reorderTransactionActive.value) {
