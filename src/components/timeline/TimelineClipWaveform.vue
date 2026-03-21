@@ -20,6 +20,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { renderFormulaWaveform } from '@/services/formulaWaveformService'
+import { getActiveVariableDefinitions, prependVariableDefinitions } from '@/services/variableTrackService'
 import { useDawStore } from '@/stores/dawStore'
 import { ticksToSamples } from '@/utils/timeUtils'
 
@@ -49,7 +50,7 @@ const props = defineProps({
 })
 
 const dawStore = useDawStore()
-const { evalEffects, sampleRate, tickSize } = storeToRefs(dawStore)
+const { evalEffects, sampleRate, tickSize, valueTrackerLiveInputs, valueTrackerTracks, variableTracks } = storeToRefs(dawStore)
 const waveformSamples = ref(null)
 
 let requestVersion = 0
@@ -57,6 +58,17 @@ let requestVersion = 0
 const svgWidth = computed(() => Math.max(1, Math.round(props.width)))
 const previewPointCount = computed(() =>
   Math.max(MIN_PREVIEW_POINTS, Math.min(MAX_PREVIEW_POINTS, Math.round(props.width * 1.5)))
+)
+const renderableFormula = computed(() =>
+  prependVariableDefinitions(
+    props.formula,
+    getActiveVariableDefinitions(
+      props.start,
+      variableTracks.value,
+      valueTrackerTracks.value,
+      valueTrackerLiveInputs.value
+    )
+  ) ?? props.formula
 )
 
 const waveformPath = computed(() => {
@@ -80,7 +92,7 @@ watch(
   () => ({
     duration: props.duration,
     evalEffectsKey: JSON.stringify(evalEffects.value),
-    formula: props.formula,
+    formula: renderableFormula.value,
     sampleRate: sampleRate.value,
     start: props.start,
     tickSize: tickSize.value,
