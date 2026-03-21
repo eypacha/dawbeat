@@ -1,8 +1,34 @@
 <template>
   <Panel class="flex min-h-[320px] flex-col">
-    <div class="mb-4 flex items-center justify-between gap-4">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <div>
         <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">Timeline</p>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <button
+          class="rounded-md border border-zinc-800 bg-zinc-950/80 px-3 py-2 text-xs text-zinc-200 transition hover:border-zinc-700 hover:text-zinc-50"
+          type="button"
+          @click="dawStore.addTrack()"
+        >
+          + Formula
+        </button>
+
+        <button
+          class="rounded-md border border-zinc-800 bg-zinc-950/80 px-3 py-2 text-xs text-zinc-200 transition hover:border-zinc-700 hover:text-zinc-50"
+          type="button"
+          @click="dawStore.addVariableTrack()"
+        >
+          + Variable
+        </button>
+
+        <button
+          class="rounded-md border border-zinc-800 bg-zinc-950/80 px-3 py-2 text-xs text-zinc-200 transition hover:border-zinc-700 hover:text-zinc-50"
+          type="button"
+          @click="dawStore.addValueTrackerTrack()"
+        >
+          + Value
+        </button>
       </div>
     </div>
 
@@ -93,8 +119,6 @@
           @track-reorder-start="handleTrackReorderStart"
         />
 
-        <TimelineAddTrackRow :timeline-width="timelineWidthStyle" />
-
         <TimelineAutomationLane
           v-for="lane in automationLanes"
           :key="lane.id"
@@ -112,7 +136,6 @@ import { storeToRefs } from 'pinia'
 import Panel from '@/components/ui/Panel.vue'
 import TimelineAutomationLane from '@/components/timeline/TimelineAutomationLane.vue'
 import Playhead from '@/components/timeline/Playhead.vue'
-import TimelineAddTrackRow from '@/components/timeline/TimelineAddTrackRow.vue'
 import TimelineLoopRegion from '@/components/timeline/TimelineLoopRegion.vue'
 import TimelineTrack from '@/components/timeline/TimelineTrack.vue'
 import TimelineVariableTrack from '@/components/timeline/TimelineVariableTrack.vue'
