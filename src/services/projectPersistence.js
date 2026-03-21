@@ -181,6 +181,34 @@ export function setupProjectPersistence(store) {
   )
 }
 
+function ensureNamedValueTrackerTracks(valueTrackerTracks, variableTrackNames = [], trackName = 'Value Tracker') {
+  if (!Array.isArray(variableTrackNames) || !variableTrackNames.length) {
+    return
+  }
+
+  for (const variableTrackName of variableTrackNames) {
+    if (getBoundValueTrackerVariableNames(valueTrackerTracks).includes(variableTrackName)) {
+      continue
+    }
+
+    const nextValueTrackerTrack = createValueTrackerTrack({
+      binding: {
+        type: 'variable',
+        variableName: variableTrackName
+      },
+      name: trackName
+    })
+
+    nextValueTrackerTrack.clips.push(createValueTrackerClip({
+      duration: DEFAULT_FORMULA_DROP_DURATION,
+      start: 0,
+      values: createConstantValueTrackerValues(0, DEFAULT_FORMULA_DROP_DURATION)
+    }))
+    sortValueTrackerTrackClips(nextValueTrackerTrack)
+    valueTrackerTracks.unshift(nextValueTrackerTrack)
+  }
+}
+
 function normalizeProjectPayload(project) {
   if (!isRecord(project)) {
     return null
@@ -215,42 +243,30 @@ function normalizeProjectPayload(project) {
   const evalEffects = hasOwn(project, 'evalEffects')
     ? normalizeEvalEffects(project.evalEffects)
     : [createStereoOffsetEvalEffect({ id: 'fx1' })]
-  const stereoOffsetAutoVariableTrackNames = collectAutoVariableTrackNames(
-    evalEffects
-      .filter((effect) => effect?.type === 'stereoOffset')
-      .flatMap((effect) => getEvalEffectExpressions(effect))
+  ensureNamedValueTrackerTracks(
+    valueTrackerTracks,
+    collectAutoVariableTrackNames(
+      evalEffects
+        .filter((effect) => effect?.type === 'stereoOffset')
+        .flatMap((effect) => getEvalEffectExpressions(effect))
+    ),
+    'Stereo Offset'
   )
-
-  for (const variableTrackName of stereoOffsetAutoVariableTrackNames) {
-    if (getBoundValueTrackerVariableNames(valueTrackerTracks).includes(variableTrackName)) {
-      continue
-    }
-
-    const nextValueTrackerTrack = createValueTrackerTrack({
-      binding: {
-        type: 'variable',
-        variableName: variableTrackName
-      },
-      name: 'Stereo Offset'
-    })
-
-    nextValueTrackerTrack.clips.push(createValueTrackerClip({
-      duration: DEFAULT_FORMULA_DROP_DURATION,
-      start: 0,
-      values: createConstantValueTrackerValues(0, DEFAULT_FORMULA_DROP_DURATION)
-    }))
-    sortValueTrackerTrackClips(nextValueTrackerTrack)
-    valueTrackerTracks.unshift(nextValueTrackerTrack)
-  }
+  ensureNamedValueTrackerTracks(
+    valueTrackerTracks,
+    collectAutoVariableTrackNames(
+      evalEffects
+        .filter((effect) => effect?.type === 'tReplacement')
+        .flatMap((effect) => getEvalEffectExpressions(effect))
+    ),
+    'T Replacement'
+  )
 
   const boundValueTrackerVariableNames = new Set(getBoundValueTrackerVariableNames(valueTrackerTracks))
   const requiredAutoVariableTrackNames = collectAutoVariableTrackNames([
     ...formulas.map((formula) => formula.code),
     ...collectTrackInlineFormulas(tracks),
-    ...collectVariableTrackFormulas(variableTracks),
-    ...evalEffects
-      .filter((effect) => effect?.type === 'tReplacement')
-      .flatMap((effect) => getEvalEffectExpressions(effect))
+    ...collectVariableTrackFormulas(variableTracks)
   ])
 
   for (const variableTrackName of requiredAutoVariableTrackNames) {

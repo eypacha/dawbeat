@@ -147,6 +147,44 @@ function createEmptyProject() {
   }
 }
 
+function ensureNamedValueTrackerTracks(store, variableTrackNames = [], trackName = 'Value Tracker') {
+  if (!Array.isArray(variableTrackNames) || !variableTrackNames.length) {
+    return []
+  }
+
+  const createdValueTrackerTrackIds = []
+
+  for (const variableTrackName of variableTrackNames) {
+    const existingValueTrackerTrack = findValueTrackerTrackByVariableName(
+      store.valueTrackerTracks,
+      variableTrackName
+    )
+
+    if (existingValueTrackerTrack) {
+      continue
+    }
+
+    const nextValueTrackerTrack = createValueTrackerTrack({
+      binding: {
+        type: 'variable',
+        variableName: variableTrackName
+      },
+      name: trackName
+    })
+
+    nextValueTrackerTrack.clips.push(createValueTrackerClip({
+      duration: DEFAULT_FORMULA_DROP_DURATION,
+      start: 0,
+      values: createConstantValueTrackerValues('0', DEFAULT_FORMULA_DROP_DURATION)
+    }))
+    sortValueTrackerTrackClips(nextValueTrackerTrack)
+    store.valueTrackerTracks.unshift(nextValueTrackerTrack)
+    createdValueTrackerTrackIds.push(nextValueTrackerTrack.id)
+  }
+
+  return createdValueTrackerTrackIds
+}
+
 function createInitialState() {
   const defaultProject = createDefaultProject()
   const savedProject = loadProject()
@@ -1898,32 +1936,7 @@ export const useDawStore = defineStore('dawStore', {
         )
 
         if (missingAutoVariableTrackNames.length) {
-          for (const variableTrackName of missingAutoVariableTrackNames) {
-            const existingValueTrackerTrack = findValueTrackerTrackByVariableName(
-              this.valueTrackerTracks,
-              variableTrackName
-            )
-
-            if (existingValueTrackerTrack) {
-              continue
-            }
-
-            const nextValueTrackerTrack = createValueTrackerTrack({
-              binding: {
-                type: 'variable',
-                variableName: variableTrackName
-              },
-              name: 'Stereo Offset'
-            })
-
-            nextValueTrackerTrack.clips.push(createValueTrackerClip({
-              duration: DEFAULT_FORMULA_DROP_DURATION,
-              start: 0,
-              values: createConstantValueTrackerValues('0', DEFAULT_FORMULA_DROP_DURATION)
-            }))
-            sortValueTrackerTrackClips(nextValueTrackerTrack)
-            this.valueTrackerTracks.unshift(nextValueTrackerTrack)
-          }
+          ensureNamedValueTrackerTracks(this, missingAutoVariableTrackNames, 'Stereo Offset')
         }
 
         return
@@ -1937,9 +1950,7 @@ export const useDawStore = defineStore('dawStore', {
         )
 
         if (missingAutoVariableTrackNames.length) {
-          this.ensureInitializedVariableTracks(
-            Object.fromEntries(missingAutoVariableTrackNames.map((variableTrackName) => [variableTrackName, '0']))
-          )
+          ensureNamedValueTrackerTracks(this, missingAutoVariableTrackNames, 'T Replacement')
         }
       }
     },
