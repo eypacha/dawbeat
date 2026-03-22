@@ -8,7 +8,6 @@
     class="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-zinc-100"
   >
     <Panel class="w-full max-w-xl" padding="lg">
-      <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">DawBeat</p>
       <div class="mt-6 space-y-3 text-sm leading-6 text-zinc-300">
         <p>This web app is only available on desktop, but you can use your phone or tablet as a controller. Just scan the QR code by clicking the mobile icon on an automation track.</p>
       </div>
@@ -17,53 +16,16 @@
 
   <div v-else class="h-screen overflow-hidden bg-zinc-950 text-zinc-200 font-mono">
     <div class="flex h-full w-full flex-col gap-4 overflow-hidden p-4">
-      <Toolbar
-        :active-drawer="activeAuxiliaryDrawer"
-        :compact-layout="isCompactLayout"
-        @toggle-effects-drawer="toggleAuxiliaryDrawer('effects')"
-        @toggle-library-drawer="toggleAuxiliaryDrawer('library')"
-      />
+      <Toolbar />
 
-      <main
-        v-if="!isCompactLayout"
-        class="app-main-layout min-h-0 flex-1 gap-4 overflow-hidden"
-        :style="mainLayoutStyle"
-      >
+      <main class="app-main-layout min-h-0 flex-1 gap-4 overflow-hidden" :style="mainLayoutStyle">
         <FormulaLibrary :collapsed="libraryCollapsed" @toggle-collapse="toggleLibraryCollapsed" />
         <Timeline />
         <EffectsPanel :collapsed="effectsCollapsed" @toggle-collapse="toggleEffectsCollapsed" />
       </main>
 
-      <main v-else class="min-h-0 flex-1 overflow-hidden">
-        <Timeline />
-      </main>
-
-      <EvaluatedPanel v-if="showEvaluatedPanel && !isCompactLayout" />
+      <EvaluatedPanel v-if="showEvaluatedPanel" />
     </div>
-
-    <SideDrawer
-      :open="isCompactLayout && activeAuxiliaryDrawer === 'library'"
-      panel-class="w-[min(calc(100vw-1rem),22rem)] p-4"
-      side="right"
-      :show-backdrop="false"
-      @close="closeAuxiliaryDrawer"
-    >
-      <FormulaLibrary
-        :collapsed="false"
-        :show-collapse-toggle="false"
-        @formula-drag-start="handleTabletLibraryFormulaDragStart"
-        @toggle-collapse="closeAuxiliaryDrawer"
-      />
-    </SideDrawer>
-
-    <SideDrawer
-      :open="isCompactLayout && activeAuxiliaryDrawer === 'effects'"
-      panel-class="w-[min(calc(100vw-1rem),24rem)] p-4"
-      side="right"
-      @close="closeAuxiliaryDrawer"
-    >
-      <EffectsPanel :collapsed="false" :show-collapse-toggle="false" @toggle-collapse="closeAuxiliaryDrawer" />
-    </SideDrawer>
 
     <ContextMenu
       :x="contextMenu.state.x"
@@ -188,7 +150,6 @@ import FormulaInputDialog from '@/components/ui/FormulaInputDialog.vue'
 import AutomationCompanionModal from '@/components/ui/AutomationCompanionModal.vue'
 import Panel from '@/components/ui/Panel.vue'
 import SnackbarContainer from '@/components/ui/SnackbarContainer.vue'
-import SideDrawer from '@/components/ui/SideDrawer.vue'
 import TextInputDialog from '@/components/ui/TextInputDialog.vue'
 import TrackPresentationDialog from '@/components/ui/TrackPresentationDialog.vue'
 import ValueTrackerBindingDialog from '@/components/ui/ValueTrackerBindingDialog.vue'
@@ -257,7 +218,6 @@ const transportPlayback = useTransportPlayback()
 const { enableAudio, stop } = transportPlayback
 const effectsCollapsed = ref(false)
 const libraryCollapsed = ref(false)
-const activeAuxiliaryDrawer = ref(null)
 const viewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWidth)
 const {
   audioReady,
@@ -421,8 +381,7 @@ const formulaDialogTitle = computed(() => {
     : 'Edit Clip Formula'
 })
 const isAutomationCompanionRoute = computed(() => isAutomationCompanionMode())
-const isMobileLayout = computed(() => viewportWidth.value < 768)
-const isCompactLayout = computed(() => viewportWidth.value >= 768 && viewportWidth.value < 1280)
+const isMobileLayout = computed(() => viewportWidth.value < 1280)
 const automationCompanionSelectedLane = computed(() =>
   automationCompanionModalState.laneId
     ? dawStore.getAutomationLaneById(automationCompanionModalState.laneId)
@@ -453,32 +412,9 @@ function toggleEffectsCollapsed() {
   effectsCollapsed.value = !effectsCollapsed.value
 }
 
-function closeAuxiliaryDrawer() {
-  activeAuxiliaryDrawer.value = null
-}
-
-function toggleAuxiliaryDrawer(drawer) {
-  if (!isCompactLayout.value) {
-    return
-  }
-
-  activeAuxiliaryDrawer.value = activeAuxiliaryDrawer.value === drawer ? null : drawer
-}
-
-function handleTabletLibraryFormulaDragStart() {
-  if (!isCompactLayout.value || activeAuxiliaryDrawer.value !== 'library') {
-    return
-  }
-
-  window.requestAnimationFrame(() => {
-    closeAuxiliaryDrawer()
-  })
-}
-
 function handleKeydown(event) {
   if (event.key === 'Escape') {
     if (!editingClipId.value) {
-      closeAuxiliaryDrawer()
       dawStore.clearClipSelection()
       dawStore.clearAutomationPointSelection()
       dawStore.clearTimelineSectionLabelSelection()
@@ -825,12 +761,6 @@ watch(isValueTrackerDialogVisible, (visible) => {
 
   dawStore.commitHistoryTransaction()
   valueTrackerDialogHistoryActive.value = false
-})
-
-watch(isCompactLayout, (compactLayout) => {
-  if (!compactLayout) {
-    closeAuxiliaryDrawer()
-  }
 })
 
 watch(automationCompanionSelectedLane, (lane) => {

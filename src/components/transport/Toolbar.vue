@@ -6,7 +6,7 @@
           <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">DawBeat</p>
         </div>
 
-        <Divider v-if="!compactLayout" />
+        <Divider />
 
         <div class="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
           <IconButton
@@ -42,7 +42,7 @@
           />
         </div>
 
-        <Divider v-if="!compactLayout" />
+        <Divider />
 
         <div class="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
           <IconButton
@@ -188,29 +188,9 @@
           </div>
         </div>
 
-        <Divider v-if="!compactLayout" />
+        <Divider />
 
         <div class="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
-          <IconButton
-            v-if="compactLayout"
-            :icon="BookOpen"
-            :class="activeDrawer === 'library' ? 'border-sky-500/60 bg-sky-500/10 text-sky-200 hover:bg-sky-500/20' : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700 hover:text-zinc-100'"
-            label="Toggle Library"
-            size="sm"
-            :title="activeDrawer === 'library' ? 'Close the Library drawer' : 'Open the Library drawer'"
-            @click="emit('toggle-library-drawer')"
-          />
-
-          <IconButton
-            v-if="compactLayout"
-            :icon="SlidersHorizontal"
-            :class="activeDrawer === 'effects' ? 'border-amber-500/60 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20' : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700 hover:text-zinc-100'"
-            label="Toggle Effects"
-            size="sm"
-            :title="activeDrawer === 'effects' ? 'Close the Effects drawer' : 'Open the Effects drawer'"
-            @click="emit('toggle-effects-drawer')"
-          />
-
           <button
             class="border border-zinc-800 bg-zinc-950 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-700 hover:text-zinc-100 disabled:cursor-default disabled:opacity-40"
             :disabled="exportingWav"
@@ -272,7 +252,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { BookOpen, Circle, Download, FilePlus, FolderOpen, Pause, Play, Redo2, Repeat, Settings2, Shuffle, SlidersHorizontal, Square, Undo2 } from 'lucide-vue-next'
+import { Circle, Download, FilePlus, FolderOpen, Pause, Play, Redo2, Repeat, Settings2, Shuffle, Square, Undo2 } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { automationCompanionHostState } from '@/services/automationCompanionService'
 import { getRandomDemoProjectEntry } from '@/services/demoProjectService'
@@ -298,19 +278,6 @@ import IconButton from '@/components/ui/IconButton.vue'
 import Panel from '@/components/ui/Panel.vue'
 import SettingsModal from '@/components/ui/SettingsModal.vue'
 
-const props = defineProps({
-  activeDrawer: {
-    type: String,
-    default: null
-  },
-  compactLayout: {
-    type: Boolean,
-    default: false
-  }
-})
-
-const emit = defineEmits(['toggle-effects-drawer', 'toggle-library-drawer'])
-
 const dawStore = useDawStore()
 const { play, pause, stop, toggleRecord } = useTransportPlayback()
 const { automationRecordingArmed, bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, sampleRate, tickSize, time } = storeToRefs(dawStore)
@@ -325,26 +292,10 @@ const newProjectConfirmVisible = ref(false)
 const shuffleDemoConfirmVisible = ref(false)
 const lastShuffledDemoProjectId = ref(null)
 const transportDisplayMode = ref('sample')
-const toolbarLayoutClassName = computed(() =>
-  props.compactLayout
-    ? 'flex flex-wrap items-center justify-between gap-3 px-4 py-3'
-    : 'grid grid-cols-[max-content_minmax(0,1fr)_max-content_minmax(0,1fr)_max-content] items-center gap-4 px-4 py-1'
-)
-const leftGroupClassName = computed(() =>
-  props.compactLayout
-    ? 'flex min-w-0 flex-wrap items-center gap-3'
-    : 'col-[1] flex min-w-0 items-center gap-4'
-)
-const transportControlsGroupClassName = computed(() =>
-  props.compactLayout
-    ? 'flex shrink-0 items-center justify-center gap-2 text-xs text-zinc-400'
-    : 'col-[3] flex shrink-0 items-center justify-center gap-2 text-xs text-zinc-400'
-)
-const rightGroupClassName = computed(() =>
-  props.compactLayout
-    ? 'flex min-w-0 flex-wrap items-center justify-end gap-3'
-    : 'col-[5] flex min-w-0 items-center justify-end gap-4'
-)
+const toolbarLayoutClassName = 'grid grid-cols-[max-content_minmax(0,1fr)_max-content_minmax(0,1fr)_max-content] items-center gap-4 px-4 py-1'
+const leftGroupClassName = 'col-[1] flex min-w-0 items-center gap-4'
+const transportControlsGroupClassName = 'col-[3] flex shrink-0 items-center justify-center gap-2 text-xs text-zinc-400'
+const rightGroupClassName = 'col-[5] flex min-w-0 items-center justify-end gap-4'
 
 const transportSampleTime = computed(() => {
   const sampleTime = ticksToSamples(time.value, tickSize.value)
