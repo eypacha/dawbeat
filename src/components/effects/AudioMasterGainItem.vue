@@ -3,6 +3,7 @@
     <div class="mt-1 grid gap-2">
       <AudioOutputVisualizer
         :mode="visualizerMode"
+        :palette-id="visualizerPaletteId"
         show-window-button
         @open-window="openVisualizerWindow"
       />
@@ -62,6 +63,14 @@
             @click="visualizerFormulaOverlayVisible = !visualizerFormulaOverlayVisible"
           />
           <IconButton
+            :icon="Palette"
+            class="border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-200"
+            :label="`Next palette (${nextVisualizerPaletteLabel})`"
+            size="sm"
+            :title="`Next palette: ${nextVisualizerPaletteLabel}`"
+            @click="cycleVisualizerPalette"
+          />
+          <IconButton
             :icon="Shuffle"
             class="border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-200"
             :label="`Next visualizer (${nextVisualizerModeLabel})`"
@@ -86,6 +95,7 @@
     <AudioOutputVisualizer
       :fullscreen="visualizerWindowFullscreen"
       :mode="visualizerMode"
+      :palette-id="visualizerPaletteId"
       :show-formula-overlay="visualizerFormulaOverlayVisible"
       windowed
     />
@@ -94,11 +104,15 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { Code2, Maximize2, Minimize2, Shuffle } from 'lucide-vue-next'
+import { Code2, Maximize2, Minimize2, Palette, Shuffle } from 'lucide-vue-next'
 import AudioOutputVisualizer from '@/components/effects/AudioOutputVisualizer.vue'
 import EffectParamAutomationButton from '@/components/effects/EffectParamAutomationButton.vue'
 import FloatingWindow from '@/components/ui/FloatingWindow.vue'
 import IconButton from '@/components/ui/IconButton.vue'
+import {
+  DEFAULT_VISUALIZER_PALETTE_ID,
+  VISUALIZER_PALETTES
+} from '@/utils/visualizerPalettes'
 
 const props = defineProps({
   gain: {
@@ -119,6 +133,7 @@ const VISUALIZER_MODE_LABELS = {
 const gainLabel = computed(() => `${Number(props.gain ?? 0).toFixed(2)}x`)
 const visualizerFormulaOverlayVisible = ref(false)
 const visualizerMode = ref(VISUALIZER_MODES[0])
+const visualizerPaletteId = ref(DEFAULT_VISUALIZER_PALETTE_ID)
 const visualizerWindowElement = ref(null)
 const visualizerWindowFullscreen = ref(false)
 const visualizerWindowOpen = ref(false)
@@ -126,6 +141,11 @@ const nextVisualizerModeLabel = computed(() => {
   const currentIndex = VISUALIZER_MODES.indexOf(visualizerMode.value)
   const nextMode = VISUALIZER_MODES[(currentIndex + 1) % VISUALIZER_MODES.length] ?? VISUALIZER_MODES[0]
   return VISUALIZER_MODE_LABELS[nextMode] ?? nextMode
+})
+const nextVisualizerPaletteLabel = computed(() => {
+  const currentIndex = VISUALIZER_PALETTES.findIndex((palette) => palette.id === visualizerPaletteId.value)
+  const nextPalette = VISUALIZER_PALETTES[(currentIndex + 1) % VISUALIZER_PALETTES.length] ?? VISUALIZER_PALETTES[0]
+  return nextPalette?.label ?? nextPalette?.id ?? 'Palette'
 })
 
 function handleInput(event) {
@@ -141,6 +161,12 @@ function handleInteractionKeydown(event) {
 function cycleVisualizerMode() {
   const currentIndex = VISUALIZER_MODES.indexOf(visualizerMode.value)
   visualizerMode.value = VISUALIZER_MODES[(currentIndex + 1) % VISUALIZER_MODES.length] ?? VISUALIZER_MODES[0]
+}
+
+function cycleVisualizerPalette() {
+  const currentIndex = VISUALIZER_PALETTES.findIndex((palette) => palette.id === visualizerPaletteId.value)
+  visualizerPaletteId.value = VISUALIZER_PALETTES[(currentIndex + 1) % VISUALIZER_PALETTES.length]?.id
+    ?? DEFAULT_VISUALIZER_PALETTE_ID
 }
 
 async function toggleVisualizerWindowFullscreen() {

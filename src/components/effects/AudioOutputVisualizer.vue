@@ -1,8 +1,9 @@
 <template>
   <div
     ref="containerElement"
-    class="relative overflow-hidden rounded border border-amber-500/20 bg-[#0b0809]"
+    class="relative overflow-hidden rounded border"
     :class="containerClassName"
+    :style="containerStyle"
   >
     <canvas ref="canvasElement" class="block h-full w-full" />
 
@@ -36,7 +37,10 @@
         <AppWindow class="h-3.5 w-3.5" :stroke-width="2.25" />
       </button>
 
-      <span class="pointer-events-none ml-auto text-[10px] uppercase tracking-[0.18em] text-amber-100/60">{{ levelLabel }}</span>
+      <span
+        class="pointer-events-none ml-auto text-[10px] uppercase tracking-[0.18em]"
+        :style="levelStyle"
+      >{{ levelLabel }}</span>
     </div>
   </div>
 </template>
@@ -52,6 +56,11 @@ import { hasRenderableFormulaInput } from '@/services/formulaService'
 import { renderFormulaWaveformChannels } from '@/services/formulaWaveformService'
 import { useDawStore } from '@/stores/dawStore'
 import { clamp, ticksToSamples } from '@/utils/timeUtils'
+import {
+  DEFAULT_VISUALIZER_PALETTE_ID,
+  getVisualizerPaletteById,
+  withAlpha
+} from '@/utils/visualizerPalettes'
 
 const props = defineProps({
   fullscreen: {
@@ -61,6 +70,10 @@ const props = defineProps({
   mode: {
     type: String,
     default: 'linear'
+  },
+  paletteId: {
+    type: String,
+    default: DEFAULT_VISUALIZER_PALETTE_ID
   },
   showFormulaOverlay: {
     type: Boolean,
@@ -172,6 +185,7 @@ const overlayExpressions = computed(() =>
     duplicateMono: true
   })
 )
+const selectedPalette = computed(() => getVisualizerPaletteById(props.paletteId))
 const containerClassName = computed(() => {
   if (props.fullscreen) {
     return 'h-full min-h-0'
@@ -183,6 +197,13 @@ const containerClassName = computed(() => {
 
   return 'h-28'
 })
+const containerStyle = computed(() => ({
+  backgroundColor: selectedPalette.value.colors.background,
+  borderColor: withAlpha(selectedPalette.value.colors.border, 0.2)
+}))
+const levelStyle = computed(() => ({
+  color: withAlpha(selectedPalette.value.colors.audio, 0.6)
+}))
 
 onMounted(() => {
   syncCanvasSize()
@@ -250,6 +271,10 @@ watch(
     resetWaterfallHistory()
   }
 )
+
+function getPaletteColors() {
+  return selectedPalette.value.colors
+}
 
 function renderFrame() {
   drawVisualizer()
@@ -365,11 +390,13 @@ function drawVisualizer() {
 }
 
 function drawBackground(ctx, width, height) {
+  const colors = getPaletteColors()
+
   ctx.clearRect(0, 0, width, height)
-  ctx.fillStyle = '#0b0809'
+  ctx.fillStyle = colors.background
   ctx.fillRect(0, 0, width, height)
 
-  ctx.strokeStyle = 'rgba(245, 158, 11, 0.08)'
+  ctx.strokeStyle = withAlpha(colors.grid, 0.08)
   ctx.lineWidth = 1
 
   for (let index = 1; index < 4; index += 1) {
@@ -382,7 +409,7 @@ function drawBackground(ctx, width, height) {
 }
 
 function drawIdleState(ctx, width, height) {
-  ctx.strokeStyle = 'rgba(245, 158, 11, 0.2)'
+  ctx.strokeStyle = withAlpha(getPaletteColors().grid, 0.2)
   ctx.lineWidth = 1.5
   ctx.beginPath()
   ctx.moveTo(0, height * 0.6)
@@ -407,7 +434,7 @@ function drawCircularGuides(ctx, width, height) {
   const { x: centerX, y: centerY } = getCircularCenter(width, height)
   const maxRadius = Math.max(24, Math.min(width, height) * 0.32)
 
-  ctx.strokeStyle = 'rgba(245, 158, 11, 0.08)'
+  ctx.strokeStyle = withAlpha(getPaletteColors().grid, 0.08)
   ctx.lineWidth = 1
 
   for (const ratio of [0.45, 0.72, 1]) {
@@ -438,7 +465,7 @@ function drawCircularIdleState(ctx, width, height) {
   const { x: centerX, y: centerY } = getCircularCenter(width, height)
   const radius = Math.max(18, Math.min(width, height) * 0.18)
 
-  ctx.strokeStyle = 'rgba(245, 158, 11, 0.2)'
+  ctx.strokeStyle = withAlpha(getPaletteColors().grid, 0.2)
   ctx.lineWidth = 1.5
   ctx.beginPath()
   ctx.arc(centerX, centerY, radius, 0, TAU)
@@ -446,6 +473,7 @@ function drawCircularIdleState(ctx, width, height) {
 }
 
 function drawFrequencyBars(ctx, width, height, spectrum) {
+  const { audio } = getPaletteColors()
   const availableHeight = height - 22
   const barCount = Math.max(MIN_BAR_COUNT, Math.min(MAX_BAR_COUNT, Math.floor(width / TARGET_BAR_WIDTH)))
   const gap = 2
@@ -465,7 +493,7 @@ function drawFrequencyBars(ctx, width, height, spectrum) {
     const y = bottom - barHeight
     const alpha = 0.2 + easedValue * 0.75
 
-    ctx.fillStyle = `rgba(251, 191, 36, ${alpha})`
+    ctx.fillStyle = withAlpha(audio, alpha)
     ctx.fillRect(x, y, barWidth, barHeight)
   }
 }
@@ -475,10 +503,11 @@ function drawFormulaOverlay(ctx, width, height, waveforms) {
     return
   }
 
+  const { formulaPrimary, formulaSecondary } = getPaletteColors()
   const offsets = waveforms.length > 1 ? [-height * 0.065, height * 0.065] : [0]
   const colors = waveforms.length > 1
-    ? ['rgba(56, 189, 248, 0.82)', 'rgba(125, 211, 252, 0.62)']
-    : ['rgba(56, 189, 248, 0.82)']
+    ? [withAlpha(formulaPrimary, 0.82), withAlpha(formulaSecondary, 0.62)]
+    : [withAlpha(formulaPrimary, 0.82)]
 
   waveforms.forEach((waveform, index) => {
     drawFormulaChannelWaveform(
@@ -497,11 +526,12 @@ function drawCircularFormulaOverlay(ctx, width, height, waveforms) {
     return
   }
 
+  const { formulaPrimary, formulaSecondary } = getPaletteColors()
   const baseRadius = Math.max(18, Math.min(width, height) * 0.12)
   const radiusStep = Math.max(10, Math.min(width, height) * 0.035)
   const colors = waveforms.length > 1
-    ? ['rgba(56, 189, 248, 0.82)', 'rgba(125, 211, 252, 0.56)']
-    : ['rgba(56, 189, 248, 0.82)']
+    ? [withAlpha(formulaPrimary, 0.82), withAlpha(formulaSecondary, 0.56)]
+    : [withAlpha(formulaPrimary, 0.82)]
 
   waveforms.forEach((waveform, index) => {
     drawCircularFormulaRing(
@@ -577,11 +607,12 @@ function drawFormulaChannelWaveform(ctx, width, height, waveform, centerOffset, 
 }
 
 function drawWaveform(ctx, width, height, waveform) {
+  const { audio } = getPaletteColors()
   const centerY = height * 0.54
   const amplitude = height * 0.24 + level.value * height * 0.14
   const lastIndex = Math.max(1, Math.floor((waveform.length - 1) / WAVEFORM_SAMPLE_STEP))
 
-  ctx.strokeStyle = 'rgba(252, 211, 77, 0.96)'
+  ctx.strokeStyle = withAlpha(audio, 0.96)
   ctx.lineWidth = 1.75
   ctx.beginPath()
 
@@ -602,6 +633,7 @@ function drawWaveform(ctx, width, height, waveform) {
 }
 
 function drawCircularFrequencyBars(ctx, width, height, spectrum) {
+  const { audio } = getPaletteColors()
   const { x: centerX, y: centerY } = getCircularCenter(width, height)
   const innerRadius = Math.max(28, Math.min(width, height) * 0.18)
   const maxBarLength = Math.max(18, Math.min(width, height) * 0.15)
@@ -624,7 +656,7 @@ function drawCircularFrequencyBars(ctx, width, height, spectrum) {
     const endRadius = startRadius + barLength
     const alpha = 0.18 + easedValue * 0.78
 
-    ctx.strokeStyle = `rgba(251, 191, 36, ${alpha})`
+    ctx.strokeStyle = withAlpha(audio, alpha)
     ctx.lineWidth = 1 + easedValue * 2.2
     ctx.beginPath()
     ctx.moveTo(
@@ -640,12 +672,13 @@ function drawCircularFrequencyBars(ctx, width, height, spectrum) {
 }
 
 function drawCircularWaveform(ctx, width, height, waveform) {
+  const { audio } = getPaletteColors()
   const { x: centerX, y: centerY } = getCircularCenter(width, height)
   const baseRadius = Math.max(44, Math.min(width, height) * 0.28)
   const amplitude = Math.max(10, Math.min(width, height) * 0.06 + level.value * Math.min(width, height) * 0.035)
   const lastIndex = Math.max(1, Math.floor((waveform.length - 1) / WAVEFORM_SAMPLE_STEP))
 
-  ctx.strokeStyle = 'rgba(252, 211, 77, 0.96)'
+  ctx.strokeStyle = withAlpha(audio, 0.96)
   ctx.lineWidth = 1.75
   ctx.beginPath()
 
@@ -669,20 +702,21 @@ function drawCircularWaveform(ctx, width, height, waveform) {
 }
 
 function drawCircularCore(ctx, width, height) {
+  const { audio, audioGlow } = getPaletteColors()
   const { x: centerX, y: centerY } = getCircularCenter(width, height)
   const radius = Math.max(8, Math.min(width, height) * 0.038 + level.value * Math.min(width, height) * 0.014)
   const coreGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 2.6)
 
-  coreGradient.addColorStop(0, 'rgba(252, 211, 77, 0.95)')
-  coreGradient.addColorStop(0.35, 'rgba(245, 158, 11, 0.42)')
-  coreGradient.addColorStop(1, 'rgba(245, 158, 11, 0)')
+  coreGradient.addColorStop(0, withAlpha(audio, 0.95))
+  coreGradient.addColorStop(0.35, withAlpha(audioGlow, 0.42))
+  coreGradient.addColorStop(1, withAlpha(audioGlow, 0))
 
   ctx.fillStyle = coreGradient
   ctx.beginPath()
   ctx.arc(centerX, centerY, radius * 2.6, 0, TAU)
   ctx.fill()
 
-  ctx.fillStyle = 'rgba(252, 211, 77, 0.92)'
+  ctx.fillStyle = withAlpha(audio, 0.92)
   ctx.beginPath()
   ctx.arc(centerX, centerY, radius, 0, TAU)
   ctx.fill()
@@ -791,13 +825,14 @@ function sampleWaterfallSnapshot(waveform, pointCount, { normalized = false } = 
 }
 
 function drawWaterfallGuides(ctx, width, height) {
+  const { audioGlow, divider, formulaPrimary } = getPaletteColors()
   const centerY = height * 0.5
 
   drawWaterfallBandGuides(
     ctx,
     createWaterfallBandConfig(width, height, {
       backY: centerY - height * 0.025,
-      color: 'rgba(245, 158, 11, 0.08)',
+      colorRgb: audioGlow,
       frontY: 0.5,
       valueDirection: -1
     })
@@ -806,13 +841,13 @@ function drawWaterfallGuides(ctx, width, height) {
     ctx,
     createWaterfallBandConfig(width, height, {
       backY: centerY + height * 0.025,
-      color: 'rgba(56, 189, 248, 0.08)',
+      colorRgb: formulaPrimary,
       frontY: height - 0.5,
       valueDirection: 1
     })
   )
 
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'
+  ctx.strokeStyle = withAlpha(divider, 0.08)
   ctx.lineWidth = 1
   ctx.beginPath()
   ctx.moveTo(width * 0.08, centerY)
@@ -821,16 +856,17 @@ function drawWaterfallGuides(ctx, width, height) {
 }
 
 function drawWaterfallSnapshots(ctx, width, height) {
+  const { audio, formulaPrimary } = getPaletteColors()
   const centerY = height * 0.5
   const topBand = createWaterfallBandConfig(width, height, {
     backY: centerY - height * 0.025,
-    color: 'rgba(252, 211, 77, 0.96)',
+    colorRgb: audio,
     frontY: 0.5,
     valueDirection: -1
   })
   const bottomBand = createWaterfallBandConfig(width, height, {
     backY: centerY + height * 0.025,
-    color: 'rgba(56, 189, 248, 0.96)',
+    colorRgb: formulaPrimary,
     frontY: height - 0.5,
     valueDirection: 1
   })
@@ -841,7 +877,7 @@ function drawWaterfallSnapshots(ctx, width, height) {
 
 function createWaterfallBandConfig(width, height, {
   backY,
-  color,
+  colorRgb,
   frontY,
   valueDirection
 }) {
@@ -849,7 +885,7 @@ function createWaterfallBandConfig(width, height, {
     backHalfWidth: width * 0.13,
     backY,
     centerX: width * 0.5,
-    color,
+    colorRgb,
     frontHalfWidth: Math.max(0, width * 0.5 - 0.5),
     frontY,
     height,
@@ -858,7 +894,7 @@ function createWaterfallBandConfig(width, height, {
 }
 
 function drawWaterfallBandGuides(ctx, band) {
-  ctx.strokeStyle = band.color
+  ctx.strokeStyle = withAlpha(band.colorRgb, 0.08)
   ctx.lineWidth = 1
 
   for (let index = 0; index < WATERFALL_GUIDE_ROW_COUNT; index += 1) {
@@ -912,7 +948,7 @@ function drawWaterfallSnapshot(ctx, snapshot, depth, band) {
   const lineWidth = 0.65 + frontness * 1.6
   const lastIndex = Math.max(1, snapshot.length - 1)
 
-  ctx.strokeStyle = band.color.replace('0.96', alpha.toFixed(3))
+  ctx.strokeStyle = withAlpha(band.colorRgb, alpha)
   ctx.lineWidth = lineWidth
   ctx.beginPath()
 
@@ -932,7 +968,7 @@ function drawWaterfallSnapshot(ctx, snapshot, depth, band) {
 }
 
 function drawWaterfallIdleTrace(ctx, band) {
-  ctx.strokeStyle = band.color.replace('0.96', '0.22')
+  ctx.strokeStyle = withAlpha(band.colorRgb, 0.22)
   ctx.lineWidth = 1.5
   ctx.beginPath()
   ctx.moveTo(band.centerX - band.frontHalfWidth, band.frontY)
