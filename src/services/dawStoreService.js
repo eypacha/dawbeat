@@ -235,6 +235,10 @@ export function createValueTrackerClip(clip = {}) {
     start: Number.isFinite(Number(clip.start)) ? Number(clip.start) : 0,
     duration,
     stepSubdivision,
+    valueTrackerLibraryItemId:
+      typeof clip.valueTrackerLibraryItemId === 'string' && clip.valueTrackerLibraryItemId
+        ? clip.valueTrackerLibraryItemId
+        : null,
     values: normalizeValueTrackerValues(
       clip.values,
       duration,

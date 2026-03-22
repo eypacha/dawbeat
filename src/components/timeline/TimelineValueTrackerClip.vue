@@ -12,6 +12,12 @@
     @dblclick.stop="handleEditStart"
     @pointerdown.stop="handleClipPointerDown"
   >
+    <Link2
+      v-if="isReferenceClip"
+      class="pointer-events-none absolute right-1 top-1 h-3 w-3 opacity-80"
+      :stroke-width="2.25"
+    />
+
     <div class="pointer-events-none absolute inset-0 flex items-end gap-px px-2 pb-1 pt-2 opacity-60">
       <span
         v-for="bar in previewBars"
@@ -48,10 +54,12 @@
 <script setup>
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import { Link2 } from 'lucide-vue-next'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineClipInteraction } from '@/composables/useTimelineClipInteraction'
 import {
   getValueTrackerEventCount,
+  getValueTrackerLibraryItemById,
   getValueTrackerResolvedValues,
   getValueTrackerValueAtTime
 } from '@/services/valueTrackerService'
@@ -78,7 +86,7 @@ const props = defineProps({
 
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
-const { editingClipId, pixelsPerTick, selectedClipIds, valueTrackerTracks } = storeToRefs(dawStore)
+const { editingClipId, pixelsPerTick, selectedClipIds, valueTrackerLibraryItems, valueTrackerTracks } = storeToRefs(dawStore)
 const pendingShiftSelectionAction = ref(null)
 let duplicateDrag = ref(false)
 let ignoreNextClick = ref(false)
@@ -105,6 +113,10 @@ const eventCount = computed(() => getValueTrackerEventCount(props.clip.values))
 const valueTrackerTrack = computed(() =>
   valueTrackerTracks.value.find((track) => track.id === props.valueTrackerTrackId) ?? null
 )
+const linkedValueTrackerLibraryItem = computed(() =>
+  getValueTrackerLibraryItemById(valueTrackerLibraryItems.value, props.clip.valueTrackerLibraryItemId)
+)
+const isReferenceClip = computed(() => Boolean(linkedValueTrackerLibraryItem.value))
 const resolvedValues = computed(() =>
   getValueTrackerResolvedValues(
     props.clip.values,
@@ -277,7 +289,11 @@ const buttonClassName = computed(() => {
 const clipTitle = computed(() =>
   props.preview
     ? `Recording · ${eventCount.value} sets · ${stepCount.value} steps`
-    : `Value Tracker · ${eventCount.value} sets · ${stepCount.value} steps`
+    : [
+        isReferenceClip.value ? `Linked · ${linkedValueTrackerLibraryItem.value?.name ?? 'Value Pattern'}` : 'Value Tracker',
+        `${eventCount.value} sets`,
+        `${stepCount.value} steps`
+      ].join(' · ')
 )
 
 function handleEditStart() {
@@ -295,7 +311,6 @@ function handleContextMenu(event) {
   }
 
   handleSelect({ preserveMultiSelection: true })
-
   openContextMenu({
     x: event.clientX,
     y: event.clientY,
@@ -308,9 +323,19 @@ function handleContextMenu(event) {
       {
         action: 'add-value-tracker-clip-to-library',
         clipId: props.clip.id,
-        label: 'Add To Library',
+        label: isReferenceClip.value ? 'Show In Library' : 'Add To Library...',
         valueTrackerTrackId: props.valueTrackerTrackId
       },
+      ...(
+        isReferenceClip.value
+          ? [{
+              action: 'detach-value-tracker-clip-library',
+              clipId: props.clip.id,
+              label: 'Detach From Library',
+              valueTrackerTrackId: props.valueTrackerTrackId
+            }]
+          : []
+      ),
       {
         action: 'copy-clip',
         clipId: props.clip.id,

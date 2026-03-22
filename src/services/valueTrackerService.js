@@ -140,6 +140,41 @@ export function createValueTrackerLibraryItem(item = {}) {
   }
 }
 
+export function getValueTrackerLibraryItemById(valueTrackerLibraryItems = [], valueTrackerLibraryItemId) {
+  if (typeof valueTrackerLibraryItemId !== 'string' || !valueTrackerLibraryItemId) {
+    return null
+  }
+
+  return (Array.isArray(valueTrackerLibraryItems) ? valueTrackerLibraryItems : []).find(
+    (item) => item?.id === valueTrackerLibraryItemId
+  ) ?? null
+}
+
+export function resolveValueTrackerClipLibraryReference(clip, valueTrackerLibraryItems = []) {
+  return getValueTrackerLibraryItemById(valueTrackerLibraryItems, clip?.valueTrackerLibraryItemId)
+}
+
+export function materializeValueTrackerClipLibraryReference(clip, valueTrackerLibraryItems = []) {
+  const valueTrackerLibraryItem = resolveValueTrackerClipLibraryReference(clip, valueTrackerLibraryItems)
+
+  if (!valueTrackerLibraryItem) {
+    const duration = Number.isFinite(Number(clip?.duration)) ? Number(clip.duration) : 4
+    const stepSubdivision = normalizeValueTrackerStepSubdivision(clip?.stepSubdivision)
+
+    return {
+      duration,
+      stepSubdivision,
+      values: normalizeValueTrackerValues(clip?.values, duration, stepSubdivision)
+    }
+  }
+
+  return {
+    duration: valueTrackerLibraryItem.duration,
+    stepSubdivision: valueTrackerLibraryItem.stepSubdivision,
+    values: [...valueTrackerLibraryItem.values]
+  }
+}
+
 export function normalizeValueTrackerStepSubdivision(value) {
   const numericValue = Number(value)
 

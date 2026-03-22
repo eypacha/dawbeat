@@ -381,6 +381,7 @@ function handleLaneDrop(event) {
       duration: valueTrackerLibraryItem.duration,
       start,
       stepSubdivision: valueTrackerLibraryItem.stepSubdivision,
+      valueTrackerLibraryItemId: valueTrackerLibraryItem.id,
       values: [...(valueTrackerLibraryItem.values ?? [])]
     })
   })

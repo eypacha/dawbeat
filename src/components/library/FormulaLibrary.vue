@@ -216,7 +216,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { BookOpen, ChevronLeft, ChevronRight, GripVertical, Pencil, TextCursorInput, Trash2 } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
@@ -255,13 +255,13 @@ const {
   formulas,
   pixelsPerTick,
   selectedFormulaId,
+  selectedValueTrackerLibraryItemId,
   valueTrackerLibraryItems
 } = storeToRefs(dawStore)
 
 const activeLibraryTab = ref(FORMULA_LIBRARY_TAB)
 const editingValueTrackerLibraryItemId = ref(null)
 const renamingValueTrackerLibraryItemId = ref(null)
-const selectedValueTrackerLibraryItemId = ref(null)
 
 const editingValueTrackerLibraryItem = computed(() =>
   valueTrackerLibraryItems.value.find((item) => item.id === editingValueTrackerLibraryItemId.value) ?? null
@@ -301,16 +301,16 @@ function handleNewValueTrackerLibraryItem() {
   const valueTrackerLibraryItemId = dawStore.addValueTrackerLibraryItem()
 
   activeLibraryTab.value = VALUE_TRACKER_LIBRARY_TAB
-  selectedValueTrackerLibraryItemId.value = valueTrackerLibraryItemId
+  dawStore.selectValueTrackerLibraryItem(valueTrackerLibraryItemId)
   editingValueTrackerLibraryItemId.value = valueTrackerLibraryItemId
 }
 
 function handleSelectValueTrackerLibraryItem(valueTrackerLibraryItemId) {
-  selectedValueTrackerLibraryItemId.value = valueTrackerLibraryItemId
+  dawStore.selectValueTrackerLibraryItem(valueTrackerLibraryItemId)
 }
 
 function handleEditValueTrackerLibraryItem(valueTrackerLibraryItemId) {
-  selectedValueTrackerLibraryItemId.value = valueTrackerLibraryItemId
+  dawStore.selectValueTrackerLibraryItem(valueTrackerLibraryItemId)
   editingValueTrackerLibraryItemId.value = valueTrackerLibraryItemId
 }
 
@@ -329,7 +329,7 @@ function handleValueTrackerLibraryItemEditorUpdate(nextDraft) {
 }
 
 function handleRenameValueTrackerLibraryItem(valueTrackerLibraryItemId) {
-  selectedValueTrackerLibraryItemId.value = valueTrackerLibraryItemId
+  dawStore.selectValueTrackerLibraryItem(valueTrackerLibraryItemId)
   renamingValueTrackerLibraryItemId.value = valueTrackerLibraryItemId
 }
 
@@ -361,10 +361,6 @@ function handleRemoveValueTrackerLibraryItem(valueTrackerLibraryItemId) {
 
   if (renamingValueTrackerLibraryItemId.value === valueTrackerLibraryItemId) {
     renamingValueTrackerLibraryItemId.value = null
-  }
-
-  if (selectedValueTrackerLibraryItemId.value === valueTrackerLibraryItemId) {
-    selectedValueTrackerLibraryItemId.value = null
   }
 }
 
@@ -405,7 +401,7 @@ function handleValueTrackerLibraryItemDragStart(event, valueTrackerLibraryItemId
     return
   }
 
-  selectedValueTrackerLibraryItemId.value = valueTrackerLibraryItemId
+  dawStore.selectValueTrackerLibraryItem(valueTrackerLibraryItemId)
   event.dataTransfer?.setData('valueTrackerLibraryItemId', valueTrackerLibraryItemId)
   event.dataTransfer?.setData(
     'valueTrackerLibraryDragOffsetPx',
@@ -567,4 +563,12 @@ function getValueTrackerLibraryItemSummary(valueTrackerLibraryItem) {
 
   return `${eventCount} sets · ${stepCount} steps · ${valueTrackerLibraryItem.stepSubdivision} step/tick`
 }
+
+watch(selectedValueTrackerLibraryItemId, (valueTrackerLibraryItemId) => {
+  if (!valueTrackerLibraryItemId) {
+    return
+  }
+
+  activeLibraryTab.value = VALUE_TRACKER_LIBRARY_TAB
+})
 </script>

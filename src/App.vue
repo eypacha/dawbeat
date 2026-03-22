@@ -583,6 +583,11 @@ function handleContextMenuSelect(action, item) {
     return
   }
 
+  if (action === 'detach-value-tracker-clip-library') {
+    dawStore.detachValueTrackerClipFromLibrary(item.valueTrackerTrackId, item.clipId)
+    return
+  }
+
   if (action === 'delete-clip') {
     dawStore.removeClip(item.clipId)
     return

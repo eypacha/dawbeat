@@ -46,12 +46,12 @@ import { DEFAULT_TRACK_COLOR, getTrackColor } from '@/utils/colorUtils'
 import { BASE_TICK_SIZE, MAX_ZOOM, MIN_ZOOM, TIMELINE_SNAP_SUBDIVISIONS, clamp } from '@/utils/timeUtils'
 
 const PROJECT_STORAGE_KEY = 'dawbeat-project'
-const PROJECT_VERSION = 15
+const PROJECT_VERSION = 16
 const SAVE_DEBOUNCE_MS = 400
 const DEFAULT_LOOP_START = 0
 const DEFAULT_LOOP_END = 16
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
-const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, PROJECT_VERSION])
+const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, PROJECT_VERSION])
 
 export function serializeProject(state) {
   return normalizeProjectPayload({
@@ -247,6 +247,9 @@ function normalizeProjectPayload(project) {
         .map((item) => normalizeValueTrackerLibraryItem(item, project.version))
         .filter(Boolean)
     : []
+  const valueTrackerLibraryItemsById = new Map(
+    valueTrackerLibraryItems.map((item) => [item.id, item])
+  )
   const evalEffects = hasOwn(project, 'evalEffects')
     ? normalizeEvalEffects(project.evalEffects)
     : [createStereoOffsetEvalEffect({ id: 'fx1' })]
@@ -268,6 +271,21 @@ function normalizeProjectPayload(project) {
     ),
     'T Replacement'
   )
+
+  for (const valueTrackerTrack of valueTrackerTracks) {
+    for (const clip of valueTrackerTrack.clips ?? []) {
+      const valueTrackerLibraryItem = valueTrackerLibraryItemsById.get(clip.valueTrackerLibraryItemId)
+
+      if (!valueTrackerLibraryItem) {
+        clip.valueTrackerLibraryItemId = null
+        continue
+      }
+
+      clip.duration = valueTrackerLibraryItem.duration
+      clip.stepSubdivision = valueTrackerLibraryItem.stepSubdivision
+      clip.values = [...valueTrackerLibraryItem.values]
+    }
+  }
 
   const boundValueTrackerVariableNames = new Set(getBoundValueTrackerVariableNames(valueTrackerTracks))
   const requiredAutoVariableTrackNames = collectAutoVariableTrackNames([
@@ -486,6 +504,10 @@ function normalizeValueTrackerClip(clip, projectVersion) {
     start: normalizeNonNegativeNumber(clip.start, 0),
     duration,
     stepSubdivision,
+    valueTrackerLibraryItemId:
+      typeof clip.valueTrackerLibraryItemId === 'string' && clip.valueTrackerLibraryItemId
+        ? clip.valueTrackerLibraryItemId
+        : null,
     values
   })
 }
