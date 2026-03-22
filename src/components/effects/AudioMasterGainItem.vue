@@ -49,7 +49,6 @@
       <div class="flex items-start justify-between gap-4">
         <div>
           <p class="text-sm uppercase tracking-[0.24em] text-zinc-500">Audio Visualizer</p>
-          <p class="mt-2 text-xs text-zinc-500">Live output and formula overlay</p>
         </div>
 
         <div class="flex items-start gap-3" data-window-no-drag="true">
