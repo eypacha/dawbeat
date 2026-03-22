@@ -1,7 +1,7 @@
 <template>
   <div
     ref="containerElement"
-    class="relative overflow-hidden rounded border border-amber-500/20 bg-[linear-gradient(180deg,rgba(24,24,27,0.96),rgba(9,9,11,0.98))]"
+    class="relative overflow-hidden rounded border border-amber-500/20 bg-[#0b0809]"
     :class="containerClassName"
   >
     <canvas ref="canvasElement" class="block h-full w-full" />
@@ -89,6 +89,11 @@ const MIN_BAR_COUNT = 18
 const MIN_CIRCULAR_BAR_COUNT = 36
 const TARGET_BAR_WIDTH = 10
 const TAU = Math.PI * 2
+const WATERFALL_HISTORY_LIMIT = 64
+const WATERFALL_GUIDE_ROW_COUNT = 4
+const WATERFALL_SNAPSHOT_INTERVAL_MS = 42
+const WATERFALL_SNAPSHOT_POINTS = 96
+const WATERFALL_VISIBLE_TRACE_COUNT = 12
 const WAVEFORM_SAMPLE_STEP = 4
 
 const canvasElement = ref(null)
@@ -97,11 +102,16 @@ const formulaWaveforms = ref([])
 const level = ref(0)
 
 let animationFrameId = 0
+let canvasDisplayHeight = 0
+let canvasDisplayWidth = 0
 let canvasContext = null
 let frequencyData = null
 let formulaPreviewRequestVersion = 0
+let lastWaterfallSnapshotAt = 0
 let timeDomainData = null
 let resizeObserver = null
+let waterfallAudioHistory = []
+let waterfallFormulaHistory = []
 
 const dawStore = useDawStore()
 const {
@@ -194,6 +204,7 @@ onBeforeUnmount(() => {
   }
 
   formulaPreviewRequestVersion += 1
+  resetWaterfallHistory()
   resizeObserver?.disconnect()
 })
 
@@ -233,6 +244,13 @@ watch(
   { immediate: true }
 )
 
+watch(
+  () => props.mode,
+  () => {
+    resetWaterfallHistory()
+  }
+)
+
 function renderFrame() {
   drawVisualizer()
   animationFrameId = requestAnimationFrame(renderFrame)
@@ -252,6 +270,9 @@ function syncCanvasSize() {
   const devicePixelRatio = window.devicePixelRatio || 1
   const displayWidth = Math.round(width * devicePixelRatio)
   const displayHeight = Math.round(height * devicePixelRatio)
+
+  canvasDisplayWidth = width
+  canvasDisplayHeight = height
 
   if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
     canvas.width = displayWidth
@@ -286,8 +307,8 @@ function ensureDataBuffers(analyser) {
 function drawVisualizer() {
   const canvas = canvasElement.value
   const ctx = canvasContext
-  const width = canvas?.clientWidth ?? 0
-  const height = canvas?.clientHeight ?? 0
+  const width = canvasDisplayWidth || canvas?.clientWidth || 0
+  const height = canvasDisplayHeight || canvas?.clientHeight || 0
 
   if (!ctx || width <= 0 || height <= 0) {
     return
@@ -300,6 +321,8 @@ function drawVisualizer() {
   if (props.mode === 'circular') {
     drawCircularGuides(ctx, width, height)
     drawCircularFormulaOverlay(ctx, width, height, formulaWaveforms.value)
+  } else if (props.mode === 'waterfall') {
+    drawWaterfallGuides(ctx, width, height)
   } else {
     drawFormulaOverlay(ctx, width, height, formulaWaveforms.value)
   }
@@ -309,6 +332,8 @@ function drawVisualizer() {
 
     if (props.mode === 'circular') {
       drawCircularIdleState(ctx, width, height)
+    } else if (props.mode === 'waterfall') {
+      drawWaterfallSnapshots(ctx, width, height)
     } else {
       drawIdleState(ctx, width, height)
     }
@@ -329,18 +354,19 @@ function drawVisualizer() {
     return
   }
 
+  if (props.mode === 'waterfall') {
+    updateWaterfallHistories(timeDomainData, formulaWaveforms.value)
+    drawWaterfallSnapshots(ctx, width, height)
+    return
+  }
+
   drawFrequencyBars(ctx, width, height, frequencyData)
   drawWaveform(ctx, width, height, timeDomainData)
 }
 
 function drawBackground(ctx, width, height) {
-  const backgroundGradient = ctx.createLinearGradient(0, 0, 0, height)
-  backgroundGradient.addColorStop(0, 'rgba(56, 189, 248, 0.03)')
-  backgroundGradient.addColorStop(0.45, 'rgba(245, 158, 11, 0.08)')
-  backgroundGradient.addColorStop(1, 'rgba(9, 9, 11, 0.98)')
-
   ctx.clearRect(0, 0, width, height)
-  ctx.fillStyle = backgroundGradient
+  ctx.fillStyle = '#0b0809'
   ctx.fillRect(0, 0, width, height)
 
   ctx.strokeStyle = 'rgba(245, 158, 11, 0.08)'
@@ -369,6 +395,12 @@ function getCircularCenter(width, height) {
     x: width * 0.5,
     y: height * 0.5
   }
+}
+
+function resetWaterfallHistory() {
+  waterfallAudioHistory = []
+  waterfallFormulaHistory = []
+  lastWaterfallSnapshotAt = 0
 }
 
 function drawCircularGuides(ctx, width, height) {
@@ -654,6 +686,258 @@ function drawCircularCore(ctx, width, height) {
   ctx.beginPath()
   ctx.arc(centerX, centerY, radius, 0, TAU)
   ctx.fill()
+}
+
+function updateWaterfallHistories(audioWaveform, waveforms) {
+  const now = performance.now()
+  const formulaWaveform = mergeWaterfallFormulaWaveform(waveforms)
+
+  if (
+    (waterfallAudioHistory.length || waterfallFormulaHistory.length)
+    && now - lastWaterfallSnapshotAt < WATERFALL_SNAPSHOT_INTERVAL_MS
+  ) {
+    return
+  }
+
+  lastWaterfallSnapshotAt = now
+  pushWaterfallSnapshot(
+    waterfallAudioHistory,
+    sampleWaterfallSnapshot(audioWaveform, WATERFALL_SNAPSHOT_POINTS)
+  )
+  pushWaterfallSnapshot(
+    waterfallFormulaHistory,
+    sampleWaterfallSnapshot(formulaWaveform, WATERFALL_SNAPSHOT_POINTS, { normalized: true })
+  )
+}
+
+function mergeWaterfallFormulaWaveform(waveforms) {
+  const channels = Array.isArray(waveforms)
+    ? waveforms.filter((waveform) => Array.isArray(waveform) || ArrayBuffer.isView(waveform))
+    : []
+
+  if (!channels.length) {
+    return null
+  }
+
+  const maxLength = Math.max(
+    0,
+    ...channels.map((waveform) => Number.isFinite(waveform?.length) ? waveform.length : 0)
+  )
+
+  if (maxLength <= 0) {
+    return null
+  }
+
+  const merged = new Float32Array(maxLength)
+
+  for (let index = 0; index < maxLength; index += 1) {
+    let total = 0
+    let count = 0
+
+    for (const waveform of channels) {
+      const lastIndex = Math.max(0, waveform.length - 1)
+      const sampleIndex = lastIndex <= 0
+        ? 0
+        : Math.min(lastIndex, Math.round((index / Math.max(1, maxLength - 1)) * lastIndex))
+      const value = waveform[sampleIndex]
+
+      if (!Number.isFinite(value)) {
+        continue
+      }
+
+      total += value
+      count += 1
+    }
+
+    merged[index] = count ? clamp(total / count, -1, 1) : 0
+  }
+
+  return merged
+}
+
+function pushWaterfallSnapshot(history, snapshot) {
+  if (!snapshot?.length) {
+    return
+  }
+
+  history.unshift(snapshot)
+
+  if (history.length > WATERFALL_HISTORY_LIMIT) {
+    history.length = WATERFALL_HISTORY_LIMIT
+  }
+}
+
+function sampleWaterfallSnapshot(waveform, pointCount, { normalized = false } = {}) {
+  if (!waveform?.length) {
+    return null
+  }
+
+  const snapshot = new Float32Array(pointCount)
+  const lastIndex = Math.max(1, waveform.length - 1)
+
+  for (let index = 0; index < pointCount; index += 1) {
+    const sampleIndex = Math.min(
+      lastIndex,
+      Math.floor((index / Math.max(1, pointCount - 1)) * lastIndex)
+    )
+
+    const sourceValue = waveform[sampleIndex]
+    snapshot[index] = normalized
+      ? clamp(sourceValue ?? 0, -1, 1)
+      : clamp(((sourceValue ?? 128) - 128) / 128, -1, 1)
+  }
+
+  return snapshot
+}
+
+function drawWaterfallGuides(ctx, width, height) {
+  const centerY = height * 0.5
+
+  drawWaterfallBandGuides(
+    ctx,
+    createWaterfallBandConfig(width, height, {
+      backY: centerY - height * 0.025,
+      color: 'rgba(245, 158, 11, 0.08)',
+      frontY: 0.5,
+      valueDirection: -1
+    })
+  )
+  drawWaterfallBandGuides(
+    ctx,
+    createWaterfallBandConfig(width, height, {
+      backY: centerY + height * 0.025,
+      color: 'rgba(56, 189, 248, 0.08)',
+      frontY: height - 0.5,
+      valueDirection: 1
+    })
+  )
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(width * 0.08, centerY)
+  ctx.lineTo(width * 0.92, centerY)
+  ctx.stroke()
+}
+
+function drawWaterfallSnapshots(ctx, width, height) {
+  const centerY = height * 0.5
+  const topBand = createWaterfallBandConfig(width, height, {
+    backY: centerY - height * 0.025,
+    color: 'rgba(252, 211, 77, 0.96)',
+    frontY: 0.5,
+    valueDirection: -1
+  })
+  const bottomBand = createWaterfallBandConfig(width, height, {
+    backY: centerY + height * 0.025,
+    color: 'rgba(56, 189, 248, 0.96)',
+    frontY: height - 0.5,
+    valueDirection: 1
+  })
+
+  drawWaterfallBand(ctx, waterfallAudioHistory, topBand)
+  drawWaterfallBand(ctx, waterfallFormulaHistory, bottomBand)
+}
+
+function createWaterfallBandConfig(width, height, {
+  backY,
+  color,
+  frontY,
+  valueDirection
+}) {
+  return {
+    backHalfWidth: width * 0.13,
+    backY,
+    centerX: width * 0.5,
+    color,
+    frontHalfWidth: Math.max(0, width * 0.5 - 0.5),
+    frontY,
+    height,
+    valueDirection
+  }
+}
+
+function drawWaterfallBandGuides(ctx, band) {
+  ctx.strokeStyle = band.color
+  ctx.lineWidth = 1
+
+  for (let index = 0; index < WATERFALL_GUIDE_ROW_COUNT; index += 1) {
+    const depth = index / Math.max(1, WATERFALL_GUIDE_ROW_COUNT - 1)
+    const y = band.frontY + depth * (band.backY - band.frontY)
+    const halfWidth = band.frontHalfWidth + depth * (band.backHalfWidth - band.frontHalfWidth)
+
+    ctx.beginPath()
+    ctx.moveTo(band.centerX - halfWidth, y)
+    ctx.lineTo(band.centerX + halfWidth, y)
+    ctx.stroke()
+  }
+
+  for (const xRatio of [-1, -0.5, 0, 0.5, 1]) {
+    ctx.beginPath()
+    ctx.moveTo(band.centerX + band.frontHalfWidth * xRatio, band.frontY)
+    ctx.lineTo(band.centerX + band.backHalfWidth * xRatio, band.backY)
+    ctx.stroke()
+  }
+}
+
+function drawWaterfallBand(ctx, history, band) {
+  const visibleHistory = history.slice(0, WATERFALL_VISIBLE_TRACE_COUNT)
+
+  if (!visibleHistory.length) {
+    drawWaterfallIdleTrace(ctx, band)
+    return
+  }
+
+  for (let historyIndex = visibleHistory.length - 1; historyIndex >= 0; historyIndex -= 1) {
+    const snapshot = visibleHistory[historyIndex]
+    const depth = visibleHistory.length <= 1
+      ? 0
+      : historyIndex / Math.max(1, visibleHistory.length - 1)
+
+    drawWaterfallSnapshot(ctx, snapshot, depth, band)
+  }
+}
+
+function drawWaterfallSnapshot(ctx, snapshot, depth, band) {
+  if (!snapshot?.length) {
+    return
+  }
+
+  const frontness = 1 - depth
+  const centerness = depth
+  const centerY = band.frontY + depth * (band.backY - band.frontY)
+  const halfWidth = band.backHalfWidth + frontness * (band.frontHalfWidth - band.backHalfWidth)
+  const amplitude = band.height * (0.015 + frontness * 0.13)
+  const alpha = 0.06 + frontness * 0.88
+  const lineWidth = 0.65 + frontness * 1.6
+  const lastIndex = Math.max(1, snapshot.length - 1)
+
+  ctx.strokeStyle = band.color.replace('0.96', alpha.toFixed(3))
+  ctx.lineWidth = lineWidth
+  ctx.beginPath()
+
+  for (let index = 0; index < snapshot.length; index += 1) {
+    const x = band.centerX + (((index / lastIndex) - 0.5) * halfWidth * 2)
+    const y = centerY + snapshot[index] * amplitude * band.valueDirection
+
+    if (index === 0) {
+      ctx.moveTo(x, y)
+      continue
+    }
+
+    ctx.lineTo(x, y)
+  }
+
+  ctx.stroke()
+}
+
+function drawWaterfallIdleTrace(ctx, band) {
+  ctx.strokeStyle = band.color.replace('0.96', '0.22')
+  ctx.lineWidth = 1.5
+  ctx.beginPath()
+  ctx.moveTo(band.centerX - band.frontHalfWidth, band.frontY)
+  ctx.lineTo(band.centerX + band.frontHalfWidth, band.frontY)
+  ctx.stroke()
 }
 
 function measureSignalLevel(waveform) {

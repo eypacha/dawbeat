@@ -109,10 +109,11 @@ const props = defineProps({
 
 const emit = defineEmits(['create-automation', 'interaction-end', 'interaction-start', 'update:gain'])
 
-const VISUALIZER_MODES = ['linear', 'circular']
+const VISUALIZER_MODES = ['linear', 'circular', 'waterfall']
 const VISUALIZER_MODE_LABELS = {
   circular: 'Circular',
-  linear: 'Linear'
+  linear: 'Linear',
+  waterfall: 'Waterfall'
 }
 
 const gainLabel = computed(() => `${Number(props.gain ?? 0).toFixed(2)}x`)
