@@ -1,12 +1,24 @@
 <template>
   <div
     ref="containerElement"
-    class="relative h-28 overflow-hidden rounded border border-amber-500/20 bg-[linear-gradient(180deg,rgba(24,24,27,0.96),rgba(9,9,11,0.98))]"
+    class="relative overflow-hidden rounded border border-amber-500/20 bg-[linear-gradient(180deg,rgba(24,24,27,0.96),rgba(9,9,11,0.98))]"
+    :class="windowed ? 'h-[22rem]' : 'h-28'"
   >
     <canvas ref="canvasElement" class="block h-full w-full" />
 
-    <div class="pointer-events-none absolute inset-x-3 top-2 flex items-center justify-end">
-      <span class="text-[10px] uppercase tracking-[0.18em] text-amber-100/60">{{ levelLabel }}</span>
+    <div class="absolute inset-x-3 top-2 flex items-center justify-between gap-3">
+      <button
+        v-if="showWindowButton"
+        aria-label="Open visualizer window"
+        class="pointer-events-auto inline-flex h-6 w-6 items-center justify-center border border-zinc-700 bg-zinc-950/90 text-zinc-300 transition hover:border-zinc-500 hover:text-zinc-100"
+        title="Open visualizer window"
+        type="button"
+        @click="emit('open-window')"
+      >
+        <AppWindow class="h-3.5 w-3.5" :stroke-width="2.25" />
+      </button>
+
+      <span class="pointer-events-none ml-auto text-[10px] uppercase tracking-[0.18em] text-amber-100/60">{{ levelLabel }}</span>
     </div>
 
     <div class="pointer-events-none absolute inset-x-3 bottom-2 flex items-center gap-4 text-[10px] uppercase tracking-[0.16em] text-zinc-500">
@@ -25,12 +37,26 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { AppWindow } from 'lucide-vue-next'
 import { getActiveFormula } from '@/engine/timelineEngine'
 import bytebeatService from '@/services/bytebeatService'
 import { applyEvalEffects } from '@/services/evalEffectService'
 import { renderFormulaWaveformChannels } from '@/services/formulaWaveformService'
 import { useDawStore } from '@/stores/dawStore'
 import { clamp, ticksToSamples } from '@/utils/timeUtils'
+
+defineProps({
+  showWindowButton: {
+    type: Boolean,
+    default: false
+  },
+  windowed: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const emit = defineEmits(['open-window'])
 
 const FORMULA_PREVIEW_MAX_SPAN_SAMPLES = 8192
 const FORMULA_PREVIEW_MIN_SPAN_SAMPLES = 1024

@@ -1,16 +1,18 @@
 <template>
   <div
     v-if="open"
-    class="pointer-events-none fixed inset-0 z-50"
+    class="pointer-events-none fixed inset-0"
+    :style="windowStyle"
   >
     <div
       ref="panelElement"
       :class="panelClassName"
       :style="panelStyle"
+      @pointerdown="activateWindow"
     >
       <header
         v-if="title || $slots.header"
-        class="mb-4 cursor-grab select-none active:cursor-grabbing"
+        :class="headerClassName"
         @pointerdown="handleHeaderPointerDown"
       >
         <slot name="header">
@@ -30,7 +32,8 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { createFloatingWindowId, useFloatingWindowStack } from '@/services/floatingWindowService'
 
 const props = defineProps({
   closeOnEsc: {
@@ -55,9 +58,10 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'fullscreen-change'])
 
 const WINDOW_MARGIN = 8
+const windowId = createFloatingWindowId()
 
 const panelElement = ref(null)
 const position = reactive({
@@ -71,7 +75,20 @@ const dragState = reactive({
   startX: 0,
   startY: 0
 })
+const fullscreenActive = ref(false)
 const positionInitialized = ref(false)
+const {
+  activateWindow,
+  isTopmostWindow,
+  removeWindow,
+  zIndex
+} = useFloatingWindowStack(windowId)
+
+const headerClassName = computed(() =>
+  fullscreenActive.value
+    ? 'mb-4 select-none'
+    : 'mb-4 cursor-grab select-none active:cursor-grabbing'
+)
 
 const panelClassName = computed(() => {
   let widthClassName = 'w-[min(calc(100vw-1rem),32rem)]'
@@ -93,20 +110,38 @@ const panelClassName = computed(() => {
     .join(' ')
 })
 
+const windowStyle = computed(() => ({
+  zIndex: zIndex.value
+}))
+
 const panelStyle = computed(() => ({
-  left: `${position.x}px`,
-  top: `${position.y}px`
+  ...(fullscreenActive.value
+    ? {
+        height: '100vh',
+        left: '0px',
+        maxHeight: '100vh',
+        maxWidth: '100vw',
+        top: '0px',
+        width: '100vw'
+      }
+    : {
+        left: `${position.x}px`,
+        top: `${position.y}px`
+      })
 }))
 
 watch(
   () => props.open,
   async (open) => {
     if (!open) {
+      void exitFullscreen()
       removeWindowListeners()
+      removeWindow()
       return
     }
 
     await nextTick()
+    syncFullscreenState()
 
     if (!positionInitialized.value) {
       centerPanel()
@@ -115,6 +150,7 @@ watch(
       clampPanelPosition()
     }
 
+    activateWindow()
     window.addEventListener('keydown', handleKeydown)
     window.addEventListener('resize', handleResize)
   },
@@ -122,7 +158,7 @@ watch(
 )
 
 function handleHeaderPointerDown(event) {
-  if (event.button !== 0) {
+  if (event.button !== 0 || fullscreenActive.value) {
     return
   }
 
@@ -167,7 +203,13 @@ function handlePointerEnd() {
 }
 
 function handleKeydown(event) {
-  if (!props.open || !props.closeOnEsc || event.key !== 'Escape') {
+  if (
+    !props.open ||
+    !props.closeOnEsc ||
+    event.key !== 'Escape' ||
+    !isTopmostWindow.value ||
+    fullscreenActive.value
+  ) {
     return
   }
 
@@ -175,6 +217,10 @@ function handleKeydown(event) {
 }
 
 function handleResize() {
+  if (fullscreenActive.value) {
+    return
+  }
+
   clampPanelPosition()
 }
 
@@ -215,7 +261,67 @@ function removeWindowListeners() {
   window.removeEventListener('resize', handleResize)
 }
 
+function syncFullscreenState() {
+  const nextFullscreenActive = Boolean(panelElement.value) && document.fullscreenElement === panelElement.value
+
+  if (fullscreenActive.value === nextFullscreenActive) {
+    return
+  }
+
+  fullscreenActive.value = nextFullscreenActive
+  emit('fullscreen-change', nextFullscreenActive)
+}
+
+async function enterFullscreen() {
+  activateWindow()
+
+  if (!panelElement.value?.requestFullscreen) {
+    return
+  }
+
+  try {
+    await panelElement.value.requestFullscreen()
+  } catch {
+    syncFullscreenState()
+  }
+}
+
+async function exitFullscreen() {
+  if (document.fullscreenElement !== panelElement.value || !document.exitFullscreen) {
+    return
+  }
+
+  try {
+    await document.exitFullscreen()
+  } catch {
+    syncFullscreenState()
+  }
+}
+
+async function toggleFullscreen() {
+  if (fullscreenActive.value) {
+    await exitFullscreen()
+    return
+  }
+
+  await enterFullscreen()
+}
+
+defineExpose({
+  enterFullscreen,
+  exitFullscreen,
+  fullscreenActive,
+  toggleFullscreen
+})
+
+onMounted(() => {
+  document.addEventListener('fullscreenchange', syncFullscreenState)
+})
+
 onBeforeUnmount(() => {
+  document.removeEventListener('fullscreenchange', syncFullscreenState)
   removeWindowListeners()
+  void exitFullscreen()
+  removeWindow()
 })
 </script>
