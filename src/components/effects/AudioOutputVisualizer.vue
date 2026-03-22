@@ -20,7 +20,10 @@
           :key="expression.id"
           class="grid min-h-0 content-start"
         >
-          <pre class="overflow-hidden px-4 text-xs leading-6 text-zinc-100/95 whitespace-pre-wrap break-words drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]">{{ expression.code }}</pre>
+          <pre
+            class="overflow-hidden px-4 text-zinc-100/95 whitespace-pre-wrap break-words drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]"
+            :style="formulaOverlayTextStyle"
+          >{{ expression.code }}</pre>
         </section>
       </div>
     </div>
@@ -199,10 +202,16 @@ const containerClassName = computed(() => {
 })
 const containerStyle = computed(() => ({
   backgroundColor: selectedPalette.value.colors.background,
-  borderColor: withAlpha(selectedPalette.value.colors.border, 0.2)
+  borderColor: withAlpha(selectedPalette.value.colors.border, 0.2),
+  containerType: 'inline-size'
+}))
+const formulaOverlayTextStyle = computed(() => ({
+  fontSize: 'clamp(0.625rem, 3.1cqi, 1.125rem)',
+  lineHeight: 1.55
 }))
 const levelStyle = computed(() => ({
-  color: withAlpha(selectedPalette.value.colors.audio, 0.6)
+  color: withAlpha(selectedPalette.value.colors.audio, 0.6),
+  fontSize: 'clamp(0.5rem, 2cqi, 0.75rem)'
 }))
 
 onMounted(() => {

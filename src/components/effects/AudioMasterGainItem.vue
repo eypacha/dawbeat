@@ -53,41 +53,45 @@
           <p class="text-sm uppercase tracking-[0.24em] text-zinc-500">Audio Visualizer</p>
         </div>
 
-        <div class="flex items-start gap-3" data-window-no-drag="true">
-          <IconButton
-            :icon="Code2"
-            :class="visualizerFormulaOverlayVisible ? 'border-amber-400/60 bg-amber-400/10 text-amber-200 hover:bg-amber-400/20' : 'border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-200'"
-            :label="visualizerFormulaOverlayVisible ? 'Hide formulas' : 'Show formulas'"
-            size="sm"
-            :title="visualizerFormulaOverlayVisible ? 'Hide left and right formulas' : 'Show left and right formulas'"
-            @click="visualizerFormulaOverlayVisible = !visualizerFormulaOverlayVisible"
-          />
-          <IconButton
-            :icon="Palette"
-            class="border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-200"
-            :label="`Next palette (${nextVisualizerPaletteLabel})`"
-            size="sm"
-            :title="`Next palette: ${nextVisualizerPaletteLabel}`"
-            @click="cycleVisualizerPalette"
-          />
-          <IconButton
-            :icon="Shuffle"
-            class="border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-200"
-            :label="`Next visualizer (${nextVisualizerModeLabel})`"
-            size="sm"
-            :title="`Next visualizer: ${nextVisualizerModeLabel}`"
-            @click="cycleVisualizerMode"
-          />
-          <IconButton
-            :icon="visualizerWindowFullscreen ? Minimize2 : Maximize2"
-            :label="visualizerWindowFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
-            size="sm"
-            :title="visualizerWindowFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
-            @click="toggleVisualizerWindowFullscreen"
-          />
-          <IconButton label="Close" size="sm" @click="closeVisualizerWindow">
-            x
-          </IconButton>
+        <div class="flex items-start" data-window-no-drag="true">
+          <div class="flex items-start gap-1">
+            <IconButton
+              :icon="Code2"
+              :class="visualizerFormulaOverlayVisible ? 'border-amber-400/60 bg-amber-400/10 text-amber-200 hover:bg-amber-400/20' : 'border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-200'"
+              :label="visualizerFormulaOverlayVisible ? 'Hide formulas' : 'Show formulas'"
+              size="sm"
+              :title="visualizerFormulaOverlayVisible ? 'Hide left and right formulas' : 'Show left and right formulas'"
+              @click="visualizerFormulaOverlayVisible = !visualizerFormulaOverlayVisible"
+            />
+            <IconButton
+              :icon="Palette"
+              class="border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-200"
+              :label="`Next palette (${nextVisualizerPaletteLabel})`"
+              size="sm"
+              :title="`Next palette: ${nextVisualizerPaletteLabel}`"
+              @click="cycleVisualizerPalette"
+            />
+            <IconButton
+              :icon="Shuffle"
+              class="border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-200"
+              :label="`Next visualizer (${nextVisualizerModeLabel})`"
+              size="sm"
+              :title="`Next visualizer: ${nextVisualizerModeLabel}`"
+              @click="cycleVisualizerMode"
+            />
+            <IconButton
+              :icon="visualizerWindowFullscreen ? Minimize2 : Maximize2"
+              :label="visualizerWindowFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
+              size="sm"
+              :title="visualizerWindowFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
+              @click="toggleVisualizerWindowFullscreen"
+            />
+          </div>
+          <div class="ml-8">
+            <IconButton label="Close" size="sm" @click="closeVisualizerWindow">
+              x
+            </IconButton>
+          </div>
         </div>
       </div>
     </template>
