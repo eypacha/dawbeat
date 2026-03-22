@@ -30,7 +30,7 @@
             label="Shuffle Demo"
             size="sm"
             title="Load a random bundled demo project"
-            @click="handleRandomDemoProject"
+            @click="shuffleDemoConfirmVisible = true"
           />
 
           <IconButton
@@ -249,6 +249,15 @@
       @confirm="handleNewProjectConfirm"
     />
 
+    <ConfirmDialog
+      confirm-label="Load Demo"
+      :message="'Current project changes will be replaced. Load a random demo project?'"
+      title="Shuffle Demo"
+      :visible="shuffleDemoConfirmVisible"
+      @cancel="shuffleDemoConfirmVisible = false"
+      @confirm="handleRandomDemoProjectConfirm"
+    />
+
     <SettingsModal :visible="settingsVisible" @close="settingsVisible = false" />
   </Panel>
 </template>
@@ -304,6 +313,7 @@ const sampleRateDraft = ref(String(sampleRate.value))
 const settingsVisible = ref(false)
 const exportingWav = ref(false)
 const newProjectConfirmVisible = ref(false)
+const shuffleDemoConfirmVisible = ref(false)
 const lastShuffledDemoProjectId = ref(null)
 const transportDisplayMode = ref('sample')
 const toolbarLayoutClassName = computed(() =>
@@ -613,6 +623,11 @@ async function handleRandomDemoProject() {
     console.error('Could not load the demo project', error)
     enqueueSnackbar('Could not load the selected demo project.', { variant: 'error' })
   }
+}
+
+async function handleRandomDemoProjectConfirm() {
+  shuffleDemoConfirmVisible.value = false
+  await handleRandomDemoProject()
 }
 
 async function handleWavExport() {
