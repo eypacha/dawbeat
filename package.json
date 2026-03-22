@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "lamejs": "^1.2.1",
     "lucide-vue-next": "^0.517.0",
     "peerjs": "^1.5.5",
     "pinia": "^3.0.4",

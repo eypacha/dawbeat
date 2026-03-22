@@ -41,9 +41,20 @@ const MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS = {
   reverb: ['decay', 'preDelay']
 }
 
-export async function downloadProjectWav(state, filename = createWavFilename()) {
-  const wavBuffer = await renderProjectToWav(state)
+export async function downloadProjectWav(state, { loopCount = 1, filename = createWavFilename() } = {}) {
+  const wavBuffer = await renderProjectToWav(state, { loopCount })
   const blob = new Blob([wavBuffer], { type: 'audio/wav' })
+  triggerDownload(blob, filename)
+}
+
+export async function downloadProjectMp3(state, { loopCount = 1, filename = createMp3Filename() } = {}) {
+  const wavBuffer = await renderProjectToWav(state, { loopCount })
+  const mp3Buffer = await encodeWavToMp3(wavBuffer)
+  const blob = new Blob([mp3Buffer], { type: 'audio/mpeg' })
+  triggerDownload(blob, filename)
+}
+
+function triggerDownload(blob, filename) {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
 
@@ -58,13 +69,15 @@ export async function downloadProjectWav(state, filename = createWavFilename()) 
   }, 0)
 }
 
-async function renderProjectToWav(state) {
-  const totalTicks = getProjectDurationTicks(state.tracks)
+async function renderProjectToWav(state, { loopCount = 1 } = {}) {
+  const singleLoopTicks = getProjectDurationTicks(state.tracks)
 
-  if (totalTicks <= 0) {
+  if (singleLoopTicks <= 0) {
     throw new Error('Project is empty')
   }
 
+  const loops = Math.max(1, Math.round(loopCount))
+  const totalTicks = singleLoopTicks * loops
   const sourceSampleRate = getSourceSampleRate(state.sampleRate)
   const outputSampleRate = getOutputSampleRate(sourceSampleRate)
   const totalSourceSamples = Math.max(1, Math.ceil(ticksToSamples(totalTicks, state.tickSize)))
@@ -76,7 +89,8 @@ async function renderProjectToWav(state) {
     outputSampleRate,
     sourceSampleRate,
     totalOutputSamples,
-    totalSourceSamples
+    totalSourceSamples,
+    loops
   })
   const [processedLeftChannel, processedRightChannel] = await renderAudioEffectsOffline(
     state,
@@ -90,72 +104,125 @@ async function renderProjectToWav(state) {
   })
 }
 
+async function encodeWavToMp3(wavBuffer) {
+  const { Mp3Encoder } = await import('lamejs')
+  const view = new DataView(wavBuffer)
+  // WAV PCM data starts at byte 44 for standard 16-bit stereo
+  const numChannels = view.getUint16(22, true)
+  const sampleRate = view.getUint32(24, true)
+  const numFrames = (wavBuffer.byteLength - 44) / (numChannels * 2)
+  const kbps = 128
+  const encoder = new Mp3Encoder(numChannels, sampleRate, kbps)
+  const CHUNK = 1152
+  const leftPcm = new Int16Array(numFrames)
+  const rightPcm = numChannels > 1 ? new Int16Array(numFrames) : null
+
+  for (let i = 0; i < numFrames; i += 1) {
+    const offset = 44 + i * numChannels * 2
+    leftPcm[i] = view.getInt16(offset, true)
+    if (rightPcm) {
+      rightPcm[i] = view.getInt16(offset + 2, true)
+    }
+  }
+
+  const mp3Parts = []
+
+  for (let offset = 0; offset < numFrames; offset += CHUNK) {
+    const left = leftPcm.subarray(offset, offset + CHUNK)
+    const right = rightPcm ? rightPcm.subarray(offset, offset + CHUNK) : left
+    const encoded = encoder.encodeBuffer(left, right)
+    if (encoded.length > 0) {
+      mp3Parts.push(new Uint8Array(encoded))
+    }
+  }
+
+  const flushed = encoder.flush()
+  if (flushed.length > 0) {
+    mp3Parts.push(new Uint8Array(flushed))
+  }
+
+  const totalLength = mp3Parts.reduce((sum, part) => sum + part.length, 0)
+  const output = new Uint8Array(totalLength)
+  let writeOffset = 0
+  for (const part of mp3Parts) {
+    output.set(part, writeOffset)
+    writeOffset += part.length
+  }
+
+  return output.buffer
+}
+
 function renderTimelineChannels(
   state,
-  { outputSampleRate, sourceSampleRate, totalOutputSamples, totalSourceSamples }
+  { outputSampleRate, sourceSampleRate, totalOutputSamples, totalSourceSamples, loops = 1 }
 ) {
   const leftChannel = new Float32Array(totalOutputSamples)
   const rightChannel = new Float32Array(totalOutputSamples)
-  const boundaries = collectTimelineBoundaries(
+  const singleLoopSourceSamples = Math.ceil(totalSourceSamples / Math.max(1, loops))
+  const singleLoopBoundaries = collectTimelineBoundaries(
     state.tracks,
     state.variableTracks,
     state.valueTrackerTracks,
     state.tickSize,
-    totalSourceSamples
+    singleLoopSourceSamples
   )
   const evaluatorCache = new Map()
 
-  for (let index = 0; index < boundaries.length - 1; index += 1) {
-    const startSourceSample = boundaries[index]
-    const endSourceSample = boundaries[index + 1]
+  for (let loop = 0; loop < loops; loop += 1) {
+    const loopSourceOffset = loop * singleLoopSourceSamples
 
-    if (endSourceSample <= startSourceSample) {
-      continue
-    }
+    for (let index = 0; index < singleLoopBoundaries.length - 1; index += 1) {
+      const startSourceSample = singleLoopBoundaries[index] + loopSourceOffset
+      const endSourceSample = singleLoopBoundaries[index + 1] + loopSourceOffset
 
-    const startOutputSample = convertSourceBoundaryToOutputSample(
-      startSourceSample,
-      sourceSampleRate,
-      outputSampleRate,
-      totalOutputSamples
-    )
-    const endOutputSample = convertSourceBoundaryToOutputSample(
-      endSourceSample,
-      sourceSampleRate,
-      outputSampleRate,
-      totalOutputSamples
-    )
+      if (endSourceSample <= startSourceSample) {
+        continue
+      }
 
-    if (endOutputSample <= startOutputSample) {
-      continue
-    }
-
-    const timeTicks = samplesToTicks(startSourceSample, state.tickSize)
-    const activeFormula = getActiveFormula(
-      timeTicks,
-      state.tracks,
-      state.formulas,
-      state.variableTracks,
-      state.valueTrackerTracks
-    )
-    const expressions = getRenderableExpressions(activeFormula, state.evalEffects)
-
-    if (!expressions.length) {
-      continue
-    }
-
-    const leftEvaluator = getExpressionEvaluator(expressions[0], evaluatorCache)
-    const rightEvaluator = getExpressionEvaluator(expressions[1] ?? expressions[0], evaluatorCache)
-
-    for (let outputSample = startOutputSample; outputSample < endOutputSample; outputSample += 1) {
-      const sourceSample = convertOutputSampleToSourceSample(
-        outputSample,
+      const startOutputSample = convertSourceBoundaryToOutputSample(
+        startSourceSample,
         sourceSampleRate,
-        outputSampleRate
+        outputSampleRate,
+        totalOutputSamples
+      )
+      const endOutputSample = convertSourceBoundaryToOutputSample(
+        endSourceSample,
+        sourceSampleRate,
+        outputSampleRate,
+        totalOutputSamples
       )
 
-      leftChannel[outputSample] = evaluateBytebeatSample(leftEvaluator, sourceSample)
-      rightChannel[outputSample] = evaluateBytebeatSample(rightEvaluator, sourceSample)
+      if (endOutputSample <= startOutputSample) {
+        continue
+      }
+
+      const timeTicks = samplesToTicks(singleLoopBoundaries[index], state.tickSize)
+      const activeFormula = getActiveFormula(
+        timeTicks,
+        state.tracks,
+        state.formulas,
+        state.variableTracks,
+        state.valueTrackerTracks
+      )
+      const expressions = getRenderableExpressions(activeFormula, state.evalEffects)
+
+      if (!expressions.length) {
+        continue
+      }
+
+      const leftEvaluator = getExpressionEvaluator(expressions[0], evaluatorCache)
+      const rightEvaluator = getExpressionEvaluator(expressions[1] ?? expressions[0], evaluatorCache)
+
+      for (let outputSample = startOutputSample; outputSample < endOutputSample; outputSample += 1) {
+        const sourceSample = convertOutputSampleToSourceSample(
+          outputSample,
+          sourceSampleRate,
+          outputSampleRate
+        )
+
+        leftChannel[outputSample] = evaluateBytebeatSample(leftEvaluator, sourceSample)
+        rightChannel[outputSample] = evaluateBytebeatSample(rightEvaluator, sourceSample)
+      }
     }
   }
 
@@ -1186,4 +1253,9 @@ function writeAscii(view, offset, value) {
 function createWavFilename(now = new Date()) {
   const normalizedDate = now.toISOString().replace(/[:.]/g, '-')
   return `dawbeat-export-${normalizedDate}.wav`
+}
+
+function createMp3Filename(now = new Date()) {
+  const normalizedDate = now.toISOString().replace(/[:.]/g, '-')
+  return `dawbeat-export-${normalizedDate}.mp3`
 }

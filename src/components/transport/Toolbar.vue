@@ -214,11 +214,11 @@
           <button
             class="border border-zinc-800 bg-zinc-950 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-700 hover:text-zinc-100 disabled:cursor-default disabled:opacity-40"
             :disabled="exportingWav"
-            :title="exportingWav ? 'Rendering the project to WAV' : 'Export the current project as WAV audio'"
+            :title="exportingWav ? 'Rendering the project…' : 'Export the current project'"
             type="button"
-            @click="handleWavExport"
+            @click="exportModalVisible = true"
           >
-            {{ exportingWav ? 'Exporting...' : 'Export WAV' }}
+            {{ exportingWav ? 'Exporting…' : 'Export' }}
           </button>
 
           <IconButton
@@ -259,6 +259,13 @@
     />
 
     <SettingsModal :visible="settingsVisible" @close="settingsVisible = false" />
+
+    <ExportModal
+      :exporting="exportingWav"
+      :visible="exportModalVisible"
+      @close="exportModalVisible = false"
+      @export="handleExport"
+    />
   </Panel>
 </template>
 
@@ -279,7 +286,8 @@ import {
 } from '@/services/bpmService'
 import { midiClockState } from '@/services/midiClockService'
 import { useDawStore } from '@/stores/dawStore'
-import { downloadProjectWav } from '@/services/exportService'
+import { downloadProjectMp3, downloadProjectWav } from '@/services/exportService'
+import ExportModal from '@/components/ui/ExportModal.vue'
 import { downloadProjectFile, importProjectFile } from '@/services/projectPersistence'
 import { enqueueSnackbar } from '@/services/notifications'
 import { MAX_SAMPLE_RATE, MIN_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
@@ -312,6 +320,7 @@ const projectFileInput = ref(null)
 const sampleRateDraft = ref(String(sampleRate.value))
 const settingsVisible = ref(false)
 const exportingWav = ref(false)
+const exportModalVisible = ref(false)
 const newProjectConfirmVisible = ref(false)
 const shuffleDemoConfirmVisible = ref(false)
 const lastShuffledDemoProjectId = ref(null)
@@ -630,7 +639,7 @@ async function handleRandomDemoProjectConfirm() {
   await handleRandomDemoProject()
 }
 
-async function handleWavExport() {
+async function handleExport({ format, loopCount }) {
   if (exportingWav.value) {
     return
   }
@@ -638,11 +647,17 @@ async function handleWavExport() {
   exportingWav.value = true
 
   try {
-    await downloadProjectWav(dawStore.$state)
-    enqueueSnackbar('WAV exported', { variant: 'success' })
+    if (format === 'mp3') {
+      await downloadProjectMp3(dawStore.$state, { loopCount })
+      enqueueSnackbar('MP3 exported', { variant: 'success' })
+    } else {
+      await downloadProjectWav(dawStore.$state, { loopCount })
+      enqueueSnackbar('WAV exported', { variant: 'success' })
+    }
+    exportModalVisible.value = false
   } catch (error) {
     enqueueSnackbar(
-      error instanceof Error ? error.message : 'WAV export failed',
+      error instanceof Error ? error.message : 'Export failed',
       { variant: 'error' }
     )
   } finally {
