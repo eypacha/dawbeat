@@ -303,6 +303,12 @@ Practical rule:
 - `formulaService` resolves inline and referenced formulas
 - `formulaWaveformService` renders waveform previews
 - `timelineLaneLayoutService` normalizes persistable lane heights
+- `timelineSectionLabelService` manages timeline section markers and their normalization
+- `bpmService` centralizes BPM/unit parsing and conversion helpers
+- `midiClockService` owns runtime MIDI Clock lock state and transport sync commands
+- `demoProjectService` resolves bundled demos from `src/data/*.json`
+- `formulaMutationService` encapsulates formula mutation used by store actions
+- visualizer services (`visualizerConfigService`, `visualizerFrameService`, `visualizerRenderer`) own visualizer configuration and frame rendering
 - `bytebeatService` handles live audio integration
 - `projectPersistence` normalizes, serializes, and restores projects
 
@@ -315,6 +321,7 @@ src/
       StartScreen.vue
     companion/
       AutomationCompanionView.vue
+    editor/
     effects/
       AudioOutputVisualizer.vue
       AudioBitCrusherItem.vue
@@ -383,32 +390,51 @@ src/
     useTimelineMarqueeSelection.js
     useTransportPlayback.js
 
+  data/
+    demo.json
+    demo-boss-level.json
+    demo-stereo-madness.json
+
   engine/
     timelineEngine.js
+
+  i18n/
+    locales/
 
   services/
     audioEffectService.js
     automationCompanionService.js
     automationService.js
+    bpmService.js
     bytebeatNodeLoader.js
     bytebeatService.js
+    clipboard.js
     dawStoreService.js
+    demoProjectService.js
     evalEffectService.js
     exportService.js
+    floatingWindowService.js
+    formulaMutationService.js
     formulaService.js
     formulaWaveformService.js
     keyboardShortcuts.js
+    midiClockService.js
     midiInputService.js
     notifications.js
     projectPersistence.js
     snapService.js
+    timelineHeaderWidthService.js
     timelineLaneLayoutService.js
+    timelineSectionLabelService.js
     timelineService.js
     trackPlaybackState.js
     trackUnionOperatorService.js
     valueTrackerInputService.js
     valueTrackerService.js
     variableTrackService.js
+    visualizerConfigService.js
+    visualizerFrameService.js
+    visualizerRenderer.js
 
   stores/
     dawStore.js
@@ -420,6 +446,9 @@ src/
     formulaValidation.js
     macroNodes.js
     timeUtils.js
+    visualizerPalettes.js
+
+  views/
 ```
 
 The agent must respect this structure and extend it without mixing responsibilities.
@@ -454,16 +483,20 @@ Relevant fields today:
   masterGain: 1,
   showEvaluatedPanel: true,
   showClipWaveforms: true,
+  timelineSectionLabels: [],
   selectedClipIds: [],
   selectedClipId: null,
   selectedTrackId: null,
+  selectedTimelineSectionLabelId: null,
   selectedFormulaId: null,
+  selectedValueTrackerLibraryItemId: null,
   selectedValueTrackerTrackId: null,
   selectedAutomationPoint: null,
   editingClipId: null,
   editingFormulaId: null,
   clipDragPreview: null,
   clipClipboard: null,
+  valueTrackerLibraryItems: [],
   valueTrackerRecordingSession: null,
   valueTrackerLiveInputs: {},
   historyPast: [],
@@ -715,8 +748,9 @@ Today there is:
 - JSON project export
 - local storage reset
 - offline WAV export
-- project normalization with `version: 14`
+- project normalization with `version: 18`
 - persistence of `tracks`, `variableTracks`, `valueTrackerTracks`, `formulas`
+- persistence of `valueTrackerLibraryItems` and `timelineSectionLabels`
 - persistence of `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`
 - persistence of `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate`, `bpmMeasure`, and `tickSize`
 - persistence of `height` inside formula tracks, variable tracks, value tracker tracks, and automation lanes

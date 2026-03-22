@@ -90,20 +90,20 @@ Implemented today:
 ## Running It
 
 ```bash
-yarn install
-yarn dev
+pnpm install
+pnpm dev
 ```
 
 Production build:
 
 ```bash
-yarn build
+pnpm build
 ```
 
 Local preview:
 
 ```bash
-yarn preview
+pnpm preview
 ```
 
 ## Current Interactions
@@ -207,10 +207,10 @@ Offline export renders the timeline, eval effects, master gain, supported audio 
 ## Persistence
 
 - on startup, the app tries to load the project saved in `localStorage`
-- if none exists, it starts from `src/data/demo.json`
+- if none exists, it starts from the default entry returned by `demoProjectService` (from `src/data/*.json`)
 - `projectPersistence` normalizes imported projects and serializes the persistable state
-- the current project serializes `version: 14`
-- persisted fields include `tracks`, `variableTracks`, `valueTrackerTracks`, `formulas`, `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`, `bpmMeasure`, `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate`, `tickSize`, `showClipWaveforms`, and `showEvaluatedPanel`, including `height` inside tracks and lanes
+- the current project serializes `version: 18`
+- persisted fields include `tracks`, `variableTracks`, `valueTrackerTracks`, `valueTrackerLibraryItems`, `formulas`, `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`, `bpmMeasure`, `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate`, `tickSize`, `timelineSectionLabels`, `showClipWaveforms`, and `showEvaluatedPanel`, including `height` inside tracks and lanes
 - the automation companion stores its own controller session separately in `localStorage` so the same phone can reconnect and retain subscribed lanes for the same host
 - `automationLiveOverrides` and `automationRecordingArmed` are runtime-only and are not serialized into the project
 - `MIDI Clock receive` is not serialized into the project and does not write persisted `sampleRate`; it only applies a runtime override to the live engine
@@ -226,6 +226,7 @@ src/
       StartScreen.vue
     companion/
       AutomationCompanionView.vue
+    editor/
     effects/
       AudioOutputVisualizer.vue
       AudioBitCrusherItem.vue
@@ -292,31 +293,48 @@ src/
     useTimelineLaneResize.js
     useTimelineMarqueeSelection.js
     useTransportPlayback.js
+  data/
+    demo.json
+    demo-boss-level.json
+    demo-stereo-madness.json
   engine/
     timelineEngine.js
+  i18n/
+    locales/
   services/
     audioEffectService.js
     automationCompanionService.js
     automationService.js
+    bpmService.js
     bytebeatNodeLoader.js
     bytebeatService.js
+    clipboard.js
     dawStoreService.js
+    demoProjectService.js
     evalEffectService.js
     exportService.js
+    floatingWindowService.js
+    formulaMutationService.js
     formulaService.js
     formulaWaveformService.js
     keyboardShortcuts.js
+    midiClockService.js
     midiInputService.js
     notifications.js
     projectPersistence.js
     snapService.js
+    timelineHeaderWidthService.js
     timelineLaneLayoutService.js
+    timelineSectionLabelService.js
     timelineService.js
     trackPlaybackState.js
     trackUnionOperatorService.js
     valueTrackerInputService.js
     valueTrackerService.js
     variableTrackService.js
+    visualizerConfigService.js
+    visualizerFrameService.js
+    visualizerRenderer.js
   stores/
     dawStore.js
   utils/
@@ -326,6 +344,8 @@ src/
     formulaValidation.js
     macroNodes.js
     timeUtils.js
+    visualizerPalettes.js
+  views/
 ```
 
 ## Current Architecture
@@ -356,6 +376,15 @@ Practical notes:
 - `bytebeatService` controls live audio, sample rate, master gain, and the real-time audio chain
 - `exportService` uses a separate offline Tone.js path to render WAV
 - `projectPersistence` normalizes, versions, and serializes projects
+
+Additional modules currently in active use:
+
+- `bpmService` centralizes BPM/unit conversion and normalization
+- `midiClockService` derives runtime effective sample rate from external MIDI Clock and controls transport sync events
+- `timelineSectionLabelService` manages section markers shown on the timeline and persisted in projects
+- `demoProjectService` resolves bundled demo projects from `src/data/*.json`
+- `formulaMutationService` encapsulates formula mutation helpers used by store actions
+- visualizer services (`visualizerConfigService`, `visualizerFrameService`, `visualizerRenderer`) power scope rendering settings and frame composition
 
 ## Main Models
 
