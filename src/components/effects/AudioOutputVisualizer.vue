@@ -2,7 +2,7 @@
   <div
     ref="containerElement"
     class="relative overflow-hidden rounded border border-amber-500/20 bg-[linear-gradient(180deg,rgba(24,24,27,0.96),rgba(9,9,11,0.98))]"
-    :class="windowed ? 'h-[22rem]' : 'h-28'"
+    :class="containerClassName"
   >
     <canvas ref="canvasElement" class="block h-full w-full" />
 
@@ -10,7 +10,7 @@
       <button
         v-if="showWindowButton"
         aria-label="Open visualizer window"
-        class="pointer-events-auto inline-flex h-6 w-6 items-center justify-center border border-zinc-700 bg-zinc-950/90 text-zinc-300 transition hover:border-zinc-500 hover:text-zinc-100"
+        class="pointer-events-auto inline-flex h-6 w-6 items-center justify-center border border-zinc-700/50 bg-zinc-950/45 text-zinc-400/70 transition hover:border-zinc-500/70 hover:bg-zinc-950/65 hover:text-zinc-100/90"
         title="Open visualizer window"
         type="button"
         @click="emit('open-window')"
@@ -19,17 +19,6 @@
       </button>
 
       <span class="pointer-events-none ml-auto text-[10px] uppercase tracking-[0.18em] text-amber-100/60">{{ levelLabel }}</span>
-    </div>
-
-    <div class="pointer-events-none absolute inset-x-3 bottom-2 flex items-center gap-4 text-[10px] uppercase tracking-[0.16em] text-zinc-500">
-      <span class="inline-flex items-center gap-1.5">
-        <span class="h-px w-4 bg-amber-300/85" />
-        Audio
-      </span>
-      <span class="inline-flex items-center gap-1.5">
-        <span class="h-px w-4 bg-sky-300/75" />
-        Formula
-      </span>
     </div>
   </div>
 </template>
@@ -45,7 +34,11 @@ import { renderFormulaWaveformChannels } from '@/services/formulaWaveformService
 import { useDawStore } from '@/stores/dawStore'
 import { clamp, ticksToSamples } from '@/utils/timeUtils'
 
-defineProps({
+const props = defineProps({
+  fullscreen: {
+    type: Boolean,
+    default: false
+  },
   showWindowButton: {
     type: Boolean,
     default: false
@@ -132,11 +125,18 @@ const formulaPreviewEndSample = computed(() => formulaPreviewStartSample.value +
 const levelLabel = computed(() => {
   const normalizedLevel = Math.max(0, Math.min(1, level.value))
 
-  if (normalizedLevel <= 0.01) {
-    return 'Silence'
+  return `${Math.round(normalizedLevel * 100)}%`
+})
+const containerClassName = computed(() => {
+  if (props.fullscreen) {
+    return 'h-full min-h-0'
   }
 
-  return `${Math.round(normalizedLevel * 100)}%`
+  if (props.windowed) {
+    return 'h-[22rem]'
+  }
+
+  return 'h-28'
 })
 
 onMounted(() => {

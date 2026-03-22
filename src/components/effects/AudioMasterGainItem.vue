@@ -39,7 +39,7 @@
   <FloatingWindow
     ref="visualizerWindowElement"
     :open="visualizerWindowOpen"
-    panel-class="rounded-none"
+    panel-class="rounded-none !w-[min(calc(100vw-1rem),36rem)]"
     size="xl"
     title="Audio Visualizer"
     @fullscreen-change="visualizerWindowFullscreen = $event"
@@ -67,7 +67,7 @@
       </div>
     </template>
 
-    <AudioOutputVisualizer windowed />
+    <AudioOutputVisualizer :fullscreen="visualizerWindowFullscreen" windowed />
   </FloatingWindow>
 </template>
 
