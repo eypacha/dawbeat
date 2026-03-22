@@ -2,6 +2,7 @@
   <article class="w-full max-w-full min-w-0 overflow-hidden rounded border border-zinc-700 bg-zinc-900/90 p-3 text-zinc-100">
     <div class="mt-1 grid gap-2">
       <AudioOutputVisualizer
+        :mode="visualizerMode"
         show-window-button
         @open-window="openVisualizerWindow"
       />
@@ -61,6 +62,14 @@
             @click="visualizerFormulaOverlayVisible = !visualizerFormulaOverlayVisible"
           />
           <IconButton
+            :icon="Shuffle"
+            class="border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-200"
+            :label="`Next visualizer (${nextVisualizerModeLabel})`"
+            size="sm"
+            :title="`Next visualizer: ${nextVisualizerModeLabel}`"
+            @click="cycleVisualizerMode"
+          />
+          <IconButton
             :icon="visualizerWindowFullscreen ? Minimize2 : Maximize2"
             :label="visualizerWindowFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
             size="sm"
@@ -76,6 +85,7 @@
 
     <AudioOutputVisualizer
       :fullscreen="visualizerWindowFullscreen"
+      :mode="visualizerMode"
       :show-formula-overlay="visualizerFormulaOverlayVisible"
       windowed
     />
@@ -84,7 +94,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { Code2, Maximize2, Minimize2 } from 'lucide-vue-next'
+import { Code2, Maximize2, Minimize2, Shuffle } from 'lucide-vue-next'
 import AudioOutputVisualizer from '@/components/effects/AudioOutputVisualizer.vue'
 import EffectParamAutomationButton from '@/components/effects/EffectParamAutomationButton.vue'
 import FloatingWindow from '@/components/ui/FloatingWindow.vue'
@@ -99,11 +109,23 @@ const props = defineProps({
 
 const emit = defineEmits(['create-automation', 'interaction-end', 'interaction-start', 'update:gain'])
 
+const VISUALIZER_MODES = ['linear', 'circular']
+const VISUALIZER_MODE_LABELS = {
+  circular: 'Circular',
+  linear: 'Linear'
+}
+
 const gainLabel = computed(() => `${Number(props.gain ?? 0).toFixed(2)}x`)
 const visualizerFormulaOverlayVisible = ref(false)
+const visualizerMode = ref(VISUALIZER_MODES[0])
 const visualizerWindowElement = ref(null)
 const visualizerWindowFullscreen = ref(false)
 const visualizerWindowOpen = ref(false)
+const nextVisualizerModeLabel = computed(() => {
+  const currentIndex = VISUALIZER_MODES.indexOf(visualizerMode.value)
+  const nextMode = VISUALIZER_MODES[(currentIndex + 1) % VISUALIZER_MODES.length] ?? VISUALIZER_MODES[0]
+  return VISUALIZER_MODE_LABELS[nextMode] ?? nextMode
+})
 
 function handleInput(event) {
   emit('update:gain', Number(event.target.value))
@@ -113,6 +135,11 @@ function handleInteractionKeydown(event) {
   if (event.key.startsWith('Arrow') || event.key === 'Home' || event.key === 'End' || event.key === 'PageUp' || event.key === 'PageDown') {
     emit('interaction-start')
   }
+}
+
+function cycleVisualizerMode() {
+  const currentIndex = VISUALIZER_MODES.indexOf(visualizerMode.value)
+  visualizerMode.value = VISUALIZER_MODES[(currentIndex + 1) % VISUALIZER_MODES.length] ?? VISUALIZER_MODES[0]
 }
 
 async function toggleVisualizerWindowFullscreen() {

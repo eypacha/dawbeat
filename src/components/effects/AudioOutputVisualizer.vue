@@ -58,6 +58,10 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  mode: {
+    type: String,
+    default: 'linear'
+  },
   showFormulaOverlay: {
     type: Boolean,
     default: false
@@ -79,9 +83,12 @@ const FORMULA_PREVIEW_MIN_SPAN_SAMPLES = 1024
 const FORMULA_PREVIEW_SAMPLE_COUNT = 192
 const FORMULA_PREVIEW_WINDOW_SECONDS = 0.5
 const FORMULA_PREVIEW_WINDOW_STEP_DIVISOR = 2
+const MAX_CIRCULAR_BAR_COUNT = 88
 const MAX_BAR_COUNT = 48
 const MIN_BAR_COUNT = 18
+const MIN_CIRCULAR_BAR_COUNT = 36
 const TARGET_BAR_WIDTH = 10
+const TAU = Math.PI * 2
 const WAVEFORM_SAMPLE_STEP = 4
 
 const canvasElement = ref(null)
@@ -289,11 +296,23 @@ function drawVisualizer() {
   const analyser = bytebeatService.getOutputAnalyser()
   ensureDataBuffers(analyser)
   drawBackground(ctx, width, height)
-  drawFormulaOverlay(ctx, width, height, formulaWaveforms.value)
+
+  if (props.mode === 'circular') {
+    drawCircularGuides(ctx, width, height)
+    drawCircularFormulaOverlay(ctx, width, height, formulaWaveforms.value)
+  } else {
+    drawFormulaOverlay(ctx, width, height, formulaWaveforms.value)
+  }
 
   if (!analyser || !frequencyData || !timeDomainData) {
     level.value = 0
-    drawIdleState(ctx, width, height)
+
+    if (props.mode === 'circular') {
+      drawCircularIdleState(ctx, width, height)
+    } else {
+      drawIdleState(ctx, width, height)
+    }
+
     return
   }
 
@@ -302,6 +321,13 @@ function drawVisualizer() {
 
   const nextLevel = measureSignalLevel(timeDomainData)
   level.value = level.value * 0.78 + nextLevel * 0.22
+
+  if (props.mode === 'circular') {
+    drawCircularFrequencyBars(ctx, width, height, frequencyData)
+    drawCircularWaveform(ctx, width, height, timeDomainData)
+    drawCircularCore(ctx, width, height)
+    return
+  }
 
   drawFrequencyBars(ctx, width, height, frequencyData)
   drawWaveform(ctx, width, height, timeDomainData)
@@ -335,6 +361,55 @@ function drawIdleState(ctx, width, height) {
   ctx.beginPath()
   ctx.moveTo(0, height * 0.6)
   ctx.lineTo(width, height * 0.6)
+  ctx.stroke()
+}
+
+function getCircularCenter(width, height) {
+  return {
+    x: width * 0.5,
+    y: height * 0.5
+  }
+}
+
+function drawCircularGuides(ctx, width, height) {
+  const { x: centerX, y: centerY } = getCircularCenter(width, height)
+  const maxRadius = Math.max(24, Math.min(width, height) * 0.32)
+
+  ctx.strokeStyle = 'rgba(245, 158, 11, 0.08)'
+  ctx.lineWidth = 1
+
+  for (const ratio of [0.45, 0.72, 1]) {
+    ctx.beginPath()
+    ctx.arc(centerX, centerY, maxRadius * ratio, 0, TAU)
+    ctx.stroke()
+  }
+
+  for (let index = 0; index < 8; index += 1) {
+    const angle = (-Math.PI / 2) + (index / 8) * TAU
+    const innerRadius = maxRadius * 0.24
+    const outerRadius = maxRadius
+
+    ctx.beginPath()
+    ctx.moveTo(
+      centerX + Math.cos(angle) * innerRadius,
+      centerY + Math.sin(angle) * innerRadius
+    )
+    ctx.lineTo(
+      centerX + Math.cos(angle) * outerRadius,
+      centerY + Math.sin(angle) * outerRadius
+    )
+    ctx.stroke()
+  }
+}
+
+function drawCircularIdleState(ctx, width, height) {
+  const { x: centerX, y: centerY } = getCircularCenter(width, height)
+  const radius = Math.max(18, Math.min(width, height) * 0.18)
+
+  ctx.strokeStyle = 'rgba(245, 158, 11, 0.2)'
+  ctx.lineWidth = 1.5
+  ctx.beginPath()
+  ctx.arc(centerX, centerY, radius, 0, TAU)
   ctx.stroke()
 }
 
@@ -383,6 +458,61 @@ function drawFormulaOverlay(ctx, width, height, waveforms) {
       colors[index] ?? colors[0]
     )
   })
+}
+
+function drawCircularFormulaOverlay(ctx, width, height, waveforms) {
+  if (!Array.isArray(waveforms) || !waveforms.length) {
+    return
+  }
+
+  const baseRadius = Math.max(18, Math.min(width, height) * 0.12)
+  const radiusStep = Math.max(10, Math.min(width, height) * 0.035)
+  const colors = waveforms.length > 1
+    ? ['rgba(56, 189, 248, 0.82)', 'rgba(125, 211, 252, 0.56)']
+    : ['rgba(56, 189, 248, 0.82)']
+
+  waveforms.forEach((waveform, index) => {
+    drawCircularFormulaRing(
+      ctx,
+      width,
+      height,
+      waveform,
+      baseRadius + index * radiusStep,
+      colors[index] ?? colors[0]
+    )
+  })
+}
+
+function drawCircularFormulaRing(ctx, width, height, waveform, baseRadius, strokeStyle) {
+  if (!waveform?.length) {
+    return
+  }
+
+  const { x: centerX, y: centerY } = getCircularCenter(width, height)
+  const amplitude = Math.max(6, Math.min(width, height) * 0.026)
+  const lastIndex = Math.max(1, waveform.length - 1)
+
+  ctx.strokeStyle = strokeStyle
+  ctx.lineWidth = 1.1
+  ctx.beginPath()
+
+  for (let index = 0; index < waveform.length; index += 1) {
+    const normalizedValue = clamp(waveform[index] ?? 0, -1, 1)
+    const angle = (-Math.PI / 2) + (index / lastIndex) * TAU
+    const radius = baseRadius + normalizedValue * amplitude
+    const x = centerX + Math.cos(angle) * radius
+    const y = centerY + Math.sin(angle) * radius
+
+    if (index === 0) {
+      ctx.moveTo(x, y)
+      continue
+    }
+
+    ctx.lineTo(x, y)
+  }
+
+  ctx.closePath()
+  ctx.stroke()
 }
 
 function drawFormulaChannelWaveform(ctx, width, height, waveform, centerOffset, strokeStyle) {
@@ -437,6 +567,93 @@ function drawWaveform(ctx, width, height, waveform) {
   }
 
   ctx.stroke()
+}
+
+function drawCircularFrequencyBars(ctx, width, height, spectrum) {
+  const { x: centerX, y: centerY } = getCircularCenter(width, height)
+  const innerRadius = Math.max(28, Math.min(width, height) * 0.18)
+  const maxBarLength = Math.max(18, Math.min(width, height) * 0.15)
+  const barCount = Math.max(
+    MIN_CIRCULAR_BAR_COUNT,
+    Math.min(MAX_CIRCULAR_BAR_COUNT, Math.floor(Math.min(width, height) * 0.48))
+  )
+  const maxIndex = Math.max(1, spectrum.length - 1)
+
+  for (let index = 0; index < barCount; index += 1) {
+    const spectrumIndex = Math.min(
+      maxIndex,
+      Math.floor(((index / Math.max(1, barCount - 1)) ** 1.78) * maxIndex)
+    )
+    const normalizedValue = (spectrum[spectrumIndex] ?? 0) / 255
+    const easedValue = normalizedValue ** 1.28
+    const barLength = Math.max(4, easedValue * maxBarLength)
+    const angle = (-Math.PI / 2) + (index / barCount) * TAU
+    const startRadius = innerRadius
+    const endRadius = startRadius + barLength
+    const alpha = 0.18 + easedValue * 0.78
+
+    ctx.strokeStyle = `rgba(251, 191, 36, ${alpha})`
+    ctx.lineWidth = 1 + easedValue * 2.2
+    ctx.beginPath()
+    ctx.moveTo(
+      centerX + Math.cos(angle) * startRadius,
+      centerY + Math.sin(angle) * startRadius
+    )
+    ctx.lineTo(
+      centerX + Math.cos(angle) * endRadius,
+      centerY + Math.sin(angle) * endRadius
+    )
+    ctx.stroke()
+  }
+}
+
+function drawCircularWaveform(ctx, width, height, waveform) {
+  const { x: centerX, y: centerY } = getCircularCenter(width, height)
+  const baseRadius = Math.max(44, Math.min(width, height) * 0.28)
+  const amplitude = Math.max(10, Math.min(width, height) * 0.06 + level.value * Math.min(width, height) * 0.035)
+  const lastIndex = Math.max(1, Math.floor((waveform.length - 1) / WAVEFORM_SAMPLE_STEP))
+
+  ctx.strokeStyle = 'rgba(252, 211, 77, 0.96)'
+  ctx.lineWidth = 1.75
+  ctx.beginPath()
+
+  for (let index = 0; index < waveform.length; index += WAVEFORM_SAMPLE_STEP) {
+    const normalizedValue = ((waveform[index] ?? 128) - 128) / 128
+    const angle = (-Math.PI / 2) + ((index / WAVEFORM_SAMPLE_STEP) / lastIndex) * TAU
+    const radius = baseRadius + normalizedValue * amplitude
+    const x = centerX + Math.cos(angle) * radius
+    const y = centerY + Math.sin(angle) * radius
+
+    if (index === 0) {
+      ctx.moveTo(x, y)
+      continue
+    }
+
+    ctx.lineTo(x, y)
+  }
+
+  ctx.closePath()
+  ctx.stroke()
+}
+
+function drawCircularCore(ctx, width, height) {
+  const { x: centerX, y: centerY } = getCircularCenter(width, height)
+  const radius = Math.max(8, Math.min(width, height) * 0.038 + level.value * Math.min(width, height) * 0.014)
+  const coreGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 2.6)
+
+  coreGradient.addColorStop(0, 'rgba(252, 211, 77, 0.95)')
+  coreGradient.addColorStop(0.35, 'rgba(245, 158, 11, 0.42)')
+  coreGradient.addColorStop(1, 'rgba(245, 158, 11, 0)')
+
+  ctx.fillStyle = coreGradient
+  ctx.beginPath()
+  ctx.arc(centerX, centerY, radius * 2.6, 0, TAU)
+  ctx.fill()
+
+  ctx.fillStyle = 'rgba(252, 211, 77, 0.92)'
+  ctx.beginPath()
+  ctx.arc(centerX, centerY, radius, 0, TAU)
+  ctx.fill()
 }
 
 function measureSignalLevel(waveform) {
