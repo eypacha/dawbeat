@@ -9,11 +9,8 @@
   >
     <Panel class="w-full max-w-xl" padding="lg">
       <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">DawBeat</p>
-      <h1 class="mt-4 text-3xl font-semibold text-zinc-50 sm:text-4xl">Mobile Mode Soon</h1>
       <div class="mt-6 space-y-3 text-sm leading-6 text-zinc-300">
-        <p>Disponible para PC.</p>
-        <p>Soporte experimental para tablet.</p>
-        <p>Próximamente: modo controlador para celular.</p>
+        <p>This web app is only available on desktop, but you can use your phone as a controller. Just scan the QR code by clicking the mobile icon on an automation track.</p>
       </div>
     </Panel>
   </section>
