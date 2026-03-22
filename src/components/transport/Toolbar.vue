@@ -608,7 +608,7 @@ async function handleRandomDemoProject() {
   try {
     await applyIncomingProject(demoProjectEntry.project)
     lastShuffledDemoProjectId.value = demoProjectEntry.id
-    enqueueSnackbar(`Loaded demo: ${demoProjectEntry.name}.`, { variant: 'success' })
+    enqueueSnackbar(`Loaded demo: ${demoProjectEntry.name}`, { variant: 'success' })
   } catch (error) {
     console.error('Could not load the demo project', error)
     enqueueSnackbar('Could not load the selected demo project.', { variant: 'error' })
