@@ -46,17 +46,22 @@
           Timeline
         </div>
 
-        <div class="relative h-11 shrink-0" :style="rulerStyle">
+        <div class="relative h-16 shrink-0" :style="rulerStyle">
           <TimelineLoopRegion
             :loop-enabled="loopEnabled"
             :loop-start="loopStart"
             :loop-end="loopEnd"
           />
 
+          <TimelineSectionLabels
+            :timeline-width="timelineWidthStyle"
+            @scrub-pointerdown="handleScrubPointerDown"
+          />
+
           <span
             v-for="mark in rulerMarks"
             :key="mark"
-            class="absolute top-2 text-[10px] text-zinc-500"
+            class="absolute top-8 text-[10px] text-zinc-500"
             :style="{ left: `${ticksToPixels(mark, pixelsPerTick)}px`, transform: 'translateX(8px)' }"
           >
             {{ mark }}
@@ -64,7 +69,9 @@
 
           <button
             class="absolute inset-0 z-10 cursor-grab"
+            data-context-menu-enabled="true"
             type="button"
+            @contextmenu="handleRulerContextMenu"
             @pointerdown="handleScrubPointerDown"
           />
         </div>
@@ -75,6 +82,15 @@
         class="relative"
         @pointerdown.capture="handleTimelineSurfacePointerDownCapture"
       >
+        <div class="pointer-events-none absolute inset-0 z-10">
+          <div
+            v-for="timelineSectionLabel in timelineSectionLabels"
+            :key="timelineSectionLabel.id"
+            class="absolute inset-y-0 w-px border-l border-dashed border-sky-400/20"
+            :style="{ left: `${ticksToPixels(timelineSectionLabel.time, pixelsPerTick)}px` }"
+          />
+        </div>
+
         <Playhead
           :time="time"
           :offset="trackLabelWidth"
@@ -141,12 +157,15 @@ import Panel from '@/components/ui/Panel.vue'
 import TimelineAutomationLane from '@/components/timeline/TimelineAutomationLane.vue'
 import Playhead from '@/components/timeline/Playhead.vue'
 import TimelineLoopRegion from '@/components/timeline/TimelineLoopRegion.vue'
+import TimelineSectionLabels from '@/components/timeline/TimelineSectionLabels.vue'
 import TimelineTrack from '@/components/timeline/TimelineTrack.vue'
 import TimelineVariableTrack from '@/components/timeline/TimelineVariableTrack.vue'
 import TimelineValueTrackerTrack from '@/components/timeline/TimelineValueTrackerTrack.vue'
+import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineMarqueeSelection } from '@/composables/useTimelineMarqueeSelection'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { getTimelineTrackLabelWidth } from '@/services/timelineHeaderWidthService'
+import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { useDawStore } from '@/stores/dawStore'
 import {
   getVisibleTimelineTickStep,
@@ -160,8 +179,9 @@ const AUTO_SCROLL_PADDING = 96
 const FIXED_TIMELINE_TICKS = 256
 
 const dawStore = useDawStore()
+const { openContextMenu } = useContextMenu()
 const { seekToTime } = useTransportPlayback()
-const { automationLanes, editingClipId, loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, tickSize, time, tracks, valueTrackerTracks, variableTracks } =
+const { automationLanes, editingClipId, loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, tickSize, time, timelineSectionLabels, tracks, valueTrackerTracks, variableTracks } =
   storeToRefs(dawStore)
 const scrollContainer = ref(null)
 const timelineSurfaceElement = ref(null)
@@ -254,6 +274,7 @@ function handleWheel(event) {
 }
 
 function handleTimelineSurfacePointerDownCapture(event) {
+  dawStore.clearTimelineSectionLabelSelection()
   handleSurfacePointerDown(event)
 }
 
@@ -290,11 +311,32 @@ function handleScrubPointerDown(event) {
     return
   }
 
+  dawStore.clearTimelineSectionLabelSelection()
   scrubPointerId = event.pointerId
   void scrubToClientX(event.clientX)
   window.addEventListener('pointermove', handleScrubPointerMove)
   window.addEventListener('pointerup', handleScrubPointerEnd)
   window.addEventListener('pointercancel', handleScrubPointerEnd)
+}
+
+function handleRulerContextMenu(event) {
+  if (!scrollContainer.value) {
+    return
+  }
+
+  event.preventDefault()
+
+  openContextMenu({
+    x: event.clientX,
+    y: event.clientY,
+    items: [
+      {
+        action: 'create-timeline-section-label',
+        label: 'Add Section Label',
+        time: getTimelineTickFromClientX(event.clientX, shouldSnapFromPointerEvent(event))
+      }
+    ]
+  })
 }
 
 function handleScrubPointerMove(event) {
@@ -321,14 +363,29 @@ async function scrubToClientX(clientX) {
     return
   }
 
-  const containerRect = scrollContainer.value.getBoundingClientRect()
-  const timelineX = scrollContainer.value.scrollLeft + clientX - containerRect.left - trackLabelWidth.value
+  const timelineX = getTimelinePixelsFromClientX(clientX)
   const nextTime = Math.min(
     FIXED_TIMELINE_TICKS,
     Math.max(0, snapTicks(pixelsToTicks(timelineX, pixelsPerTick.value), 1))
   )
 
   await seekToTime(nextTime)
+}
+
+function getTimelinePixelsFromClientX(clientX) {
+  if (!scrollContainer.value) {
+    return 0
+  }
+
+  const containerRect = scrollContainer.value.getBoundingClientRect()
+  return scrollContainer.value.scrollLeft + clientX - containerRect.left - trackLabelWidth.value
+}
+
+function getTimelineTickFromClientX(clientX, shouldSnap = true) {
+  return getDraggedTick(
+    pixelsToTicks(getTimelinePixelsFromClientX(clientX), pixelsPerTick.value),
+    shouldSnap
+  )
 }
 
 function cleanupTrackReorder() {

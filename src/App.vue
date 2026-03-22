@@ -142,6 +142,15 @@
       @confirm="confirmValueTrackerTrackName"
     />
 
+    <TextInputDialog
+      :initial-value="timelineSectionLabelDialog.labelName"
+      label="Name"
+      :title="timelineSectionLabelDialog.labelId ? 'Rename Section Label' : 'New Section Label'"
+      :visible="timelineSectionLabelDialog.visible"
+      @cancel="closeTimelineSectionLabelDialog"
+      @confirm="confirmTimelineSectionLabel"
+    />
+
     <ValueTrackerBindingDialog
       :initial-binding="valueTrackerTrackBindingDialog.binding"
       :track-name="valueTrackerTrackBindingDialog.trackName"
@@ -196,6 +205,7 @@ import { getFormulaById, resolveClipFormula, resolveClipFormulaName } from '@/se
 import { initKeyboardShortcuts } from '@/services/keyboardShortcuts'
 import { disposeMidiClock, registerMidiClockTransport } from '@/services/midiClockService'
 import { disposeMidiInput } from '@/services/midiInputService'
+import { getNextTimelineSectionLabelName } from '@/services/timelineSectionLabelService'
 import { findTimelineClip } from '@/services/dawStoreService'
 import { getValueTrackerValueAtTime } from '@/services/valueTrackerService'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
@@ -227,6 +237,12 @@ const valueTrackerTrackBindingDialog = reactive({
   trackName: '',
   visible: false
 })
+const timelineSectionLabelDialog = reactive({
+  labelId: null,
+  labelName: '',
+  labelTime: 0,
+  visible: false
+})
 const valueTrackerDialogHistoryActive = ref(false)
 let disposeKeyboardShortcuts = null
 let disposeMidiClockTransport = null
@@ -245,8 +261,10 @@ const {
   selectedAutomationPoint,
   selectedClipId,
   selectedClipIds,
+  selectedTimelineSectionLabelId,
   showEvaluatedPanel,
   time,
+  timelineSectionLabels,
   tracks,
   valueTrackerTracks,
   variableTracks
@@ -430,6 +448,7 @@ function handleKeydown(event) {
       closeAuxiliaryDrawer()
       dawStore.clearClipSelection()
       dawStore.clearAutomationPointSelection()
+      dawStore.clearTimelineSectionLabelSelection()
     }
 
     return
@@ -452,6 +471,11 @@ function handleKeydown(event) {
       selectedAutomationPoint.value.laneId,
       selectedAutomationPoint.value.index
     )
+    return
+  }
+
+  if (selectedTimelineSectionLabelId.value) {
+    dawStore.removeTimelineSectionLabel(selectedTimelineSectionLabelId.value)
     return
   }
 
@@ -560,6 +584,27 @@ function handleContextMenuSelect(action, item) {
 
   if (action === 'delete-automation-point') {
     dawStore.removeAutomationPoint(item.laneId, item.pointIndex)
+    return
+  }
+
+  if (action === 'create-timeline-section-label') {
+    timelineSectionLabelDialog.labelId = null
+    timelineSectionLabelDialog.labelName = getNextTimelineSectionLabelName(timelineSectionLabels.value)
+    timelineSectionLabelDialog.labelTime = item.time ?? 0
+    timelineSectionLabelDialog.visible = true
+    return
+  }
+
+  if (action === 'edit-timeline-section-label') {
+    timelineSectionLabelDialog.labelId = item.labelId ?? null
+    timelineSectionLabelDialog.labelName = item.labelName ?? ''
+    timelineSectionLabelDialog.labelTime = item.time ?? 0
+    timelineSectionLabelDialog.visible = true
+    return
+  }
+
+  if (action === 'delete-timeline-section-label') {
+    dawStore.removeTimelineSectionLabel(item.labelId)
     return
   }
 
@@ -672,6 +717,27 @@ function confirmValueTrackerTrackName(nextName) {
   }
 
   closeValueTrackerTrackNameDialog()
+}
+
+function closeTimelineSectionLabelDialog() {
+  timelineSectionLabelDialog.labelId = null
+  timelineSectionLabelDialog.labelName = ''
+  timelineSectionLabelDialog.labelTime = 0
+  timelineSectionLabelDialog.visible = false
+}
+
+function confirmTimelineSectionLabel(nextName) {
+  if (timelineSectionLabelDialog.labelId) {
+    dawStore.renameTimelineSectionLabel(timelineSectionLabelDialog.labelId, nextName)
+    closeTimelineSectionLabelDialog()
+    return
+  }
+
+  dawStore.addTimelineSectionLabel({
+    name: nextName,
+    time: timelineSectionLabelDialog.labelTime
+  })
+  closeTimelineSectionLabelDialog()
 }
 
 function closeValueTrackerTrackBindingDialog() {

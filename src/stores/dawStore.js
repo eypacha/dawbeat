@@ -87,6 +87,13 @@ import { normalizeTrackUnionOperator } from '@/services/trackUnionOperatorServic
 import { getDefaultDemoProjectEntry } from '@/services/demoProjectService'
 import { loadProject, normalizeProject, serializeProject } from '@/services/projectPersistence'
 import {
+  createTimelineSectionLabel,
+  getTimelineSectionLabelById,
+  normalizeTimelineSectionLabelName,
+  normalizeTimelineSectionLabelTime,
+  sortTimelineSectionLabels
+} from '@/services/timelineSectionLabelService'
+import {
   BASE_PIXELS_PER_TICK,
   BASE_TICK_SIZE,
   MAX_ZOOM,
@@ -149,6 +156,7 @@ function createEmptyProject() {
     showEvaluatedPanel: true,
     showClipWaveforms: true,
     tickSize: BASE_TICK_SIZE,
+    timelineSectionLabels: [],
     tracks: [createTrack()],
     variableTracks: [],
     valueTrackerLibraryItems: [],
@@ -272,6 +280,7 @@ function createInitialState() {
     showEvaluatedPanel: project.showEvaluatedPanel,
     showClipWaveforms: project.showClipWaveforms,
     tickSize: project.tickSize,
+    timelineSectionLabels: project.timelineSectionLabels,
     tracks: project.tracks,
     variableTracks: project.variableTracks,
     valueTrackerLibraryItems: project.valueTrackerLibraryItems,
@@ -286,6 +295,7 @@ function createInitialState() {
     selectedFormulaId: null,
     selectedClipId: null,
     selectedTrackId: null,
+    selectedTimelineSectionLabelId: null,
     selectedValueTrackerLibraryItemId: null,
     selectedValueTrackerTrackId: null,
     valueTrackerRecordingSession: null,
@@ -306,6 +316,7 @@ function clearTransientSelectionState(store) {
   store.selectedAutomationPoint = null
   store.selectedFormulaId = null
   store.selectedTrackId = null
+  store.selectedTimelineSectionLabelId = null
   store.selectedValueTrackerLibraryItemId = null
   store.selectedValueTrackerTrackId = null
   store.valueTrackerRecordingSession = null
@@ -450,6 +461,7 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   store.showEvaluatedPanel = normalizedProject.showEvaluatedPanel
   store.showClipWaveforms = normalizedProject.showClipWaveforms
   store.tickSize = normalizedProject.tickSize
+  store.timelineSectionLabels = normalizedProject.timelineSectionLabels
   store.tracks = normalizedProject.tracks
   store.variableTracks = normalizedProject.variableTracks
   store.valueTrackerLibraryItems = normalizedProject.valueTrackerLibraryItems
@@ -498,6 +510,7 @@ function syncSelectedClipState(store, clipIds) {
   store.selectedAutomationPoint = null
   store.selectedClipIds = nextSelectedClipIds
   store.selectedClipId = nextSelectedClipIds[0] ?? null
+  store.selectedTimelineSectionLabelId = null
 }
 
 function collectSelectedClipEntries(tracks, variableTracks, valueTrackerTracks, clipIds) {
@@ -744,6 +757,8 @@ export const useDawStore = defineStore('dawStore', {
     getAutomationLaneByAudioEffectParam: (state) => (effectId, paramKey) =>
       getAutomationLaneByAudioEffectParam(state.automationLanes, effectId, paramKey),
     getAutomationLaneById: (state) => (laneId) => findAutomationLaneById(state.automationLanes, laneId),
+    getTimelineSectionLabelById: (state) => (labelId) =>
+      getTimelineSectionLabelById(state.timelineSectionLabels, labelId),
     getAutomationValueAt: (state) => (time, laneId) =>
       Object.hasOwn(state.automationLiveOverrides, laneId)
         ? Number(state.automationLiveOverrides[laneId])
@@ -933,6 +948,7 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
+      this.selectedTimelineSectionLabelId = null
       this.selectedAutomationPoint = {
         laneId,
         index
@@ -941,6 +957,105 @@ export const useDawStore = defineStore('dawStore', {
 
     clearAutomationPointSelection() {
       this.selectedAutomationPoint = null
+    },
+
+    selectTimelineSectionLabel(labelId) {
+      if (!labelId) {
+        this.selectedTimelineSectionLabelId = null
+        return
+      }
+
+      const timelineSectionLabel = this.getTimelineSectionLabelById(labelId)
+
+      if (!timelineSectionLabel) {
+        this.selectedTimelineSectionLabelId = null
+        return
+      }
+
+      this.selectedAutomationPoint = null
+      this.selectedClipIds = []
+      this.selectedClipId = null
+      this.selectedFormulaId = null
+      this.selectedTrackId = null
+      this.selectedTimelineSectionLabelId = timelineSectionLabel.id
+    },
+
+    clearTimelineSectionLabelSelection() {
+      this.selectedTimelineSectionLabelId = null
+    },
+
+    addTimelineSectionLabel(label = {}) {
+      return this.recordHistoryStep('add-timeline-section-label', () => {
+        const nextTimelineSectionLabel = createTimelineSectionLabel(label)
+
+        this.timelineSectionLabels.push(nextTimelineSectionLabel)
+        sortTimelineSectionLabels(this.timelineSectionLabels)
+        this.selectTimelineSectionLabel(nextTimelineSectionLabel.id)
+        return nextTimelineSectionLabel.id
+      })
+    },
+
+    renameTimelineSectionLabel(labelId, nextName) {
+      return this.recordHistoryStep('rename-timeline-section-label', () => {
+        const timelineSectionLabel = this.getTimelineSectionLabelById(labelId)
+
+        if (!timelineSectionLabel) {
+          return false
+        }
+
+        timelineSectionLabel.name = normalizeTimelineSectionLabelName(
+          nextName,
+          timelineSectionLabel.name
+        )
+        this.selectTimelineSectionLabel(timelineSectionLabel.id)
+        return true
+      })
+    },
+
+    moveTimelineSectionLabel(labelId, nextTime, shouldSnap = true) {
+      return this.recordHistoryStep('move-timeline-section-label', () => {
+        const timelineSectionLabel = this.getTimelineSectionLabelById(labelId)
+
+        if (!timelineSectionLabel) {
+          if (this.selectedTimelineSectionLabelId === labelId) {
+            this.clearTimelineSectionLabelSelection()
+          }
+
+          return false
+        }
+
+        const normalizedTime = shouldSnap
+          ? snapTicks(nextTime)
+          : normalizeTimelineSectionLabelTime(nextTime, timelineSectionLabel.time)
+
+        timelineSectionLabel.time = normalizeTimelineSectionLabelTime(
+          normalizedTime,
+          timelineSectionLabel.time
+        )
+        sortTimelineSectionLabels(this.timelineSectionLabels)
+        this.selectTimelineSectionLabel(timelineSectionLabel.id)
+        return true
+      })
+    },
+
+    removeTimelineSectionLabel(labelId) {
+      return this.recordHistoryStep('remove-timeline-section-label', () => {
+        const nextTimelineSectionLabels = this.timelineSectionLabels.filter(
+          (timelineSectionLabel) => timelineSectionLabel.id !== labelId
+        )
+
+        if (nextTimelineSectionLabels.length === this.timelineSectionLabels.length) {
+          return false
+        }
+
+        this.timelineSectionLabels = nextTimelineSectionLabels
+
+        if (this.selectedTimelineSectionLabelId === labelId) {
+          this.clearTimelineSectionLabelSelection()
+        }
+
+        return true
+      })
     },
 
     addAutomationPoint(laneId, point) {
@@ -3551,6 +3666,7 @@ export const useDawStore = defineStore('dawStore', {
 
     selectFormula(formulaId) {
       this.clearAutomationPointSelection()
+      this.clearTimelineSectionLabelSelection()
 
       if (!formulaId) {
         this.selectedFormulaId = null
@@ -3586,6 +3702,7 @@ export const useDawStore = defineStore('dawStore', {
 
     selectTrack(trackId) {
       this.clearAutomationPointSelection()
+      this.clearTimelineSectionLabelSelection()
       this.selectedTrackId = trackId
     },
 

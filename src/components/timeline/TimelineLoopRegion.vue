@@ -1,16 +1,16 @@
 <template>
   <div
-    class="absolute bottom-1 z-20 h-3 rounded-sm border transition-opacity"
+    class="absolute bottom-1 z-20 h-2.5 rounded-sm border transition-opacity"
     :class="loopRegionClassName"
     :style="loopStyle"
     @pointerdown="handleMovePointerDown"
   >
     <span
-      class="absolute inset-y-0 left-0 w-2 -translate-x-1/2 cursor-ew-resize rounded-sm border border-emerald-200/70 bg-emerald-300"
+      class="absolute left-0 top-1/2 h-3.5 w-2 -translate-x-1/2 -translate-y-1/2 cursor-ew-resize rounded-sm border border-emerald-200/70 bg-emerald-300"
       @pointerdown.stop="handleStartPointerDown"
     />
     <span
-      class="absolute inset-y-0 right-0 w-2 translate-x-1/2 cursor-ew-resize rounded-sm border border-emerald-200/70 bg-emerald-300"
+      class="absolute right-0 top-1/2 h-3.5 w-2 translate-x-1/2 -translate-y-1/2 cursor-ew-resize rounded-sm border border-emerald-200/70 bg-emerald-300"
       @pointerdown.stop="handleEndPointerDown"
     />
   </div>
