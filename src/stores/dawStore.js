@@ -102,6 +102,7 @@ import {
 } from '@/services/variableTrackService'
 import {
   DEFAULT_VALUE_TRACKER_STEP_SUBDIVISION,
+  createValueTrackerLibraryItem,
   createDefaultValueTrackerBinding,
   createSparseRecordedValueTrackerValues,
   createConstantValueTrackerValues,
@@ -109,8 +110,10 @@ import {
   doesValueTrackerBindingMatchInput,
   getValueTrackerRecordedStepIndex,
   getValueTrackerValueAtTime,
+  getNextValueTrackerLibraryItemName,
   getNextValueTrackerTrackName,
   isNumericValueTrackerInitializer,
+  normalizeValueTrackerLibraryItemName,
   normalizeValueTrackerValue,
   normalizeValueTrackerValues,
   normalizeValueTrackerTrackName,
@@ -142,6 +145,7 @@ function createEmptyProject() {
     tickSize: BASE_TICK_SIZE,
     tracks: [createTrack()],
     variableTracks: [],
+    valueTrackerLibraryItems: [],
     valueTrackerTracks: [],
     zoom: 1
   }
@@ -216,6 +220,7 @@ function createInitialState() {
     tickSize: project.tickSize,
     tracks: project.tracks,
     variableTracks: project.variableTracks,
+    valueTrackerLibraryItems: project.valueTrackerLibraryItems,
     valueTrackerTracks: project.valueTrackerTracks,
     historyApplying: false,
     historyFuture: [],
@@ -391,6 +396,7 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   store.tickSize = normalizedProject.tickSize
   store.tracks = normalizedProject.tracks
   store.variableTracks = normalizedProject.variableTracks
+  store.valueTrackerLibraryItems = normalizedProject.valueTrackerLibraryItems
   store.valueTrackerTracks = normalizedProject.valueTrackerTracks
   clearTransientSelectionState(store)
   store.playing = nextPlaying
@@ -1855,6 +1861,21 @@ export const useDawStore = defineStore('dawStore', {
       })
     },
 
+    addValueTrackerLibraryItem(item = {}) {
+      return this.recordHistoryStep('add-value-tracker-library-item', () => {
+        const nextValueTrackerLibraryItem = createValueTrackerLibraryItem({
+          ...item,
+          name:
+            typeof item.name === 'string' && item.name.trim()
+              ? item.name
+              : getNextValueTrackerLibraryItemName(this.valueTrackerLibraryItems)
+        })
+
+        this.valueTrackerLibraryItems.push(nextValueTrackerLibraryItem)
+        return nextValueTrackerLibraryItem.id
+      })
+    },
+
     addEvalEffect(effect) {
       return this.recordHistoryStep('add-eval-effect', () => {
         const nextEffect = createEvalEffect(effect)
@@ -1971,6 +1992,53 @@ export const useDawStore = defineStore('dawStore', {
       }
     },
 
+    updateValueTrackerLibraryItem(valueTrackerLibraryItemId, updates) {
+      const valueTrackerLibraryItem = this.valueTrackerLibraryItems.find(
+        (item) => item.id === valueTrackerLibraryItemId
+      )
+
+      if (!valueTrackerLibraryItem) {
+        return
+      }
+
+      if (typeof updates?.name === 'string') {
+        valueTrackerLibraryItem.name = normalizeValueTrackerLibraryItemName(
+          updates.name,
+          valueTrackerLibraryItem.name
+        )
+      }
+
+      if (
+        typeof updates?.values === 'undefined' &&
+        typeof updates?.duration === 'undefined' &&
+        typeof updates?.stepSubdivision === 'undefined'
+      ) {
+        return
+      }
+
+      const normalizedValueTrackerLibraryItem = createValueTrackerLibraryItem({
+        ...valueTrackerLibraryItem,
+        duration:
+          typeof updates?.duration !== 'undefined'
+            ? updates.duration
+            : valueTrackerLibraryItem.duration,
+        id: valueTrackerLibraryItem.id,
+        name: valueTrackerLibraryItem.name,
+        stepSubdivision:
+          typeof updates?.stepSubdivision !== 'undefined'
+            ? updates.stepSubdivision
+            : valueTrackerLibraryItem.stepSubdivision,
+        values:
+          typeof updates?.values !== 'undefined'
+            ? updates.values
+            : valueTrackerLibraryItem.values
+      })
+
+      valueTrackerLibraryItem.duration = normalizedValueTrackerLibraryItem.duration
+      valueTrackerLibraryItem.stepSubdivision = normalizedValueTrackerLibraryItem.stepSubdivision
+      valueTrackerLibraryItem.values = normalizedValueTrackerLibraryItem.values
+    },
+
     removeFormula(formulaId) {
       return this.recordHistoryStep('remove-formula', () => {
         const formula = getFormulaById(this.formulas, formulaId)
@@ -2000,6 +2068,14 @@ export const useDawStore = defineStore('dawStore', {
         if (this.editingFormulaId === formulaId) {
           this.editingFormulaId = null
         }
+      })
+    },
+
+    removeValueTrackerLibraryItem(valueTrackerLibraryItemId) {
+      return this.recordHistoryStep('remove-value-tracker-library-item', () => {
+        this.valueTrackerLibraryItems = this.valueTrackerLibraryItems.filter(
+          (item) => item.id !== valueTrackerLibraryItemId
+        )
       })
     },
 
@@ -3090,6 +3166,29 @@ export const useDawStore = defineStore('dawStore', {
         clip.formula = null
         clip.formulaName = null
         return formulaId
+      })
+    },
+
+    addValueTrackerClipToLibrary(valueTrackerTrackId, clipId) {
+      return this.recordHistoryStep('add-value-tracker-clip-to-library', () => {
+        const valueTrackerTrack = findValueTrackerTrack(this.valueTrackerTracks, valueTrackerTrackId)
+
+        if (!valueTrackerTrack) {
+          return null
+        }
+
+        const clip = findClip(valueTrackerTrack, clipId)
+
+        if (!clip) {
+          return null
+        }
+
+        return this.addValueTrackerLibraryItem({
+          duration: clip.duration,
+          name: valueTrackerTrack.name,
+          stepSubdivision: clip.stepSubdivision,
+          values: [...(clip.values ?? [])]
+        })
       })
     },
 

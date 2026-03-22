@@ -306,6 +306,12 @@ function handleContextMenu(event) {
         label: 'Hex Editor'
       },
       {
+        action: 'add-value-tracker-clip-to-library',
+        clipId: props.clip.id,
+        label: 'Add To Library',
+        valueTrackerTrackId: props.valueTrackerTrackId
+      },
+      {
         action: 'copy-clip',
         clipId: props.clip.id,
         label: 'Copy'

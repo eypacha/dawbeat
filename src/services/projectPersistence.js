@@ -33,6 +33,7 @@ import {
   normalizeVariableTrackName
 } from '@/services/variableTrackService'
 import {
+  createValueTrackerLibraryItem,
   createConstantValueTrackerValues,
   getBoundValueTrackerVariableNames,
   normalizeValueTrackerStepSubdivision,
@@ -45,12 +46,12 @@ import { DEFAULT_TRACK_COLOR, getTrackColor } from '@/utils/colorUtils'
 import { BASE_TICK_SIZE, MAX_ZOOM, MIN_ZOOM, TIMELINE_SNAP_SUBDIVISIONS, clamp } from '@/utils/timeUtils'
 
 const PROJECT_STORAGE_KEY = 'dawbeat-project'
-const PROJECT_VERSION = 14
+const PROJECT_VERSION = 15
 const SAVE_DEBOUNCE_MS = 400
 const DEFAULT_LOOP_START = 0
 const DEFAULT_LOOP_END = 16
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
-const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, PROJECT_VERSION])
+const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, PROJECT_VERSION])
 
 export function serializeProject(state) {
   return normalizeProjectPayload({
@@ -58,6 +59,7 @@ export function serializeProject(state) {
     tracks: state.tracks,
     variableTracks: state.variableTracks,
     valueTrackerTracks: state.valueTrackerTracks,
+    valueTrackerLibraryItems: state.valueTrackerLibraryItems,
     formulas: state.formulas,
     zoom: state.zoom,
     loopStart: state.loopStart,
@@ -240,6 +242,11 @@ function normalizeProjectPayload(project) {
         .map((valueTrackerTrack) => normalizeValueTrackerTrack(valueTrackerTrack, project.version))
         .filter(Boolean)
     : []
+  const valueTrackerLibraryItems = Array.isArray(project.valueTrackerLibraryItems)
+    ? project.valueTrackerLibraryItems
+        .map((item) => normalizeValueTrackerLibraryItem(item, project.version))
+        .filter(Boolean)
+    : []
   const evalEffects = hasOwn(project, 'evalEffects')
     ? normalizeEvalEffects(project.evalEffects)
     : [createStereoOffsetEvalEffect({ id: 'fx1' })]
@@ -289,6 +296,7 @@ function normalizeProjectPayload(project) {
     tracks,
     variableTracks,
     valueTrackerTracks,
+    valueTrackerLibraryItems,
     formulas,
     zoom: clamp(normalizeNumber(project.zoom, 1), MIN_ZOOM, MAX_ZOOM),
     loopStart,
@@ -404,6 +412,25 @@ function normalizeValueTrackerTrack(valueTrackerTrack, projectVersion) {
 
   sortValueTrackerTrackClips(nextValueTrackerTrack)
   return nextValueTrackerTrack
+}
+
+function normalizeValueTrackerLibraryItem(item, projectVersion) {
+  if (!isRecord(item)) {
+    return null
+  }
+
+  return createValueTrackerLibraryItem({
+    duration: normalizePositiveNumber(item.duration, 4),
+    id: typeof item.id === 'string' && item.id ? item.id : undefined,
+    name: typeof item.name === 'string' ? item.name : undefined,
+    stepSubdivision: normalizeValueTrackerStepSubdivision(item.stepSubdivision),
+    values: normalizeValueTrackerValues(
+      item.values,
+      normalizePositiveNumber(item.duration, 4),
+      normalizeValueTrackerStepSubdivision(item.stepSubdivision),
+      projectVersion <= 12 ? { mode: 'legacyDense' } : undefined
+    )
+  })
 }
 
 function normalizeClip(clip, formulaIds) {
