@@ -72,6 +72,7 @@
           spellcheck="false"
           @input="handleTextareaInput('left')"
           @scroll="syncHighlightScroll('left')"
+          @keydown="handleNumberArrowKey('left', $event)"
           @keydown.esc.prevent="emit('close')"
           @keydown.shift.enter.prevent="handleEvalShortcut"
           @keydown.meta.enter.prevent="handleEvalShortcut"
@@ -99,6 +100,7 @@
           spellcheck="false"
           @input="handleTextareaInput('right')"
           @scroll="syncHighlightScroll('right')"
+          @keydown="handleNumberArrowKey('right', $event)"
           @keydown.esc.prevent="emit('close')"
           @keydown.shift.enter.prevent="handleEvalShortcut"
           @keydown.meta.enter.prevent="handleEvalShortcut"
@@ -128,6 +130,7 @@
           spellcheck="false"
           @input="handleTextareaInput('mono')"
           @scroll="syncHighlightScroll('mono')"
+          @keydown="handleNumberArrowKey('mono', $event)"
           @keydown.esc.prevent="emit('close')"
           @keydown.shift.enter.prevent="handleEvalShortcut"
           @keydown.meta.enter.prevent="handleEvalShortcut"
@@ -374,6 +377,67 @@ function handleTextareaInput(kind) {
   syncHighlightScroll(kind)
 }
 
+function handleNumberArrowKey(kind, event) {
+  if (!event || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) {
+    return
+  }
+
+  if (event.metaKey || event.ctrlKey || event.altKey) {
+    return
+  }
+
+  const textarea = getTextareaElement(kind)
+
+  if (!textarea) {
+    return
+  }
+
+  const selectionStart = Number(textarea.selectionStart)
+  const selectionEnd = Number(textarea.selectionEnd)
+
+  if (!Number.isInteger(selectionStart) || !Number.isInteger(selectionEnd) || selectionStart !== selectionEnd) {
+    return
+  }
+
+  const currentValue = getDraftValueByKind(kind)
+  const numberRange = findNumberRangeAtCaret(currentValue, selectionStart)
+
+  if (!numberRange) {
+    return
+  }
+
+  const steppedNumberText = stepNumberText(
+    numberRange.value,
+    event.shiftKey
+      ? (event.key === 'ArrowUp' ? 'double' : 'half')
+      : (event.key === 'ArrowUp' ? 'increment' : 'decrement')
+  )
+
+  if (steppedNumberText === null) {
+    return
+  }
+
+  const nextValue = `${currentValue.slice(0, numberRange.start)}${steppedNumberText}${currentValue.slice(numberRange.end)}`
+  const caretOffsetInsideNumber = selectionStart - numberRange.start
+  const nextCaret = numberRange.start + Math.min(Math.max(0, caretOffsetInsideNumber), steppedNumberText.length)
+
+  setDraftValueByKind(kind, nextValue)
+  syncFormulaValidity()
+
+  void nextTick(() => {
+    const nextTextarea = getTextareaElement(kind)
+
+    if (!nextTextarea) {
+      return
+    }
+
+    nextTextarea.setSelectionRange(nextCaret, nextCaret)
+    syncHighlightScroll(kind)
+  })
+
+  event.preventDefault()
+}
+
 function emitDraft() {
   if (!formulaValid.value) {
     return
@@ -529,6 +593,128 @@ function focusActiveTextarea(select = false) {
   if (select) {
     textarea.select()
   }
+}
+
+function getDraftValueByKind(kind) {
+  if (kind === 'left') {
+    return draftLeftValue.value
+  }
+
+  if (kind === 'right') {
+    return draftRightValue.value
+  }
+
+  return draftValue.value
+}
+
+function setDraftValueByKind(kind, value) {
+  if (kind === 'left') {
+    draftLeftValue.value = value
+    return
+  }
+
+  if (kind === 'right') {
+    draftRightValue.value = value
+    return
+  }
+
+  draftValue.value = value
+}
+
+function findNumberRangeAtCaret(expression, caretPosition) {
+  if (typeof expression !== 'string' || !expression.length) {
+    return null
+  }
+
+  const normalizedCaretPosition = Number(caretPosition)
+
+  if (!Number.isInteger(normalizedCaretPosition) || normalizedCaretPosition < 0) {
+    return null
+  }
+
+  const numberPattern = /-?\d*\.?\d+(?:e[+-]?\d+)?/gi
+
+  for (const match of expression.matchAll(numberPattern)) {
+    const matchText = match[0]
+    const start = match.index ?? -1
+    const end = start + matchText.length
+
+    if (start < 0) {
+      continue
+    }
+
+    if (!(normalizedCaretPosition >= start && normalizedCaretPosition <= end)) {
+      continue
+    }
+
+    const previousChar = start > 0 ? expression[start - 1] : ''
+    const nextChar = end < expression.length ? expression[end] : ''
+
+    if (isIdentifierChar(previousChar) || isIdentifierChar(nextChar)) {
+      continue
+    }
+
+    return {
+      end,
+      start,
+      value: matchText
+    }
+  }
+
+  return null
+}
+
+function stepNumberText(numberText, operation) {
+  const currentNumber = Number(numberText)
+
+  if (!Number.isFinite(currentNumber)) {
+    return null
+  }
+
+  let nextNumber = currentNumber
+
+  if (operation === 'double' || operation === 'half') {
+    const baseInteger = Math.trunc(currentNumber)
+
+    if (operation === 'double') {
+      nextNumber = baseInteger * 2
+    } else {
+      nextNumber = Math.trunc(baseInteger / 2)
+    }
+  } else if (operation === 'increment') {
+    nextNumber = currentNumber + 1
+  } else if (operation === 'decrement') {
+    nextNumber = currentNumber - 1
+  }
+
+  if (!Number.isFinite(nextNumber)) {
+    return null
+  }
+
+  if (/[eE]/.test(numberText)) {
+    return String(nextNumber)
+  }
+
+  if (operation === 'increment' || operation === 'decrement') {
+    if (numberText.includes('.')) {
+      const decimalDigits = (numberText.split('.')[1] ?? '').length
+      return nextNumber.toFixed(decimalDigits)
+    }
+
+    return String(Math.round(nextNumber))
+  }
+
+  return String(Math.trunc(nextNumber))
+}
+
+function isIdentifierChar(value) {
+  return typeof value === 'string' && /[A-Za-z0-9_$]/.test(value)
+}
+
+function trimTrailingZeros(value) {
+  return value
+    .replace(/(\.\d*?[1-9])0+$/u, '$1')
+    .replace(/\.0+$/u, '')
 }
 
 </script>
