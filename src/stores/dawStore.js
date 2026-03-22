@@ -84,6 +84,7 @@ import {
   getFormulaById,
   mergeFormulaUpdates
 } from '@/services/formulaService'
+import { mutateFormula } from '@/services/formulaMutationService'
 import { DEFAULT_BPM_MEASURE, normalizeBpmMeasureExpression } from '@/services/bpmService'
 import {
   normalizeAutomationLaneHeight,
@@ -3616,6 +3617,74 @@ export const useDawStore = defineStore('dawStore', {
         this.setSelectedClips([clip.id])
         this.selectedTrackId = trackId
         this.selectedFormulaId = null
+      })
+    },
+
+    mutateClipFormula(trackId, clipId) {
+      return this.recordHistoryStep('mutate-clip-formula', () => {
+        const track = findTrack(this.tracks, trackId)
+
+        if (!track) {
+          return false
+        }
+
+        const clip = findClip(track, clipId)
+
+        if (!clip) {
+          return false
+        }
+
+        if (clip.formulaId) {
+          const formula = getFormulaById(this.formulas, clip.formulaId)
+
+          if (!formula) {
+            return false
+          }
+
+          Object.assign(clip, getClipFormulaFieldsFromFormula(formula))
+          clip.formulaName = formula.name
+          clip.formulaId = null
+        }
+
+        let didMutate = false
+
+        if (clip.formulaStereo) {
+          const leftSource = clip.leftFormula || clip.formula || ''
+          const rightSource = clip.rightFormula || clip.formula || ''
+          const leftMutation = mutateFormula(leftSource)
+          const rightMutation = mutateFormula(rightSource)
+
+          if (typeof leftMutation === 'string' && leftMutation && leftMutation !== leftSource) {
+            clip.leftFormula = leftMutation
+            didMutate = true
+          }
+
+          if (typeof rightMutation === 'string' && rightMutation && rightMutation !== rightSource) {
+            clip.rightFormula = rightMutation
+            didMutate = true
+          }
+
+          if (didMutate) {
+            clip.formula = clip.leftFormula || clip.formula || ''
+          }
+        } else {
+          const source = clip.formula || clip.leftFormula || ''
+          const mutation = mutateFormula(source)
+
+          if (typeof mutation === 'string' && mutation && mutation !== source) {
+            clip.formula = mutation
+            didMutate = true
+          }
+        }
+
+        if (!didMutate) {
+          return false
+        }
+
+        this.setSelectedClips([clip.id])
+        this.selectedTrackId = trackId
+        this.selectedFormulaId = null
+        return true
       })
     },
 

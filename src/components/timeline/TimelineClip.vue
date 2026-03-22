@@ -222,6 +222,12 @@ function handleContextMenu(event) {
       label: 'Edit Clip'
     },
     {
+      action: 'mutate-clip-formula',
+      clipId: props.clip.id,
+      label: 'Mutate Formula',
+      trackId: props.trackId
+    },
+    {
       action: 'add-clip-formula-to-library',
       clipId: props.clip.id,
       label: props.clip.formulaId ? 'Show In Library' : 'Add To Library...',

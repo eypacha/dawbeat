@@ -216,6 +216,7 @@ import { disposeMidiClock, registerMidiClockTransport } from '@/services/midiClo
 import { disposeMidiInput } from '@/services/midiInputService'
 import { getNextTimelineSectionLabelName } from '@/services/timelineSectionLabelService'
 import { findTimelineClip } from '@/services/dawStoreService'
+import { enqueueSnackbar } from '@/services/notifications'
 import { getValueTrackerValueAtTime } from '@/services/valueTrackerService'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
@@ -655,6 +656,18 @@ function handleContextMenuSelect(action, item) {
 
   if (action === 'add-clip-formula-to-library') {
     dawStore.addClipFormulaToLibrary(item.trackId, item.clipId)
+    return
+  }
+
+  if (action === 'mutate-clip-formula') {
+    const didMutate = dawStore.mutateClipFormula(item.trackId, item.clipId)
+
+    if (!didMutate) {
+      enqueueSnackbar('No valid mutation was generated for this formula.', {
+        variant: 'warning'
+      })
+    }
+
     return
   }
 
