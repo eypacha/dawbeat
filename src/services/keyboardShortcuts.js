@@ -33,7 +33,17 @@ export function initKeyboardShortcuts({ dawStore, transport }) {
       dawStore.toggleLoop()
     },
     ArrowLeft: (event) => {
-      if (event.metaKey || event.ctrlKey || event.altKey || !dawStore.selectedClipIds.length) {
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        return
+      }
+
+      if (dawStore.selectedAutomationPoint) {
+        event.preventDefault()
+        dawStore.nudgeSelectedAutomationPointTime(-clipNudgeStep)
+        return
+      }
+
+      if (!dawStore.selectedClipIds.length) {
         return
       }
 
@@ -41,12 +51,38 @@ export function initKeyboardShortcuts({ dawStore, transport }) {
       dawStore.nudgeSelectedClips(-clipNudgeStep, !event.shiftKey)
     },
     ArrowRight: (event) => {
-      if (event.metaKey || event.ctrlKey || event.altKey || !dawStore.selectedClipIds.length) {
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        return
+      }
+
+      if (dawStore.selectedAutomationPoint) {
+        event.preventDefault()
+        dawStore.nudgeSelectedAutomationPointTime(clipNudgeStep)
+        return
+      }
+
+      if (!dawStore.selectedClipIds.length) {
         return
       }
 
       event.preventDefault()
       dawStore.nudgeSelectedClips(clipNudgeStep, !event.shiftKey)
+    },
+    ArrowUp: (event) => {
+      if (event.metaKey || event.ctrlKey || event.altKey || !dawStore.selectedAutomationPoint) {
+        return
+      }
+
+      event.preventDefault()
+      dawStore.nudgeSelectedAutomationPointValue(1)
+    },
+    ArrowDown: (event) => {
+      if (event.metaKey || event.ctrlKey || event.altKey || !dawStore.selectedAutomationPoint) {
+        return
+      }
+
+      event.preventDefault()
+      dawStore.nudgeSelectedAutomationPointValue(-1)
     }
   }
 

@@ -1,0 +1,629 @@
+{
+  "version": 16,
+  "tracks": [
+    {
+      "id": "c7f7a6b1-a6c7-4dac-bd13-c34a8051f9e6",
+      "color": "#6366f1",
+      "muted": false,
+      "soloed": false,
+      "unionOperator": "|",
+      "name": "Bass",
+      "height": 80,
+      "clips": [
+        {
+          "id": "cfe14b28-83fc-4fc7-b511-0369e5197318",
+          "formula": null,
+          "formulaId": "d16638ac-fb54-4dd7-8c06-815da21990bb",
+          "formulaName": null,
+          "start": 0,
+          "duration": 16
+        },
+        {
+          "id": "dd930be6-2f76-4dff-813c-a0f6c1c87282",
+          "formula": null,
+          "formulaId": "305153b1-ecc3-4ca3-a330-e4e9fcdc398f",
+          "formulaName": null,
+          "start": 16,
+          "duration": 32
+        },
+        {
+          "id": "ba0f5542-4164-427d-a1d0-89344e78ff31",
+          "formula": null,
+          "formulaId": "d16638ac-fb54-4dd7-8c06-815da21990bb",
+          "formulaName": null,
+          "start": 48,
+          "duration": 16
+        },
+        {
+          "id": "21778889-9fff-4880-9221-afd2c669fe03",
+          "formula": null,
+          "formulaId": "305153b1-ecc3-4ca3-a330-e4e9fcdc398f",
+          "formulaName": null,
+          "start": 63.75,
+          "duration": 16.5
+        },
+        {
+          "id": "c2daf320-6edc-467a-bfe6-94f5f97c6efe",
+          "formula": "t*((t&4096?t%65536<59392?0:t>>16:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
+          "formulaId": null,
+          "formulaName": "Neurofunk 2",
+          "start": 80.25,
+          "duration": 31.75
+        },
+        {
+          "id": "304aaea7-1c09-4022-b202-643edc6ddff6",
+          "formula": null,
+          "formulaId": "305153b1-ecc3-4ca3-a330-e4e9fcdc398f",
+          "formulaName": null,
+          "start": 112,
+          "duration": 16.25
+        },
+        {
+          "id": "85d0e7e6-7195-4d6a-baed-67b38d812848",
+          "formula": null,
+          "formulaId": "d16638ac-fb54-4dd7-8c06-815da21990bb",
+          "formulaName": null,
+          "start": 128.25,
+          "duration": 15.75
+        }
+      ]
+    },
+    {
+      "id": "dc9a2e84-3a99-47c9-8a43-5d4b1a58ed62",
+      "color": "#6366f1",
+      "muted": false,
+      "soloed": false,
+      "unionOperator": "|",
+      "name": "Kick",
+      "height": 80,
+      "clips": [
+        {
+          "id": "68fde018-5959-47e4-b3ec-73809d2348a7",
+          "formula": null,
+          "formulaId": "be1b19a8-50fe-47fc-a41d-3b091f553ed0",
+          "formulaName": null,
+          "start": 16,
+          "duration": 32
+        },
+        {
+          "id": "5f27252e-af7e-4562-8519-176b5349fa83",
+          "formula": null,
+          "formulaId": "be1b19a8-50fe-47fc-a41d-3b091f553ed0",
+          "formulaName": null,
+          "start": 96,
+          "duration": 48
+        }
+      ]
+    },
+    {
+      "id": "55267b37-b44e-461d-a524-c41c2d1c1e32",
+      "color": "#3b82f6",
+      "muted": false,
+      "soloed": false,
+      "unionOperator": "|",
+      "name": "Track 2",
+      "height": 80,
+      "clips": [
+        {
+          "id": "2ecadf15-9047-4f13-90a4-ac0018b55dac",
+          "formula": null,
+          "formulaId": "6fa8e764-714e-40d5-a2e9-65b722d49ffe",
+          "formulaName": null,
+          "start": 6,
+          "duration": 2
+        },
+        {
+          "id": "95407f6b-18df-4bd2-935b-9b77a7a23c8e",
+          "formula": "t>>(t&4096?3:4)",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 8,
+          "duration": 24
+        },
+        {
+          "id": "31d867cb-9633-4f5f-80b5-c0db26cde4b1",
+          "formula": "t>>(t&4096?3:4)",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 56,
+          "duration": 8
+        },
+        {
+          "id": "036d507b-6636-4bfd-9c42-fbdc222e7846",
+          "formula": null,
+          "formulaId": "b731021b-30d7-4508-bf32-761fb7eeac16",
+          "formulaName": null,
+          "start": 108,
+          "duration": 4
+        },
+        {
+          "id": "4c587dbd-1131-4fef-aa13-5756e05b4296",
+          "formula": null,
+          "formulaId": "b731021b-30d7-4508-bf32-761fb7eeac16",
+          "formulaName": null,
+          "start": 116,
+          "duration": 4
+        },
+        {
+          "id": "7d8cf6f9-ace2-4e5b-9991-3ae64dd5bf21",
+          "formula": null,
+          "formulaId": "b731021b-30d7-4508-bf32-761fb7eeac16",
+          "formulaName": null,
+          "start": 124,
+          "duration": 4
+        }
+      ]
+    }
+  ],
+  "variableTracks": [],
+  "valueTrackerTracks": [
+    {
+      "id": "8bcff566-2bfd-4ea1-b85f-80c182f72776",
+      "name": "Stereo Offset",
+      "binding": {
+        "type": "variable",
+        "deviceId": null,
+        "channel": null,
+        "controller": null,
+        "note": null,
+        "variableName": "b"
+      },
+      "height": 64,
+      "clips": [
+        {
+          "id": "2c7af9b1-0091-4855-874c-0a6df2dfcafc",
+          "start": 0,
+          "duration": 4,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "70bcd85c-4180-42f0-9af5-0de30da52cc5",
+          "start": 76,
+          "duration": 4,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            128,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "ac4570a8-fd8a-4492-b4a4-166fb79d165e",
+          "start": 80,
+          "duration": 4,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "a1179ba8-6e74-4e6d-88cf-8fcb600898fb",
+          "start": 108,
+          "duration": 4,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            512,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "9f6d872d-df6d-4338-bbb7-ac7d9140b872",
+          "start": 112,
+          "duration": 4,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "id": "f07e9c74-4612-42bf-bfe2-73e69b09b5af",
+      "name": "a",
+      "binding": {
+        "type": "variable",
+        "deviceId": null,
+        "channel": null,
+        "controller": null,
+        "note": null,
+        "variableName": "a"
+      },
+      "height": 64,
+      "clips": [
+        {
+          "id": "35ec5a8d-c4a3-4f57-8312-cd285e097baa",
+          "start": 0,
+          "duration": 2,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            8,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "8240d213-0b2b-4574-8a30-7f14d38e6ad5",
+          "start": 16,
+          "duration": 2,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            1,
+            8,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "b5dd7c35-5cb4-4909-9221-378fa1791a49",
+          "start": 22,
+          "duration": 2,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            1,
+            8,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "19a130d3-bb9c-4540-af43-346ddf287c05",
+          "start": 23.988344423288634,
+          "duration": 2,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            1,
+            8,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "72f3788f-9dd2-4d82-9a57-30bf64c0b6aa",
+          "start": 30,
+          "duration": 2,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            1,
+            8,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        }
+      ]
+    }
+  ],
+  "valueTrackerLibraryItems": [
+    {
+      "id": "ffa85a2b-bacf-42e7-acca-445d7af33814",
+      "name": "Bass melody",
+      "duration": 16,
+      "stepSubdivision": 4,
+      "values": [
+        1,
+        null,
+        null,
+        2,
+        null,
+        null,
+        null,
+        1,
+        null,
+        null,
+        3,
+        null,
+        null,
+        null,
+        1,
+        null,
+        null,
+        null,
+        2,
+        null,
+        null,
+        null,
+        null,
+        5,
+        null,
+        null,
+        null,
+        4,
+        null,
+        null,
+        null,
+        1,
+        null,
+        null,
+        2,
+        null,
+        null,
+        null,
+        1,
+        null,
+        null,
+        null,
+        null,
+        2,
+        null,
+        null,
+        null,
+        1,
+        null,
+        null,
+        2,
+        null,
+        null,
+        null,
+        null,
+        6,
+        null,
+        null,
+        5,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    }
+  ],
+  "formulas": [
+    {
+      "id": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+      "name": "",
+      "code": "t * t & 64"
+    },
+    {
+      "id": "6fa8e764-714e-40d5-a2e9-65b722d49ffe",
+      "name": "",
+      "code": "t >> 2"
+    },
+    {
+      "id": "2783704c-61c4-4793-ad9a-ddfcd7b73291",
+      "name": "",
+      "code": "t*t>>11&25"
+    },
+    {
+      "id": "5d4228df-72ca-4f4b-b89b-36c1407510e1",
+      "name": "Bass",
+      "code": "t * a & 64"
+    },
+    {
+      "id": "d16638ac-fb54-4dd7-8c06-815da21990bb",
+      "name": "Boss level #6",
+      "code": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n"
+    },
+    {
+      "id": "305153b1-ecc3-4ca3-a330-e4e9fcdc398f",
+      "name": "Neurofunk",
+      "code": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))"
+    },
+    {
+      "id": "be1b19a8-50fe-47fc-a41d-3b091f553ed0",
+      "name": "Kick",
+      "code": "t>>(t&16384?t&4096?4:3:2)"
+    },
+    {
+      "id": "b731021b-30d7-4508-bf32-761fb7eeac16",
+      "name": "",
+      "code": "t*t>>12%25"
+    }
+  ],
+  "zoom": 0.3075461304187775,
+  "loopStart": 111.75,
+  "loopEnd": 144,
+  "loopEnabled": true,
+  "audioEffects": [
+    {
+      "id": "75f86f92-f8e9-46e4-8980-cef4dbefe964",
+      "type": "eq",
+      "enabled": true,
+      "expanded": false,
+      "params": {
+        "low": 4,
+        "mid": 9,
+        "high": 7,
+        "lowFrequency": 450,
+        "highFrequency": 6690
+      }
+    }
+  ],
+  "evalEffects": [
+    {
+      "id": "fx6",
+      "type": "stereoOffset",
+      "enabled": true,
+      "expanded": true,
+      "params": {
+        "offset": "b"
+      }
+    },
+    {
+      "id": "fx5",
+      "type": "tReplacement",
+      "enabled": true,
+      "expanded": true,
+      "params": {
+        "stereo": false,
+        "expression": "t+t%b ",
+        "leftExpression": "t",
+        "rightExpression": "t"
+      }
+    }
+  ],
+  "automationLanes": [
+    {
+      "id": "masterGain",
+      "height": 180,
+      "type": "masterGain",
+      "points": [
+        {
+          "curve": "easeInOut",
+          "time": 0,
+          "value": 0
+        },
+        {
+          "curve": "easeInOut",
+          "time": 16,
+          "value": 0.9165414663461539
+        },
+        {
+          "curve": "easeInOut",
+          "time": 0,
+          "value": 0
+        },
+        {
+          "curve": "easeInOut",
+          "time": 15.75,
+          "value": 0.5876652644230769
+        },
+        {
+          "curve": "easeInOut",
+          "time": 48,
+          "value": 0.9028695913461539
+        },
+        {
+          "curve": "easeInOut",
+          "time": 56,
+          "value": 0.8982872596153846
+        },
+        {
+          "curve": "easeInOut",
+          "time": 48.25,
+          "value": 0.18624131944444444
+        },
+        {
+          "curve": "easeInOut",
+          "time": 96.25,
+          "value": 0.8952907986111112
+        },
+        {
+          "curve": "easeInOut",
+          "time": 108,
+          "value": 0.8957248263888888
+        },
+        {
+          "curve": "easeInOut",
+          "time": 96.25,
+          "value": 0.3628255208333333
+        },
+        {
+          "curve": "easeInOut",
+          "time": 100,
+          "value": 0.3546223958333333
+        }
+      ]
+    }
+  ],
+  "bpmMeasure": "t >> 4",
+  "masterGain": 1,
+  "sampleRate": 8000,
+  "tickSize": 1024,
+  "showClipWaveforms": true,
+  "showEvaluatedPanel": true
+}

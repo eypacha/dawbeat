@@ -58,7 +58,10 @@ import {
   createAudioEffectParamAutomationLane,
   createDefaultAutomationLane,
   getAutomationLaneByAudioEffectParam,
+  getAutomationLaneConfig,
   getAutomationLaneById as findAutomationLaneById,
+  getAutomationLaneNormalizedValue,
+  getAutomationLaneValueFromNormalized,
   getAutomationValueAtTime,
   getDefaultAutomationLanes,
   normalizeAutomationCurveType,
@@ -81,7 +84,7 @@ import {
   normalizeVariableTrackHeight
 } from '@/services/timelineLaneLayoutService'
 import { normalizeTrackUnionOperator } from '@/services/trackUnionOperatorService'
-import demoProject from '@/data/demo.json'
+import { getDefaultDemoProjectEntry } from '@/services/demoProjectService'
 import { loadProject, normalizeProject, serializeProject } from '@/services/projectPersistence'
 import {
   BASE_PIXELS_PER_TICK,
@@ -125,9 +128,10 @@ import {
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
 const MIN_VALUE_TRACKER_RECORDING_DURATION = 1
 const MAX_HISTORY_ENTRIES = 100
+const AUTOMATION_KEYBOARD_NORMALIZED_STEP_COUNT = 10
 
 function createDefaultProject() {
-  return normalizeProject(demoProject) ?? createEmptyProject()
+  return normalizeProject(getDefaultDemoProjectEntry()?.project) ?? createEmptyProject()
 }
 
 function createEmptyProject() {
@@ -1109,6 +1113,93 @@ export const useDawStore = defineStore('dawStore', {
       })
     },
 
+    nudgeSelectedAutomationPointTime(deltaTicks) {
+      const normalizedDeltaTicks = Number(deltaTicks)
+      const selectedPoint = this.selectedAutomationPoint
+
+      if (!selectedPoint || !Number.isFinite(normalizedDeltaTicks) || normalizedDeltaTicks === 0) {
+        return false
+      }
+
+      return this.recordHistoryStep('nudge-selected-automation-point-time', () => {
+        const lane = this.getAutomationLaneById(selectedPoint.laneId)
+        const point = lane?.points?.[selectedPoint.index]
+
+        if (!lane || !point) {
+          this.clearAutomationPointSelection()
+          return false
+        }
+
+        if (selectedPoint.index === 0) {
+          this.selectAutomationPoint(selectedPoint.laneId, 0)
+          return false
+        }
+
+        const nextTime = Math.max(0, snapTicks(point.time) + normalizedDeltaTicks)
+
+        if (nextTime === point.time) {
+          return false
+        }
+
+        this.updateAutomationPoint(selectedPoint.laneId, selectedPoint.index, {
+          ...point,
+          time: nextTime
+        })
+
+        return true
+      })
+    },
+
+    nudgeSelectedAutomationPointValue(deltaNormalizedSteps) {
+      const normalizedDeltaSteps = Number(deltaNormalizedSteps)
+      const selectedPoint = this.selectedAutomationPoint
+
+      if (!selectedPoint || !Number.isFinite(normalizedDeltaSteps) || normalizedDeltaSteps === 0) {
+        return false
+      }
+
+      return this.recordHistoryStep('nudge-selected-automation-point-value', () => {
+        const lane = this.getAutomationLaneById(selectedPoint.laneId)
+        const point = lane?.points?.[selectedPoint.index]
+        const laneConfig = getAutomationLaneConfig(lane)
+
+        if (!lane || !point || !laneConfig) {
+          if (!lane || !point) {
+            this.clearAutomationPointSelection()
+          }
+
+          return false
+        }
+
+        const currentNormalizedValue = getAutomationLaneNormalizedValue(
+          lane,
+          point.value,
+          lane.points[0]?.value
+        )
+        const nextNormalizedValue = clamp(
+          currentNormalizedValue + normalizedDeltaSteps / AUTOMATION_KEYBOARD_NORMALIZED_STEP_COUNT,
+          0,
+          1
+        )
+        const nextValue = getAutomationLaneValueFromNormalized(
+          lane,
+          nextNormalizedValue,
+          point.value
+        )
+
+        if (nextValue === point.value) {
+          return false
+        }
+
+        this.updateAutomationPoint(selectedPoint.laneId, selectedPoint.index, {
+          ...point,
+          value: nextValue
+        })
+
+        return true
+      })
+    },
+
     removeAutomationPoint(laneId, index) {
       return this.recordHistoryStep('remove-automation-point', () => {
         const lane = this.getAutomationLaneById(laneId)
@@ -1129,7 +1220,7 @@ export const useDawStore = defineStore('dawStore', {
         }
 
         if (this.selectedAutomationPoint.index === index) {
-          this.clearAutomationPointSelection()
+          this.selectAutomationPoint(laneId, Math.max(0, index - 1))
           return
         }
 

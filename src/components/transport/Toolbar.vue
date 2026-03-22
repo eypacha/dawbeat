@@ -26,6 +26,14 @@
           />
 
           <IconButton
+            :icon="Shuffle"
+            label="Shuffle Demo"
+            size="sm"
+            title="Load a random bundled demo project"
+            @click="handleRandomDemoProject"
+          />
+
+          <IconButton
             :icon="Download"
             label="Save JSON"
             size="sm"
@@ -248,9 +256,10 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { BookOpen, Circle, Download, FilePlus, FolderOpen, Pause, Play, Redo2, Repeat, Settings2, SlidersHorizontal, Square, Undo2 } from 'lucide-vue-next'
+import { BookOpen, Circle, Download, FilePlus, FolderOpen, Pause, Play, Redo2, Repeat, Settings2, Shuffle, SlidersHorizontal, Square, Undo2 } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { automationCompanionHostState } from '@/services/automationCompanionService'
+import { getRandomDemoProjectEntry } from '@/services/demoProjectService'
 import {
   formatBpmValue,
   getBpmFromSampleRate,
@@ -295,6 +304,7 @@ const sampleRateDraft = ref(String(sampleRate.value))
 const settingsVisible = ref(false)
 const exportingWav = ref(false)
 const newProjectConfirmVisible = ref(false)
+const lastShuffledDemoProjectId = ref(null)
 const transportDisplayMode = ref('sample')
 const toolbarLayoutClassName = computed(() =>
   props.compactLayout
@@ -573,10 +583,36 @@ function handleProjectDownload() {
   downloadProjectFile(dawStore.$state)
 }
 
+async function applyIncomingProject(project) {
+  await stop()
+  dawStore.applyProject(project)
+}
+
 async function handleNewProjectConfirm() {
   await stop()
   dawStore.resetToEmptyProject()
+  lastShuffledDemoProjectId.value = null
   newProjectConfirmVisible.value = false
+}
+
+async function handleRandomDemoProject() {
+  const demoProjectEntry = getRandomDemoProjectEntry({
+    excludeId: lastShuffledDemoProjectId.value
+  })
+
+  if (!demoProjectEntry) {
+    enqueueSnackbar('No bundled demo projects are available.', { variant: 'warning' })
+    return
+  }
+
+  try {
+    await applyIncomingProject(demoProjectEntry.project)
+    lastShuffledDemoProjectId.value = demoProjectEntry.id
+    enqueueSnackbar(`Loaded demo: ${demoProjectEntry.name}.`, { variant: 'success' })
+  } catch (error) {
+    console.error('Could not load the demo project', error)
+    enqueueSnackbar('Could not load the selected demo project.', { variant: 'error' })
+  }
 }
 
 async function handleWavExport() {
@@ -611,10 +647,11 @@ async function handleProjectFileChange(event) {
     const project = await importProjectFile(file)
 
     try {
-      await stop()
-      dawStore.applyProject(project)
+      await applyIncomingProject(project)
+      lastShuffledDemoProjectId.value = null
     } catch (error) {
-      console.error('No se pudo abrir el proyecto', error)
+      console.error('Could not open the project', error)
+      enqueueSnackbar('Could not open the project.', { variant: 'error' })
     }
   } catch (error) {
     enqueueSnackbar('Invalid project file', { variant: 'error' })

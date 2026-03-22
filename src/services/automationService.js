@@ -179,6 +179,40 @@ export function getAutomationLaneConfig(lane) {
   }
 }
 
+export function getAutomationLaneNormalizedValue(lane, value, fallback = 0) {
+  const config = getAutomationLaneConfig(lane)
+  const numericValue = Number(value)
+
+  if (!config) {
+    return clamp(Number.isFinite(numericValue) ? numericValue : Number(fallback) || 0, 0, 1)
+  }
+
+  const min = Number.isFinite(Number(config.min)) ? Number(config.min) : 0
+  const max = Number.isFinite(Number(config.max)) ? Number(config.max) : 1
+  const range = Math.max(0.0001, max - min)
+  const fallbackValue = Number.isFinite(Number(fallback)) ? Number(fallback) : min
+  const resolvedValue = Number.isFinite(numericValue) ? numericValue : fallbackValue
+
+  return clamp((resolvedValue - min) / range, 0, 1)
+}
+
+export function getAutomationLaneValueFromNormalized(lane, normalizedValue, fallback = null) {
+  const config = getAutomationLaneConfig(lane)
+  const normalized = clamp(Number(normalizedValue) || 0, 0, 1)
+
+  if (!config) {
+    return normalized
+  }
+
+  const min = Number.isFinite(Number(config.min)) ? Number(config.min) : 0
+  const max = Number.isFinite(Number(config.max)) ? Number(config.max) : 1
+  const range = Math.max(0.0001, max - min)
+  const fallbackValue = Number.isFinite(Number(fallback)) ? Number(fallback) : min
+  const rawValue = min + normalized * range
+
+  return config.normalize(Number.isFinite(rawValue) ? rawValue : fallbackValue)
+}
+
 export function normalizeAutomationCurveType(curve, fallback = DEFAULT_AUTOMATION_CURVE) {
   const normalizedFallback = VALID_AUTOMATION_CURVES.has(fallback)
     ? fallback
