@@ -69,17 +69,21 @@
         <button
           class="border border-zinc-800 bg-zinc-950 px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-100 disabled:cursor-default disabled:opacity-40"
           type="button"
+          :disabled="isExporting"
           @click="emit('close')"
         >
           Cancel
         </button>
         <button
-          class="border border-indigo-500/50 bg-indigo-500/10 px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-indigo-200 transition hover:border-indigo-400/70 hover:bg-indigo-500/20 disabled:cursor-default disabled:opacity-40"
-          :disabled="exporting"
+          class="border w-[100px] h-[29px] border-indigo-500/50 bg-indigo-500/10 px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-indigo-200 transition hover:border-indigo-400/70 hover:bg-indigo-500/20 disabled:cursor-default disabled:opacity-40"
+          :disabled="isExporting"
           type="button"
           @click="handleExport"
         >
-          {{ exporting ? 'Exporting…' : `Export ${format.toUpperCase()}` }}
+          <span v-if="!isExporting">{{ `Export ${format.toUpperCase()}` }}</span>
+          <span v-else class="flex items-center justify-center">
+            <LoaderCircle class="h-3.5 w-3.5 animate-spin" :stroke-width="2.25" />
+          </span>
         </button>
       </div>
     </template>
@@ -87,7 +91,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
+import { LoaderCircle } from 'lucide-vue-next'
 import Modal from '@/components/ui/Modal.vue'
 
 const FORMATS = [
@@ -116,12 +121,41 @@ const emit = defineEmits(['close', 'export'])
 const format = ref('wav')
 const renderMode = ref('full')
 const loopCount = ref(2)
+const localExporting = ref(false)
+const isExporting = computed(() => props.exporting || localExporting.value)
 
-function handleExport() {
-  if (props.exporting) return
+watch(
+  () => props.exporting,
+  (exporting) => {
+    if (!exporting) {
+      localExporting.value = false
+    }
+  }
+)
+
+async function handleExport() {
+  if (isExporting.value) return
+
+  // Lock immediately in this component so the click feedback is instant.
+  localExporting.value = true
+
+  // Yield one UI frame so disabled/progress state is painted before heavy export starts.
+  await nextTick()
+  await waitForUiPaint()
+
   emit('export', {
     format: format.value,
     loopCount: renderMode.value === 'loop' ? Math.max(1, loopCount.value) : 1
+  })
+}
+
+function waitForUiPaint() {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      requestAnimationFrame(() => {
+        resolve()
+      })
+    }, 0)
   })
 }
 </script>

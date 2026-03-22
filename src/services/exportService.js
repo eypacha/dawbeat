@@ -1,4 +1,8 @@
 import { Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, connect as toneConnect } from 'tone'
+import * as lamejsModule from 'lamejs'
+import bitStreamModule from 'lamejs/src/js/BitStream.js'
+import lameCoreModule from 'lamejs/src/js/Lame.js'
+import mpegModeModule from 'lamejs/src/js/MPEGMode.js'
 import { getActiveFormula } from '@/engine/timelineEngine'
 import {
   AUTOMATION_CURVE_LINEAR,
@@ -36,6 +40,7 @@ const DEFAULT_EXPORT_WAV_SAMPLE_RATE = 44100
 const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter']
 const MIN_AUTOMATION_CURVE_SAMPLES = 16
 const MAX_AUTOMATION_CURVE_SAMPLES = 128
+const MP3_ENCODER = resolveMp3Encoder()
 const MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS = {
   distortion: ['drive'],
   reverb: ['decay', 'preDelay']
@@ -105,14 +110,14 @@ async function renderProjectToWav(state, { loopCount = 1 } = {}) {
 }
 
 async function encodeWavToMp3(wavBuffer) {
-  const { Mp3Encoder } = await import('lamejs')
+  ensureLamejsGlobals()
   const view = new DataView(wavBuffer)
   // WAV PCM data starts at byte 44 for standard 16-bit stereo
   const numChannels = view.getUint16(22, true)
   const sampleRate = view.getUint32(24, true)
   const numFrames = (wavBuffer.byteLength - 44) / (numChannels * 2)
   const kbps = 128
-  const encoder = new Mp3Encoder(numChannels, sampleRate, kbps)
+  const encoder = new MP3_ENCODER(numChannels, sampleRate, kbps)
   const CHUNK = 1152
   const leftPcm = new Int16Array(numFrames)
   const rightPcm = numChannels > 1 ? new Int16Array(numFrames) : null
@@ -150,6 +155,48 @@ async function encodeWavToMp3(wavBuffer) {
   }
 
   return output.buffer
+}
+
+function resolveMp3Encoder() {
+  const resolvedEncoder = lamejsModule.Mp3Encoder ?? lamejsModule.default?.Mp3Encoder
+
+  if (typeof resolvedEncoder !== 'function') {
+    throw new Error('MP3 encoder is not available')
+  }
+
+  return resolvedEncoder
+}
+
+function ensureLamejsGlobals() {
+  if (!globalThis.MPEGMode) {
+    const mpegMode = mpegModeModule.default ?? mpegModeModule
+
+    if (typeof mpegMode !== 'function' && typeof mpegMode !== 'object') {
+      throw new Error('Unable to initialize MPEGMode for MP3 export')
+    }
+
+    globalThis.MPEGMode = mpegMode
+  }
+
+  if (!globalThis.Lame) {
+    const lameCore = lameCoreModule.default ?? lameCoreModule
+
+    if (typeof lameCore !== 'function') {
+      throw new Error('Unable to initialize Lame core for MP3 export')
+    }
+
+    globalThis.Lame = lameCore
+  }
+
+  if (!globalThis.BitStream) {
+    const bitStream = bitStreamModule.default ?? bitStreamModule
+
+    if (typeof bitStream !== 'function') {
+      throw new Error('Unable to initialize BitStream for MP3 export')
+    }
+
+    globalThis.BitStream = bitStream
+  }
 }
 
 function renderTimelineChannels(

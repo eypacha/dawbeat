@@ -198,7 +198,10 @@
             type="button"
             @click="exportModalVisible = true"
           >
-            {{ exportingWav ? 'Exporting…' : 'Export' }}
+            <span v-if="!exportingWav">Export</span>
+            <span v-else class="flex items-center justify-center">
+              <LoaderCircle class="h-3.5 w-3.5 animate-spin" :stroke-width="2.25" />
+            </span>
           </button>
 
           <IconButton
@@ -250,9 +253,9 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Circle, Download, FilePlus, FolderOpen, Pause, Play, Redo2, Repeat, Settings2, Shuffle, Square, Undo2 } from 'lucide-vue-next'
+import { Circle, Download, FilePlus, FolderOpen, LoaderCircle, Pause, Play, Redo2, Repeat, Settings2, Shuffle, Square, Undo2 } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { automationCompanionHostState } from '@/services/automationCompanionService'
 import { getRandomDemoProjectEntry } from '@/services/demoProjectService'
@@ -597,6 +600,10 @@ async function handleExport({ format, loopCount }) {
 
   exportingWav.value = true
 
+  // Let Vue flush state and the browser paint the progress bar before heavy export work.
+  await nextTick()
+  await waitForAnimationFrame()
+
   try {
     if (format === 'mp3') {
       await downloadProjectMp3(dawStore.$state, { loopCount })
@@ -614,6 +621,14 @@ async function handleExport({ format, loopCount }) {
   } finally {
     exportingWav.value = false
   }
+}
+
+function waitForAnimationFrame() {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      resolve()
+    })
+  })
 }
 
 async function handleProjectFileChange(event) {
@@ -639,3 +654,4 @@ async function handleProjectFileChange(event) {
   }
 }
 </script>
+
