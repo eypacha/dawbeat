@@ -53,6 +53,14 @@
 
         <div class="flex items-start gap-3" data-window-no-drag="true">
           <IconButton
+            :icon="Code2"
+            :class="visualizerFormulaOverlayVisible ? 'border-amber-400/60 bg-amber-400/10 text-amber-200 hover:bg-amber-400/20' : 'border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700 hover:text-zinc-200'"
+            :label="visualizerFormulaOverlayVisible ? 'Hide formulas' : 'Show formulas'"
+            size="sm"
+            :title="visualizerFormulaOverlayVisible ? 'Hide left and right formulas' : 'Show left and right formulas'"
+            @click="visualizerFormulaOverlayVisible = !visualizerFormulaOverlayVisible"
+          />
+          <IconButton
             :icon="visualizerWindowFullscreen ? Minimize2 : Maximize2"
             :label="visualizerWindowFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
             size="sm"
@@ -66,13 +74,17 @@
       </div>
     </template>
 
-    <AudioOutputVisualizer :fullscreen="visualizerWindowFullscreen" windowed />
+    <AudioOutputVisualizer
+      :fullscreen="visualizerWindowFullscreen"
+      :show-formula-overlay="visualizerFormulaOverlayVisible"
+      windowed
+    />
   </FloatingWindow>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue'
-import { Maximize2, Minimize2 } from 'lucide-vue-next'
+import { Code2, Maximize2, Minimize2 } from 'lucide-vue-next'
 import AudioOutputVisualizer from '@/components/effects/AudioOutputVisualizer.vue'
 import EffectParamAutomationButton from '@/components/effects/EffectParamAutomationButton.vue'
 import FloatingWindow from '@/components/ui/FloatingWindow.vue'
@@ -88,6 +100,7 @@ const props = defineProps({
 const emit = defineEmits(['create-automation', 'interaction-end', 'interaction-start', 'update:gain'])
 
 const gainLabel = computed(() => `${Number(props.gain ?? 0).toFixed(2)}x`)
+const visualizerFormulaOverlayVisible = ref(false)
 const visualizerWindowElement = ref(null)
 const visualizerWindowFullscreen = ref(false)
 const visualizerWindowOpen = ref(false)

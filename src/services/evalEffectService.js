@@ -130,6 +130,65 @@ export function applyEvalEffects(formula, evalEffects = []) {
   return expressions
 }
 
+export function getEvaluatedDisplayExpressions(evaluatedExpressions = [], options = {}) {
+  const {
+    duplicateMono = false,
+    fallbackCode = '0'
+  } = options
+  const normalizedExpressions = (Array.isArray(evaluatedExpressions) ? evaluatedExpressions : [])
+    .filter((expression) => typeof expression === 'string' && expression.trim())
+
+  if (!normalizedExpressions.length) {
+    if (duplicateMono) {
+      return [
+        {
+          id: 'left',
+          label: 'Left Channel',
+          code: fallbackCode
+        },
+        {
+          id: 'right',
+          label: 'Right Channel',
+          code: fallbackCode
+        }
+      ]
+    }
+
+    return [
+      {
+        id: 'mono',
+        label: 'Channel',
+        code: fallbackCode
+      }
+    ]
+  }
+
+  const [leftExpression = fallbackCode, rightExpression = leftExpression] = normalizedExpressions
+
+  if (duplicateMono || rightExpression !== leftExpression) {
+    return [
+      {
+        id: 'left',
+        label: 'Left Channel',
+        code: leftExpression
+      },
+      {
+        id: 'right',
+        label: 'Right Channel',
+        code: rightExpression
+      }
+    ]
+  }
+
+  return [
+    {
+      id: 'mono',
+      label: 'Channel',
+      code: leftExpression
+    }
+  ]
+}
+
 export function applyEvalEffect(expressions, effect) {
   switch (effect?.type) {
     case 'stereoOffset':

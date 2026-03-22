@@ -38,7 +38,7 @@ import { getActiveFormula } from '@/engine/timelineEngine'
 import IconButton from '@/components/ui/IconButton.vue'
 import Panel from '@/components/ui/Panel.vue'
 import { copyTextToClipboard } from '@/services/clipboard'
-import { applyEvalEffects } from '@/services/evalEffectService'
+import { applyEvalEffects, getEvaluatedDisplayExpressions } from '@/services/evalEffectService'
 import { enqueueSnackbar } from '@/services/notifications'
 import { useDawStore } from '@/stores/dawStore'
 
@@ -64,42 +64,7 @@ const evaluatedExpressions = computed(() => {
     .filter((expression) => typeof expression === 'string' && expression.trim())
 })
 
-const displayExpressions = computed(() => {
-  if (!evaluatedExpressions.value.length) {
-    return [
-      {
-        id: 'mono',
-        label: 'Channel',
-        code: '0'
-      }
-    ]
-  }
-
-  const [leftExpression = '', rightExpression = leftExpression] = evaluatedExpressions.value
-
-  if (rightExpression === leftExpression) {
-    return [
-      {
-        id: 'mono',
-        label: 'Channel',
-        code: leftExpression
-      }
-    ]
-  }
-
-  return [
-    {
-      id: 'left',
-      label: 'Left Channel',
-      code: leftExpression
-    },
-    {
-      id: 'right',
-      label: 'Right Channel',
-      code: rightExpression
-    }
-  ]
-})
+const displayExpressions = computed(() => getEvaluatedDisplayExpressions(evaluatedExpressions.value))
 
 async function copyExpression(expression) {
   try {

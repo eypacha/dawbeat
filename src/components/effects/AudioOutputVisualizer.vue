@@ -6,6 +6,24 @@
   >
     <canvas ref="canvasElement" class="block h-full w-full" />
 
+    <div
+      v-if="showFormulaOverlay && overlayExpressions.length"
+      class="pointer-events-none absolute inset-x-0 top-8 flex justify-center px-6"
+    >
+      <div
+        class="grid w-full max-w-[min(100%,56rem)] gap-8 text-center"
+        :class="overlayExpressions.length > 1 ? 'md:grid-cols-2' : 'grid-cols-1'"
+      >
+        <section
+          v-for="expression in overlayExpressions"
+          :key="expression.id"
+          class="grid min-h-0 content-start"
+        >
+          <pre class="overflow-hidden px-4 text-xs leading-6 text-zinc-100/95 whitespace-pre-wrap break-words drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]">{{ expression.code }}</pre>
+        </section>
+      </div>
+    </div>
+
     <div class="absolute inset-x-3 top-2 flex items-center justify-between gap-3">
       <button
         v-if="showWindowButton"
@@ -29,13 +47,17 @@ import { storeToRefs } from 'pinia'
 import { AppWindow } from 'lucide-vue-next'
 import { getActiveFormula } from '@/engine/timelineEngine'
 import bytebeatService from '@/services/bytebeatService'
-import { applyEvalEffects } from '@/services/evalEffectService'
+import { applyEvalEffects, getEvaluatedDisplayExpressions } from '@/services/evalEffectService'
 import { renderFormulaWaveformChannels } from '@/services/formulaWaveformService'
 import { useDawStore } from '@/stores/dawStore'
 import { clamp, ticksToSamples } from '@/utils/timeUtils'
 
 const props = defineProps({
   fullscreen: {
+    type: Boolean,
+    default: false
+  },
+  showFormulaOverlay: {
     type: Boolean,
     default: false
   },
@@ -127,6 +149,11 @@ const levelLabel = computed(() => {
 
   return `${Math.round(normalizedLevel * 100)}%`
 })
+const overlayExpressions = computed(() =>
+  getEvaluatedDisplayExpressions(evaluatedExpressions.value, {
+    duplicateMono: true
+  })
+)
 const containerClassName = computed(() => {
   if (props.fullscreen) {
     return 'h-full min-h-0'
