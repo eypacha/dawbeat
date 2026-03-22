@@ -32,6 +32,9 @@ let masterGainValue = 1
 let transportMuted = true
 let masterGainNode = null
 let outputAnalyserNode = null
+let outputChannelSplitterNode = null
+let outputLeftAnalyserNode = null
+let outputRightAnalyserNode = null
 const audioEffectNodes = new Map()
 
 function safeDisconnect(node) {
@@ -87,6 +90,42 @@ function ensureOutputAnalyserNode() {
   return outputAnalyserNode
 }
 
+function ensureOutputStereoAnalyserNodes() {
+  if (!audioContext) {
+    return null
+  }
+
+  if (!outputChannelSplitterNode) {
+    outputChannelSplitterNode = new ChannelSplitterNode(audioContext, {
+      numberOfOutputs: 2
+    })
+  }
+
+  if (!outputLeftAnalyserNode) {
+    outputLeftAnalyserNode = new AnalyserNode(audioContext, {
+      fftSize: 2048,
+      maxDecibels: -18,
+      minDecibels: -96,
+      smoothingTimeConstant: 0.82
+    })
+  }
+
+  if (!outputRightAnalyserNode) {
+    outputRightAnalyserNode = new AnalyserNode(audioContext, {
+      fftSize: 2048,
+      maxDecibels: -18,
+      minDecibels: -96,
+      smoothingTimeConstant: 0.82
+    })
+  }
+
+  return {
+    left: outputLeftAnalyserNode,
+    right: outputRightAnalyserNode,
+    splitter: outputChannelSplitterNode
+  }
+}
+
 function getOutputGainValue() {
   return transportMuted ? 0 : masterGainValue
 }
@@ -97,15 +136,23 @@ function connectOutputNodeToDestination(outputNode) {
   }
 
   const analyserNode = ensureOutputAnalyserNode()
+  const stereoNodes = ensureOutputStereoAnalyserNodes()
 
-  if (!analyserNode) {
-    outputNode.connect(audioContext.destination)
+  outputNode.connect(audioContext.destination)
+
+  if (analyserNode) {
+    safeDisconnect(analyserNode)
+    outputNode.connect(analyserNode)
+  }
+
+  if (!stereoNodes?.splitter || !stereoNodes.left || !stereoNodes.right) {
     return
   }
 
-  safeDisconnect(analyserNode)
-  outputNode.connect(analyserNode)
-  analyserNode.connect(audioContext.destination)
+  safeDisconnect(stereoNodes.splitter)
+  outputNode.connect(stereoNodes.splitter)
+  stereoNodes.splitter.connect(stereoNodes.left, 0)
+  stereoNodes.splitter.connect(stereoNodes.right, 1)
 }
 
 async function createAudioEffectNode(effect) {
@@ -578,6 +625,19 @@ const bytebeatService = {
 
   getOutputAnalyser() {
     return ensureOutputAnalyserNode()
+  },
+
+  getOutputStereoAnalysers() {
+    const stereoNodes = ensureOutputStereoAnalyserNodes()
+
+    if (!stereoNodes) {
+      return null
+    }
+
+    return {
+      left: stereoNodes.left,
+      right: stereoNodes.right
+    }
   }
 }
 

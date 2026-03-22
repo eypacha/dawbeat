@@ -89,6 +89,7 @@ const WATERFALL_GUIDE_ROW_COUNT = 4
 const WATERFALL_SNAPSHOT_INTERVAL_MS = 42
 const WATERFALL_SNAPSHOT_POINTS = 96
 const WATERFALL_VISIBLE_TRACE_COUNT = 12
+const VECTORSCOPE_SAMPLE_STEP = 2
 const WAVEFORM_SAMPLE_STEP = 4
 
 const canvasElement = ref(null)
@@ -103,6 +104,8 @@ let canvasContext = null
 let frequencyData = null
 let formulaPreviewRequestVersion = 0
 let lastWaterfallSnapshotAt = 0
+let leftTimeDomainData = null
+let rightTimeDomainData = null
 let timeDomainData = null
 let resizeObserver = null
 let waterfallAudioHistory = []
@@ -313,6 +316,22 @@ function ensureDataBuffers(analyser) {
   }
 }
 
+function ensureStereoDataBuffers(stereoAnalysers) {
+  if (!stereoAnalysers?.left || !stereoAnalysers?.right) {
+    leftTimeDomainData = null
+    rightTimeDomainData = null
+    return
+  }
+
+  if (!leftTimeDomainData || leftTimeDomainData.length !== stereoAnalysers.left.fftSize) {
+    leftTimeDomainData = new Uint8Array(stereoAnalysers.left.fftSize)
+  }
+
+  if (!rightTimeDomainData || rightTimeDomainData.length !== stereoAnalysers.right.fftSize) {
+    rightTimeDomainData = new Uint8Array(stereoAnalysers.right.fftSize)
+  }
+}
+
 function drawVisualizer() {
   const canvas = canvasElement.value
   const ctx = canvasContext
@@ -324,7 +343,9 @@ function drawVisualizer() {
   }
 
   const analyser = bytebeatService.getOutputAnalyser()
+  const stereoAnalysers = bytebeatService.getOutputStereoAnalysers()
   ensureDataBuffers(analyser)
+  ensureStereoDataBuffers(stereoAnalysers)
   drawBackground(ctx, width, height)
 
   if (props.mode === 'circular') {
@@ -332,6 +353,8 @@ function drawVisualizer() {
     drawCircularFormulaOverlay(ctx, width, height, formulaWaveforms.value)
   } else if (props.mode === 'waterfall') {
     drawWaterfallGuides(ctx, width, height)
+  } else if (props.mode === 'vectorscope') {
+    drawVectorscopeGuides(ctx, width, height)
   } else {
     drawFormulaOverlay(ctx, width, height, formulaWaveforms.value)
   }
@@ -343,6 +366,8 @@ function drawVisualizer() {
       drawCircularIdleState(ctx, width, height)
     } else if (props.mode === 'waterfall') {
       drawWaterfallSnapshots(ctx, width, height)
+    } else if (props.mode === 'vectorscope') {
+      drawVectorscopeIdleState(ctx, width, height)
     } else {
       drawIdleState(ctx, width, height)
     }
@@ -364,6 +389,19 @@ function drawVisualizer() {
   } else if (props.mode === 'waterfall') {
     updateWaterfallHistories(timeDomainData, formulaWaveforms.value)
     drawWaterfallSnapshots(ctx, width, height)
+  } else if (props.mode === 'vectorscope') {
+    if (
+      !stereoAnalysers?.left
+      || !stereoAnalysers?.right
+      || !leftTimeDomainData
+      || !rightTimeDomainData
+    ) {
+      drawVectorscopeIdleState(ctx, width, height)
+    } else {
+      stereoAnalysers.left.getByteTimeDomainData(leftTimeDomainData)
+      stereoAnalysers.right.getByteTimeDomainData(rightTimeDomainData)
+      drawVectorscopeTrace(ctx, width, height, leftTimeDomainData, rightTimeDomainData)
+    }
   } else {
     drawFrequencyBars(ctx, width, height, frequencyData)
     drawWaveform(ctx, width, height, timeDomainData)
@@ -807,6 +845,131 @@ function drawCircularCore(ctx, width, height) {
   ctx.beginPath()
   ctx.arc(centerX, centerY, radius, 0, TAU)
   ctx.fill()
+}
+
+function getVectorscopeFrame(width, height) {
+  const size = Math.max(48, Math.min(width * 0.74, height * 0.72))
+  const centerX = width * 0.5
+  const centerY = height * 0.5
+
+  return {
+    centerX,
+    centerY,
+    halfSize: size * 0.5,
+    size,
+    x: centerX - size * 0.5,
+    y: centerY - size * 0.5
+  }
+}
+
+function drawVectorscopeGuides(ctx, width, height) {
+  const { divider, grid } = getPaletteColors()
+  const frame = getVectorscopeFrame(width, height)
+
+  ctx.strokeStyle = withAlpha(grid, 0.1)
+  ctx.lineWidth = 1
+  ctx.strokeRect(frame.x, frame.y, frame.size, frame.size)
+
+  ctx.beginPath()
+  ctx.moveTo(frame.x, frame.y)
+  ctx.lineTo(frame.x + frame.size, frame.y + frame.size)
+  ctx.moveTo(frame.x + frame.size, frame.y)
+  ctx.lineTo(frame.x, frame.y + frame.size)
+  ctx.stroke()
+
+  ctx.strokeStyle = withAlpha(divider, 0.08)
+  ctx.beginPath()
+  ctx.moveTo(frame.centerX, frame.y)
+  ctx.lineTo(frame.centerX, frame.y + frame.size)
+  ctx.moveTo(frame.x, frame.centerY)
+  ctx.lineTo(frame.x + frame.size, frame.centerY)
+  ctx.stroke()
+}
+
+function drawVectorscopeIdleState(ctx, width, height) {
+  const { audio } = getPaletteColors()
+  const frame = getVectorscopeFrame(width, height)
+
+  ctx.fillStyle = withAlpha(audio, 0.28)
+  ctx.beginPath()
+  ctx.arc(frame.centerX, frame.centerY, Math.max(2.5, frame.size * 0.012), 0, TAU)
+  ctx.fill()
+}
+
+function drawVectorscopeTrace(ctx, width, height, leftWaveform, rightWaveform) {
+  const { audio, formulaPrimary } = getPaletteColors()
+  const frame = getVectorscopeFrame(width, height)
+  const sampleCount = Math.min(leftWaveform.length, rightWaveform.length)
+
+  if (sampleCount <= 0) {
+    drawVectorscopeIdleState(ctx, width, height)
+    return
+  }
+
+  ctx.save()
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.shadowBlur = 0
+
+  drawVectorscopePath(ctx, leftWaveform, rightWaveform, frame, {
+    lineWidth: 4 + level.value * 2,
+    sampleCount,
+    sampleStep: VECTORSCOPE_SAMPLE_STEP,
+    strokeStyle: withAlpha(formulaPrimary, 0.16 + level.value * 0.08)
+  })
+  drawVectorscopePath(ctx, leftWaveform, rightWaveform, frame, {
+    lineWidth: 1.2 + level.value * 0.8,
+    sampleCount,
+    sampleStep: VECTORSCOPE_SAMPLE_STEP,
+    strokeStyle: withAlpha(audio, 0.42 + level.value * 0.2)
+  })
+
+  ctx.fillStyle = withAlpha(audio, 0.34 + level.value * 0.18)
+
+  for (let index = 0; index < sampleCount; index += VECTORSCOPE_SAMPLE_STEP * 10) {
+    const x = frame.centerX + normalizeAnalyserSample(leftWaveform[index]) * frame.halfSize
+    const y = frame.centerY - normalizeAnalyserSample(rightWaveform[index]) * frame.halfSize
+
+    ctx.beginPath()
+    ctx.arc(x, y, Math.max(1.2, 1.5 + level.value * 0.8), 0, TAU)
+    ctx.fill()
+  }
+
+  ctx.restore()
+}
+
+function drawVectorscopePath(ctx, leftWaveform, rightWaveform, frame, {
+  lineWidth,
+  sampleCount,
+  sampleStep,
+  strokeStyle
+}) {
+  let started = false
+
+  ctx.strokeStyle = strokeStyle
+  ctx.lineWidth = lineWidth
+  ctx.beginPath()
+
+  for (let index = 0; index < sampleCount; index += sampleStep) {
+    const x = frame.centerX + normalizeAnalyserSample(leftWaveform[index]) * frame.halfSize
+    const y = frame.centerY - normalizeAnalyserSample(rightWaveform[index]) * frame.halfSize
+
+    if (!started) {
+      ctx.moveTo(x, y)
+      started = true
+      continue
+    }
+
+    ctx.lineTo(x, y)
+  }
+
+  if (started) {
+    ctx.stroke()
+  }
+}
+
+function normalizeAnalyserSample(sample) {
+  return clamp(((sample ?? 128) - 128) / 128, -1, 1)
 }
 
 function updateWaterfallHistories(audioWaveform, waveforms) {
