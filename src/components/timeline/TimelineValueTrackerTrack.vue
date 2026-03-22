@@ -9,7 +9,7 @@
       class="sticky left-0 z-20 flex shrink-0 flex-col justify-center border-r border-zinc-800 px-4 py-2 transition-colors"
       data-context-menu-enabled="true"
       :class="selectedHeaderClassName"
-      :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
+      :style="{ width: `${trackLabelWidth}px` }"
       @contextmenu="handleHeaderContextMenu"
     >
       <button
@@ -101,11 +101,15 @@ import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapServi
 import { buildCreatedClip, clampClipPlacementStart, getTrackCreateBounds } from '@/services/timelineService'
 import { createSparseRecordedValueTrackerValues, getValueTrackerBindingSummary } from '@/services/valueTrackerService'
 import { useDawStore } from '@/stores/dawStore'
-import { TRACK_LABEL_WIDTH, getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
+import { getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
 
 const DRAG_THRESHOLD_PX = 6
 
 const props = defineProps({
+  trackLabelWidth: {
+    type: Number,
+    required: true
+  },
   timelineWidth: {
     type: String,
     required: true

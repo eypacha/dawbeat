@@ -22,7 +22,7 @@
         track.id === selectedTrackId ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-900 text-zinc-300',
         isTrackReorderSource ? 'cursor-grabbing opacity-50' : 'cursor-grab'
       ]"
-      :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
+      :style="{ width: `${trackLabelWidth}px` }"
       @contextmenu="handleContextMenu"
       @dragend="handleTrackReorderDragEnd"
       @dragstart="handleTrackReorderDragStart"
@@ -122,6 +122,7 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTimelineLaneResize } from '@/composables/useTimelineLaneResize'
 import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
+import { getFormulaTrackDisplayName } from '@/services/timelineHeaderWidthService'
 import { isTrackAudible } from '@/services/trackPlaybackState'
 import { getTrackUnionOperatorOption, TRACK_UNION_OPERATOR_OPTIONS } from '@/services/trackUnionOperatorService'
 import TimelineClip from '@/components/timeline/TimelineClip.vue'
@@ -139,7 +140,7 @@ import {
   getTrackColor,
   lightenHex
 } from '@/utils/colorUtils'
-import { TRACK_LABEL_WIDTH, getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
+import { getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
 
 const DRAG_THRESHOLD_PX = 6
 
@@ -166,6 +167,10 @@ const props = defineProps({
   },
   track: {
     type: Object,
+    required: true
+  },
+  trackLabelWidth: {
+    type: Number,
     required: true
   },
   timelineWidth: {
@@ -230,11 +235,7 @@ const dragPreview = computed(() => {
 })
 
 const displayTrackName = computed(() => {
-  if (typeof props.track.name === 'string' && props.track.name.trim()) {
-    return props.track.name
-  }
-
-  return `Track ${props.trackIndex + 1}`
+  return getFormulaTrackDisplayName(props.track, props.trackIndex)
 })
 
 const isMuted = computed(() => Boolean(props.track.muted))

@@ -67,11 +67,15 @@ import { useTimelineLaneResize } from '@/composables/useTimelineLaneResize'
 import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { buildCreatedClip, clampClipPlacementStart, getTrackCreateBounds } from '@/services/timelineService'
 import { useDawStore } from '@/stores/dawStore'
-import { TRACK_LABEL_WIDTH, getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
+import { getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
 
 const DRAG_THRESHOLD_PX = 6
 
 const props = defineProps({
+  trackLabelWidth: {
+    type: Number,
+    required: true
+  },
   timelineWidth: {
     type: String,
     required: true
@@ -96,7 +100,7 @@ const visibleTickStep = computed(() => getVisibleTimelineTickStep(pixelsPerTick.
 const laneHeight = computed(() => props.variableTrack.height)
 const headerStyle = computed(() => ({
   height: `${laneHeight.value}px`,
-  width: `${TRACK_LABEL_WIDTH}px`
+  width: `${props.trackLabelWidth}px`
 }))
 
 const laneStyle = computed(() => ({

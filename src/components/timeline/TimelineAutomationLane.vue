@@ -4,7 +4,7 @@
       class="sticky left-0 z-20 flex shrink-0 items-center justify-between gap-3 border-r border-zinc-800 px-4 py-2 transition-colors"
       data-context-menu-enabled="true"
       :class="selectedHeaderClassName"
-      :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
+      :style="{ width: `${trackLabelWidth}px` }"
       @contextmenu="handleContextMenu"
     >
       <div class="min-w-0">
@@ -92,13 +92,17 @@ import {
 } from '@/services/automationService'
 import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { useDawStore } from '@/stores/dawStore'
-import { TRACK_LABEL_WIDTH, clamp, getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
+import { clamp, getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
 
 const CURVED_SEGMENT_SAMPLE_COUNT = 12
 
 const props = defineProps({
   lane: {
     type: Object,
+    required: true
+  },
+  trackLabelWidth: {
+    type: Number,
     required: true
   },
   timelineWidth: {

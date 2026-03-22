@@ -41,7 +41,7 @@
       <div class="sticky top-0 z-20 flex min-w-full w-max border-b border-zinc-800 bg-zinc-900/95">
         <div
           class="sticky left-0 z-30 flex shrink-0 items-center border-r border-zinc-800 bg-zinc-900 px-4 text-[10px] uppercase tracking-[0.3em] text-zinc-500"
-          :style="{ width: `${TRACK_LABEL_WIDTH}px` }"
+          :style="{ width: `${trackLabelWidth}px` }"
         >
           Timeline
         </div>
@@ -77,7 +77,7 @@
       >
         <Playhead
           :time="time"
-          :offset="TRACK_LABEL_WIDTH"
+          :offset="trackLabelWidth"
           @pointerdown="handleScrubPointerDown"
         />
 
@@ -90,6 +90,7 @@
         <TimelineVariableTrack
           v-for="variableTrack in variableTracks"
           :key="variableTrack.name"
+          :track-label-width="trackLabelWidth"
           :timeline-width="timelineWidthStyle"
           :variable-track="variableTrack"
         />
@@ -97,6 +98,7 @@
         <TimelineValueTrackerTrack
           v-for="valueTrackerTrack in valueTrackerTracks"
           :key="valueTrackerTrack.id"
+          :track-label-width="trackLabelWidth"
           :timeline-width="timelineWidthStyle"
           :value-tracker-track="valueTrackerTrack"
         />
@@ -105,6 +107,7 @@
           v-for="(track, index) in tracks"
           :key="track.id"
           :is-track-reorder-source="draggingTrackId === track.id"
+          :track-label-width="trackLabelWidth"
           :track-index="index"
           :track-reorder-active="trackDropTarget?.trackId === track.id"
           :track-reorder-color="draggingTrackColor"
@@ -123,6 +126,7 @@
           v-for="lane in automationLanes"
           :key="lane.id"
           :lane="lane"
+          :track-label-width="trackLabelWidth"
           :timeline-width="timelineWidthStyle"
         />
       </div>
@@ -142,9 +146,9 @@ import TimelineVariableTrack from '@/components/timeline/TimelineVariableTrack.v
 import TimelineValueTrackerTrack from '@/components/timeline/TimelineValueTrackerTrack.vue'
 import { useTimelineMarqueeSelection } from '@/composables/useTimelineMarqueeSelection'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
+import { getTimelineTrackLabelWidth } from '@/services/timelineHeaderWidthService'
 import { useDawStore } from '@/stores/dawStore'
 import {
-  TRACK_LABEL_WIDTH,
   getVisibleTimelineTickStep,
   getSamplesPerTick,
   pixelsToTicks,
@@ -186,6 +190,14 @@ const rulerMarks = computed(() => {
 
   return marks
 })
+const trackLabelWidth = computed(() =>
+  getTimelineTrackLabelWidth({
+    automationLanes: automationLanes.value,
+    tracks: tracks.value,
+    valueTrackerTracks: valueTrackerTracks.value,
+    variableTracks: variableTracks.value
+  })
+)
 const timelineWidthStyle = computed(() => `${ticksToPixels(FIXED_TIMELINE_TICKS, pixelsPerTick.value)}px`)
 const draggingTrackColor = computed(
   () => tracks.value.find((track) => track.id === draggingTrackId.value)?.color ?? null
@@ -206,25 +218,25 @@ function handleWheel(event) {
   const viewportLeft = scrollContainer.value.scrollLeft
   const viewportRight = viewportLeft + scrollContainer.value.clientWidth
   const previousPixelsPerTick = pixelsPerTick.value
-  const previousPlayheadOffset = TRACK_LABEL_WIDTH + ticksToPixels(time.value, previousPixelsPerTick)
+  const previousPlayheadOffset = trackLabelWidth.value + ticksToPixels(time.value, previousPixelsPerTick)
   const playheadWasVisible =
     previousPlayheadOffset >= viewportLeft && previousPlayheadOffset <= viewportRight
   const containerRect = scrollContainer.value.getBoundingClientRect()
   const pointerOffsetX = event.clientX - containerRect.left
-  const timelineX = scrollContainer.value.scrollLeft + pointerOffsetX - TRACK_LABEL_WIDTH
+  const timelineX = scrollContainer.value.scrollLeft + pointerOffsetX - trackLabelWidth.value
   const anchorTick = Math.max(0, timelineX / previousPixelsPerTick)
 
   dawStore.adjustZoom(event.deltaY)
 
   const nextTimelineX = anchorTick * pixelsPerTick.value
-  const nextScrollLeft = nextTimelineX - pointerOffsetX + TRACK_LABEL_WIDTH
+  const nextScrollLeft = nextTimelineX - pointerOffsetX + trackLabelWidth.value
   scrollContainer.value.scrollLeft = Math.max(0, nextScrollLeft)
 
   if (!playheadWasVisible) {
     return
   }
 
-  const nextPlayheadOffset = TRACK_LABEL_WIDTH + ticksToPixels(time.value, pixelsPerTick.value)
+  const nextPlayheadOffset = trackLabelWidth.value + ticksToPixels(time.value, pixelsPerTick.value)
   const nextViewportLeft = scrollContainer.value.scrollLeft
   const nextViewportRight = nextViewportLeft + scrollContainer.value.clientWidth
 
@@ -310,7 +322,7 @@ async function scrubToClientX(clientX) {
   }
 
   const containerRect = scrollContainer.value.getBoundingClientRect()
-  const timelineX = scrollContainer.value.scrollLeft + clientX - containerRect.left - TRACK_LABEL_WIDTH
+  const timelineX = scrollContainer.value.scrollLeft + clientX - containerRect.left - trackLabelWidth.value
   const nextTime = Math.min(
     FIXED_TIMELINE_TICKS,
     Math.max(0, snapTicks(pixelsToTicks(timelineX, pixelsPerTick.value), 1))
@@ -338,7 +350,7 @@ watch(time, (nextTime) => {
     return
   }
 
-  const playheadOffset = TRACK_LABEL_WIDTH + ticksToPixels(nextTime, pixelsPerTick.value)
+  const playheadOffset = trackLabelWidth.value + ticksToPixels(nextTime, pixelsPerTick.value)
   const viewportLeft = scrollContainer.value.scrollLeft
   const viewportRight = viewportLeft + scrollContainer.value.clientWidth
 
