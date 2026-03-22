@@ -45,8 +45,8 @@
     />
 
     <div class="pointer-events-none absolute left-2 right-2 top-1.5 z-[1]">
-      <span class="block truncate text-[11px] font-medium leading-none">Value Tracker</span>
-      <span class="mt-0.5 block truncate text-[9px] leading-none opacity-80">{{ eventCount }} sets</span>
+      <span v-if="displayName" class="block truncate text-[11px] font-medium leading-none">{{ displayName }}</span>
+      <span class="block truncate text-[9px] leading-none opacity-80" :class="displayName ? 'mt-0.5' : ''">{{ eventCount }} sets</span>
     </div>
   </div>
 </template>
@@ -116,6 +116,7 @@ const valueTrackerTrack = computed(() =>
 const linkedValueTrackerLibraryItem = computed(() =>
   getValueTrackerLibraryItemById(valueTrackerLibraryItems.value, props.clip.valueTrackerLibraryItemId)
 )
+const displayName = computed(() => linkedValueTrackerLibraryItem.value?.name?.trim() ?? '')
 const isReferenceClip = computed(() => Boolean(linkedValueTrackerLibraryItem.value))
 const resolvedValues = computed(() =>
   getValueTrackerResolvedValues(
