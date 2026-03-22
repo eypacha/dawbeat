@@ -1,0 +1,435 @@
+{
+  "version": 18,
+  "tracks": [
+    {
+      "id": "58443c9f-2a5d-4c57-b9f8-a26fc1342bf3",
+      "color": "#6366f1",
+      "muted": false,
+      "soloed": false,
+      "unionOperator": "*",
+      "height": 80,
+      "clips": [
+        {
+          "id": "e72c429a-dd11-4ef5-8347-94f29e20dd5a",
+          "formulaId": "d5c27fa5-2bf6-4d34-8e36-94c760ada5d2",
+          "formulaName": null,
+          "start": 0,
+          "duration": 16,
+          "formulaStereo": false,
+          "formula": "",
+          "leftFormula": "",
+          "rightFormula": ""
+        },
+        {
+          "id": "7a1a0ecf-250f-4d77-a450-1de3869248c7",
+          "formulaId": "23b8417a-70c3-4a5a-a086-5d64d444106c",
+          "formulaName": null,
+          "start": 16,
+          "duration": 8,
+          "formulaStereo": false,
+          "formula": "",
+          "leftFormula": "",
+          "rightFormula": ""
+        },
+        {
+          "id": "20699f3e-3064-4bbc-bb63-945632d1595b",
+          "formulaId": "9608b00e-abef-4d47-b5d3-1477a5f9fe6a",
+          "formulaName": null,
+          "start": 24,
+          "duration": 8,
+          "formulaStereo": false,
+          "formula": "",
+          "leftFormula": "",
+          "rightFormula": ""
+        },
+        {
+          "id": "e619377d-0ac7-4c30-af67-af5a03efe822",
+          "formulaId": "23b8417a-70c3-4a5a-a086-5d64d444106c",
+          "formulaName": null,
+          "start": 32,
+          "duration": 8,
+          "formulaStereo": false,
+          "formula": "",
+          "leftFormula": "",
+          "rightFormula": ""
+        },
+        {
+          "id": "83770f66-31b3-466d-a90c-e7069e8d3df4",
+          "formulaId": "9608b00e-abef-4d47-b5d3-1477a5f9fe6a",
+          "formulaName": null,
+          "start": 40,
+          "duration": 8,
+          "formulaStereo": false,
+          "formula": "",
+          "leftFormula": "",
+          "rightFormula": ""
+        },
+        {
+          "id": "246dffae-d3f7-46d3-b7ff-e0c173ab1f2e",
+          "formulaId": "23b8417a-70c3-4a5a-a086-5d64d444106c",
+          "formulaName": null,
+          "start": 48,
+          "duration": 8,
+          "formulaStereo": false,
+          "formula": "",
+          "leftFormula": "",
+          "rightFormula": ""
+        },
+        {
+          "id": "aad9430f-2719-4f05-9259-c38730197435",
+          "formulaId": "9608b00e-abef-4d47-b5d3-1477a5f9fe6a",
+          "formulaName": null,
+          "start": 56,
+          "duration": 8,
+          "formulaStereo": false,
+          "formula": "",
+          "leftFormula": "",
+          "rightFormula": ""
+        },
+        {
+          "id": "8bed7e16-ff8c-4543-a858-6d55251238ce",
+          "formulaId": "23b8417a-70c3-4a5a-a086-5d64d444106c",
+          "formulaName": null,
+          "start": 64,
+          "duration": 8,
+          "formulaStereo": false,
+          "formula": "",
+          "leftFormula": "",
+          "rightFormula": ""
+        }
+      ]
+    },
+    {
+      "id": "48247635-e5f2-41dc-9679-27591b40c83f",
+      "color": "#3b82f6",
+      "muted": false,
+      "soloed": false,
+      "unionOperator": "|",
+      "height": 80,
+      "clips": [
+        {
+          "id": "a45242c7-fec7-4bab-ba7c-ac39449ef5d0",
+          "formulaStereo": false,
+          "formula": "0.999",
+          "leftFormula": "0.999",
+          "rightFormula": "0.999",
+          "formulaId": null,
+          "formulaName": "",
+          "start": 16,
+          "duration": 64
+        }
+      ]
+    },
+    {
+      "id": "ac7c44c3-913c-4eee-8dcf-2997b240e51b",
+      "color": "#06b6d4",
+      "muted": false,
+      "soloed": false,
+      "unionOperator": "|",
+      "height": 80,
+      "clips": [
+        {
+          "id": "f1682635-2e72-406e-a709-f990062d6b03",
+          "formulaId": "cbdf95b2-1d2d-473c-b82f-9203393f1e78",
+          "formulaName": null,
+          "start": 48,
+          "duration": 16,
+          "formulaStereo": false,
+          "formula": "",
+          "leftFormula": "",
+          "rightFormula": ""
+        },
+        {
+          "id": "4d196d33-e31b-408a-b2ca-28c0ef23b233",
+          "formulaId": "cd756631-86b0-4b29-ae25-476868753d11",
+          "formulaName": null,
+          "start": 64,
+          "duration": 16,
+          "formulaStereo": false,
+          "formula": "",
+          "leftFormula": "",
+          "rightFormula": ""
+        }
+      ]
+    }
+  ],
+  "variableTracks": [],
+  "valueTrackerTracks": [
+    {
+      "id": "0e93f95c-370f-43df-a878-eb528145d352",
+      "name": "a",
+      "binding": {
+        "type": "variable",
+        "deviceId": null,
+        "channel": null,
+        "controller": null,
+        "note": null,
+        "variableName": "a"
+      },
+      "height": 64,
+      "clips": [
+        {
+          "id": "bfcac6bd-9365-4848-b500-0ab6bae20a68",
+          "start": 0,
+          "duration": 4,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            4,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "03582edd-2099-4489-9e8d-4abd746215a4",
+          "start": 15,
+          "duration": 2,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            3,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "ddc7cd0e-2473-4615-a75b-6471e2a23b9c",
+          "start": 23,
+          "duration": 2,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            3,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "7c3a4e9a-83e6-447c-a91f-b2801fb80acd",
+          "start": 31,
+          "duration": 2,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            3,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "1f65d476-2a2b-4135-a682-9c4c441fe9fe",
+          "start": 39,
+          "duration": 2,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            3,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "f12608f4-8c80-4006-93a0-d3cc25b3b95d",
+          "start": 47,
+          "duration": 2,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            3,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "b5acc92f-8a6c-4baf-b4d0-b738ca685303",
+          "start": 55,
+          "duration": 2,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            3,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "e4cb3f3e-da3f-4d58-9f32-5e9eb0e04f83",
+          "start": 63,
+          "duration": 2,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            3,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "0296853d-58db-470c-9d56-eaed226e4807",
+          "start": 71,
+          "duration": 2,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            3,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "45268b76-ec9d-4bb5-b78c-80668ee97852",
+          "start": 79,
+          "duration": 2,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            3,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null
+          ]
+        }
+      ]
+    }
+  ],
+  "valueTrackerLibraryItems": [],
+  "formulas": [
+    {
+      "id": "23b8417a-70c3-4a5a-a086-5d64d444106c",
+      "name": "Base Stereo 1",
+      "stereo": true,
+      "code": "(t>>a|t>>3|t*2)",
+      "leftCode": "(t>>a|t>>3|t*2)",
+      "rightCode": "t&0x256?t>>4:t>>10"
+    },
+    {
+      "id": "9608b00e-abef-4d47-b5d3-1477a5f9fe6a",
+      "name": "Base Stereo 2",
+      "stereo": true,
+      "code": "t&0x256?t>>4:t>>10",
+      "leftCode": "t&0x256?t>>4:t>>10",
+      "rightCode": "(t>>a|t>>3|t*2)"
+    },
+    {
+      "id": "cbdf95b2-1d2d-473c-b82f-9203393f1e78",
+      "name": "Louder clean melody L",
+      "stereo": true,
+      "code": "9*(t*((t>>9|t>>13)&15)&16)",
+      "leftCode": "9*(t*((t>>9|t>>13)&15)&16)",
+      "rightCode": "0"
+    },
+    {
+      "id": "d5c27fa5-2bf6-4d34-8e36-94c760ada5d2",
+      "name": "Base mono",
+      "stereo": false,
+      "code": "(t>>a|t>>3|t*2)",
+      "leftCode": "(t>>a|t>>3|t*2)",
+      "rightCode": "(t>>a|t>>3|t*2)"
+    },
+    {
+      "id": "cd756631-86b0-4b29-ae25-476868753d11",
+      "name": "Louder clean melody R",
+      "stereo": true,
+      "code": "0",
+      "leftCode": "0",
+      "rightCode": "9*(t*((t>>9|t>>13)&15)&16)"
+    }
+  ],
+  "zoom": 0.19356766073405643,
+  "loopStart": 48,
+  "loopEnd": 80,
+  "loopEnabled": true,
+  "audioEffects": [],
+  "evalEffects": [
+    {
+      "id": "fx5",
+      "type": "stereoOffset",
+      "enabled": true,
+      "expanded": true,
+      "params": {
+        "offset": "128"
+      }
+    }
+  ],
+  "automationLanes": [],
+  "bpmMeasure": "t >> 4",
+  "masterGain": 1,
+  "sampleRate": 8000,
+  "tickSize": 1024,
+  "timelineSectionLabels": [
+    {
+      "id": "00387c0b-62d5-4c48-a93f-db8e781d7654",
+      "name": "Intro",
+      "time": 0
+    },
+    {
+      "id": "c3cd9b96-982e-4edd-a08e-006c1fc3a986",
+      "name": "Part A",
+      "time": 16
+    },
+    {
+      "id": "0b731ed9-088d-41a4-8844-2639290e0167",
+      "name": "Parte B",
+      "time": 48
+    }
+  ],
+  "showClipWaveforms": true,
+  "showEvaluatedPanel": true
+}
