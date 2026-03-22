@@ -10,7 +10,7 @@
     <Panel class="w-full max-w-xl" padding="lg">
       <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">DawBeat</p>
       <div class="mt-6 space-y-3 text-sm leading-6 text-zinc-300">
-        <p>This web app is only available on desktop, but you can use your phone as a controller. Just scan the QR code by clicking the mobile icon on an automation track.</p>
+        <p>This web app is only available on desktop, but you can use your phone or tablet as a controller. Just scan the QR code by clicking the mobile icon on an automation track.</p>
       </div>
     </Panel>
   </section>
