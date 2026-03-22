@@ -25,6 +25,7 @@
       v-if="showClipWaveforms"
       :duration="clip.duration"
       :formula="resolvedFormula"
+      :height="trackHeight"
       :start="clip.start"
       :width="clipWidth"
     />
@@ -71,6 +72,10 @@ const props = defineProps({
   },
   trackId: {
     type: String,
+    required: true
+  },
+  trackHeight: {
+    type: Number,
     required: true
   }
 })

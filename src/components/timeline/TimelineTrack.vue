@@ -102,6 +102,7 @@
         :key="clip.id"
         :clip="clip"
         :track-id="track.id"
+        :track-height="track.height"
       />
     </div>
 
