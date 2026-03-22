@@ -1,5 +1,5 @@
 {
-  "version": 14,
+  "version": 16,
   "tracks": [
     {
       "id": "c7f7a6b1-a6c7-4dac-bd13-c34a8051f9e6",
@@ -12,11 +12,11 @@
       "clips": [
         {
           "id": "feea4311-5fb0-427f-b387-68666eaa15bd",
-          "formula": "t * a & 64",
-          "formulaId": null,
-          "formulaName": "",
+          "formula": null,
+          "formulaId": "5d4228df-72ca-4f4b-b89b-36c1407510e1",
+          "formulaName": null,
           "start": 0,
-          "duration": 16
+          "duration": 24
         }
       ]
     },
@@ -30,11 +30,27 @@
       "height": 80,
       "clips": [
         {
-          "id": "5600f65c-0854-449f-8cc7-8fc8f6b92676",
+          "id": "1c0a4697-edb9-4156-873d-6203c768a2c9",
           "formula": null,
           "formulaId": "6fa8e764-714e-40d5-a2e9-65b722d49ffe",
           "formulaName": null,
           "start": 0,
+          "duration": 3
+        },
+        {
+          "id": "9f62f776-a7af-4efa-b31b-f16ee7017bdd",
+          "formula": null,
+          "formulaId": "6fa8e764-714e-40d5-a2e9-65b722d49ffe",
+          "formulaName": null,
+          "start": 4,
+          "duration": 3
+        },
+        {
+          "id": "5600f65c-0854-449f-8cc7-8fc8f6b92676",
+          "formula": null,
+          "formulaId": "6fa8e764-714e-40d5-a2e9-65b722d49ffe",
+          "formulaName": null,
+          "start": 8,
           "duration": 15
         },
         {
@@ -42,7 +58,7 @@
           "formula": "t >> 3",
           "formulaId": null,
           "formulaName": "",
-          "start": 15,
+          "start": 23,
           "duration": 1
         }
       ]
@@ -60,7 +76,7 @@
           "formula": null,
           "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
           "formulaName": null,
-          "start": 0,
+          "start": 8,
           "duration": 0.25
         },
         {
@@ -68,7 +84,7 @@
           "formula": null,
           "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
           "formulaName": null,
-          "start": 1.5,
+          "start": 9.5,
           "duration": 0.25
         },
         {
@@ -76,7 +92,7 @@
           "formula": null,
           "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
           "formulaName": null,
-          "start": 3,
+          "start": 11,
           "duration": 0.25
         },
         {
@@ -84,7 +100,7 @@
           "formula": null,
           "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
           "formulaName": null,
-          "start": 5,
+          "start": 13,
           "duration": 0.25
         },
         {
@@ -92,7 +108,7 @@
           "formula": null,
           "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
           "formulaName": null,
-          "start": 6,
+          "start": 14,
           "duration": 0.25
         },
         {
@@ -100,7 +116,7 @@
           "formula": null,
           "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
           "formulaName": null,
-          "start": 8,
+          "start": 16,
           "duration": 0.25
         },
         {
@@ -108,7 +124,7 @@
           "formula": null,
           "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
           "formulaName": null,
-          "start": 9.5,
+          "start": 17.5,
           "duration": 0.25
         },
         {
@@ -116,7 +132,7 @@
           "formula": null,
           "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
           "formulaName": null,
-          "start": 11,
+          "start": 19,
           "duration": 0.25
         },
         {
@@ -124,7 +140,7 @@
           "formula": null,
           "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
           "formulaName": null,
-          "start": 13,
+          "start": 21,
           "duration": 0.25
         },
         {
@@ -132,7 +148,7 @@
           "formula": null,
           "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
           "formulaName": null,
-          "start": 14,
+          "start": 22,
           "duration": 0.25
         }
       ]
@@ -147,26 +163,26 @@
       "clips": [
         {
           "id": "dafdf0ae-20a5-4fb0-8fa5-5d3afedaa8ff",
-          "formula": "t*t>>11&25",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 8,
+          "formula": null,
+          "formulaId": "2783704c-61c4-4793-ad9a-ddfcd7b73291",
+          "formulaName": null,
+          "start": 16,
           "duration": 1.75
         },
         {
-          "id": "ce5019c1-0480-4b6b-9743-39dadb3af5ce",
-          "formula": "t*t>>11&25",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 11,
+          "id": "6052cd4e-6608-4c01-abbb-12a365ce214a",
+          "formula": null,
+          "formulaId": "2783704c-61c4-4793-ad9a-ddfcd7b73291",
+          "formulaName": null,
+          "start": 19,
           "duration": 1.75
         },
         {
-          "id": "f80fea59-4dff-442b-8509-94e7ab359711",
-          "formula": "t*t>>11&25",
-          "formulaId": null,
-          "formulaName": "",
-          "start": 14,
+          "id": "50360a41-8855-4adb-ab25-db83982c53fa",
+          "formula": null,
+          "formulaId": "2783704c-61c4-4793-ad9a-ddfcd7b73291",
+          "formulaName": null,
+          "start": 22,
           "duration": 1.75
         }
       ]
@@ -188,10 +204,52 @@
       "height": 52,
       "clips": [
         {
-          "id": "fe522460-7aba-4c01-b740-6ca6fb6d580f",
+          "id": "da9953f9-686b-4c42-a382-ce3d45bf6293",
           "start": 0,
+          "duration": 8,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "fe522460-7aba-4c01-b740-6ca6fb6d580f",
+          "start": 8,
           "duration": 16,
           "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
           "values": [
             1,
             null,
@@ -275,10 +333,52 @@
       "height": 52,
       "clips": [
         {
-          "id": "de4eb092-51a0-4257-ba82-5a3e38c1fd3f",
+          "id": "863e4b79-9b37-4b51-a2b5-5dafa8ae8b3b",
           "start": 0,
+          "duration": 8,
+          "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "de4eb092-51a0-4257-ba82-5a3e38c1fd3f",
+          "start": 8,
           "duration": 16,
           "stepSubdivision": 4,
+          "valueTrackerLibraryItemId": "ffa85a2b-bacf-42e7-acca-445d7af33814",
           "values": [
             1,
             null,
@@ -349,6 +449,80 @@
       ]
     }
   ],
+  "valueTrackerLibraryItems": [
+    {
+      "id": "ffa85a2b-bacf-42e7-acca-445d7af33814",
+      "name": "Bass melody",
+      "duration": 16,
+      "stepSubdivision": 4,
+      "values": [
+        1,
+        null,
+        null,
+        2,
+        null,
+        null,
+        null,
+        1,
+        null,
+        null,
+        3,
+        null,
+        null,
+        null,
+        1,
+        null,
+        null,
+        null,
+        2,
+        null,
+        null,
+        null,
+        null,
+        5,
+        null,
+        null,
+        null,
+        4,
+        null,
+        null,
+        null,
+        1,
+        null,
+        null,
+        2,
+        null,
+        null,
+        null,
+        1,
+        null,
+        null,
+        null,
+        null,
+        2,
+        null,
+        null,
+        null,
+        1,
+        null,
+        null,
+        2,
+        null,
+        null,
+        null,
+        null,
+        6,
+        null,
+        null,
+        5,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    }
+  ],
   "formulas": [
     {
       "id": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
@@ -359,11 +533,21 @@
       "id": "6fa8e764-714e-40d5-a2e9-65b722d49ffe",
       "name": "",
       "code": "t >> 4"
+    },
+    {
+      "id": "2783704c-61c4-4793-ad9a-ddfcd7b73291",
+      "name": "",
+      "code": "t*t>>11&25"
+    },
+    {
+      "id": "5d4228df-72ca-4f4b-b89b-36c1407510e1",
+      "name": "Bass",
+      "code": "t * a & 64"
     }
   ],
-  "zoom": 0.9818354632407423,
-  "loopStart": 0,
-  "loopEnd": 16,
+  "zoom": 1.147510581389071,
+  "loopStart": 8,
+  "loopEnd": 24,
   "loopEnabled": true,
   "audioEffects": [
     {
@@ -419,8 +603,23 @@
         },
         {
           "curve": "easeInOut",
-          "time": 16,
-          "value": 17.53846153846154
+          "time": 6,
+          "value": -21.796875
+        },
+        {
+          "curve": "easeInOut",
+          "time": 8.25,
+          "value": 14.390625
+        },
+        {
+          "curve": "easeInOut",
+          "time": 22.75,
+          "value": 12.021634615384613
+        },
+        {
+          "curve": "easeInOut",
+          "time": 24,
+          "value": -13.95793269230769
         }
       ]
     }
