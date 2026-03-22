@@ -57,14 +57,14 @@
           type="button"
           @click="activeLibraryTab = 'valueTrackers'"
         >
-          Value
+          Values
         </button>
       </div>
 
       <div class="min-w-0 flex-1" />
 
       <Button class="shrink-0" type="button" variant="ghost" @click="handleNewItem">
-        {{ activeLibraryTab === 'formulas' ? '+ New Formula' : '+ New Value' }}
+        {{ activeLibraryTab === 'formulas' ? '+ New Formula' : '+ New Values' }}
       </Button>
     </div>
 
