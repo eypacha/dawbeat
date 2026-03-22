@@ -75,7 +75,15 @@ import {
   mergeTReplacementParams,
   normalizeStereoOffsetExpression
 } from '@/services/evalEffectService'
-import { createFormula, getFormulaById } from '@/services/formulaService'
+import {
+  createClipFormulaFields,
+  createFormula,
+  getClipFormulaFieldsFromDraft,
+  getClipFormulaFieldsFromFormula,
+  getFormulaFieldsFromClipFormula,
+  getFormulaById,
+  mergeFormulaUpdates
+} from '@/services/formulaService'
 import { DEFAULT_BPM_MEASURE, normalizeBpmMeasureExpression } from '@/services/bpmService'
 import {
   normalizeAutomationLaneHeight,
@@ -589,10 +597,13 @@ function buildClipClipboard(entries, tracks, variableTracks, valueTrackerTracks,
       const referencedFormula = entry.clip.formulaId
         ? getFormulaById(formulas, entry.clip.formulaId)
         : null
+      const inlineClipFormulaFields = referencedFormula
+        ? getClipFormulaFieldsFromFormula(referencedFormula)
+        : createClipFormulaFields(entry.clip)
 
       return {
         duration: entry.clip.duration,
-        formula: referencedFormula?.code ?? entry.clip.formula ?? null,
+        ...inlineClipFormulaFields,
         formulaId: entry.laneType === 'track' ? referencedFormula?.id ?? null : null,
         formulaName:
           entry.laneType === 'track' ? referencedFormula?.name ?? entry.clip.formulaName ?? null : null,
@@ -2082,7 +2093,7 @@ export const useDawStore = defineStore('dawStore', {
                 })
             : createTrackClip({
                 duration: clipboardClip.duration,
-                formula: referencedFormula ? null : clipboardClip.formula ?? null,
+                ...(referencedFormula ? {} : createClipFormulaFields(clipboardClip)),
                 formulaId: referencedFormula?.id ?? null,
                 formulaName: referencedFormula?.name ?? clipboardClip.formulaName ?? null,
                 start: nextStart
@@ -2245,13 +2256,7 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      if (typeof updates.name === 'string') {
-        formula.name = updates.name
-      }
-
-      if (typeof updates.code === 'string') {
-        formula.code = updates.code
-      }
+      Object.assign(formula, mergeFormulaUpdates(formula, updates))
     },
 
     updateValueTrackerLibraryItem(valueTrackerLibraryItemId, updates) {
@@ -2316,7 +2321,7 @@ export const useDawStore = defineStore('dawStore', {
               continue
             }
 
-            clip.formula = formula.code
+            Object.assign(clip, getClipFormulaFieldsFromFormula(formula))
             clip.formulaName = formula.name
             clip.formulaId = null
           }
@@ -2869,9 +2874,9 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       if (clip.formulaId) {
-        this.updateFormula(clip.formulaId, { code: draft.code })
+        this.updateFormula(clip.formulaId, draft)
       } else {
-        clip.formula = draft.code
+        Object.assign(clip, getClipFormulaFieldsFromDraft(draft))
       }
     },
 
@@ -2898,12 +2903,9 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       if (clip.formulaId) {
-        this.updateFormula(clip.formulaId, {
-          code: draft.code,
-          name: draft.name
-        })
+        this.updateFormula(clip.formulaId, draft)
       } else {
-        clip.formula = draft.code
+        Object.assign(clip, getClipFormulaFieldsFromDraft(draft))
         clip.formulaName = draft.name
       }
     },
@@ -3485,13 +3487,16 @@ export const useDawStore = defineStore('dawStore', {
         }
 
         const formulaId = this.addFormula({
+          ...getFormulaFieldsFromClipFormula(clip),
           name: clip.formulaName ?? '',
-          code: clip.formula ?? ''
         })
 
         clip.formulaId = formulaId
-        clip.formula = null
+        clip.formula = ''
+        clip.formulaStereo = false
         clip.formulaName = null
+        clip.leftFormula = ''
+        clip.rightFormula = ''
         return formulaId
       })
     },
@@ -3574,8 +3579,11 @@ export const useDawStore = defineStore('dawStore', {
         }
 
         clip.formulaId = formula.id
-        clip.formula = null
+        clip.formula = ''
+        clip.formulaStereo = false
         clip.formulaName = null
+        clip.leftFormula = ''
+        clip.rightFormula = ''
         this.setSelectedClips([clip.id])
         this.selectedTrackId = trackId
         this.selectedFormulaId = formula.id
@@ -3602,7 +3610,7 @@ export const useDawStore = defineStore('dawStore', {
           return
         }
 
-        clip.formula = formula.code
+        Object.assign(clip, getClipFormulaFieldsFromFormula(formula))
         clip.formulaName = formula.name
         clip.formulaId = null
         this.setSelectedClips([clip.id])

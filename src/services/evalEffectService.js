@@ -1,4 +1,5 @@
 import { tokenizeFormula } from '@/utils/formulaTokenizer'
+import { normalizeExpressionList } from '@/services/formulaService'
 
 export const DEFAULT_STEREO_OFFSET_EXPRESSION = '128'
 
@@ -117,7 +118,7 @@ export function mergeTReplacementParams(currentParams = {}, updates = {}) {
 }
 
 export function applyEvalEffects(formula, evalEffects = []) {
-  let expressions = [formula]
+  let expressions = normalizeExpressionList(formula)
 
   for (const effect of evalEffects) {
     if (!effect?.enabled) {

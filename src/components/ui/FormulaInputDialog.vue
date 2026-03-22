@@ -17,36 +17,124 @@
       <Input
         v-model="draftName"
         class="mt-2"
-        :placeholder="draftValue"
+        :placeholder="namePlaceholder"
       />
     </template>
 
-    <label class="mt-4 block text-xs uppercase tracking-[0.18em] text-zinc-500">
-      {{ label }}
-    </label>
+    <template v-if="allowStereo">
+      <div class="mt-4 grid gap-2">
+        <span class="text-xs uppercase tracking-[0.18em] text-zinc-500">Mode</span>
 
-    <div class="formula-editor mt-2">
-      <div
-        ref="highlightLayerElement"
-        aria-hidden="true"
-        class="formula-editor__highlight"
-      >
-        <pre class="formula-editor__pre"><code v-html="highlightedFormulaHtml || '\n'" /></pre>
+        <div class="grid grid-cols-2 gap-2">
+          <button
+            class="border px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] transition"
+            :class="!draftStereo
+              ? 'border-sky-500/40 bg-sky-500/10 text-sky-100'
+              : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-100'"
+            type="button"
+            @click="toggleStereo(false)"
+          >
+            Mono
+          </button>
+
+          <button
+            class="border px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] transition"
+            :class="draftStereo
+              ? 'border-sky-500/40 bg-sky-500/10 text-sky-100'
+              : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-100'"
+            type="button"
+            @click="toggleStereo(true)"
+          >
+            Stereo
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <template v-if="draftStereo">
+      <label class="mt-4 block text-xs uppercase tracking-[0.18em] text-zinc-500">
+        Left
+      </label>
+
+      <div class="formula-editor mt-2">
+        <div
+          ref="leftHighlightLayerElement"
+          aria-hidden="true"
+          class="formula-editor__highlight"
+        >
+          <pre class="formula-editor__pre"><code v-html="highlightedLeftFormulaHtml || '\n'" /></pre>
+        </div>
+
+        <textarea
+          ref="leftTextareaElement"
+          v-model="draftLeftValue"
+          class="formula-editor__textarea"
+          spellcheck="false"
+          @input="handleTextareaInput('left')"
+          @scroll="syncHighlightScroll('left')"
+          @keydown.esc.prevent="emit('close')"
+          @keydown.shift.enter.prevent="handleEvalShortcut"
+          @keydown.meta.enter.prevent="handleEvalShortcut"
+          @keydown.ctrl.enter.prevent="handleEvalShortcut"
+        />
       </div>
 
-      <textarea
-        ref="textareaElement"
-        v-model="draftValue"
-        class="formula-editor__textarea"
-        spellcheck="false"
-        @input="handleTextareaInput"
-        @scroll="syncHighlightScroll"
-        @keydown.esc.prevent="emit('close')"
-        @keydown.shift.enter.prevent="handleEvalShortcut"
-        @keydown.meta.enter.prevent="handleEvalShortcut"
-        @keydown.ctrl.enter.prevent="handleEvalShortcut"
-      />
-    </div>
+      <label class="mt-4 block text-xs uppercase tracking-[0.18em] text-zinc-500">
+        Right
+      </label>
+
+      <div class="formula-editor mt-2">
+        <div
+          ref="rightHighlightLayerElement"
+          aria-hidden="true"
+          class="formula-editor__highlight"
+        >
+          <pre class="formula-editor__pre"><code v-html="highlightedRightFormulaHtml || '\n'" /></pre>
+        </div>
+
+        <textarea
+          ref="rightTextareaElement"
+          v-model="draftRightValue"
+          class="formula-editor__textarea"
+          spellcheck="false"
+          @input="handleTextareaInput('right')"
+          @scroll="syncHighlightScroll('right')"
+          @keydown.esc.prevent="emit('close')"
+          @keydown.shift.enter.prevent="handleEvalShortcut"
+          @keydown.meta.enter.prevent="handleEvalShortcut"
+          @keydown.ctrl.enter.prevent="handleEvalShortcut"
+        />
+      </div>
+    </template>
+
+    <template v-else>
+      <label class="mt-4 block text-xs uppercase tracking-[0.18em] text-zinc-500">
+        {{ label }}
+      </label>
+
+      <div class="formula-editor mt-2">
+        <div
+          ref="highlightLayerElement"
+          aria-hidden="true"
+          class="formula-editor__highlight"
+        >
+          <pre class="formula-editor__pre"><code v-html="highlightedFormulaHtml || '\n'" /></pre>
+        </div>
+
+        <textarea
+          ref="textareaElement"
+          v-model="draftValue"
+          class="formula-editor__textarea"
+          spellcheck="false"
+          @input="handleTextareaInput('mono')"
+          @scroll="syncHighlightScroll('mono')"
+          @keydown.esc.prevent="emit('close')"
+          @keydown.shift.enter.prevent="handleEvalShortcut"
+          @keydown.meta.enter.prevent="handleEvalShortcut"
+          @keydown.ctrl.enter.prevent="handleEvalShortcut"
+        />
+      </div>
+    </template>
 
     <template #footer>
       <div class="flex w-full items-end justify-between gap-4">
@@ -99,7 +187,7 @@ import IconButton from '@/components/ui/IconButton.vue'
 import Input from '@/components/ui/Input.vue'
 import Modal from '@/components/ui/Modal.vue'
 import { useDawStore } from '@/stores/dawStore'
-import { extractAutoVariableTrackNames, getFormulaAllowedIdentifiers } from '@/services/variableTrackService'
+import { collectAutoVariableTrackNames, getFormulaAllowedIdentifiers } from '@/services/variableTrackService'
 import { isNumericValueTrackerInitializer } from '@/services/valueTrackerService'
 import { renderFormulaTokensToHtmlWithOptions } from '@/utils/formulaTokenizer'
 import { validateFormulaWithOptions } from '@/utils/formulaValidation'
@@ -108,6 +196,22 @@ const props = defineProps({
   initialValue: {
     type: String,
     default: ''
+  },
+  initialLeftValue: {
+    type: String,
+    default: ''
+  },
+  initialRightValue: {
+    type: String,
+    default: ''
+  },
+  initialStereo: {
+    type: Boolean,
+    default: false
+  },
+  allowStereo: {
+    type: Boolean,
+    default: true
   },
   initialName: {
     type: String,
@@ -137,11 +241,22 @@ const dawStore = useDawStore()
 const { valueTrackerTracks, variableTracks } = storeToRefs(dawStore)
 const draftName = ref(props.initialName)
 const draftValue = ref(props.initialValue)
+const draftLeftValue = ref(props.initialLeftValue)
+const draftRightValue = ref(props.initialRightValue)
+const draftStereo = ref(props.allowStereo ? props.initialStereo : false)
 const formulaValid = ref(true)
 const highlightLayerElement = ref(null)
+const leftHighlightLayerElement = ref(null)
+const rightHighlightLayerElement = ref(null)
 const textareaElement = ref(null)
+const leftTextareaElement = ref(null)
+const rightTextareaElement = ref(null)
 const variableInitializerDrafts = ref({})
 const allowedIdentifiers = computed(() => getFormulaAllowedIdentifiers(variableTracks.value, valueTrackerTracks.value))
+const draftExpressions = computed(() => draftStereo.value
+  ? [draftLeftValue.value, draftRightValue.value]
+  : [draftValue.value]
+)
 const existingVariableTrackNames = computed(
   () => new Set([
     ...variableTracks.value.map((variableTrack) => variableTrack.name).filter(Boolean),
@@ -151,13 +266,26 @@ const existingVariableTrackNames = computed(
   ])
 )
 const missingAutoVariableTrackNames = computed(() =>
-  extractAutoVariableTrackNames(draftValue.value)
+  collectAutoVariableTrackNames(draftExpressions.value)
     .filter((variableTrackName) => !existingVariableTrackNames.value.has(variableTrackName))
 )
 const highlightedFormulaHtml = computed(() =>
   renderFormulaTokensToHtmlWithOptions(draftValue.value, {
     allowedIdentifiers: allowedIdentifiers.value
   })
+)
+const highlightedLeftFormulaHtml = computed(() =>
+  renderFormulaTokensToHtmlWithOptions(draftLeftValue.value, {
+    allowedIdentifiers: allowedIdentifiers.value
+  })
+)
+const highlightedRightFormulaHtml = computed(() =>
+  renderFormulaTokensToHtmlWithOptions(draftRightValue.value, {
+    allowedIdentifiers: allowedIdentifiers.value
+  })
+)
+const namePlaceholder = computed(() =>
+  draftStereo.value ? draftLeftValue.value : draftValue.value
 )
 
 watch(
@@ -169,12 +297,14 @@ watch(
 
     draftName.value = props.initialName
     draftValue.value = props.initialValue
+    draftLeftValue.value = props.initialLeftValue
+    draftRightValue.value = props.initialRightValue
+    draftStereo.value = props.allowStereo ? props.initialStereo : false
     variableInitializerDrafts.value = {}
     syncFormulaValidity()
     await nextTick()
-    syncHighlightScroll()
-    textareaElement.value?.focus()
-    textareaElement.value?.select()
+    syncAllHighlightScroll()
+    focusActiveTextarea(true)
   },
   { immediate: true }
 )
@@ -199,6 +329,36 @@ watch(
 )
 
 watch(
+  () => props.initialLeftValue,
+  (value) => {
+    if (!props.visible) {
+      draftLeftValue.value = value
+      syncFormulaValidity()
+    }
+  }
+)
+
+watch(
+  () => props.initialRightValue,
+  (value) => {
+    if (!props.visible) {
+      draftRightValue.value = value
+      syncFormulaValidity()
+    }
+  }
+)
+
+watch(
+  () => props.initialStereo,
+  (value) => {
+    if (!props.visible) {
+      draftStereo.value = props.allowStereo ? value : false
+      syncFormulaValidity()
+    }
+  }
+)
+
+watch(
   missingAutoVariableTrackNames,
   (variableTrackNames) => {
     variableInitializerDrafts.value = variableTrackNames.reduce((drafts, variableTrackName) => {
@@ -209,9 +369,9 @@ watch(
   { immediate: true }
 )
 
-function handleTextareaInput() {
+function handleTextareaInput(kind) {
   syncFormulaValidity()
-  syncHighlightScroll()
+  syncHighlightScroll(kind)
 }
 
 function emitDraft() {
@@ -220,8 +380,11 @@ function emitDraft() {
   }
 
   emit('eval', {
-    code: draftValue.value,
+    code: draftStereo.value ? draftLeftValue.value : draftValue.value,
+    leftCode: draftLeftValue.value,
     name: draftName.value,
+    rightCode: draftRightValue.value,
+    stereo: draftStereo.value,
     variableInitializers: collectVariableInitializers()
   })
 }
@@ -232,8 +395,11 @@ function emitSave() {
   }
 
   emit('save', {
-    code: draftValue.value,
+    code: draftStereo.value ? draftLeftValue.value : draftValue.value,
+    leftCode: draftLeftValue.value,
     name: draftName.value,
+    rightCode: draftRightValue.value,
+    stereo: draftStereo.value,
     variableInitializers: collectVariableInitializers()
   })
 }
@@ -281,18 +447,88 @@ function sendInitializerToValueTracker(variableTrackName) {
 }
 
 function syncFormulaValidity() {
-  formulaValid.value = validateFormulaWithOptions(draftValue.value, {
-    allowedIdentifiers: allowedIdentifiers.value
-  })
+  formulaValid.value = draftExpressions.value.length > 0 && draftExpressions.value.every((expression) =>
+    validateFormulaWithOptions(expression, {
+      allowedIdentifiers: allowedIdentifiers.value
+    })
+  )
 }
 
-function syncHighlightScroll() {
-  if (!textareaElement.value || !highlightLayerElement.value) {
+function syncHighlightScroll(kind = 'mono') {
+  const textarea = getTextareaElement(kind)
+  const highlightLayer = getHighlightLayerElement(kind)
+
+  if (!textarea || !highlightLayer) {
     return
   }
 
-  highlightLayerElement.value.scrollTop = textareaElement.value.scrollTop
-  highlightLayerElement.value.scrollLeft = textareaElement.value.scrollLeft
+  highlightLayer.scrollTop = textarea.scrollTop
+  highlightLayer.scrollLeft = textarea.scrollLeft
+}
+
+function syncAllHighlightScroll() {
+  syncHighlightScroll('mono')
+  syncHighlightScroll('left')
+  syncHighlightScroll('right')
+}
+
+function getTextareaElement(kind) {
+  if (kind === 'left') {
+    return leftTextareaElement.value
+  }
+
+  if (kind === 'right') {
+    return rightTextareaElement.value
+  }
+
+  return textareaElement.value
+}
+
+function getHighlightLayerElement(kind) {
+  if (kind === 'left') {
+    return leftHighlightLayerElement.value
+  }
+
+  if (kind === 'right') {
+    return rightHighlightLayerElement.value
+  }
+
+  return highlightLayerElement.value
+}
+
+function toggleStereo(nextStereo) {
+  if (!props.allowStereo || draftStereo.value === nextStereo) {
+    return
+  }
+
+  if (nextStereo) {
+    draftLeftValue.value = draftValue.value
+    draftRightValue.value = draftValue.value
+  } else {
+    draftValue.value = draftLeftValue.value
+  }
+
+  draftStereo.value = nextStereo
+  syncFormulaValidity()
+
+  void nextTick(() => {
+    syncAllHighlightScroll()
+    focusActiveTextarea(true)
+  })
+}
+
+function focusActiveTextarea(select = false) {
+  const textarea = draftStereo.value ? leftTextareaElement.value : textareaElement.value
+
+  if (!textarea) {
+    return
+  }
+
+  textarea.focus()
+
+  if (select) {
+    textarea.select()
+  }
 }
 
 </script>

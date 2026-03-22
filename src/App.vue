@@ -112,7 +112,11 @@
 
     <FormulaInputDialog
       :initial-name="editingFormulaName"
+      :initial-left-value="editingFormulaLeftValue"
+      :initial-right-value="editingFormulaRightValue"
+      :initial-stereo="editingFormulaStereo"
       :initial-value="editingFormulaValue"
+      :allow-stereo="showFormulaDialogStereoToggle"
       :show-name="showFormulaDialogNameField"
       :visible="isFormulaDialogVisible"
       label="Formula"
@@ -201,7 +205,12 @@ import {
   isAutomationCompanionMode,
   syncAutomationCompanionHostControllersFromStore
 } from '@/services/automationCompanionService'
-import { getFormulaById, resolveClipFormula, resolveClipFormulaName } from '@/services/formulaService'
+import {
+  getFormulaById,
+  getFormulaDraft,
+  resolveClipFormulaDraft,
+  resolveClipFormulaName
+} from '@/services/formulaService'
 import { initKeyboardShortcuts } from '@/services/keyboardShortcuts'
 import { disposeMidiClock, registerMidiClockTransport } from '@/services/midiClockService'
 import { disposeMidiInput } from '@/services/midiInputService'
@@ -278,20 +287,21 @@ const editingClipRecord = computed(() => {
   return findTimelineClip(tracks.value, variableTracks.value, valueTrackerTracks.value, editingClipId.value)
 })
 
-const editingClipFormula = computed(() => {
-  if (!editingClipRecord.value?.clip) {
-    return ''
-  }
-
-  if (editingClipRecord.value.laneType === 'valueTracker') {
-    return ''
+const editingClipFormulaDraft = computed(() => {
+  if (!editingClipRecord.value?.clip || editingClipRecord.value.laneType === 'valueTracker') {
+    return getFormulaDraft()
   }
 
   if (editingClipRecord.value.laneType === 'variable') {
-    return editingClipRecord.value.clip.formula ?? ''
+    return {
+      code: editingClipRecord.value.clip.formula ?? '',
+      leftCode: editingClipRecord.value.clip.formula ?? '',
+      rightCode: editingClipRecord.value.clip.formula ?? '',
+      stereo: false
+    }
   }
 
-  return resolveClipFormula(editingClipRecord.value.clip, formulas.value)
+  return resolveClipFormulaDraft(editingClipRecord.value.clip, formulas.value)
 })
 
 const editingClipFormulaName = computed(() => {
@@ -302,12 +312,12 @@ const editingClipFormulaName = computed(() => {
   return resolveClipFormulaName(editingClipRecord.value.clip, formulas.value)
 })
 
-const editingLibraryFormula = computed(() => {
+const editingLibraryFormulaDraft = computed(() => {
   if (!editingFormulaId.value) {
-    return ''
+    return getFormulaDraft()
   }
 
-  return getFormulaById(formulas.value, editingFormulaId.value)?.code ?? ''
+  return getFormulaDraft(getFormulaById(formulas.value, editingFormulaId.value))
 })
 
 const editingLibraryFormulaName = computed(() => {
@@ -363,10 +373,34 @@ const isValueTrackerDialogVisible = computed(
 
 const editingFormulaValue = computed(() => {
   if (editingClipId.value) {
-    return editingClipFormula.value
+    return editingClipFormulaDraft.value.code
   }
 
-  return editingLibraryFormula.value
+  return editingLibraryFormulaDraft.value.code
+})
+
+const editingFormulaLeftValue = computed(() => {
+  if (editingClipId.value) {
+    return editingClipFormulaDraft.value.leftCode
+  }
+
+  return editingLibraryFormulaDraft.value.leftCode
+})
+
+const editingFormulaRightValue = computed(() => {
+  if (editingClipId.value) {
+    return editingClipFormulaDraft.value.rightCode
+  }
+
+  return editingLibraryFormulaDraft.value.rightCode
+})
+
+const editingFormulaStereo = computed(() => {
+  if (editingClipId.value) {
+    return editingClipFormulaDraft.value.stereo
+  }
+
+  return editingLibraryFormulaDraft.value.stereo
 })
 
 const editingFormulaName = computed(() => {
@@ -378,6 +412,7 @@ const editingFormulaName = computed(() => {
 })
 
 const showFormulaDialogNameField = computed(() => editingClipRecord.value?.laneType !== 'variable')
+const showFormulaDialogStereoToggle = computed(() => editingClipRecord.value?.laneType !== 'variable')
 const formulaDialogTitle = computed(() => {
   if (!editingClipId.value) {
     return 'Edit Library Formula'
@@ -822,10 +857,7 @@ function evaluateFormulaDialog(nextDraft) {
   }
 
   if (editingFormulaId.value) {
-    dawStore.updateFormula(editingFormulaId.value, {
-      code: nextDraft.code,
-      name: nextDraft.name
-    })
+    dawStore.updateFormula(editingFormulaId.value, nextDraft)
   }
 }
 
@@ -844,10 +876,7 @@ function saveFormulaDialog(nextDraft) {
     dawStore.recordHistoryStep('save-library-formula', () => {
       dawStore.ensureInitializedValueTrackerTracks(nextDraft.valueTrackerInitializers)
       dawStore.ensureInitializedVariableTracks(nextDraft.variableInitializers)
-      dawStore.updateFormula(editingFormulaId.value, {
-        code: nextDraft.code,
-        name: nextDraft.name
-      })
+      dawStore.updateFormula(editingFormulaId.value, nextDraft)
     })
     closeFormulaDialog()
   }

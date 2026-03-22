@@ -19,7 +19,12 @@ import {
   createStereoOffsetEvalEffect,
   getEvalEffectExpressions
 } from '@/services/evalEffectService'
-import { createFormula } from '@/services/formulaService'
+import {
+  createClipFormulaFields,
+  createFormula,
+  getClipFormulaExpressions,
+  getFormulaExpressions
+} from '@/services/formulaService'
 import { DEFAULT_BPM_MEASURE, normalizeBpmMeasureExpression } from '@/services/bpmService'
 import {
   normalizeTrackLaneHeight,
@@ -47,12 +52,12 @@ import { DEFAULT_TRACK_COLOR, getTrackColor } from '@/utils/colorUtils'
 import { BASE_TICK_SIZE, MAX_ZOOM, MIN_ZOOM, TIMELINE_SNAP_SUBDIVISIONS, clamp } from '@/utils/timeUtils'
 
 const PROJECT_STORAGE_KEY = 'dawbeat-project'
-const PROJECT_VERSION = 17
+const PROJECT_VERSION = 18
 const SAVE_DEBOUNCE_MS = 400
 const DEFAULT_LOOP_START = 0
 const DEFAULT_LOOP_END = 16
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
-const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, PROJECT_VERSION])
+const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, PROJECT_VERSION])
 
 export function serializeProject(state) {
   return normalizeProjectPayload({
@@ -291,7 +296,7 @@ function normalizeProjectPayload(project) {
 
   const boundValueTrackerVariableNames = new Set(getBoundValueTrackerVariableNames(valueTrackerTracks))
   const requiredAutoVariableTrackNames = collectAutoVariableTrackNames([
-    ...formulas.map((formula) => formula.code),
+    ...formulas.flatMap((formula) => getFormulaExpressions(formula)),
     ...collectTrackInlineFormulas(tracks),
     ...collectVariableTrackFormulas(variableTracks)
   ])
@@ -461,10 +466,11 @@ function normalizeClip(clip, formulaIds) {
 
   const hasValidFormulaId =
     typeof clip.formulaId === 'string' && clip.formulaId && formulaIds.has(clip.formulaId)
+  const formulaFields = createClipFormulaFields(clip)
 
   return createTrackClip({
     id: typeof clip.id === 'string' && clip.id ? clip.id : undefined,
-    formula: hasValidFormulaId ? null : typeof clip.formula === 'string' ? clip.formula : null,
+    ...(!hasValidFormulaId ? formulaFields : {}),
     formulaId: hasValidFormulaId ? clip.formulaId : null,
     formulaName:
       !hasValidFormulaId && typeof clip.formulaName === 'string' ? clip.formulaName : null,
@@ -542,8 +548,7 @@ function collectTrackInlineFormulas(tracks) {
   return tracks.flatMap((track) =>
     Array.isArray(track?.clips)
       ? track.clips
-          .map((clip) => (typeof clip?.formula === 'string' ? clip.formula : ''))
-          .filter(Boolean)
+          .flatMap((clip) => getClipFormulaExpressions(clip))
       : []
   )
 }

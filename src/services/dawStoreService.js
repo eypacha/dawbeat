@@ -1,5 +1,6 @@
 import { DEFAULT_TRACK_COLOR } from '@/utils/colorUtils'
 import { DEFAULT_TRACK_UNION_OPERATOR } from '@/services/trackUnionOperatorService'
+import { createClipFormulaFields } from '@/services/formulaService'
 import {
   normalizeTrackLaneHeight,
   normalizeValueTrackerTrackHeight,
@@ -208,12 +209,14 @@ export function findTimelineClip(tracks, variableTracks, valueTrackerTracksOrCli
 }
 
 export function createTrackClip(clip) {
+  const formulaFields = createClipFormulaFields(clip)
+
   return {
     id: clip.id ?? createClipId(),
-    formula: clip.formula ?? null,
+    ...clip,
+    ...formulaFields,
     formulaId: clip.formulaId ?? null,
-    formulaName: clip.formulaName ?? null,
-    ...clip
+    formulaName: clip.formulaName ?? null
   }
 }
 

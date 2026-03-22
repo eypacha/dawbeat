@@ -1,5 +1,6 @@
 import { applyEvalEffects } from '@/services/evalEffectService'
 import { loadByteBeatNodeClass } from '@/services/bytebeatNodeLoader'
+import { normalizeExpressionList } from '@/services/formulaService'
 import { validateFormula } from '@/utils/formulaValidation'
 
 const DEFAULT_SAMPLE_RATE = 8000
@@ -39,12 +40,14 @@ function normalizeSampleCount(value) {
 }
 
 function sanitizeRenderableExpressions(formula, evalEffects = []) {
-  if (typeof formula !== 'string' || !formula.trim()) {
+  const normalizedFormula = normalizeExpressionList(formula)
+
+  if (!normalizedFormula.length) {
     return [SILENT_FORMULA]
   }
 
   return sanitizeRenderableExpressionList(
-    applyEvalEffects(formula, evalEffects)
+    applyEvalEffects(normalizedFormula, evalEffects)
   )
 }
 
@@ -308,7 +311,7 @@ export async function renderFormulaWaveformSegments({
     return renderFormulaWaveform({
       endSample: segment.endSample,
       evalEffects,
-      formula: segment.formula,
+      formula: segment.expressions,
       sampleCount: normalizedSampleCount,
       sampleRate,
       startSample: segment.startSample
@@ -323,7 +326,7 @@ export async function renderFormulaWaveformSegments({
     const waveform = await renderFormulaWaveform({
       endSample: segment.endSample,
       evalEffects,
-      formula: segment.formula,
+      formula: segment.expressions,
       sampleCount: segmentSampleCounts[index],
       sampleRate,
       startSample: segment.startSample
@@ -344,9 +347,7 @@ function normalizeWaveformSegments(segments) {
   }
 
   return segments.flatMap((segment) => {
-    const formula = typeof segment?.formula === 'string' && segment.formula.trim()
-      ? segment.formula
-      : SILENT_FORMULA
+    const expressions = normalizeExpressionList(segment?.expressions ?? segment?.formula, SILENT_FORMULA)
     const startSample = normalizeTimeSample(segment?.startSample)
     const endSample = Math.max(
       startSample + 1,
@@ -359,7 +360,7 @@ function normalizeWaveformSegments(segments) {
 
     return [{
       endSample,
-      formula,
+      expressions,
       startSample
     }]
   })

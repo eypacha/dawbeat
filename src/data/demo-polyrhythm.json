@@ -1,5 +1,5 @@
 {
-  "version": 16,
+  "version": 18,
   "tracks": [
     {
       "id": "poly-track-mesh",
@@ -16,7 +16,10 @@
           "formulaId": null,
           "formulaName": null,
           "start": 0,
-          "duration": 16
+          "duration": 16,
+          "formulaStereo": false,
+          "leftFormula": "((t * ((a & 7) + 3)) & (t >> 6))",
+          "rightFormula": "((t * ((a & 7) + 3)) & (t >> 6))"
         }
       ]
     },
@@ -35,7 +38,10 @@
           "formulaId": null,
           "formulaName": null,
           "start": 0,
-          "duration": 16
+          "duration": 16,
+          "formulaStereo": false,
+          "leftFormula": "((t * 5 & t >> 7) | (t * 3 & t >> 10))",
+          "rightFormula": "((t * 5 & t >> 7) | (t * 3 & t >> 10))"
         }
       ]
     },
@@ -54,7 +60,10 @@
           "formulaId": null,
           "formulaName": null,
           "start": 0,
-          "duration": 16
+          "duration": 16,
+          "formulaStereo": false,
+          "leftFormula": "((t >> 4) * (c + 4)) & 48",
+          "rightFormula": "((t >> 4) * (c + 4)) & 48"
         }
       ]
     }

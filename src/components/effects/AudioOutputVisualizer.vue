@@ -48,6 +48,7 @@ import { AppWindow } from 'lucide-vue-next'
 import { getActiveFormula } from '@/engine/timelineEngine'
 import bytebeatService from '@/services/bytebeatService'
 import { applyEvalEffects, getEvaluatedDisplayExpressions } from '@/services/evalEffectService'
+import { hasRenderableFormulaInput } from '@/services/formulaService'
 import { renderFormulaWaveformChannels } from '@/services/formulaWaveformService'
 import { useDawStore } from '@/stores/dawStore'
 import { clamp, ticksToSamples } from '@/utils/timeUtils'
@@ -119,7 +120,7 @@ const activeFormula = computed(() =>
   )
 )
 const evaluatedExpressions = computed(() => {
-  if (typeof activeFormula.value !== 'string' || !activeFormula.value.trim()) {
+  if (!hasRenderableFormulaInput(activeFormula.value)) {
     return []
   }
 

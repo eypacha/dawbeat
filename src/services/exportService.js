@@ -25,6 +25,7 @@ import {
   normalizeWidth
 } from '@/services/audioEffectService'
 import { applyEvalEffects } from '@/services/evalEffectService'
+import { hasRenderableFormulaInput } from '@/services/formulaService'
 import { getValueTrackerEventTicks } from '@/services/valueTrackerService'
 import { DEFAULT_SAMPLE_RATE } from '@/utils/audioSettings'
 import { validateFormula } from '@/utils/formulaValidation'
@@ -1073,7 +1074,7 @@ function getProjectDurationTicks(tracks) {
 }
 
 function getRenderableExpressions(activeFormula, evalEffects) {
-  if (typeof activeFormula !== 'string' || !activeFormula.trim()) {
+  if (!hasRenderableFormulaInput(activeFormula)) {
     return []
   }
 

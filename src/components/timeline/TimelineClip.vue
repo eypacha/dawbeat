@@ -24,7 +24,7 @@
     <TimelineClipWaveform
       v-if="showClipWaveforms"
       :duration="clip.duration"
-      :formula="resolvedFormula"
+      :expressions="resolvedFormulaExpressions"
       :height="trackHeight"
       :start="clip.start"
       :width="clipWidth"
@@ -61,7 +61,11 @@ import { Link2 } from 'lucide-vue-next'
 import TimelineClipWaveform from '@/components/timeline/TimelineClipWaveform.vue'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineClipInteraction } from '@/composables/useTimelineClipInteraction'
-import { resolveClipFormula, resolveClipFormulaName } from '@/services/formulaService'
+import {
+  resolveClipFormula,
+  resolveClipFormulaExpressions,
+  resolveClipFormulaName
+} from '@/services/formulaService'
 import { useDawStore } from '@/stores/dawStore'
 import { ticksToPixels } from '@/utils/timeUtils'
 
@@ -88,6 +92,7 @@ const pendingShiftSelectionAction = ref(null)
 const MIN_CLIP_RENDER_TICKS = 0.5
 
 const resolvedFormula = computed(() => resolveClipFormula(props.clip, formulas.value))
+const resolvedFormulaExpressions = computed(() => resolveClipFormulaExpressions(props.clip, formulas.value))
 const isReferenceClip = computed(() => Boolean(props.clip.formulaId))
 const resolvedFormulaName = computed(() => resolveClipFormulaName(props.clip, formulas.value))
 const showFormulaName = computed(() => Boolean(resolvedFormulaName.value))

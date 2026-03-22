@@ -107,7 +107,7 @@
               @dblclick="handleEditFormula(formula.id)"
             >
               <span class="block truncate text-sm text-white">{{ getFormulaDisplayName(formula) }}</span>
-              <span class="mt-1 block truncate text-xs text-zinc-500">{{ formula.code }}</span>
+              <span class="mt-1 block truncate text-xs text-zinc-500">{{ getFormulaDisplayCode(formula) }}</span>
             </button>
 
             <div class="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
@@ -224,7 +224,7 @@ import IconButton from '@/components/ui/IconButton.vue'
 import Panel from '@/components/ui/Panel.vue'
 import TextInputDialog from '@/components/ui/TextInputDialog.vue'
 import ValueTrackerClipEditorDialog from '@/components/ui/ValueTrackerClipEditorDialog.vue'
-import { getFormulaDisplayName } from '@/services/formulaService'
+import { getFormulaDisplayCode, getFormulaDisplayName } from '@/services/formulaService'
 import { DEFAULT_FORMULA_DROP_DURATION } from '@/services/timelineService'
 import {
   getValueTrackerEventCount,
@@ -495,7 +495,7 @@ function createFormulaDragImage(formula) {
 
   if (formula.name.trim()) {
     const code = document.createElement('div')
-    code.textContent = formula.code
+    code.textContent = getFormulaDisplayCode(formula)
     code.style.marginTop = '4px'
     code.style.whiteSpace = 'nowrap'
     code.style.overflow = 'hidden'

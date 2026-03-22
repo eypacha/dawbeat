@@ -20,6 +20,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { renderFormulaWaveformSegments } from '@/services/formulaWaveformService'
+import { normalizeExpressionList } from '@/services/formulaService'
 import {
   collectFormulaReferencedVariableNames,
   getActiveVariableDefinitions,
@@ -40,8 +41,8 @@ const props = defineProps({
     type: Number,
     required: true
   },
-  formula: {
-    type: String,
+  expressions: {
+    type: [Array, String],
     required: true
   },
   height: {
@@ -75,17 +76,22 @@ const waveformAmplitude = computed(() => Math.max(4, svgHeight.value * 0.38))
 const previewPointCount = computed(() =>
   Math.max(MIN_PREVIEW_POINTS, Math.min(MAX_PREVIEW_POINTS, Math.round(props.width * 1.5)))
 )
+const normalizedExpressions = computed(() => normalizeExpressionList(props.expressions))
 const referencedVariableNames = computed(() =>
-  collectFormulaReferencedVariableNames(
-    props.formula,
-    variableTracks.value,
-    valueTrackerTracks.value
-  )
+  [...new Set(
+    normalizedExpressions.value.flatMap((expression) =>
+      collectFormulaReferencedVariableNames(
+        expression,
+        variableTracks.value,
+        valueTrackerTracks.value
+      )
+    )
+  )]
 )
 const waveformSegments = computed(() =>
   getRenderableWaveformSegments({
     duration: props.duration,
-    formula: props.formula,
+    expressions: normalizedExpressions.value,
     referencedVariableNames: referencedVariableNames.value,
     start: props.start,
     tickSize: tickSize.value,
@@ -158,19 +164,19 @@ onBeforeUnmount(() => {
 
 function getRenderableWaveformSegments({
   duration,
-  formula,
+  expressions,
   referencedVariableNames,
   start,
   tickSize,
   valueTrackerTracks,
   variableTracks
 }) {
-  const trimmedFormula = typeof formula === 'string' ? formula.trim() : ''
+  const trimmedExpressions = normalizeExpressionList(expressions)
   const clipStart = Number(start)
   const clipDuration = Number(duration)
   const clipEnd = clipStart + clipDuration
 
-  if (!trimmedFormula || !Number.isFinite(clipStart) || !Number.isFinite(clipDuration) || clipDuration <= 0) {
+  if (!trimmedExpressions.length || !Number.isFinite(clipStart) || !Number.isFinite(clipDuration) || clipDuration <= 0) {
     return []
   }
 
@@ -201,14 +207,16 @@ function getRenderableWaveformSegments({
     ).filter((variableDefinition) =>
       !referencedVariableNameSet.size || referencedVariableNameSet.has(variableDefinition.name)
     )
-    const renderableFormula = prependVariableDefinitions(trimmedFormula, variableDefinitions) ?? trimmedFormula
+    const renderableExpressions = trimmedExpressions.map(
+      (expression) => prependVariableDefinitions(expression, variableDefinitions) ?? expression
+    )
     const segmentStartSample = ticksToSamples(segmentStartTick, tickSize)
     const segmentEndSample = ticksToSamples(segmentEndTick, tickSize)
     const previousSegment = segments[segments.length - 1]
 
     if (
       previousSegment &&
-      previousSegment.formula === renderableFormula &&
+      JSON.stringify(previousSegment.expressions) === JSON.stringify(renderableExpressions) &&
       previousSegment.endSample === segmentStartSample
     ) {
       previousSegment.endSample = segmentEndSample
@@ -217,7 +225,7 @@ function getRenderableWaveformSegments({
 
     segments.push({
       endSample: segmentEndSample,
-      formula: renderableFormula,
+      expressions: renderableExpressions,
       startSample: segmentStartSample
     })
   }

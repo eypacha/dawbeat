@@ -39,6 +39,7 @@ import IconButton from '@/components/ui/IconButton.vue'
 import Panel from '@/components/ui/Panel.vue'
 import { copyTextToClipboard } from '@/services/clipboard'
 import { applyEvalEffects, getEvaluatedDisplayExpressions } from '@/services/evalEffectService'
+import { hasRenderableFormulaInput } from '@/services/formulaService'
 import { enqueueSnackbar } from '@/services/notifications'
 import { useDawStore } from '@/stores/dawStore'
 
@@ -56,7 +57,7 @@ const activeFormula = computed(() =>
   )
 )
 const evaluatedExpressions = computed(() => {
-  if (typeof activeFormula.value !== 'string' || !activeFormula.value.trim()) {
+  if (!hasRenderableFormulaInput(activeFormula.value)) {
     return []
   }
 
