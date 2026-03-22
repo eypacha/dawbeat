@@ -7,27 +7,6 @@
   >
     <canvas ref="canvasElement" class="block h-full w-full" />
 
-    <div
-      v-if="showFormulaOverlay && overlayExpressions.length"
-      class="pointer-events-none absolute inset-x-0 top-8 flex justify-center px-6"
-    >
-      <div
-        class="grid w-full max-w-[min(100%,56rem)] gap-8 text-center"
-        :class="overlayExpressions.length > 1 ? 'md:grid-cols-2' : 'grid-cols-1'"
-      >
-        <section
-          v-for="expression in overlayExpressions"
-          :key="expression.id"
-          class="grid min-h-0 content-start"
-        >
-          <pre
-            class="overflow-hidden px-4 text-zinc-100/95 whitespace-pre-wrap break-words drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]"
-            :style="formulaOverlayTextStyle"
-          >{{ expression.code }}</pre>
-        </section>
-      </div>
-    </div>
-
     <div class="absolute inset-x-3 top-2 flex items-center justify-between gap-3">
       <button
         v-if="showWindowButton"
@@ -205,10 +184,6 @@ const containerStyle = computed(() => ({
   borderColor: withAlpha(selectedPalette.value.colors.border, 0.2),
   containerType: 'inline-size'
 }))
-const formulaOverlayTextStyle = computed(() => ({
-  fontSize: 'clamp(0.625rem, 3.1cqi, 1.125rem)',
-  lineHeight: 1.55
-}))
 const levelStyle = computed(() => ({
   color: withAlpha(selectedPalette.value.colors.audio, 0.6),
   fontSize: 'clamp(0.5rem, 2cqi, 0.75rem)'
@@ -372,6 +347,7 @@ function drawVisualizer() {
       drawIdleState(ctx, width, height)
     }
 
+    drawCanvasFormulaTextOverlay(ctx, width, height, overlayExpressions.value)
     return
   }
 
@@ -385,17 +361,15 @@ function drawVisualizer() {
     drawCircularFrequencyBars(ctx, width, height, frequencyData)
     drawCircularWaveform(ctx, width, height, timeDomainData)
     drawCircularCore(ctx, width, height)
-    return
-  }
-
-  if (props.mode === 'waterfall') {
+  } else if (props.mode === 'waterfall') {
     updateWaterfallHistories(timeDomainData, formulaWaveforms.value)
     drawWaterfallSnapshots(ctx, width, height)
-    return
+  } else {
+    drawFrequencyBars(ctx, width, height, frequencyData)
+    drawWaveform(ctx, width, height, timeDomainData)
   }
 
-  drawFrequencyBars(ctx, width, height, frequencyData)
-  drawWaveform(ctx, width, height, timeDomainData)
+  drawCanvasFormulaTextOverlay(ctx, width, height, overlayExpressions.value)
 }
 
 function drawBackground(ctx, width, height) {
@@ -613,6 +587,110 @@ function drawFormulaChannelWaveform(ctx, width, height, waveform, centerOffset, 
   }
 
   ctx.stroke()
+}
+
+function drawCanvasFormulaTextOverlay(ctx, width, height, expressions) {
+  if (!props.showFormulaOverlay || !Array.isArray(expressions) || !expressions.length) {
+    return
+  }
+
+  const { divider } = getPaletteColors()
+  const contentInsetX = clamp(width * 0.055, 24, 64)
+  const contentTop = clamp(height * 0.14, 30, 80)
+  const contentBottom = clamp(height * 0.08, 18, 40)
+  const maxContentWidth = Math.max(0, Math.min(width - contentInsetX * 2, 896))
+
+  if (maxContentWidth <= 0) {
+    return
+  }
+
+  const contentStartX = (width - maxContentWidth) * 0.5
+  const columnGap = expressions.length > 1 ? clamp(maxContentWidth * 0.04, 20, 40) : 0
+  const columnWidth = expressions.length > 1
+    ? (maxContentWidth - columnGap) / expressions.length
+    : maxContentWidth
+  const fontSize = clamp(
+    columnWidth * (expressions.length > 1 ? 0.047 : 0.037),
+    15,
+    34
+  )
+  const lineHeight = Math.max(16, fontSize * 1.55)
+  const maxLines = Math.max(1, Math.floor((height - contentTop - contentBottom) / lineHeight))
+
+  ctx.save()
+  ctx.fillStyle = withAlpha(divider, 0.95)
+  ctx.font = `${fontSize}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace`
+  ctx.shadowBlur = fontSize * 0.9
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.95)'
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'top'
+
+  expressions.forEach((expression, expressionIndex) => {
+    const x = contentStartX + expressionIndex * (columnWidth + columnGap)
+    const lines = getWrappedCanvasPreLines(ctx, expression?.code ?? '', columnWidth, maxLines)
+
+    lines.forEach((line, lineIndex) => {
+      ctx.fillText(line, x, contentTop + lineIndex * lineHeight)
+    })
+  })
+
+  ctx.restore()
+}
+
+function getWrappedCanvasPreLines(ctx, text, maxWidth, maxLines) {
+  const wrappedLines = []
+  const sourceLines = String(text ?? '').replace(/\t/g, '  ').split('\n')
+
+  for (const sourceLine of sourceLines) {
+    if (!sourceLine.length) {
+      wrappedLines.push('')
+      continue
+    }
+
+    let currentLine = ''
+
+    for (const character of sourceLine) {
+      const nextLine = currentLine + character
+
+      if (currentLine && ctx.measureText(nextLine).width > maxWidth) {
+        wrappedLines.push(currentLine)
+        currentLine = character
+        continue
+      }
+
+      currentLine = nextLine
+    }
+
+    wrappedLines.push(currentLine)
+  }
+
+  if (wrappedLines.length <= maxLines) {
+    return wrappedLines
+  }
+
+  const visibleLines = wrappedLines.slice(0, maxLines)
+  visibleLines[maxLines - 1] = fitCanvasTextWithEllipsis(
+    ctx,
+    visibleLines[maxLines - 1],
+    maxWidth
+  )
+  return visibleLines
+}
+
+function fitCanvasTextWithEllipsis(ctx, text, maxWidth) {
+  const ellipsis = '...'
+
+  if (ctx.measureText(text).width <= maxWidth) {
+    return text
+  }
+
+  let trimmedText = text
+
+  while (trimmedText.length > 0 && ctx.measureText(`${trimmedText}${ellipsis}`).width > maxWidth) {
+    trimmedText = trimmedText.slice(0, -1)
+  }
+
+  return `${trimmedText}${ellipsis}`
 }
 
 function drawWaveform(ctx, width, height, waveform) {
