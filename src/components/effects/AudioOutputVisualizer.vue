@@ -91,6 +91,9 @@ const WATERFALL_SNAPSHOT_POINTS = 96
 const WATERFALL_VISIBLE_TRACE_COUNT = 12
 const VECTORSCOPE_SAMPLE_STEP = 2
 const WAVEFORM_SAMPLE_STEP = 4
+const FFT_MIN_DECIBELS = -120
+const FFT_MAX_DECIBELS = -10
+const FFT_MIN_LABEL_FREQUENCY = 10
 
 const canvasElement = ref(null)
 const containerElement = ref(null)
@@ -105,7 +108,9 @@ let frequencyData = null
 let formulaPreviewRequestVersion = 0
 let lastWaterfallSnapshotAt = 0
 let leftTimeDomainData = null
+let leftFrequencyData = null
 let rightTimeDomainData = null
+let rightFrequencyData = null
 let timeDomainData = null
 let resizeObserver = null
 let waterfallAudioHistory = []
@@ -318,9 +323,19 @@ function ensureDataBuffers(analyser) {
 
 function ensureStereoDataBuffers(stereoAnalysers) {
   if (!stereoAnalysers?.left || !stereoAnalysers?.right) {
+    leftFrequencyData = null
     leftTimeDomainData = null
+    rightFrequencyData = null
     rightTimeDomainData = null
     return
+  }
+
+  if (!leftFrequencyData || leftFrequencyData.length !== stereoAnalysers.left.frequencyBinCount) {
+    leftFrequencyData = new Uint8Array(stereoAnalysers.left.frequencyBinCount)
+  }
+
+  if (!rightFrequencyData || rightFrequencyData.length !== stereoAnalysers.right.frequencyBinCount) {
+    rightFrequencyData = new Uint8Array(stereoAnalysers.right.frequencyBinCount)
   }
 
   if (!leftTimeDomainData || leftTimeDomainData.length !== stereoAnalysers.left.fftSize) {
@@ -351,6 +366,8 @@ function drawVisualizer() {
   if (props.mode === 'circular') {
     drawCircularGuides(ctx, width, height)
     drawCircularFormulaOverlay(ctx, width, height, formulaWaveforms.value)
+  } else if (props.mode === 'fft') {
+    drawFftGuides(ctx, width, height, analyser)
   } else if (props.mode === 'waterfall') {
     drawWaterfallGuides(ctx, width, height)
   } else if (props.mode === 'vectorscope') {
@@ -364,6 +381,8 @@ function drawVisualizer() {
 
     if (props.mode === 'circular') {
       drawCircularIdleState(ctx, width, height)
+    } else if (props.mode === 'fft') {
+      drawFftIdleState(ctx, width, height)
     } else if (props.mode === 'waterfall') {
       drawWaterfallSnapshots(ctx, width, height)
     } else if (props.mode === 'vectorscope') {
@@ -386,6 +405,25 @@ function drawVisualizer() {
     drawCircularFrequencyBars(ctx, width, height, frequencyData)
     drawCircularWaveform(ctx, width, height, timeDomainData)
     drawCircularCore(ctx, width, height)
+  } else if (props.mode === 'fft') {
+    const fftTraces = [frequencyData]
+
+    if (
+      stereoAnalysers?.left
+      && stereoAnalysers?.right
+      && leftFrequencyData
+      && rightFrequencyData
+    ) {
+      stereoAnalysers.left.getByteFrequencyData(leftFrequencyData)
+      stereoAnalysers.right.getByteFrequencyData(rightFrequencyData)
+
+      if (isStereoSpectrum(leftFrequencyData, rightFrequencyData)) {
+        fftTraces[0] = leftFrequencyData
+        fftTraces.push(rightFrequencyData)
+      }
+    }
+
+    drawFftSpectrum(ctx, width, height, analyser, fftTraces)
   } else if (props.mode === 'waterfall') {
     updateWaterfallHistories(timeDomainData, formulaWaveforms.value)
     drawWaterfallSnapshots(ctx, width, height)
@@ -436,6 +474,176 @@ function drawIdleState(ctx, width, height) {
   ctx.moveTo(0, height * 0.6)
   ctx.lineTo(width, height * 0.6)
   ctx.stroke()
+}
+
+function getFftFrequencyRange(analyser) {
+  const sampleRate = Number(analyser?.context?.sampleRate) || 48000
+  const fftSize = Math.max(2, Number(analyser?.fftSize) || 2048)
+  const nyquist = sampleRate * 0.5
+  const minFrequency = Math.max(sampleRate / fftSize, FFT_MIN_LABEL_FREQUENCY)
+
+  return {
+    maxFrequency: Math.max(minFrequency + 1, nyquist),
+    minFrequency
+  }
+}
+
+function toLogFftX(frequency, minFrequency, maxFrequency, width) {
+  const safeFrequency = clamp(frequency, minFrequency, maxFrequency)
+  const denominator = Math.log(maxFrequency / minFrequency)
+
+  if (!Number.isFinite(denominator) || denominator <= 0) {
+    return 0
+  }
+
+  return (Math.log(safeFrequency / minFrequency) / denominator) * width
+}
+
+function drawFftGuides(ctx, width, height, analyser) {
+  const { divider, grid } = getPaletteColors()
+  const { maxFrequency, minFrequency } = getFftFrequencyRange(analyser)
+  const useSparseLabels = !props.windowed && !props.fullscreen
+  let frequencyLabelIndex = 0
+  let dbLabelIndex = 0
+
+  ctx.save()
+  ctx.strokeStyle = withAlpha(grid, 0.16)
+  ctx.fillStyle = withAlpha(divider, 0.85)
+  ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace'
+  ctx.lineWidth = 1
+
+  ctx.beginPath()
+  for (let baseFrequency = FFT_MIN_LABEL_FREQUENCY; baseFrequency <= maxFrequency; baseFrequency *= 10) {
+    for (let step = 1; step < 10; step += 1) {
+      const frequency = baseFrequency * step
+
+      if (frequency < minFrequency || frequency > maxFrequency) {
+        continue
+      }
+
+      const x = toLogFftX(frequency, minFrequency, maxFrequency, width)
+      ctx.moveTo(x, 0)
+      ctx.lineTo(x, height)
+
+      if (step === 1 || step === 2 || step === 5) {
+        const shouldDrawLabel = !useSparseLabels || frequencyLabelIndex % 2 === 0
+        frequencyLabelIndex += 1
+
+        if (shouldDrawLabel) {
+          const label = frequency < 1000
+            ? `${Math.round(frequency)}Hz`
+            : `${(frequency / 1000).toFixed(frequency >= 10000 ? 0 : 1)}kHz`
+          ctx.fillText(label, x + 3, 12)
+        }
+      }
+    }
+  }
+
+  const dbRange = FFT_MAX_DECIBELS - FFT_MIN_DECIBELS
+  for (let decibel = FFT_MAX_DECIBELS - 10; decibel >= FFT_MIN_DECIBELS; decibel -= 10) {
+    const normalized = (FFT_MAX_DECIBELS - decibel) / dbRange
+    const y = normalized * height
+    ctx.moveTo(0, y)
+    ctx.lineTo(width, y)
+
+    const shouldDrawLabel = !useSparseLabels || dbLabelIndex % 2 === 0
+    dbLabelIndex += 1
+
+    if (shouldDrawLabel) {
+      ctx.fillText(`${decibel}dB`, 4, Math.max(10, y - 3))
+    }
+  }
+
+  ctx.stroke()
+  ctx.restore()
+}
+
+function drawFftIdleState(ctx, width, height) {
+  const { audio } = getPaletteColors()
+
+  ctx.strokeStyle = withAlpha(audio, 0.18)
+  ctx.lineWidth = 1.2
+  ctx.beginPath()
+  ctx.moveTo(0, height - 2)
+  ctx.lineTo(width, height - 2)
+  ctx.stroke()
+}
+
+function drawFftSpectrum(ctx, width, height, analyser, traces) {
+  if (!Array.isArray(traces) || !traces.length) {
+    return
+  }
+
+  const colors = getPaletteColors()
+  const { maxFrequency, minFrequency } = getFftFrequencyRange(analyser)
+  const maxBinFrequency = Math.max(minFrequency + 1, maxFrequency)
+  const dbRange = FFT_MAX_DECIBELS - FFT_MIN_DECIBELS
+  const stereoStroke = [
+    withAlpha(colors.formulaPrimary, 0.9),
+    withAlpha(colors.formulaSecondary, 0.9)
+  ]
+
+  traces.forEach((spectrum, traceIndex) => {
+    if (!spectrum?.length) {
+      return
+    }
+
+    const strokeStyle = traces.length > 1
+      ? stereoStroke[traceIndex] ?? withAlpha(colors.audio, 0.85)
+      : withAlpha(colors.audio, 0.9)
+    const maxIndex = Math.max(1, spectrum.length - 1)
+
+    ctx.strokeStyle = strokeStyle
+    ctx.lineWidth = traces.length > 1 ? 1.2 : 1.35
+    ctx.beginPath()
+
+    let started = false
+    for (let index = 1; index <= maxIndex; index += 1) {
+      const normalizedValue = clamp((spectrum[index] ?? 0) / 255, 0, 1)
+      const decibels = FFT_MIN_DECIBELS + normalizedValue * dbRange
+      const y = clamp(
+        ((FFT_MAX_DECIBELS - decibels) / dbRange) * height,
+        0,
+        height
+      )
+      const frequency = (index / maxIndex) * maxBinFrequency
+      const x = toLogFftX(frequency, minFrequency, maxFrequency, width)
+
+      if (!started) {
+        ctx.moveTo(x, y)
+        started = true
+        continue
+      }
+
+      ctx.lineTo(x, y)
+    }
+
+    if (started) {
+      ctx.stroke()
+    }
+  })
+}
+
+function isStereoSpectrum(leftSpectrum, rightSpectrum) {
+  if (!leftSpectrum?.length || !rightSpectrum?.length) {
+    return false
+  }
+
+  const sampleCount = Math.min(leftSpectrum.length, rightSpectrum.length)
+
+  if (sampleCount <= 0) {
+    return false
+  }
+
+  const stride = Math.max(1, Math.floor(sampleCount / 64))
+
+  for (let index = 0; index < sampleCount; index += stride) {
+    if (Math.abs((leftSpectrum[index] ?? 0) - (rightSpectrum[index] ?? 0)) >= 3) {
+      return true
+    }
+  }
+
+  return false
 }
 
 function getCircularCenter(width, height) {

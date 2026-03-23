@@ -4,10 +4,11 @@ import {
   getVisualizerPaletteById
 } from '@/utils/visualizerPalettes'
 
-export const VISUALIZER_MODES = ['linear', 'circular', 'waterfall', 'vectorscope']
+export const VISUALIZER_MODES = ['linear', 'circular', 'fft', 'waterfall', 'vectorscope']
 export const DEFAULT_VISUALIZER_MODE = VISUALIZER_MODES[0]
 export const VISUALIZER_MODE_LABELS = {
   circular: 'Circular',
+  fft: 'FFT',
   linear: 'Linear',
   vectorscope: 'Vectorscope',
   waterfall: 'Waterfall'

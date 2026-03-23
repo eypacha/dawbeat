@@ -114,6 +114,10 @@ import EffectParamAutomationButton from '@/components/effects/EffectParamAutomat
 import FloatingWindow from '@/components/ui/FloatingWindow.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import {
+  VISUALIZER_MODES,
+  VISUALIZER_MODE_LABELS
+} from '@/services/visualizerConfigService'
+import {
   DEFAULT_VISUALIZER_PALETTE_ID,
   VISUALIZER_PALETTES
 } from '@/utils/visualizerPalettes'
@@ -126,14 +130,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['create-automation', 'interaction-end', 'interaction-start', 'update:gain'])
-
-const VISUALIZER_MODES = ['linear', 'circular', 'waterfall', 'vectorscope']
-const VISUALIZER_MODE_LABELS = {
-  circular: 'Circular',
-  linear: 'Linear',
-  vectorscope: 'Vectorscope',
-  waterfall: 'Waterfall'
-}
 
 const gainLabel = computed(() => `${Number(props.gain ?? 0).toFixed(2)}x`)
 const visualizerFormulaOverlayVisible = ref(false)
