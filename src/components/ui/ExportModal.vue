@@ -80,7 +80,7 @@
           type="button"
           @click="handleExport"
         >
-          <span v-if="!isExporting">{{ `Export ${format.toUpperCase()}` }}</span>
+          <span v-if="!isExporting">Export</span>
           <span v-else class="flex items-center justify-center">
             <LoaderCircle class="h-3.5 w-3.5 animate-spin" :stroke-width="2.25" />
           </span>
