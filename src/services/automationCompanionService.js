@@ -2,10 +2,9 @@ import { reactive } from 'vue'
 import { getAutomationLaneConfig, resolveAutomationLaneValueAtTime } from '@/services/automationService'
 import { enqueueSnackbar } from '@/services/notifications'
 
-const COMPANION_MODE = 'automation-companion'
-const COMPANION_MODE_PARAM = 'mode'
 const HOST_PEER_ID_PARAM = 'hostPeerId'
 const LANE_ID_PARAM = 'laneId'
+const COMPANION_HASH_PREFIX = '#/companion'
 const COMPANION_SESSION_STORAGE_KEY = 'dawbeat-automation-companion-session'
 const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1'])
 
@@ -43,7 +42,7 @@ const activeRemoteInteractionKeys = new Set()
 
 export function isAutomationCompanionMode(locationHref = getCurrentLocationHref()) {
   const locationUrl = safeCreateUrl(locationHref)
-  return locationUrl?.searchParams.get(COMPANION_MODE_PARAM) === COMPANION_MODE
+  return isCompanionHash(locationUrl)
 }
 
 export function openAutomationCompanionModal(laneId) {
@@ -130,12 +129,11 @@ export function getAutomationCompanionShareUrl(laneId, locationHref = getCurrent
     return ''
   }
 
-  locationUrl.searchParams.set(COMPANION_MODE_PARAM, COMPANION_MODE)
-  locationUrl.searchParams.set(HOST_PEER_ID_PARAM, automationCompanionHostState.hostPeerId)
-  locationUrl.searchParams.set(LANE_ID_PARAM, laneId)
-  locationUrl.hash = ''
+  const params = new URLSearchParams()
+  params.set(HOST_PEER_ID_PARAM, automationCompanionHostState.hostPeerId)
+  params.set(LANE_ID_PARAM, laneId)
 
-  return locationUrl.toString()
+  return `${locationUrl.origin}${locationUrl.pathname}${COMPANION_HASH_PREFIX}?${params.toString()}`
 }
 
 export function isAutomationCompanionShareUrlLoopback(locationHref = getCurrentLocationHref()) {
@@ -734,16 +732,18 @@ function consumeAutomationCompanionSessionFromLocation() {
 function getAutomationCompanionRouteParams(locationHref = getCurrentLocationHref()) {
   const locationUrl = safeCreateUrl(locationHref)
 
-  if (!locationUrl || locationUrl.searchParams.get(COMPANION_MODE_PARAM) !== COMPANION_MODE) {
+  if (!isCompanionHash(locationUrl)) {
     return {
       hostPeerId: '',
       laneId: ''
     }
   }
 
+  const params = getHashSearchParams(locationUrl)
+
   return {
-    hostPeerId: normalizeNonEmptyString(locationUrl.searchParams.get(HOST_PEER_ID_PARAM)),
-    laneId: normalizeNonEmptyString(locationUrl.searchParams.get(LANE_ID_PARAM))
+    hostPeerId: normalizeNonEmptyString(params.get(HOST_PEER_ID_PARAM)),
+    laneId: normalizeNonEmptyString(params.get(LANE_ID_PARAM))
   }
 }
 
@@ -752,15 +752,11 @@ function stripAutomationCompanionRouteParams() {
     return
   }
 
-  const locationUrl = safeCreateUrl(window.location.href)
-
-  if (!locationUrl || locationUrl.searchParams.get(COMPANION_MODE_PARAM) !== COMPANION_MODE) {
+  if (!window.location.hash.startsWith(`${COMPANION_HASH_PREFIX}?`)) {
     return
   }
 
-  locationUrl.searchParams.delete(HOST_PEER_ID_PARAM)
-  locationUrl.searchParams.delete(LANE_ID_PARAM)
-  window.history.replaceState({}, '', locationUrl.toString())
+  window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}${COMPANION_HASH_PREFIX}`)
 }
 
 function readAutomationCompanionSession() {
@@ -901,6 +897,17 @@ function getCurrentLocationHref() {
   }
 
   return window.location.href
+}
+
+function isCompanionHash(locationUrl) {
+  const hash = locationUrl?.hash ?? ''
+  return hash === COMPANION_HASH_PREFIX || hash.startsWith(`${COMPANION_HASH_PREFIX}?`)
+}
+
+function getHashSearchParams(locationUrl) {
+  const hash = locationUrl?.hash ?? ''
+  const qIndex = hash.indexOf('?')
+  return qIndex === -1 ? new URLSearchParams() : new URLSearchParams(hash.slice(qIndex + 1))
 }
 
 function normalizeNonEmptyString(value) {
