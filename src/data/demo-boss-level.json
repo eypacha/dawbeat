@@ -205,7 +205,6 @@
           "start": 0,
           "duration": 4,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             1,
             null,
@@ -230,7 +229,6 @@
           "start": 76,
           "duration": 4,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             128,
             null,
@@ -255,7 +253,6 @@
           "start": 80,
           "duration": 4,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             1,
             null,
@@ -280,7 +277,6 @@
           "start": 108,
           "duration": 4,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             512,
             null,
@@ -305,7 +301,6 @@
           "start": 112,
           "duration": 4,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             1,
             null,
@@ -345,7 +340,6 @@
           "start": 0,
           "duration": 2,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             8,
             null,
@@ -362,7 +356,6 @@
           "start": 16,
           "duration": 2,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             1,
             8,
@@ -379,7 +372,6 @@
           "start": 22,
           "duration": 2,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             1,
             8,
@@ -396,7 +388,6 @@
           "start": 23.988344423288634,
           "duration": 2,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             1,
             8,
@@ -413,7 +404,6 @@
           "start": 30,
           "duration": 2,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             1,
             8,
@@ -425,80 +415,6 @@
             null
           ]
         }
-      ]
-    }
-  ],
-  "valueTrackerLibraryItems": [
-    {
-      "id": "ffa85a2b-bacf-42e7-acca-445d7af33814",
-      "name": "Bass melody",
-      "duration": 16,
-      "stepSubdivision": 4,
-      "values": [
-        1,
-        null,
-        null,
-        2,
-        null,
-        null,
-        null,
-        1,
-        null,
-        null,
-        3,
-        null,
-        null,
-        null,
-        1,
-        null,
-        null,
-        null,
-        2,
-        null,
-        null,
-        null,
-        null,
-        5,
-        null,
-        null,
-        null,
-        4,
-        null,
-        null,
-        null,
-        1,
-        null,
-        null,
-        2,
-        null,
-        null,
-        null,
-        1,
-        null,
-        null,
-        null,
-        null,
-        2,
-        null,
-        null,
-        null,
-        1,
-        null,
-        null,
-        2,
-        null,
-        null,
-        null,
-        null,
-        6,
-        null,
-        null,
-        5,
-        null,
-        null,
-        null,
-        null,
-        null
       ]
     }
   ],

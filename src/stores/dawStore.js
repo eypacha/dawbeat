@@ -116,20 +116,15 @@ import {
 } from '@/services/variableTrackService'
 import {
   DEFAULT_VALUE_TRACKER_STEP_SUBDIVISION,
-  createValueTrackerLibraryItem,
   createDefaultValueTrackerBinding,
   createSparseRecordedValueTrackerValues,
   createConstantValueTrackerValues,
   createEmptyValueTrackerValues,
   doesValueTrackerBindingMatchInput,
-  getValueTrackerLibraryItemById,
   getValueTrackerRecordedStepIndex,
   getValueTrackerValueAtTime,
-  getNextValueTrackerLibraryItemName,
   getNextValueTrackerTrackName,
   isNumericValueTrackerInitializer,
-  materializeValueTrackerClipLibraryReference,
-  normalizeValueTrackerLibraryItemName,
   normalizeValueTrackerValue,
   normalizeValueTrackerValues,
   normalizeValueTrackerTrackName,
@@ -162,7 +157,6 @@ function createEmptyProject() {
     timelineSectionLabels: [],
     tracks: [createTrack()],
     variableTracks: [],
-    valueTrackerLibraryItems: [],
     valueTrackerTracks: [],
     zoom: 1
   }
@@ -206,54 +200,6 @@ function ensureNamedValueTrackerTracks(store, variableTrackNames = [], trackName
   return createdValueTrackerTrackIds
 }
 
-function syncValueTrackerClipWithLibraryItem(clip, valueTrackerLibraryItem) {
-  if (!clip || !valueTrackerLibraryItem) {
-    return
-  }
-
-  clip.duration = valueTrackerLibraryItem.duration
-  clip.stepSubdivision = valueTrackerLibraryItem.stepSubdivision
-  clip.valueTrackerLibraryItemId = valueTrackerLibraryItem.id
-  clip.values = [...valueTrackerLibraryItem.values]
-}
-
-function detachValueTrackerClipLibraryReference(store, clip) {
-  if (!clip?.valueTrackerLibraryItemId) {
-    return
-  }
-
-  const materializedClip = materializeValueTrackerClipLibraryReference(
-    clip,
-    store.valueTrackerLibraryItems
-  )
-
-  clip.duration = materializedClip.duration
-  clip.stepSubdivision = materializedClip.stepSubdivision
-  clip.values = materializedClip.values
-  clip.valueTrackerLibraryItemId = null
-}
-
-function syncValueTrackerClipsLinkedToLibraryItem(store, valueTrackerLibraryItemId) {
-  const valueTrackerLibraryItem = getValueTrackerLibraryItemById(
-    store.valueTrackerLibraryItems,
-    valueTrackerLibraryItemId
-  )
-
-  if (!valueTrackerLibraryItem) {
-    return
-  }
-
-  for (const valueTrackerTrack of store.valueTrackerTracks) {
-    for (const clip of valueTrackerTrack.clips ?? []) {
-      if (clip.valueTrackerLibraryItemId !== valueTrackerLibraryItem.id) {
-        continue
-      }
-
-      syncValueTrackerClipWithLibraryItem(clip, valueTrackerLibraryItem)
-    }
-  }
-}
-
 function createInitialState() {
   const defaultProject = createDefaultProject()
   const savedProject = loadProject()
@@ -284,7 +230,6 @@ function createInitialState() {
     timelineSectionLabels: project.timelineSectionLabels,
     tracks: project.tracks,
     variableTracks: project.variableTracks,
-    valueTrackerLibraryItems: project.valueTrackerLibraryItems,
     valueTrackerTracks: project.valueTrackerTracks,
     historyApplying: false,
     historyFuture: [],
@@ -296,7 +241,6 @@ function createInitialState() {
     selectedClipId: null,
     selectedTrackId: null,
     selectedTimelineSectionLabelId: null,
-    selectedValueTrackerLibraryItemId: null,
     selectedValueTrackerTrackId: null,
     valueTrackerRecordingSession: null,
     valueTrackerLiveInputs: {}
@@ -315,7 +259,6 @@ function clearTransientSelectionState(store) {
   store.selectedAutomationPoint = null
   store.selectedTrackId = null
   store.selectedTimelineSectionLabelId = null
-  store.selectedValueTrackerLibraryItemId = null
   store.selectedValueTrackerTrackId = null
   store.valueTrackerRecordingSession = null
   store.valueTrackerLiveInputs = {}
@@ -461,7 +404,6 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   store.timelineSectionLabels = normalizedProject.timelineSectionLabels
   store.tracks = normalizedProject.tracks
   store.variableTracks = normalizedProject.variableTracks
-  store.valueTrackerLibraryItems = normalizedProject.valueTrackerLibraryItems
   store.valueTrackerTracks = normalizedProject.valueTrackerTracks
   clearTransientSelectionState(store)
   store.playing = nextPlaying
@@ -589,8 +531,6 @@ function buildClipClipboard(entries, tracks, variableTracks, valueTrackerTracks)
         duration: entry.clip.duration,
         ...inlineClipFormulaFields,
         stepSubdivision: entry.laneType === 'valueTracker' ? entry.clip.stepSubdivision : null,
-        valueTrackerLibraryItemId:
-          entry.laneType === 'valueTracker' ? entry.clip.valueTrackerLibraryItemId ?? null : null,
         values: entry.laneType === 'valueTracker' ? [...(entry.clip.values ?? [])] : null,
         sourceLaneId: entry.laneId,
         sourceLaneType: entry.laneType,
@@ -2062,7 +2002,6 @@ export const useDawStore = defineStore('dawStore', {
                   duration: clipboardClip.duration,
                   start: nextStart,
                   stepSubdivision: clipboardClip.stepSubdivision,
-                  valueTrackerLibraryItemId: clipboardClip.valueTrackerLibraryItemId ?? null,
                   values: clipboardClip.values
                 })
             : createTrackClip({
@@ -2091,22 +2030,6 @@ export const useDawStore = defineStore('dawStore', {
         this.setSelectedClips(pastedClipIds)
         this.selectedTrackId = pastedAnchorTrackId
         return pastedClipIds
-      })
-    },
-
-    addValueTrackerLibraryItem(item = {}) {
-      return this.recordHistoryStep('add-value-tracker-library-item', () => {
-        const nextValueTrackerLibraryItem = createValueTrackerLibraryItem({
-          ...item,
-          name:
-            typeof item.name === 'string' && item.name.trim()
-              ? item.name
-              : getNextValueTrackerLibraryItemName(this.valueTrackerLibraryItems)
-        })
-
-        this.valueTrackerLibraryItems.push(nextValueTrackerLibraryItem)
-        this.selectedValueTrackerLibraryItemId = nextValueTrackerLibraryItem.id
-        return nextValueTrackerLibraryItem.id
       })
     },
 
@@ -2208,76 +2131,6 @@ export const useDawStore = defineStore('dawStore', {
           ensureNamedValueTrackerTracks(this, missingAutoVariableTrackNames, 'T Replacement')
         }
       }
-    },
-
-    updateValueTrackerLibraryItem(valueTrackerLibraryItemId, updates) {
-      const valueTrackerLibraryItem = this.valueTrackerLibraryItems.find(
-        (item) => item.id === valueTrackerLibraryItemId
-      )
-
-      if (!valueTrackerLibraryItem) {
-        return
-      }
-
-      if (typeof updates?.name === 'string') {
-        valueTrackerLibraryItem.name = normalizeValueTrackerLibraryItemName(
-          updates.name,
-          valueTrackerLibraryItem.name
-        )
-      }
-
-      if (
-        typeof updates?.values === 'undefined' &&
-        typeof updates?.duration === 'undefined' &&
-        typeof updates?.stepSubdivision === 'undefined'
-      ) {
-        return
-      }
-
-      const normalizedValueTrackerLibraryItem = createValueTrackerLibraryItem({
-        ...valueTrackerLibraryItem,
-        duration:
-          typeof updates?.duration !== 'undefined'
-            ? updates.duration
-            : valueTrackerLibraryItem.duration,
-        id: valueTrackerLibraryItem.id,
-        name: valueTrackerLibraryItem.name,
-        stepSubdivision:
-          typeof updates?.stepSubdivision !== 'undefined'
-            ? updates.stepSubdivision
-            : valueTrackerLibraryItem.stepSubdivision,
-        values:
-          typeof updates?.values !== 'undefined'
-            ? updates.values
-            : valueTrackerLibraryItem.values
-      })
-
-      valueTrackerLibraryItem.duration = normalizedValueTrackerLibraryItem.duration
-      valueTrackerLibraryItem.stepSubdivision = normalizedValueTrackerLibraryItem.stepSubdivision
-      valueTrackerLibraryItem.values = normalizedValueTrackerLibraryItem.values
-      syncValueTrackerClipsLinkedToLibraryItem(this, valueTrackerLibraryItem.id)
-    },
-
-    removeValueTrackerLibraryItem(valueTrackerLibraryItemId) {
-      return this.recordHistoryStep('remove-value-tracker-library-item', () => {
-        for (const valueTrackerTrack of this.valueTrackerTracks) {
-          for (const clip of valueTrackerTrack.clips ?? []) {
-            if (clip.valueTrackerLibraryItemId !== valueTrackerLibraryItemId) {
-              continue
-            }
-
-            detachValueTrackerClipLibraryReference(this, clip)
-          }
-        }
-
-        this.valueTrackerLibraryItems = this.valueTrackerLibraryItems.filter(
-          (item) => item.id !== valueTrackerLibraryItemId
-        )
-
-        if (this.selectedValueTrackerLibraryItemId === valueTrackerLibraryItemId) {
-          this.selectedValueTrackerLibraryItemId = null
-        }
-      })
     },
 
     addTrack(beforeTrackId = null) {
@@ -2660,20 +2513,9 @@ export const useDawStore = defineStore('dawStore', {
         return null
       }
 
-      const valueTrackerLibraryItem = getValueTrackerLibraryItemById(
-        this.valueTrackerLibraryItems,
-        clip.valueTrackerLibraryItemId
-      )
-
       const nextClip = createValueTrackerClip({
         ...clip,
-        duration: valueTrackerLibraryItem?.duration ?? clip.duration,
-        stepSubdivision: valueTrackerLibraryItem?.stepSubdivision ?? clip.stepSubdivision,
-        valueTrackerLibraryItemId: valueTrackerLibraryItem?.id ?? null,
-        values:
-          valueTrackerLibraryItem?.values ??
-          clip.values ??
-          createEmptyValueTrackerValues(clip.duration, clip.stepSubdivision)
+        values: clip.values ?? createEmptyValueTrackerValues(clip.duration, clip.stepSubdivision)
       })
 
       valueTrackerTrack.clips.push(nextClip)
@@ -2728,17 +2570,6 @@ export const useDawStore = defineStore('dawStore', {
 
       if (!clip) {
         return
-      }
-
-      if (
-        clip.valueTrackerLibraryItemId &&
-        (
-          typeof updates?.values !== 'undefined' ||
-          typeof updates?.duration !== 'undefined' ||
-          typeof updates?.stepSubdivision !== 'undefined'
-        )
-      ) {
-        detachValueTrackerClipLibraryReference(this, clip)
       }
 
       const nextDuration =
@@ -2810,26 +2641,6 @@ export const useDawStore = defineStore('dawStore', {
       const result = findTimelineClip(this.tracks, this.variableTracks, this.valueTrackerTracks, clipId)
 
       if (!result || result.laneType !== 'valueTracker' || !result.clip) {
-        return
-      }
-
-      const linkedValueTrackerLibraryItem = getValueTrackerLibraryItemById(
-        this.valueTrackerLibraryItems,
-        result.clip.valueTrackerLibraryItemId
-      )
-
-      if (result.clip.valueTrackerLibraryItemId && !linkedValueTrackerLibraryItem) {
-        result.clip.valueTrackerLibraryItemId = null
-      }
-
-      if (linkedValueTrackerLibraryItem) {
-        this.updateValueTrackerLibraryItem(linkedValueTrackerLibraryItem.id, {
-          values: normalizeValueTrackerValues(
-            draft?.values,
-            linkedValueTrackerLibraryItem.duration,
-            linkedValueTrackerLibraryItem.stepSubdivision
-          )
-        })
         return
       }
 
@@ -3144,10 +2955,6 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      if (clip.valueTrackerLibraryItemId) {
-        detachValueTrackerClipLibraryReference(this, clip)
-      }
-
       const previousStart = clip.start
       const previousDuration = clip.duration
       const clipEnd = getClipEnd(clip)
@@ -3214,10 +3021,6 @@ export const useDawStore = defineStore('dawStore', {
 
       if (!clip) {
         return
-      }
-
-      if (clip.valueTrackerLibraryItemId) {
-        detachValueTrackerClipLibraryReference(this, clip)
       }
 
       const previousDuration = clip.duration
@@ -3351,69 +3154,6 @@ export const useDawStore = defineStore('dawStore', {
       return duplicatedClipIds
     },
 
-    addValueTrackerClipToLibrary(valueTrackerTrackId, clipId) {
-      return this.recordHistoryStep('add-value-tracker-clip-to-library', () => {
-        const valueTrackerTrack = findValueTrackerTrack(this.valueTrackerTracks, valueTrackerTrackId)
-
-        if (!valueTrackerTrack) {
-          return null
-        }
-
-        const clip = findClip(valueTrackerTrack, clipId)
-
-        if (!clip) {
-          return null
-        }
-
-        const linkedValueTrackerLibraryItem = getValueTrackerLibraryItemById(
-          this.valueTrackerLibraryItems,
-          clip.valueTrackerLibraryItemId
-        )
-
-        if (linkedValueTrackerLibraryItem) {
-          this.selectedValueTrackerLibraryItemId = linkedValueTrackerLibraryItem.id
-          return linkedValueTrackerLibraryItem.id
-        }
-
-        const valueTrackerLibraryItemId = this.addValueTrackerLibraryItem({
-          duration: clip.duration,
-          name: valueTrackerTrack.name,
-          stepSubdivision: clip.stepSubdivision,
-          values: [...(clip.values ?? [])]
-        })
-
-        const valueTrackerLibraryItem = getValueTrackerLibraryItemById(
-          this.valueTrackerLibraryItems,
-          valueTrackerLibraryItemId
-        )
-
-        if (valueTrackerLibraryItem) {
-          syncValueTrackerClipWithLibraryItem(clip, valueTrackerLibraryItem)
-        }
-
-        return valueTrackerLibraryItemId
-      })
-    },
-
-    detachValueTrackerClipFromLibrary(valueTrackerTrackId, clipId) {
-      return this.recordHistoryStep('detach-value-tracker-clip-library', () => {
-        const valueTrackerTrack = findValueTrackerTrack(this.valueTrackerTracks, valueTrackerTrackId)
-
-        if (!valueTrackerTrack) {
-          return
-        }
-
-        const clip = findClip(valueTrackerTrack, clipId)
-
-        if (!clip) {
-          return
-        }
-
-        detachValueTrackerClipLibraryReference(this, clip)
-      })
-    },
-
-
     mutateClipFormula(trackId, clipId) {
       return this.recordHistoryStep('mutate-clip-formula', () => {
         const track = findTrack(this.tracks, trackId)
@@ -3520,24 +3260,6 @@ export const useDawStore = defineStore('dawStore', {
 
     selectClip(clipId) {
       this.setSelectedClips(clipId ? [clipId] : [])
-    },
-
-    selectValueTrackerLibraryItem(valueTrackerLibraryItemId) {
-      if (!valueTrackerLibraryItemId) {
-        this.selectedValueTrackerLibraryItemId = null
-        return
-      }
-
-      const valueTrackerLibraryItem = getValueTrackerLibraryItemById(
-        this.valueTrackerLibraryItems,
-        valueTrackerLibraryItemId
-      )
-
-      if (!valueTrackerLibraryItem) {
-        return
-      }
-
-      this.selectedValueTrackerLibraryItemId = valueTrackerLibraryItem.id
     },
 
     selectTrack(trackId) {

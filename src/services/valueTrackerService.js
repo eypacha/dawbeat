@@ -4,21 +4,12 @@ export const VALUE_TRACKER_MIN = 0
 export const VALUE_TRACKER_MAX = 0xFFFF
 export const DEFAULT_VALUE_TRACKER_STEP_SUBDIVISION = TIMELINE_SNAP_SUBDIVISIONS
 export const DEFAULT_VALUE_TRACKER_TRACK_NAME_PREFIX = 'Value Tracker'
-export const DEFAULT_VALUE_TRACKER_LIBRARY_ITEM_NAME_PREFIX = 'Value Pattern'
 export const VALUE_TRACKER_BINDING_TYPES = Object.freeze([
   'midiCc',
   'midiNote',
   'keyboard',
   'variable'
 ])
-
-export function createValueTrackerLibraryItemId() {
-  if (globalThis.crypto?.randomUUID) {
-    return globalThis.crypto.randomUUID()
-  }
-
-  return `value-pattern-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-}
 
 export function createDefaultValueTrackerBinding(binding = {}) {
   const type = VALUE_TRACKER_BINDING_TYPES.includes(binding?.type) ? binding.type : null
@@ -101,79 +92,6 @@ export function getNextValueTrackerTrackName(valueTrackerTracks = []) {
   return `${DEFAULT_VALUE_TRACKER_TRACK_NAME_PREFIX} ${index}`
 }
 
-export function normalizeValueTrackerLibraryItemName(
-  value,
-  fallback = DEFAULT_VALUE_TRACKER_LIBRARY_ITEM_NAME_PREFIX
-) {
-  const trimmedValue = typeof value === 'string' ? value.trim() : ''
-  return trimmedValue || fallback
-}
-
-export function getNextValueTrackerLibraryItemName(valueTrackerLibraryItems = []) {
-  const usedNames = new Set(
-    Array.isArray(valueTrackerLibraryItems)
-      ? valueTrackerLibraryItems
-          .map((item) => normalizeValueTrackerLibraryItemName(item?.name, ''))
-          .filter(Boolean)
-      : []
-  )
-
-  let index = 1
-
-  while (usedNames.has(`${DEFAULT_VALUE_TRACKER_LIBRARY_ITEM_NAME_PREFIX} ${index}`)) {
-    index += 1
-  }
-
-  return `${DEFAULT_VALUE_TRACKER_LIBRARY_ITEM_NAME_PREFIX} ${index}`
-}
-
-export function createValueTrackerLibraryItem(item = {}) {
-  const duration = Number.isFinite(Number(item.duration)) ? Number(item.duration) : 4
-  const stepSubdivision = normalizeValueTrackerStepSubdivision(item.stepSubdivision)
-
-  return {
-    id: item.id ?? createValueTrackerLibraryItemId(),
-    name: normalizeValueTrackerLibraryItemName(item.name),
-    duration,
-    stepSubdivision,
-    values: normalizeValueTrackerValues(item.values, duration, stepSubdivision)
-  }
-}
-
-export function getValueTrackerLibraryItemById(valueTrackerLibraryItems = [], valueTrackerLibraryItemId) {
-  if (typeof valueTrackerLibraryItemId !== 'string' || !valueTrackerLibraryItemId) {
-    return null
-  }
-
-  return (Array.isArray(valueTrackerLibraryItems) ? valueTrackerLibraryItems : []).find(
-    (item) => item?.id === valueTrackerLibraryItemId
-  ) ?? null
-}
-
-export function resolveValueTrackerClipLibraryReference(clip, valueTrackerLibraryItems = []) {
-  return getValueTrackerLibraryItemById(valueTrackerLibraryItems, clip?.valueTrackerLibraryItemId)
-}
-
-export function materializeValueTrackerClipLibraryReference(clip, valueTrackerLibraryItems = []) {
-  const valueTrackerLibraryItem = resolveValueTrackerClipLibraryReference(clip, valueTrackerLibraryItems)
-
-  if (!valueTrackerLibraryItem) {
-    const duration = Number.isFinite(Number(clip?.duration)) ? Number(clip.duration) : 4
-    const stepSubdivision = normalizeValueTrackerStepSubdivision(clip?.stepSubdivision)
-
-    return {
-      duration,
-      stepSubdivision,
-      values: normalizeValueTrackerValues(clip?.values, duration, stepSubdivision)
-    }
-  }
-
-  return {
-    duration: valueTrackerLibraryItem.duration,
-    stepSubdivision: valueTrackerLibraryItem.stepSubdivision,
-    values: [...valueTrackerLibraryItem.values]
-  }
-}
 
 export function normalizeValueTrackerStepSubdivision(value) {
   const numericValue = Number(value)

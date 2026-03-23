@@ -21,8 +21,6 @@ import {
 } from '@/services/evalEffectService'
 import {
   createClipFormulaFields,
-  createFormula,
-  getClipFormulaFieldsFromFormula,
   getClipFormulaExpressions
 } from '@/services/formulaService'
 import { DEFAULT_BPM_MEASURE, normalizeBpmMeasureExpression } from '@/services/bpmService'
@@ -39,7 +37,6 @@ import {
   normalizeVariableTrackName
 } from '@/services/variableTrackService'
 import {
-  createValueTrackerLibraryItem,
   createConstantValueTrackerValues,
   getBoundValueTrackerVariableNames,
   normalizeValueTrackerStepSubdivision,
@@ -65,7 +62,6 @@ export function serializeProject(state) {
     tracks: state.tracks,
     variableTracks: state.variableTracks,
     valueTrackerTracks: state.valueTrackerTracks,
-    valueTrackerLibraryItems: state.valueTrackerLibraryItems,
     zoom: state.zoom,
     loopStart: state.loopStart,
     loopEnd: state.loopEnd,
@@ -230,15 +226,9 @@ function normalizeProjectPayload(project) {
     return null
   }
 
-  const formulas = Array.isArray(project.formulas)
-    ? project.formulas
-    .filter(isRecord)
-    .map((formula) => createFormula(formula))
-    : []
-  const formulasById = new Map(formulas.map((formula) => [formula.id, formula]))
   const usedVariableTrackNames = new Set()
   const tracks = project.tracks
-    .map((track) => normalizeTrack(track, formulasById))
+    .map((track) => normalizeTrack(track))
     .filter(Boolean)
   const variableTracks = Array.isArray(project.variableTracks)
     ? project.variableTracks
@@ -250,14 +240,6 @@ function normalizeProjectPayload(project) {
         .map((valueTrackerTrack) => normalizeValueTrackerTrack(valueTrackerTrack, project.version))
         .filter(Boolean)
     : []
-  const valueTrackerLibraryItems = Array.isArray(project.valueTrackerLibraryItems)
-    ? project.valueTrackerLibraryItems
-        .map((item) => normalizeValueTrackerLibraryItem(item, project.version))
-        .filter(Boolean)
-    : []
-  const valueTrackerLibraryItemsById = new Map(
-    valueTrackerLibraryItems.map((item) => [item.id, item])
-  )
   const evalEffects = hasOwn(project, 'evalEffects')
     ? normalizeEvalEffects(project.evalEffects)
     : [createStereoOffsetEvalEffect({ id: 'fx1' })]
@@ -279,21 +261,6 @@ function normalizeProjectPayload(project) {
     ),
     'T Replacement'
   )
-
-  for (const valueTrackerTrack of valueTrackerTracks) {
-    for (const clip of valueTrackerTrack.clips ?? []) {
-      const valueTrackerLibraryItem = valueTrackerLibraryItemsById.get(clip.valueTrackerLibraryItemId)
-
-      if (!valueTrackerLibraryItem) {
-        clip.valueTrackerLibraryItemId = null
-        continue
-      }
-
-      clip.duration = valueTrackerLibraryItem.duration
-      clip.stepSubdivision = valueTrackerLibraryItem.stepSubdivision
-      clip.values = [...valueTrackerLibraryItem.values]
-    }
-  }
 
   const boundValueTrackerVariableNames = new Set(getBoundValueTrackerVariableNames(valueTrackerTracks))
   const requiredAutoVariableTrackNames = collectAutoVariableTrackNames([
@@ -321,7 +288,6 @@ function normalizeProjectPayload(project) {
     tracks,
     variableTracks,
     valueTrackerTracks,
-    valueTrackerLibraryItems,
     zoom: clamp(normalizeNumber(project.zoom, 1), MIN_ZOOM, MAX_ZOOM),
     loopStart,
     loopEnd,
@@ -371,7 +337,7 @@ function normalizeProjectAutomationLanes(project) {
   return automationLanes
 }
 
-function normalizeTrack(track, formulasById) {
+function normalizeTrack(track) {
   if (!isRecord(track)) {
     return null
   }
@@ -385,7 +351,7 @@ function normalizeTrack(track, formulasById) {
     name: typeof track.name === 'string' && track.name.trim() ? track.name.trim() : undefined,
     height: normalizeTrackLaneHeight(track.height),
     clips: Array.isArray(track.clips)
-      ? track.clips.map((clip) => normalizeClip(clip, formulasById)).filter(Boolean)
+      ? track.clips.map((clip) => normalizeClip(clip)).filter(Boolean)
       : []
   }
 
@@ -439,37 +405,12 @@ function normalizeValueTrackerTrack(valueTrackerTrack, projectVersion) {
   return nextValueTrackerTrack
 }
 
-function normalizeValueTrackerLibraryItem(item, projectVersion) {
-  if (!isRecord(item)) {
-    return null
-  }
-
-  return createValueTrackerLibraryItem({
-    duration: normalizePositiveNumber(item.duration, 4),
-    id: typeof item.id === 'string' && item.id ? item.id : undefined,
-    name: typeof item.name === 'string' ? item.name : undefined,
-    stepSubdivision: normalizeValueTrackerStepSubdivision(item.stepSubdivision),
-    values: normalizeValueTrackerValues(
-      item.values,
-      normalizePositiveNumber(item.duration, 4),
-      normalizeValueTrackerStepSubdivision(item.stepSubdivision),
-      projectVersion <= 12 ? { mode: 'legacyDense' } : undefined
-    )
-  })
-}
-
-function normalizeClip(clip, formulasById) {
+function normalizeClip(clip) {
   if (!isRecord(clip)) {
     return null
   }
 
-  const referencedFormula =
-    typeof clip.formulaId === 'string' && clip.formulaId
-      ? formulasById.get(clip.formulaId) ?? null
-      : null
-  const formulaFields = referencedFormula
-    ? getClipFormulaFieldsFromFormula(referencedFormula)
-    : createClipFormulaFields(clip)
+  const formulaFields = createClipFormulaFields(clip)
 
   return createTrackClip({
     id: typeof clip.id === 'string' && clip.id ? clip.id : undefined,
@@ -513,10 +454,6 @@ function normalizeValueTrackerClip(clip, projectVersion) {
     start: normalizeNonNegativeNumber(clip.start, 0),
     duration,
     stepSubdivision,
-    valueTrackerLibraryItemId:
-      typeof clip.valueTrackerLibraryItemId === 'string' && clip.valueTrackerLibraryItemId
-        ? clip.valueTrackerLibraryItemId
-        : null,
     values
   })
 }

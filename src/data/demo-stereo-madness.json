@@ -162,7 +162,6 @@
           "start": 0,
           "duration": 4,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             4,
             null,
@@ -187,7 +186,6 @@
           "start": 15,
           "duration": 2,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             3,
             null,
@@ -204,7 +202,6 @@
           "start": 23,
           "duration": 2,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             3,
             null,
@@ -221,7 +218,6 @@
           "start": 31,
           "duration": 2,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             3,
             null,
@@ -238,7 +234,6 @@
           "start": 39,
           "duration": 2,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             3,
             null,
@@ -255,7 +250,6 @@
           "start": 47,
           "duration": 2,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             3,
             null,
@@ -272,7 +266,6 @@
           "start": 55,
           "duration": 2,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             3,
             null,
@@ -289,7 +282,6 @@
           "start": 63,
           "duration": 2,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             3,
             null,
@@ -306,7 +298,6 @@
           "start": 71,
           "duration": 2,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             3,
             null,
@@ -323,7 +314,6 @@
           "start": 79,
           "duration": 2,
           "stepSubdivision": 4,
-          "valueTrackerLibraryItemId": null,
           "values": [
             3,
             null,
@@ -338,7 +328,6 @@
       ]
     }
   ],
-  "valueTrackerLibraryItems": [],
   "zoom": 0.19356766073405643,
   "loopStart": 48,
   "loopEnd": 80,

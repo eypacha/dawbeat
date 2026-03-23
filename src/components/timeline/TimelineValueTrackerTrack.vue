@@ -122,10 +122,9 @@ const props = defineProps({
 
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
-const { canPasteClipsAtPlayhead, clipDragPreview, pixelsPerTick, selectedValueTrackerTrackId, time, valueTrackerLibraryItems, valueTrackerRecordingSession } = storeToRefs(dawStore)
+const { canPasteClipsAtPlayhead, clipDragPreview, pixelsPerTick, selectedValueTrackerTrackId, time, valueTrackerRecordingSession } = storeToRefs(dawStore)
 const laneElement = ref(null)
 const creationPreview = ref(null)
-const isLibraryDropTarget = ref(false)
 
 let creationAnchorTick = 0
 let creationBounds = null
@@ -157,13 +156,11 @@ const selectedHeaderClassName = computed(() =>
       : 'bg-zinc-900 text-zinc-200'
 )
 const laneClassName = computed(() =>
-  isLibraryDropTarget.value
-    ? 'ring-1 ring-inset ring-amber-200/55'
-    : isRecordingTrack.value
-      ? 'ring-1 ring-inset ring-rose-400/45'
-      : isSelectedTrack.value
-        ? 'ring-1 ring-inset ring-amber-300/35'
-        : ''
+  isRecordingTrack.value
+    ? 'ring-1 ring-inset ring-rose-400/45'
+    : isSelectedTrack.value
+      ? 'ring-1 ring-inset ring-amber-300/35'
+      : ''
 )
 const keyboardButtonClassName = computed(() => {
   if (isRecordingTrack.value) {
@@ -341,55 +338,11 @@ function handleLanePointerDown(event) {
   window.addEventListener('pointercancel', handleCreationPointerCancel)
 }
 
-function handleLaneDragOver(event) {
-  if (!getDroppedValueTrackerLibraryItemId(event)) {
-    return
-  }
+function handleLaneDragOver() {}
 
-  isLibraryDropTarget.value = true
-}
+function handleLaneDragLeave() {}
 
-function handleLaneDragLeave(event) {
-  if (event.currentTarget?.contains(event.relatedTarget)) {
-    return
-  }
-
-  isLibraryDropTarget.value = false
-}
-
-function handleLaneDrop(event) {
-  const valueTrackerLibraryItemId = getDroppedValueTrackerLibraryItemId(event)
-  isLibraryDropTarget.value = false
-
-  if (!valueTrackerLibraryItemId) {
-    return
-  }
-
-  const valueTrackerLibraryItem = valueTrackerLibraryItems.value.find(
-    (item) => item.id === valueTrackerLibraryItemId
-  )
-
-  if (!valueTrackerLibraryItem) {
-    return
-  }
-
-  const dragOffsetPx = getDroppedValueTrackerLibraryOffsetPx(event)
-  const start = clampClipPlacementStart(
-    props.valueTrackerTrack,
-    getPointerTick(event, dragOffsetPx),
-    valueTrackerLibraryItem.duration
-  )
-
-  dawStore.recordHistoryStep('drop-value-tracker-library-to-track', () => {
-    dawStore.addValueTrackerClip(props.valueTrackerTrack.id, {
-      duration: valueTrackerLibraryItem.duration,
-      start,
-      stepSubdivision: valueTrackerLibraryItem.stepSubdivision,
-      valueTrackerLibraryItemId: valueTrackerLibraryItem.id,
-      values: [...(valueTrackerLibraryItem.values ?? [])]
-    })
-  })
-}
+function handleLaneDrop() {}
 
 function handleCreationPointerMove(event) {
   if (!creationBounds) {
@@ -444,23 +397,7 @@ function getPointerTick(event, offsetPx = 0) {
   return getDraggedTick(rawTick, shouldSnapFromPointerEvent(event))
 }
 
-function getDroppedValueTrackerLibraryItemId(event) {
-  return event.dataTransfer?.getData('valueTrackerLibraryItemId') || ''
-}
-
-function getDroppedValueTrackerLibraryOffsetPx(event) {
-  const rawOffset = event.dataTransfer?.getData('valueTrackerLibraryDragOffsetPx')
-  const numericOffset = Number(rawOffset)
-
-  if (!Number.isFinite(numericOffset) || numericOffset < 0) {
-    return 0
-  }
-
-  return numericOffset
-}
-
 function cleanupCreation() {
-  isLibraryDropTarget.value = false
   creationPreview.value = null
   creationBounds = null
   creationHistoryActive = false
