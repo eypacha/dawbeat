@@ -9,7 +9,7 @@
     <template #header>
       <div class="flex items-start justify-between gap-4">
         <p class="pr-4 text-sm uppercase tracking-[0.24em] text-zinc-500">Settings</p>
-        <IconButton label="Close" size="sm" @click="emit('close')">
+        <IconButton label="Close" size="sm" variant="text" @click="emit('close')">
           x
         </IconButton>
       </div>

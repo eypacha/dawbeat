@@ -3,7 +3,7 @@
     :aria-label="label"
     :class="[buttonSizeClassName, 'shrink-0 !p-0 tracking-normal']"
     :disabled="disabled"
-    :variant="variant"
+    :variant="buttonVariant"
   >
     <component
       :is="icon"
@@ -45,6 +45,14 @@ const props = defineProps({
     type: String,
     default: 'ghost'
   }
+})
+
+const buttonVariant = computed(() => {
+  if (props.variant === 'text') {
+    return 'plain'
+  }
+
+  return props.variant
 })
 
 const buttonSizeClassName = computed(() => {
