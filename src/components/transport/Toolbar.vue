@@ -211,6 +211,14 @@
             title="Open app settings"
             @click="settingsVisible = true"
           />
+
+          <IconButton
+            :icon="Info"
+            label="About"
+            size="sm"
+            title="About DawBeat"
+            @click="aboutVisible = true"
+          />
         </div>
       </div>
     </div>
@@ -243,6 +251,8 @@
 
     <SettingsModal :visible="settingsVisible" @close="settingsVisible = false" />
 
+    <AboutModal :visible="aboutVisible" @close="aboutVisible = false" />
+
     <ExportModal
       :exporting="exportingWav"
       :visible="exportModalVisible"
@@ -255,7 +265,7 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Circle, Download, FilePlus, FolderOpen, LoaderCircle, Pause, Play, Redo2, Repeat, Settings2, Shuffle, Square, Undo2 } from 'lucide-vue-next'
+import { Circle, Download, FilePlus, FolderOpen, Info, LoaderCircle, Pause, Play, Redo2, Repeat, Settings2, Shuffle, Square, Undo2 } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { automationCompanionHostState } from '@/services/automationCompanionService'
 import { getRandomDemoProjectEntry } from '@/services/demoProjectService'
@@ -275,6 +285,7 @@ import { downloadProjectFile, importProjectFile } from '@/services/projectPersis
 import { enqueueSnackbar } from '@/services/notifications'
 import { MAX_SAMPLE_RATE, MIN_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
 import { ticksToSamples } from '@/utils/timeUtils'
+import AboutModal from '@/components/ui/AboutModal.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import Divider from '@/components/ui/Divider.vue'
 import IconButton from '@/components/ui/IconButton.vue'
@@ -288,6 +299,7 @@ const bpmDraft = ref(formatBpmValue(getBpmFromSampleRate(sampleRate.value, bpmMe
 const bpmMeasureDraft = ref(bpmMeasure.value)
 const projectFileInput = ref(null)
 const sampleRateDraft = ref(String(sampleRate.value))
+const aboutVisible = ref(false)
 const settingsVisible = ref(false)
 const exportingWav = ref(false)
 const exportModalVisible = ref(false)
