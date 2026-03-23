@@ -270,7 +270,34 @@ const displayAudioEffects = computed(() => audioEffects.value.map((effect) => {
     return effect
   }
 
-  return resolveAudioEffectAtTime(time.value, dawStore.automationLanes, effect)
+  const resolvedEffect = resolveAudioEffectAtTime(time.value, dawStore.automationLanes, effect)
+
+  if (!resolvedEffect?.params || typeof resolvedEffect.params !== 'object') {
+    return resolvedEffect
+  }
+
+  const nextParams = {
+    ...resolvedEffect.params
+  }
+
+  for (const paramKey of Object.keys(nextParams)) {
+    const lane = dawStore.getAutomationLaneByAudioEffectParam(effect.id, paramKey)
+
+    if (!lane?.id) {
+      continue
+    }
+
+    const liveOrAutomationValue = dawStore.getAutomationValueAt(time.value, lane.id)
+
+    if (Number.isFinite(Number(liveOrAutomationValue))) {
+      nextParams[paramKey] = Number(liveOrAutomationValue)
+    }
+  }
+
+  return {
+    ...resolvedEffect,
+    params: nextParams
+  }
 }))
 const displayAudioEffectsByVisualOrder = computed(() => [...displayAudioEffects.value].reverse())
 const displayMasterGain = computed(() => {

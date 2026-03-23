@@ -44,7 +44,7 @@
           class="border border-zinc-800 bg-zinc-900/80 p-5 shadow-lg shadow-black/20"
         >
           <div class="flex items-start justify-between gap-3">
-            <h2 class="text-2xl text-zinc-50">{{ lane.label }}</h2>
+            <h2 class="text-2xl text-zinc-50">{{ getLaneDisplayLabel(lane) }}</h2>
 
             <Button size="sm" variant="ghost" @click="removeAutomationCompanionLane(lane.laneId)">
               Remove
@@ -176,6 +176,16 @@ function formatLaneValue(value) {
   }
 
   return numericValue.toFixed(3)
+}
+
+function getLaneDisplayLabel(lane) {
+  const label = typeof lane?.label === 'string' ? lane.label.trim() : ''
+
+  if (!label || label === lane?.laneId) {
+    return 'Connecting...'
+  }
+
+  return label
 }
 
 onMounted(() => {

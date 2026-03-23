@@ -93,6 +93,7 @@ import Modal from '@/components/ui/Modal.vue'
 import { enqueueSnackbar } from '@/services/notifications'
 import {
   automationCompanionHostState,
+  getAutomationCompanionLaneControllerCount,
   getAutomationCompanionShareUrl,
   isAutomationCompanionShareUrlLoopback
 } from '@/services/automationCompanionService'
@@ -128,10 +129,28 @@ const qrSkeletonCells = [
 
 const laneLabel = computed(() => getAutomationLaneConfig(props.lane)?.label ?? props.lane?.id ?? 'Automation')
 const shareUrl = computed(() => getAutomationCompanionShareUrl(props.lane?.id ?? null))
+const laneControllerCount = computed(() => getAutomationCompanionLaneControllerCount(props.lane?.id ?? null))
 const hostPeerId = computed(() => automationCompanionHostState.hostPeerId)
 const status = computed(() => automationCompanionHostState.status)
 const errorMessage = computed(() => automationCompanionHostState.error || 'Could not start the automation companion host.')
 const loopbackWarning = computed(() => Boolean(shareUrl.value) && isAutomationCompanionShareUrlLoopback())
+
+watch(
+  [() => props.open, laneControllerCount],
+  ([open, controllerCount], [previousOpen, previousControllerCount]) => {
+    if (!open || !props.lane?.id) {
+      return
+    }
+
+    const wasOpen = Boolean(previousOpen)
+    const previousCount = Number(previousControllerCount) || 0
+    const nextCount = Number(controllerCount) || 0
+
+    if (wasOpen && previousCount === 0 && nextCount > 0) {
+      emit('close')
+    }
+  }
+)
 
 watch(
   [() => props.open, shareUrl],
