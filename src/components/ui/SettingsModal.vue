@@ -9,9 +9,7 @@
     <template #header>
       <div class="flex items-start justify-between gap-4">
         <p class="pr-4 text-sm uppercase tracking-[0.24em] text-zinc-500">Settings</p>
-        <IconButton label="Close" size="sm" variant="text" @click="emit('close')">
-          x
-        </IconButton>
+        <IconButton :icon="X" label="Close" size="sm" variant="text" @click="emit('close')" />
       </div>
     </template>
 
@@ -221,6 +219,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import { X } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import IconButton from '@/components/ui/IconButton.vue'
