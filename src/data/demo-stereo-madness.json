@@ -11,91 +11,83 @@
       "clips": [
         {
           "id": "e72c429a-dd11-4ef5-8347-94f29e20dd5a",
-          "formulaId": "d5c27fa5-2bf6-4d34-8e36-94c760ada5d2",
-          "formulaName": null,
+          "formulaName": "Base mono",
           "start": 0,
           "duration": 16,
           "formulaStereo": false,
-          "formula": "",
-          "leftFormula": "",
-          "rightFormula": ""
+          "formula": "(t>>a|t>>3|t*2)",
+          "leftFormula": "(t>>a|t>>3|t*2)",
+          "rightFormula": "(t>>a|t>>3|t*2)"
         },
         {
           "id": "7a1a0ecf-250f-4d77-a450-1de3869248c7",
-          "formulaId": "23b8417a-70c3-4a5a-a086-5d64d444106c",
-          "formulaName": null,
+          "formulaName": "Base Stereo 1",
           "start": 16,
           "duration": 8,
-          "formulaStereo": false,
-          "formula": "",
-          "leftFormula": "",
-          "rightFormula": ""
+          "formulaStereo": true,
+          "formula": "(t>>a|t>>3|t*2)",
+          "leftFormula": "(t>>a|t>>3|t*2)",
+          "rightFormula": "t&0x256?t>>4:t>>10"
         },
         {
           "id": "20699f3e-3064-4bbc-bb63-945632d1595b",
-          "formulaId": "9608b00e-abef-4d47-b5d3-1477a5f9fe6a",
-          "formulaName": null,
+          "formulaName": "Base Stereo 2",
           "start": 24,
           "duration": 8,
-          "formulaStereo": false,
-          "formula": "",
-          "leftFormula": "",
-          "rightFormula": ""
+          "formulaStereo": true,
+          "formula": "t&0x256?t>>4:t>>10",
+          "leftFormula": "t&0x256?t>>4:t>>10",
+          "rightFormula": "(t>>a|t>>3|t*2)"
         },
         {
           "id": "e619377d-0ac7-4c30-af67-af5a03efe822",
-          "formulaId": "23b8417a-70c3-4a5a-a086-5d64d444106c",
-          "formulaName": null,
+          "formulaName": "Base Stereo 1",
           "start": 32,
           "duration": 8,
-          "formulaStereo": false,
-          "formula": "",
-          "leftFormula": "",
-          "rightFormula": ""
+          "formulaStereo": true,
+          "formula": "(t>>a|t>>3|t*2)",
+          "leftFormula": "(t>>a|t>>3|t*2)",
+          "rightFormula": "t&0x256?t>>4:t>>10"
         },
         {
           "id": "83770f66-31b3-466d-a90c-e7069e8d3df4",
-          "formulaId": "9608b00e-abef-4d47-b5d3-1477a5f9fe6a",
-          "formulaName": null,
+          "formulaName": "Base Stereo 2",
           "start": 40,
           "duration": 8,
-          "formulaStereo": false,
-          "formula": "",
-          "leftFormula": "",
-          "rightFormula": ""
+          "formulaStereo": true,
+          "formula": "t&0x256?t>>4:t>>10",
+          "leftFormula": "t&0x256?t>>4:t>>10",
+          "rightFormula": "(t>>a|t>>3|t*2)"
         },
         {
           "id": "246dffae-d3f7-46d3-b7ff-e0c173ab1f2e",
-          "formulaId": "23b8417a-70c3-4a5a-a086-5d64d444106c",
-          "formulaName": null,
+          "formulaName": "Base Stereo 1",
           "start": 48,
           "duration": 8,
-          "formulaStereo": false,
-          "formula": "",
-          "leftFormula": "",
-          "rightFormula": ""
+          "formulaStereo": true,
+          "formula": "(t>>a|t>>3|t*2)",
+          "leftFormula": "(t>>a|t>>3|t*2)",
+          "rightFormula": "t&0x256?t>>4:t>>10"
         },
         {
           "id": "aad9430f-2719-4f05-9259-c38730197435",
-          "formulaId": "9608b00e-abef-4d47-b5d3-1477a5f9fe6a",
-          "formulaName": null,
+          "formulaName": "Base Stereo 2",
           "start": 56,
           "duration": 8,
-          "formulaStereo": false,
-          "formula": "",
-          "leftFormula": "",
-          "rightFormula": ""
+          "formulaStereo": true,
+          "formula": "t&0x256?t>>4:t>>10",
+          "leftFormula": "t&0x256?t>>4:t>>10",
+          "rightFormula": "(t>>a|t>>3|t*2)"
         },
         {
           "id": "8bed7e16-ff8c-4543-a858-6d55251238ce",
-          "formulaId": "23b8417a-70c3-4a5a-a086-5d64d444106c",
-          "formulaName": null,
+          "formulaName": "Base Stereo 1",
           "start": 64,
           "duration": 8,
-          "formulaStereo": false,
-          "formula": "",
-          "leftFormula": "",
-          "rightFormula": ""
+          "formulaStereo": true,
+          "formula": "(t>>a|t>>3|t*2)",
+          "leftFormula": "(t>>a|t>>3|t*2)",
+          "rightFormula": "t&0x256?t>>4:t>>10"
         }
       ]
     },
@@ -113,7 +105,6 @@
           "formula": "0.999",
           "leftFormula": "0.999",
           "rightFormula": "0.999",
-          "formulaId": null,
           "formulaName": "",
           "start": 16,
           "duration": 64
@@ -130,25 +121,23 @@
       "clips": [
         {
           "id": "f1682635-2e72-406e-a709-f990062d6b03",
-          "formulaId": "cbdf95b2-1d2d-473c-b82f-9203393f1e78",
-          "formulaName": null,
+          "formulaName": "Louder clean melody L",
           "start": 48,
           "duration": 16,
-          "formulaStereo": false,
-          "formula": "",
-          "leftFormula": "",
-          "rightFormula": ""
+          "formulaStereo": true,
+          "formula": "9*(t*((t>>9|t>>13)&15)&16)",
+          "leftFormula": "9*(t*((t>>9|t>>13)&15)&16)",
+          "rightFormula": "0"
         },
         {
           "id": "4d196d33-e31b-408a-b2ca-28c0ef23b233",
-          "formulaId": "cd756631-86b0-4b29-ae25-476868753d11",
-          "formulaName": null,
+          "formulaName": "Louder clean melody R",
           "start": 64,
           "duration": 16,
-          "formulaStereo": false,
-          "formula": "",
-          "leftFormula": "",
-          "rightFormula": ""
+          "formulaStereo": true,
+          "formula": "0",
+          "leftFormula": "0",
+          "rightFormula": "9*(t*((t>>9|t>>13)&15)&16)"
         }
       ]
     }
@@ -350,48 +339,6 @@
     }
   ],
   "valueTrackerLibraryItems": [],
-  "formulas": [
-    {
-      "id": "23b8417a-70c3-4a5a-a086-5d64d444106c",
-      "name": "Base Stereo 1",
-      "stereo": true,
-      "code": "(t>>a|t>>3|t*2)",
-      "leftCode": "(t>>a|t>>3|t*2)",
-      "rightCode": "t&0x256?t>>4:t>>10"
-    },
-    {
-      "id": "9608b00e-abef-4d47-b5d3-1477a5f9fe6a",
-      "name": "Base Stereo 2",
-      "stereo": true,
-      "code": "t&0x256?t>>4:t>>10",
-      "leftCode": "t&0x256?t>>4:t>>10",
-      "rightCode": "(t>>a|t>>3|t*2)"
-    },
-    {
-      "id": "cbdf95b2-1d2d-473c-b82f-9203393f1e78",
-      "name": "Louder clean melody L",
-      "stereo": true,
-      "code": "9*(t*((t>>9|t>>13)&15)&16)",
-      "leftCode": "9*(t*((t>>9|t>>13)&15)&16)",
-      "rightCode": "0"
-    },
-    {
-      "id": "d5c27fa5-2bf6-4d34-8e36-94c760ada5d2",
-      "name": "Base mono",
-      "stereo": false,
-      "code": "(t>>a|t>>3|t*2)",
-      "leftCode": "(t>>a|t>>3|t*2)",
-      "rightCode": "(t>>a|t>>3|t*2)"
-    },
-    {
-      "id": "cd756631-86b0-4b29-ae25-476868753d11",
-      "name": "Louder clean melody R",
-      "stereo": true,
-      "code": "0",
-      "leftCode": "0",
-      "rightCode": "9*(t*((t>>9|t>>13)&15)&16)"
-    }
-  ],
   "zoom": 0.19356766073405643,
   "loopStart": 48,
   "loopEnd": 80,

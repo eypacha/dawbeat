@@ -12,14 +12,13 @@
       "clips": [
         {
           "id": "feea4311-5fb0-427f-b387-68666eaa15bd",
-          "formula": "",
-          "formulaId": "5d4228df-72ca-4f4b-b89b-36c1407510e1",
-          "formulaName": null,
+          "formula": "t * a & 64",
+          "formulaName": "Bass",
           "start": 0,
           "duration": 24,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t * a & 64",
+          "rightFormula": "t * a & 64"
         }
       ]
     },
@@ -34,41 +33,37 @@
       "clips": [
         {
           "id": "1c0a4697-edb9-4156-873d-6203c768a2c9",
-          "formula": "",
-          "formulaId": "6fa8e764-714e-40d5-a2e9-65b722d49ffe",
+          "formula": "t >> 4",
           "formulaName": null,
           "start": 0,
           "duration": 3,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4"
         },
         {
           "id": "9f62f776-a7af-4efa-b31b-f16ee7017bdd",
-          "formula": "",
-          "formulaId": "6fa8e764-714e-40d5-a2e9-65b722d49ffe",
+          "formula": "t >> 4",
           "formulaName": null,
           "start": 4,
           "duration": 3,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4"
         },
         {
           "id": "5600f65c-0854-449f-8cc7-8fc8f6b92676",
-          "formula": "",
-          "formulaId": "6fa8e764-714e-40d5-a2e9-65b722d49ffe",
+          "formula": "t >> 4",
           "formulaName": null,
           "start": 8,
           "duration": 15,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4"
         },
         {
           "id": "cad814fc-7248-4c3b-bc54-39e605da79c6",
           "formula": "t >> 3",
-          "formulaId": null,
           "formulaName": "",
           "start": 23,
           "duration": 1,
@@ -88,113 +83,103 @@
       "clips": [
         {
           "id": "7369055f-635c-470f-8c22-16bd6e2b8768",
-          "formula": "",
-          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formula": "t * t & 64",
           "formulaName": null,
           "start": 8,
           "duration": 0.25,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64"
         },
         {
           "id": "b9d80400-049f-4914-b51a-7dfd5fd3857e",
-          "formula": "",
-          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formula": "t * t & 64",
           "formulaName": null,
           "start": 9.5,
           "duration": 0.25,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64"
         },
         {
           "id": "dcaf8dfc-2fef-4a2a-892e-ae6d09180a03",
-          "formula": "",
-          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formula": "t * t & 64",
           "formulaName": null,
           "start": 11,
           "duration": 0.25,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64"
         },
         {
           "id": "24178e55-b00c-412a-b3bf-5219f1ca7059",
-          "formula": "",
-          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formula": "t * t & 64",
           "formulaName": null,
           "start": 13,
           "duration": 0.25,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64"
         },
         {
           "id": "f5922629-68df-4ea7-bd18-ecfef23ebccd",
-          "formula": "",
-          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formula": "t * t & 64",
           "formulaName": null,
           "start": 14,
           "duration": 0.25,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64"
         },
         {
           "id": "d51cc6ed-16a4-40e1-ae87-a08503f38768",
-          "formula": "",
-          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formula": "t * t & 64",
           "formulaName": null,
           "start": 16,
           "duration": 0.25,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64"
         },
         {
           "id": "62840893-ef63-47bd-948c-d6c69f13687d",
-          "formula": "",
-          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formula": "t * t & 64",
           "formulaName": null,
           "start": 17.5,
           "duration": 0.25,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64"
         },
         {
           "id": "d348f587-3e2c-4671-8609-2f5358517216",
-          "formula": "",
-          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formula": "t * t & 64",
           "formulaName": null,
           "start": 19,
           "duration": 0.25,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64"
         },
         {
           "id": "23a4b634-d7d5-43e4-b206-3d245cdef1c3",
-          "formula": "",
-          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formula": "t * t & 64",
           "formulaName": null,
           "start": 21,
           "duration": 0.25,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64"
         },
         {
           "id": "7da4db0b-ef64-4936-aeb9-626e63aee824",
-          "formula": "",
-          "formulaId": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
+          "formula": "t * t & 64",
           "formulaName": null,
           "start": 22,
           "duration": 0.25,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64"
         }
       ]
     },
@@ -208,36 +193,33 @@
       "clips": [
         {
           "id": "dafdf0ae-20a5-4fb0-8fa5-5d3afedaa8ff",
-          "formula": "",
-          "formulaId": "2783704c-61c4-4793-ad9a-ddfcd7b73291",
+          "formula": "t*t>>11&25",
           "formulaName": null,
           "start": 16,
           "duration": 1.75,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25"
         },
         {
           "id": "6052cd4e-6608-4c01-abbb-12a365ce214a",
-          "formula": "",
-          "formulaId": "2783704c-61c4-4793-ad9a-ddfcd7b73291",
+          "formula": "t*t>>11&25",
           "formulaName": null,
           "start": 19,
           "duration": 1.75,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25"
         },
         {
           "id": "50360a41-8855-4adb-ab25-db83982c53fa",
-          "formula": "",
-          "formulaId": "2783704c-61c4-4793-ad9a-ddfcd7b73291",
+          "formula": "t*t>>11&25",
           "formulaName": null,
           "start": 22,
           "duration": 1.75,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25"
         }
       ]
     }
@@ -575,40 +557,6 @@
         null,
         null
       ]
-    }
-  ],
-  "formulas": [
-    {
-      "id": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
-      "name": "",
-      "code": "t * t & 64",
-      "leftCode": "t * t & 64",
-      "rightCode": "t * t & 64",
-      "stereo": false
-    },
-    {
-      "id": "6fa8e764-714e-40d5-a2e9-65b722d49ffe",
-      "name": "",
-      "code": "t >> 4",
-      "leftCode": "t >> 4",
-      "rightCode": "t >> 4",
-      "stereo": false
-    },
-    {
-      "id": "2783704c-61c4-4793-ad9a-ddfcd7b73291",
-      "name": "",
-      "code": "t*t>>11&25",
-      "leftCode": "t*t>>11&25",
-      "rightCode": "t*t>>11&25",
-      "stereo": false
-    },
-    {
-      "id": "5d4228df-72ca-4f4b-b89b-36c1407510e1",
-      "name": "Bass",
-      "code": "t * a & 64",
-      "leftCode": "t * a & 64",
-      "rightCode": "t * a & 64",
-      "stereo": false
     }
   ],
   "zoom": 1.147510581389071,

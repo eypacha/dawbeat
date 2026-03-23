@@ -464,9 +464,7 @@ function handleCreationPointerUp() {
 
   const nextClip = {
     ...creationPreview.value,
-    formula: '',
-    formulaId: null,
-    formulaName: null
+    formula: ''
   }
 
   dawStore.addClip(props.track.id, nextClip)

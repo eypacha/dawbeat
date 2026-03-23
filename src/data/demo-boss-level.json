@@ -12,52 +12,47 @@
       "clips": [
         {
           "id": "cfe14b28-83fc-4fc7-b511-0369e5197318",
-          "formula": "",
-          "formulaId": "d16638ac-fb54-4dd7-8c06-815da21990bb",
-          "formulaName": null,
+          "formula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
+          "formulaName": "Boss level #6",
           "start": 0,
           "duration": 16,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
+          "rightFormula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n"
         },
         {
           "id": "dd930be6-2f76-4dff-813c-a0f6c1c87282",
-          "formula": "",
-          "formulaId": "305153b1-ecc3-4ca3-a330-e4e9fcdc398f",
-          "formulaName": null,
+          "formula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
+          "formulaName": "Neurofunk",
           "start": 16,
           "duration": 32,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
+          "rightFormula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))"
         },
         {
           "id": "ba0f5542-4164-427d-a1d0-89344e78ff31",
-          "formula": "",
-          "formulaId": "d16638ac-fb54-4dd7-8c06-815da21990bb",
-          "formulaName": null,
+          "formula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
+          "formulaName": "Boss level #6",
           "start": 48,
           "duration": 16,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
+          "rightFormula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n"
         },
         {
           "id": "21778889-9fff-4880-9221-afd2c669fe03",
-          "formula": "",
-          "formulaId": "305153b1-ecc3-4ca3-a330-e4e9fcdc398f",
-          "formulaName": null,
+          "formula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
+          "formulaName": "Neurofunk",
           "start": 63.75,
           "duration": 16.5,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
+          "rightFormula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))"
         },
         {
           "id": "c2daf320-6edc-467a-bfe6-94f5f97c6efe",
           "formula": "t*((t&4096?t%65536<59392?0:t>>16:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
-          "formulaId": null,
           "formulaName": "Neurofunk 2",
           "start": 80.25,
           "duration": 31.75,
@@ -67,25 +62,23 @@
         },
         {
           "id": "304aaea7-1c09-4022-b202-643edc6ddff6",
-          "formula": "",
-          "formulaId": "305153b1-ecc3-4ca3-a330-e4e9fcdc398f",
-          "formulaName": null,
+          "formula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
+          "formulaName": "Neurofunk",
           "start": 112,
           "duration": 16.25,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
+          "rightFormula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))"
         },
         {
           "id": "85d0e7e6-7195-4d6a-baed-67b38d812848",
-          "formula": "",
-          "formulaId": "d16638ac-fb54-4dd7-8c06-815da21990bb",
-          "formulaName": null,
+          "formula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
+          "formulaName": "Boss level #6",
           "start": 128.25,
           "duration": 15.75,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
+          "rightFormula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n"
         }
       ]
     },
@@ -100,25 +93,23 @@
       "clips": [
         {
           "id": "68fde018-5959-47e4-b3ec-73809d2348a7",
-          "formula": "",
-          "formulaId": "be1b19a8-50fe-47fc-a41d-3b091f553ed0",
-          "formulaName": null,
+          "formula": "t>>(t&16384?t&4096?4:3:2)",
+          "formulaName": "Kick",
           "start": 16,
           "duration": 32,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t>>(t&16384?t&4096?4:3:2)",
+          "rightFormula": "t>>(t&16384?t&4096?4:3:2)"
         },
         {
           "id": "5f27252e-af7e-4562-8519-176b5349fa83",
-          "formula": "",
-          "formulaId": "be1b19a8-50fe-47fc-a41d-3b091f553ed0",
-          "formulaName": null,
+          "formula": "t>>(t&16384?t&4096?4:3:2)",
+          "formulaName": "Kick",
           "start": 96,
           "duration": 48,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t>>(t&16384?t&4096?4:3:2)",
+          "rightFormula": "t>>(t&16384?t&4096?4:3:2)"
         }
       ]
     },
@@ -133,19 +124,17 @@
       "clips": [
         {
           "id": "2ecadf15-9047-4f13-90a4-ac0018b55dac",
-          "formula": "",
-          "formulaId": "6fa8e764-714e-40d5-a2e9-65b722d49ffe",
+          "formula": "t >> 2",
           "formulaName": null,
           "start": 6,
           "duration": 2,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t >> 2",
+          "rightFormula": "t >> 2"
         },
         {
           "id": "95407f6b-18df-4bd2-935b-9b77a7a23c8e",
           "formula": "t>>(t&4096?3:4)",
-          "formulaId": null,
           "formulaName": "",
           "start": 8,
           "duration": 24,
@@ -156,7 +145,6 @@
         {
           "id": "31d867cb-9633-4f5f-80b5-c0db26cde4b1",
           "formula": "t>>(t&4096?3:4)",
-          "formulaId": null,
           "formulaName": "",
           "start": 56,
           "duration": 8,
@@ -166,36 +154,33 @@
         },
         {
           "id": "036d507b-6636-4bfd-9c42-fbdc222e7846",
-          "formula": "",
-          "formulaId": "b731021b-30d7-4508-bf32-761fb7eeac16",
+          "formula": "t*t>>12%25",
           "formulaName": null,
           "start": 108,
           "duration": 4,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t*t>>12%25",
+          "rightFormula": "t*t>>12%25"
         },
         {
           "id": "4c587dbd-1131-4fef-aa13-5756e05b4296",
-          "formula": "",
-          "formulaId": "b731021b-30d7-4508-bf32-761fb7eeac16",
+          "formula": "t*t>>12%25",
           "formulaName": null,
           "start": 116,
           "duration": 4,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t*t>>12%25",
+          "rightFormula": "t*t>>12%25"
         },
         {
           "id": "7d8cf6f9-ace2-4e5b-9991-3ae64dd5bf21",
-          "formula": "",
-          "formulaId": "b731021b-30d7-4508-bf32-761fb7eeac16",
+          "formula": "t*t>>12%25",
           "formulaName": null,
           "start": 124,
           "duration": 4,
           "formulaStereo": false,
-          "leftFormula": "",
-          "rightFormula": ""
+          "leftFormula": "t*t>>12%25",
+          "rightFormula": "t*t>>12%25"
         }
       ]
     }
@@ -515,72 +500,6 @@
         null,
         null
       ]
-    }
-  ],
-  "formulas": [
-    {
-      "id": "0e034a00-3c2b-4577-aca9-0e72ffe9c34a",
-      "name": "",
-      "code": "t * t & 64",
-      "leftCode": "t * t & 64",
-      "rightCode": "t * t & 64",
-      "stereo": false
-    },
-    {
-      "id": "6fa8e764-714e-40d5-a2e9-65b722d49ffe",
-      "name": "",
-      "code": "t >> 2",
-      "leftCode": "t >> 2",
-      "rightCode": "t >> 2",
-      "stereo": false
-    },
-    {
-      "id": "2783704c-61c4-4793-ad9a-ddfcd7b73291",
-      "name": "",
-      "code": "t*t>>11&25",
-      "leftCode": "t*t>>11&25",
-      "rightCode": "t*t>>11&25",
-      "stereo": false
-    },
-    {
-      "id": "5d4228df-72ca-4f4b-b89b-36c1407510e1",
-      "name": "Bass",
-      "code": "t * a & 64",
-      "leftCode": "t * a & 64",
-      "rightCode": "t * a & 64",
-      "stereo": false
-    },
-    {
-      "id": "d16638ac-fb54-4dd7-8c06-815da21990bb",
-      "name": "Boss level #6",
-      "code": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
-      "leftCode": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
-      "rightCode": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
-      "stereo": false
-    },
-    {
-      "id": "305153b1-ecc3-4ca3-a330-e4e9fcdc398f",
-      "name": "Neurofunk",
-      "code": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
-      "leftCode": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
-      "rightCode": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
-      "stereo": false
-    },
-    {
-      "id": "be1b19a8-50fe-47fc-a41d-3b091f553ed0",
-      "name": "Kick",
-      "code": "t>>(t&16384?t&4096?4:3:2)",
-      "leftCode": "t>>(t&16384?t&4096?4:3:2)",
-      "rightCode": "t>>(t&16384?t&4096?4:3:2)",
-      "stereo": false
-    },
-    {
-      "id": "b731021b-30d7-4508-bf32-761fb7eeac16",
-      "name": "",
-      "code": "t*t>>12%25",
-      "leftCode": "t*t>>12%25",
-      "rightCode": "t*t>>12%25",
-      "stereo": false
     }
   ],
   "zoom": 0.3075461304187775,
