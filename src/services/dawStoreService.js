@@ -214,18 +214,14 @@ export function createTrackClip(clip) {
   return {
     id: clip.id ?? createClipId(),
     ...clip,
-    ...formulaFields,
-    formulaId: clip.formulaId ?? null,
-    formulaName: clip.formulaName ?? null
+    ...formulaFields
   }
 }
 
 export function createVariableTrackClip(clip = {}) {
   return createTrackClip({
     ...clip,
-    formula: typeof clip.formula === 'string' ? clip.formula : DEFAULT_VARIABLE_CLIP_FORMULA,
-    formulaId: null,
-    formulaName: null
+    formula: typeof clip.formula === 'string' ? clip.formula : DEFAULT_VARIABLE_CLIP_FORMULA
   })
 }
 

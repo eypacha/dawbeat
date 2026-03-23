@@ -247,7 +247,6 @@ function renderTimelineChannels(
       const activeFormula = getActiveFormula(
         timeTicks,
         state.tracks,
-        state.formulas,
         state.variableTracks,
         state.valueTrackerTracks
       )

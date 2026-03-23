@@ -17,7 +17,6 @@
       <Toolbar />
 
       <main class="app-main-layout min-h-0 flex-1 gap-4 overflow-hidden" :style="mainLayoutStyle">
-        <FormulaLibrary :collapsed="libraryCollapsed" @toggle-collapse="toggleLibraryCollapsed" />
         <Timeline />
         <EffectsPanel :collapsed="effectsCollapsed" @toggle-collapse="toggleEffectsCollapsed" />
       </main>
@@ -136,7 +135,6 @@ import { storeToRefs } from 'pinia'
 import StartScreen from '@/components/boot/StartScreen.vue'
 import EffectsPanel from '@/components/effects/EffectsPanel.vue'
 import EvaluatedPanel from '@/components/evaluated/EvaluatedPanel.vue'
-import FormulaLibrary from '@/components/library/FormulaLibrary.vue'
 import AutomationCurveMenu from '@/components/timeline/AutomationCurveMenu.vue'
 import Timeline from '@/components/timeline/Timeline.vue'
 import TrackUnionOperatorMenu from '@/components/timeline/TrackUnionOperatorMenu.vue'
@@ -160,10 +158,8 @@ import {
   syncAutomationCompanionHostControllersFromStore
 } from '@/services/automationCompanionService'
 import {
-  getFormulaById,
   getFormulaDraft,
-  resolveClipFormulaDraft,
-  resolveClipFormulaName
+  resolveClipFormulaDraft
 } from '@/services/formulaService'
 import { initKeyboardShortcuts } from '@/services/keyboardShortcuts'
 import { disposeMidiClock, registerMidiClockTransport } from '@/services/midiClockService'
@@ -213,14 +209,11 @@ let disposeMidiClockTransport = null
 const transportPlayback = useTransportPlayback()
 const { enableAudio, stop } = transportPlayback
 const effectsCollapsed = ref(false)
-const libraryCollapsed = ref(false)
 const viewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWidth)
 const {
   audioReady,
   automationLanes,
   editingClipId,
-  editingFormulaId,
-  formulas,
   selectedAutomationPoint,
   selectedClipId,
   selectedClipIds,
@@ -255,31 +248,7 @@ const editingClipFormulaDraft = computed(() => {
     }
   }
 
-  return resolveClipFormulaDraft(editingClipRecord.value.clip, formulas.value)
-})
-
-const editingClipFormulaName = computed(() => {
-  if (!editingClipRecord.value?.clip || editingClipRecord.value.laneType !== 'track') {
-    return ''
-  }
-
-  return resolveClipFormulaName(editingClipRecord.value.clip, formulas.value)
-})
-
-const editingLibraryFormulaDraft = computed(() => {
-  if (!editingFormulaId.value) {
-    return getFormulaDraft()
-  }
-
-  return getFormulaDraft(getFormulaById(formulas.value, editingFormulaId.value))
-})
-
-const editingLibraryFormulaName = computed(() => {
-  if (!editingFormulaId.value) {
-    return ''
-  }
-
-  return getFormulaById(formulas.value, editingFormulaId.value)?.name ?? ''
+  return resolveClipFormulaDraft(editingClipRecord.value.clip)
 })
 
 const editingValueTrackerClip = computed(() =>
@@ -319,59 +288,25 @@ const editingValueTrackerPlayheadStepIndex = computed(() => {
   )
 })
 const isFormulaDialogVisible = computed(
-  () => Boolean(editingFormulaId.value || (editingClipId.value && editingClipRecord.value?.laneType !== 'valueTracker'))
+  () => Boolean(editingClipId.value && editingClipRecord.value?.laneType !== 'valueTracker')
 )
 const isValueTrackerDialogVisible = computed(
   () => Boolean(editingClipId.value && editingClipRecord.value?.laneType === 'valueTracker')
 )
 
-const editingFormulaValue = computed(() => {
-  if (editingClipId.value) {
-    return editingClipFormulaDraft.value.code
-  }
+const editingFormulaValue = computed(() => editingClipFormulaDraft.value.code)
 
-  return editingLibraryFormulaDraft.value.code
-})
+const editingFormulaLeftValue = computed(() => editingClipFormulaDraft.value.leftCode)
 
-const editingFormulaLeftValue = computed(() => {
-  if (editingClipId.value) {
-    return editingClipFormulaDraft.value.leftCode
-  }
+const editingFormulaRightValue = computed(() => editingClipFormulaDraft.value.rightCode)
 
-  return editingLibraryFormulaDraft.value.leftCode
-})
+const editingFormulaStereo = computed(() => editingClipFormulaDraft.value.stereo)
 
-const editingFormulaRightValue = computed(() => {
-  if (editingClipId.value) {
-    return editingClipFormulaDraft.value.rightCode
-  }
+const editingFormulaName = computed(() => '')
 
-  return editingLibraryFormulaDraft.value.rightCode
-})
-
-const editingFormulaStereo = computed(() => {
-  if (editingClipId.value) {
-    return editingClipFormulaDraft.value.stereo
-  }
-
-  return editingLibraryFormulaDraft.value.stereo
-})
-
-const editingFormulaName = computed(() => {
-  if (editingClipId.value) {
-    return editingClipFormulaName.value
-  }
-
-  return editingLibraryFormulaName.value
-})
-
-const showFormulaDialogNameField = computed(() => editingClipRecord.value?.laneType !== 'variable')
+const showFormulaDialogNameField = computed(() => false)
 const showFormulaDialogStereoToggle = computed(() => editingClipRecord.value?.laneType !== 'variable')
 const formulaDialogTitle = computed(() => {
-  if (!editingClipId.value) {
-    return 'Edit Library Formula'
-  }
-
   return editingClipRecord.value?.laneType === 'variable'
     ? 'Edit Variable Formula'
     : 'Edit Clip Formula'
@@ -383,8 +318,7 @@ const automationCompanionSelectedLane = computed(() =>
     : null
 )
 const mainLayoutStyle = computed(() => ({
-  '--effects-width': effectsCollapsed.value ? '56px' : '304px',
-  '--library-width': libraryCollapsed.value ? '56px' : '320px'
+  '--effects-width': effectsCollapsed.value ? '56px' : '304px'
 }))
 
 function syncViewportWidth() {
@@ -397,10 +331,6 @@ function syncViewportWidth() {
 
 async function handleStart() {
   await enableAudio()
-}
-
-function toggleLibraryCollapsed() {
-  libraryCollapsed.value = !libraryCollapsed.value
 }
 
 function toggleEffectsCollapsed() {
@@ -510,8 +440,6 @@ function handleContextMenuSelect(action, item) {
       dawStore.addClip(item.trackId, {
         duration: item.duration ?? 1,
         formula: '',
-        formulaId: null,
-        formulaName: null,
         start: item.start ?? 0
       })
     })
@@ -582,11 +510,6 @@ function handleContextMenuSelect(action, item) {
     return
   }
 
-  if (action === 'add-clip-formula-to-library') {
-    dawStore.addClipFormulaToLibrary(item.trackId, item.clipId)
-    return
-  }
-
   if (action === 'mutate-clip-formula') {
     const didMutate = dawStore.mutateClipFormula(item.trackId, item.clipId)
 
@@ -611,11 +534,6 @@ function handleContextMenuSelect(action, item) {
 
   if (action === 'delete-clip') {
     dawStore.removeClip(item.clipId)
-    return
-  }
-
-  if (action === 'detach-clip-formula') {
-    dawStore.detachClipFormula(item.trackId, item.clipId)
     return
   }
 
@@ -733,7 +651,6 @@ function confirmValueTrackerTrackBinding(nextBinding) {
 
 function closeFormulaDialog() {
   dawStore.setEditingClip(null)
-  dawStore.setEditingFormula(null)
 }
 
 function closeValueTrackerDialog() {
@@ -784,11 +701,6 @@ function evaluateFormulaDialog(nextDraft) {
 
   if (editingClipId.value) {
     dawStore.saveClipFormulaDraft(editingClipId.value, nextDraft)
-    return
-  }
-
-  if (editingFormulaId.value) {
-    dawStore.updateFormula(editingFormulaId.value, nextDraft)
   }
 }
 
@@ -798,16 +710,6 @@ function saveFormulaDialog(nextDraft) {
       dawStore.ensureInitializedValueTrackerTracks(nextDraft.valueTrackerInitializers)
       dawStore.ensureInitializedVariableTracks(nextDraft.variableInitializers)
       dawStore.saveClipFormulaDraftAndName(editingClipId.value, nextDraft)
-    })
-    closeFormulaDialog()
-    return
-  }
-
-  if (editingFormulaId.value) {
-    dawStore.recordHistoryStep('save-library-formula', () => {
-      dawStore.ensureInitializedValueTrackerTracks(nextDraft.valueTrackerInitializers)
-      dawStore.ensureInitializedVariableTracks(nextDraft.variableInitializers)
-      dawStore.updateFormula(editingFormulaId.value, nextDraft)
     })
     closeFormulaDialog()
   }
@@ -858,13 +760,13 @@ onBeforeUnmount(() => {
 
 @media (min-width: 1024px) {
   .app-main-layout {
-    grid-template-columns: var(--library-width, 320px) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) var(--effects-width, 304px);
   }
 }
 
 @media (min-width: 1280px) {
   .app-main-layout {
-    grid-template-columns: var(--library-width, 320px) minmax(0, 1fr) var(--effects-width, 304px);
+    grid-template-columns: minmax(0, 1fr) var(--effects-width, 304px);
   }
 }
 </style>

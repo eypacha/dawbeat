@@ -119,7 +119,6 @@ let waterfallFormulaHistory = []
 const dawStore = useDawStore()
 const {
   evalEffects,
-  formulas,
   sampleRate,
   tickSize,
   time,
@@ -133,7 +132,6 @@ const activeFormula = computed(() =>
   getActiveFormula(
     time.value,
     tracks.value,
-    formulas.value,
     variableTracks.value,
     valueTrackerTracks.value,
     valueTrackerLiveInputs.value

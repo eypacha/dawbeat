@@ -77,12 +77,7 @@ import {
 } from '@/services/evalEffectService'
 import {
   createClipFormulaFields,
-  createFormula,
-  getClipFormulaFieldsFromDraft,
-  getClipFormulaFieldsFromFormula,
-  getFormulaFieldsFromClipFormula,
-  getFormulaById,
-  mergeFormulaUpdates
+  getClipFormulaFieldsFromDraft
 } from '@/services/formulaService'
 import { mutateFormula } from '@/services/formulaMutationService'
 import { DEFAULT_BPM_MEASURE, normalizeBpmMeasureExpression } from '@/services/bpmService'
@@ -156,7 +151,6 @@ function createEmptyProject() {
     automationLanes: getDefaultAutomationLanes(),
     bpmMeasure: DEFAULT_BPM_MEASURE,
     evalEffects: [],
-    formulas: [],
     loopEnabled: false,
     loopStart: 0,
     loopEnd: 16,
@@ -276,8 +270,6 @@ function createInitialState() {
     clipClipboard: null,
     evalEffects: project.evalEffects,
     editingClipId: null,
-    editingFormulaId: null,
-    formulas: project.formulas,
     loopEnabled: project.loopEnabled,
     loopStart: project.loopStart,
     loopEnd: project.loopEnd,
@@ -301,7 +293,6 @@ function createInitialState() {
     historyTransaction: null,
     selectedAutomationPoint: null,
     selectedClipIds: [],
-    selectedFormulaId: null,
     selectedClipId: null,
     selectedTrackId: null,
     selectedTimelineSectionLabelId: null,
@@ -321,9 +312,7 @@ function clearTransientSelectionState(store) {
   store.automationRecordingArmed = false
   store.clipDragPreview = null
   store.editingClipId = null
-  store.editingFormulaId = null
   store.selectedAutomationPoint = null
-  store.selectedFormulaId = null
   store.selectedTrackId = null
   store.selectedTimelineSectionLabelId = null
   store.selectedValueTrackerLibraryItemId = null
@@ -460,7 +449,6 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   store.automationLanes = normalizedProject.automationLanes
   store.bpmMeasure = normalizedProject.bpmMeasure
   store.evalEffects = normalizedProject.evalEffects
-  store.formulas = normalizedProject.formulas
   store.loopEnabled = normalizedProject.loopEnabled
   store.loopStart = normalizedProject.loopStart
   store.loopEnd = normalizedProject.loopEnd
@@ -582,7 +570,7 @@ function sortClipEntriesForClipboard(tracks, variableTracks, valueTrackerTracks,
   })
 }
 
-function buildClipClipboard(entries, tracks, variableTracks, valueTrackerTracks, formulas) {
+function buildClipClipboard(entries, tracks, variableTracks, valueTrackerTracks) {
   if (!entries.length) {
     return null
   }
@@ -595,19 +583,11 @@ function buildClipClipboard(entries, tracks, variableTracks, valueTrackerTracks,
     anchorStart,
     anchorTickOffset: anchorStart - anchorTickStart,
     clips: sortedEntries.map((entry) => {
-      const referencedFormula = entry.clip.formulaId
-        ? getFormulaById(formulas, entry.clip.formulaId)
-        : null
-      const inlineClipFormulaFields = referencedFormula
-        ? getClipFormulaFieldsFromFormula(referencedFormula)
-        : createClipFormulaFields(entry.clip)
+      const inlineClipFormulaFields = createClipFormulaFields(entry.clip)
 
       return {
         duration: entry.clip.duration,
         ...inlineClipFormulaFields,
-        formulaId: entry.laneType === 'track' ? referencedFormula?.id ?? null : null,
-        formulaName:
-          entry.laneType === 'track' ? referencedFormula?.name ?? entry.clip.formulaName ?? null : null,
         stepSubdivision: entry.laneType === 'valueTracker' ? entry.clip.stepSubdivision : null,
         valueTrackerLibraryItemId:
           entry.laneType === 'valueTracker' ? entry.clip.valueTrackerLibraryItemId ?? null : null,
@@ -987,7 +967,6 @@ export const useDawStore = defineStore('dawStore', {
       this.selectedAutomationPoint = null
       this.selectedClipIds = []
       this.selectedClipId = null
-      this.selectedFormulaId = null
       this.selectedTrackId = null
       this.selectedTimelineSectionLabelId = timelineSectionLabel.id
     },
@@ -1999,8 +1978,7 @@ export const useDawStore = defineStore('dawStore', {
         selectedClipEntries,
         this.tracks,
         this.variableTracks,
-        this.valueTrackerTracks,
-        this.formulas
+        this.valueTrackerTracks
       )
 
       if (!nextClipboard) {
@@ -2026,8 +2004,7 @@ export const useDawStore = defineStore('dawStore', {
         selectedClipEntries,
         this.tracks,
         this.variableTracks,
-        this.valueTrackerTracks,
-        this.formulas
+        this.valueTrackerTracks
       )
 
       if (!nextClipboard) {
@@ -2057,7 +2034,6 @@ export const useDawStore = defineStore('dawStore', {
         const touchedLaneEntries = []
         const pasteAnchorStart = getPasteAnchorStart(this.time, clipboard)
         let pastedAnchorTrackId = null
-        let pastedAnchorFormulaId = null
 
         this.editingClipId = null
 
@@ -2074,9 +2050,6 @@ export const useDawStore = defineStore('dawStore', {
             desiredStart,
             clipboardClip.duration
           )
-          const referencedFormula = clipboardClip.formulaId
-            ? getFormulaById(this.formulas, clipboardClip.formulaId)
-            : null
 
           const nextClip = targetEntry.laneType === 'variable'
             ? createVariableTrackClip({
@@ -2094,9 +2067,7 @@ export const useDawStore = defineStore('dawStore', {
                 })
             : createTrackClip({
                 duration: clipboardClip.duration,
-                ...(referencedFormula ? {} : createClipFormulaFields(clipboardClip)),
-                formulaId: referencedFormula?.id ?? null,
-                formulaName: referencedFormula?.name ?? clipboardClip.formulaName ?? null,
+                ...createClipFormulaFields(clipboardClip),
                 start: nextStart
               })
 
@@ -2106,7 +2077,6 @@ export const useDawStore = defineStore('dawStore', {
 
           if (pastedAnchorTrackId === null) {
             pastedAnchorTrackId = targetEntry.laneType === 'track' ? targetEntry.lane.id : null
-            pastedAnchorFormulaId = targetEntry.laneType === 'track' ? nextClip.formulaId ?? null : null
           }
         }
 
@@ -2120,17 +2090,7 @@ export const useDawStore = defineStore('dawStore', {
 
         this.setSelectedClips(pastedClipIds)
         this.selectedTrackId = pastedAnchorTrackId
-        this.selectedFormulaId = pastedAnchorFormulaId
         return pastedClipIds
-      })
-    },
-
-    addFormula(formula = {}) {
-      return this.recordHistoryStep('add-formula', () => {
-        const nextFormula = createFormula(formula)
-        this.formulas.push(nextFormula)
-        this.selectedFormulaId = nextFormula.id
-        return nextFormula.id
       })
     },
 
@@ -2250,16 +2210,6 @@ export const useDawStore = defineStore('dawStore', {
       }
     },
 
-    updateFormula(formulaId, updates) {
-      const formula = getFormulaById(this.formulas, formulaId)
-
-      if (!formula) {
-        return
-      }
-
-      Object.assign(formula, mergeFormulaUpdates(formula, updates))
-    },
-
     updateValueTrackerLibraryItem(valueTrackerLibraryItemId, updates) {
       const valueTrackerLibraryItem = this.valueTrackerLibraryItems.find(
         (item) => item.id === valueTrackerLibraryItemId
@@ -2306,38 +2256,6 @@ export const useDawStore = defineStore('dawStore', {
       valueTrackerLibraryItem.stepSubdivision = normalizedValueTrackerLibraryItem.stepSubdivision
       valueTrackerLibraryItem.values = normalizedValueTrackerLibraryItem.values
       syncValueTrackerClipsLinkedToLibraryItem(this, valueTrackerLibraryItem.id)
-    },
-
-    removeFormula(formulaId) {
-      return this.recordHistoryStep('remove-formula', () => {
-        const formula = getFormulaById(this.formulas, formulaId)
-
-        if (!formula) {
-          return
-        }
-
-        for (const track of this.tracks) {
-          for (const clip of track.clips) {
-            if (clip.formulaId !== formulaId) {
-              continue
-            }
-
-            Object.assign(clip, getClipFormulaFieldsFromFormula(formula))
-            clip.formulaName = formula.name
-            clip.formulaId = null
-          }
-        }
-
-        this.formulas = this.formulas.filter((entry) => entry.id !== formulaId)
-
-        if (this.selectedFormulaId === formulaId) {
-          this.selectedFormulaId = null
-        }
-
-        if (this.editingFormulaId === formulaId) {
-          this.editingFormulaId = null
-        }
-      })
     },
 
     removeValueTrackerLibraryItem(valueTrackerLibraryItemId) {
@@ -2588,7 +2506,6 @@ export const useDawStore = defineStore('dawStore', {
 
         this.tracks.splice(trackIndex + 1, 0, duplicatedTrack)
         this.clearClipSelection()
-        this.selectedFormulaId = null
         this.selectedTrackId = duplicatedTrack.id
         return duplicatedTrack.id
       })
@@ -2706,19 +2623,13 @@ export const useDawStore = defineStore('dawStore', {
 
       const nextClip = createTrackClip({
         ...clip,
-        formula: clip.formula ?? null,
-        formulaId: clip.formulaId ?? null,
-        formulaName: clip.formulaName ?? null
+        formula: clip.formula ?? null
       })
 
       track.clips.push(nextClip)
       sortTrackClips(track)
       this.setSelectedClips([nextClip.id])
       this.selectedTrackId = trackId
-
-      if (nextClip.formulaId) {
-        this.selectedFormulaId = nextClip.formulaId
-      }
 
       return nextClip.id
     },
@@ -2739,7 +2650,6 @@ export const useDawStore = defineStore('dawStore', {
       sortVariableTrackClips(variableTrack)
       this.setSelectedClips([nextClip.id])
       this.selectedTrackId = null
-      this.selectedFormulaId = null
       return nextClip.id
     },
 
@@ -2770,7 +2680,6 @@ export const useDawStore = defineStore('dawStore', {
       sortValueTrackerTrackClips(valueTrackerTrack)
       this.setSelectedClips([nextClip.id])
       this.selectedTrackId = null
-      this.selectedFormulaId = null
       return nextClip.id
     },
 
@@ -2788,10 +2697,6 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       Object.assign(clip, updates)
-
-      if (clip.formulaId) {
-        this.selectedFormulaId = clip.formulaId
-      }
     },
 
     updateVariableClip(variableTrackName, clipId, updates) {
@@ -2810,7 +2715,6 @@ export const useDawStore = defineStore('dawStore', {
       Object.assign(clip, updates, {
         formula: typeof updates?.formula === 'string' ? updates.formula : clip.formula
       })
-      this.selectedFormulaId = null
     },
 
     updateValueTrackerClip(valueTrackerTrackId, clipId, updates) {
@@ -2849,7 +2753,6 @@ export const useDawStore = defineStore('dawStore', {
           ? normalizeValueTrackerValues(updates.values, nextDuration, nextStepSubdivision)
           : clip.values
       })
-      this.selectedFormulaId = null
     },
 
     saveClipFormulaDraft(clipId, draft) {
@@ -2874,11 +2777,7 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      if (clip.formulaId) {
-        this.updateFormula(clip.formulaId, draft)
-      } else {
-        Object.assign(clip, getClipFormulaFieldsFromDraft(draft))
-      }
+      Object.assign(clip, getClipFormulaFieldsFromDraft(draft))
     },
 
     saveClipFormulaDraftAndName(clipId, draft) {
@@ -2903,12 +2802,8 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      if (clip.formulaId) {
-        this.updateFormula(clip.formulaId, draft)
-      } else {
-        Object.assign(clip, getClipFormulaFieldsFromDraft(draft))
-        clip.formulaName = draft.name
-      }
+      Object.assign(clip, getClipFormulaFieldsFromDraft(draft))
+      clip.formulaName = draft.name
     },
 
     saveValueTrackerClipDraft(clipId, draft) {
@@ -2943,10 +2838,6 @@ export const useDawStore = defineStore('dawStore', {
         result.clip.duration,
         result.clip.stepSubdivision
       )
-    },
-
-    setEditingFormula(formulaId) {
-      this.editingFormulaId = formulaId
     },
 
     moveClip(trackId, clipId, nextStart, shouldSnap = true) {
@@ -3055,7 +2946,6 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       this.selectedTrackId = anchorEntry.laneType === 'track' ? anchorEntry.laneId : null
-      this.selectedFormulaId = anchorEntry.laneType === 'track' ? anchorEntry.clip.formulaId ?? null : null
     },
 
     nudgeSelectedClips(deltaTicks, shouldSnap = true, anchorClipId = this.selectedClipId) {
@@ -3365,10 +3255,6 @@ export const useDawStore = defineStore('dawStore', {
       this.selectedTrackId = trackId
       this.setSelectedClips([duplicateClipId])
 
-      if (duplicateClip.formulaId) {
-        this.selectedFormulaId = duplicateClip.formulaId
-      }
-
       return duplicateClipId
     },
 
@@ -3391,7 +3277,6 @@ export const useDawStore = defineStore('dawStore', {
       variableTrack.clips.push(duplicateClip)
       sortVariableTrackClips(variableTrack)
       this.selectedTrackId = null
-      this.selectedFormulaId = null
       this.setSelectedClips([duplicateClipId])
       return duplicateClipId
     },
@@ -3415,7 +3300,6 @@ export const useDawStore = defineStore('dawStore', {
       valueTrackerTrack.clips.push(duplicateClip)
       sortValueTrackerTrackClips(valueTrackerTrack)
       this.selectedTrackId = null
-      this.selectedFormulaId = null
       this.setSelectedClips([duplicateClipId])
       return duplicateClipId
     },
@@ -3462,44 +3346,9 @@ export const useDawStore = defineStore('dawStore', {
 
       if (anchorEntry) {
         this.selectedTrackId = anchorEntry.laneType === 'track' ? anchorEntry.laneId : null
-        this.selectedFormulaId = anchorEntry.laneType === 'track' ? anchorEntry.clip.formulaId ?? null : null
       }
 
       return duplicatedClipIds
-    },
-
-    addClipFormulaToLibrary(trackId, clipId) {
-      return this.recordHistoryStep('add-clip-formula-to-library', () => {
-        const track = findTrack(this.tracks, trackId)
-
-        if (!track) {
-          return null
-        }
-
-        const clip = findClip(track, clipId)
-
-        if (!clip) {
-          return null
-        }
-
-        if (clip.formulaId) {
-          this.selectedFormulaId = clip.formulaId
-          return clip.formulaId
-        }
-
-        const formulaId = this.addFormula({
-          ...getFormulaFieldsFromClipFormula(clip),
-          name: clip.formulaName ?? '',
-        })
-
-        clip.formulaId = formulaId
-        clip.formula = ''
-        clip.formulaStereo = false
-        clip.formulaName = null
-        clip.leftFormula = ''
-        clip.rightFormula = ''
-        return formulaId
-      })
     },
 
     addValueTrackerClipToLibrary(valueTrackerTrackId, clipId) {
@@ -3564,61 +3413,6 @@ export const useDawStore = defineStore('dawStore', {
       })
     },
 
-    assignFormulaToClip(trackId, clipId, formulaId) {
-      return this.recordHistoryStep('assign-formula-to-clip', () => {
-        const track = findTrack(this.tracks, trackId)
-        const formula = getFormulaById(this.formulas, formulaId)
-
-        if (!track || !formula) {
-          return
-        }
-
-        const clip = findClip(track, clipId)
-
-        if (!clip) {
-          return
-        }
-
-        clip.formulaId = formula.id
-        clip.formula = ''
-        clip.formulaStereo = false
-        clip.formulaName = null
-        clip.leftFormula = ''
-        clip.rightFormula = ''
-        this.setSelectedClips([clip.id])
-        this.selectedTrackId = trackId
-        this.selectedFormulaId = formula.id
-      })
-    },
-
-    detachClipFormula(trackId, clipId) {
-      return this.recordHistoryStep('detach-clip-formula', () => {
-        const track = findTrack(this.tracks, trackId)
-
-        if (!track) {
-          return
-        }
-
-        const clip = findClip(track, clipId)
-
-        if (!clip || !clip.formulaId) {
-          return
-        }
-
-        const formula = getFormulaById(this.formulas, clip.formulaId)
-
-        if (!formula) {
-          return
-        }
-
-        Object.assign(clip, getClipFormulaFieldsFromFormula(formula))
-        clip.formulaName = formula.name
-        clip.formulaId = null
-        this.setSelectedClips([clip.id])
-        this.selectedTrackId = trackId
-        this.selectedFormulaId = null
-      })
-    },
 
     mutateClipFormula(trackId, clipId) {
       return this.recordHistoryStep('mutate-clip-formula', () => {
@@ -3632,18 +3426,6 @@ export const useDawStore = defineStore('dawStore', {
 
         if (!clip) {
           return false
-        }
-
-        if (clip.formulaId) {
-          const formula = getFormulaById(this.formulas, clip.formulaId)
-
-          if (!formula) {
-            return false
-          }
-
-          Object.assign(clip, getClipFormulaFieldsFromFormula(formula))
-          clip.formulaName = formula.name
-          clip.formulaId = null
         }
 
         let didMutate = false
@@ -3683,7 +3465,6 @@ export const useDawStore = defineStore('dawStore', {
 
         this.setSelectedClips([clip.id])
         this.selectedTrackId = trackId
-        this.selectedFormulaId = null
         return true
       })
     },
@@ -3739,24 +3520,6 @@ export const useDawStore = defineStore('dawStore', {
 
     selectClip(clipId) {
       this.setSelectedClips(clipId ? [clipId] : [])
-    },
-
-    selectFormula(formulaId) {
-      this.clearAutomationPointSelection()
-      this.clearTimelineSectionLabelSelection()
-
-      if (!formulaId) {
-        this.selectedFormulaId = null
-        return
-      }
-
-      const formula = getFormulaById(this.formulas, formulaId)
-
-      if (!formula) {
-        return
-      }
-
-      this.selectedFormulaId = formula.id
     },
 
     selectValueTrackerLibraryItem(valueTrackerLibraryItemId) {

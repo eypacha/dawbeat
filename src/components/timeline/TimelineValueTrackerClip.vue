@@ -199,21 +199,17 @@ function handleSelect(payload = {}) {
 
   if (shiftSelectionAction === 'remove') {
     dawStore.removeSelectedClip(props.clip.id)
-    dawStore.selectFormula(null)
     return
   }
 
   if (shiftSelectionAction === 'add') {
     dawStore.addSelectedClip(props.clip.id)
-    dawStore.selectFormula(null)
     return
   }
 
   if (!preserveMultiSelection || !isPartOfMultipleSelection.value) {
     dawStore.selectClip(props.clip.id)
   }
-
-  dawStore.selectFormula(null)
 }
 
 let cleanupInteraction = () => {}

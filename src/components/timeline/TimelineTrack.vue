@@ -80,9 +80,6 @@
       :class="laneClassName"
       :style="laneStyle"
       @contextmenu="handleLaneContextMenu"
-      @dragover.prevent="handleLaneDragOver"
-      @dragleave="handleLaneDragLeave"
-      @drop.prevent="handleLaneDrop"
       @pointerdown="handleLanePointerDown"
     >
       <TimelineClipPreview
@@ -185,7 +182,6 @@ const { openContextMenu } = useContextMenu()
 const { canPasteClipsAtPlayhead, clipDragPreview, pixelsPerTick, selectedTrackId, tracks } = storeToRefs(dawStore)
 const laneElement = ref(null)
 const creationPreview = ref(null)
-const isFormulaDropTarget = ref(false)
 
 let creationAnchorTick = 0
 let creationBounds = null
@@ -219,10 +215,6 @@ const trackControlButtonSizeClassName = computed(() =>
 const showUnionOperator = computed(() => !isCompactHeader.value)
 
 const laneClassName = computed(() => {
-  if (isFormulaDropTarget.value) {
-    return 'opacity-100 ring-1 ring-inset ring-[var(--track-color-light)]'
-  }
-
   return isAudible.value ? 'opacity-100' : 'opacity-35'
 })
 
@@ -441,46 +433,6 @@ function handleLanePointerDown(event) {
   window.addEventListener('pointercancel', handleCreationPointerCancel)
 }
 
-function handleLaneDragOver(event) {
-  if (!getDroppedFormulaId(event)) {
-    return
-  }
-
-  isFormulaDropTarget.value = true
-}
-
-function handleLaneDragLeave(event) {
-  if (event.currentTarget?.contains(event.relatedTarget)) {
-    return
-  }
-
-  isFormulaDropTarget.value = false
-}
-
-function handleLaneDrop(event) {
-  const formulaId = getDroppedFormulaId(event)
-  isFormulaDropTarget.value = false
-
-  if (!formulaId) {
-    return
-  }
-
-  const dragOffsetPx = getDroppedFormulaOffsetPx(event)
-  const start = clampClipPlacementStart(
-    props.track,
-    getPointerTick(event, dragOffsetPx),
-    DEFAULT_FORMULA_DROP_DURATION
-  )
-
-  dawStore.recordHistoryStep('drop-formula-to-track', () => {
-    dawStore.addClip(props.track.id, {
-      duration: DEFAULT_FORMULA_DROP_DURATION,
-      formulaId,
-      start
-    })
-  })
-}
-
 function handleCreationPointerMove(event) {
   if (!creationBounds) {
     return
@@ -542,7 +494,6 @@ function getPointerTick(event, offsetPx = 0) {
 }
 
 function cleanupCreation() {
-  isFormulaDropTarget.value = false
   creationPreview.value = null
   creationBounds = null
   creationHistoryActive = false
@@ -550,23 +501,6 @@ function cleanupCreation() {
   window.removeEventListener('pointermove', handleCreationPointerMove)
   window.removeEventListener('pointerup', handleCreationPointerUp)
   window.removeEventListener('pointercancel', handleCreationPointerCancel)
-}
-
-function getDroppedFormulaId(event) {
-  const formulaId = event.dataTransfer?.getData('formulaId')
-
-  if (formulaId) {
-    return formulaId
-  }
-
-  return event.dataTransfer?.getData('text/plain') || ''
-}
-
-function getDroppedFormulaOffsetPx(event) {
-  const rawOffset = event.dataTransfer?.getData('formulaDragOffsetPx')
-  const offset = Number(rawOffset)
-
-  return Number.isFinite(offset) ? offset : 0
 }
 
 function isTrackReorderDragEvent(event) {

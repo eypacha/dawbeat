@@ -18,7 +18,7 @@ export function useTransportPlayback() {
   }
 
   const dawStore = useDawStore()
-  const { audioEffects, audioReady, automationLanes, automationLiveOverrides, bpmMeasure, evalEffects, formulas, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, valueTrackerLiveInputs, valueTrackerRecordingSession, valueTrackerTracks, variableTracks } =
+  const { audioEffects, audioReady, automationLanes, automationLiveOverrides, bpmMeasure, evalEffects, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, valueTrackerLiveInputs, valueTrackerRecordingSession, valueTrackerTracks, variableTracks } =
     storeToRefs(dawStore)
 
   let frameId = 0
@@ -119,7 +119,6 @@ export function useTransportPlayback() {
         const loopFormula = getActiveFormula(
           loopStart.value,
           tracks.value,
-          formulas.value,
           variableTracks.value,
           valueTrackerTracks.value,
           valueTrackerLiveInputs.value
@@ -165,7 +164,6 @@ export function useTransportPlayback() {
     const activeFormula = getActiveFormula(
       timeTicks,
       tracks.value,
-      formulas.value,
       variableTracks.value,
       valueTrackerTracks.value,
       valueTrackerLiveInputs.value
@@ -212,7 +210,6 @@ export function useTransportPlayback() {
       const initialFormula = getActiveFormula(
         resumeTime,
         tracks.value,
-        formulas.value,
         variableTracks.value,
         valueTrackerTracks.value,
         valueTrackerLiveInputs.value
@@ -316,7 +313,6 @@ export function useTransportPlayback() {
       const activeFormula = getActiveFormula(
         normalizedTime,
         tracks.value,
-        formulas.value,
         variableTracks.value,
         valueTrackerTracks.value,
         valueTrackerLiveInputs.value

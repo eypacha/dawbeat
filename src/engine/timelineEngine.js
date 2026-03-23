@@ -45,7 +45,6 @@ function combineChannelExpressions(leftExpressions = [], rightExpressions = [], 
 export function getActiveFormula(
   timeTicks,
   tracks,
-  formulas,
   variableTracks = [],
   valueTrackerTracks = [],
   valueTrackerLiveInputs = {}
@@ -59,7 +58,7 @@ export function getActiveFormula(
 
     for (const clip of track.clips) {
       if (timeTicks >= clip.start && timeTicks < clip.start + clip.duration) {
-        const resolvedExpressions = resolveClipFormulaExpressions(clip, formulas)
+        const resolvedExpressions = resolveClipFormulaExpressions(clip)
 
         if (!resolvedExpressions.length) {
           continue

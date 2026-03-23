@@ -9,18 +9,9 @@
     data-timeline-clip="true"
     @click.stop="handleSelect"
     @contextmenu.stop.prevent="handleContextMenu"
-    @dragover.prevent.stop="handleFormulaDragOver"
-    @dragleave.stop="handleFormulaDragLeave"
-    @drop.prevent.stop="handleFormulaDrop"
     @dblclick.stop="handleEditStart"
     @pointerdown.stop="handleClipPointerDown"
   >
-    <Link2
-      v-if="isReferenceClip"
-      class="pointer-events-none absolute top-1 right-1 h-3 w-3 opacity-80"
-      :stroke-width="2.25"
-    />
-
     <TimelineClipWaveform
       v-if="showClipWaveforms"
       :duration="clip.duration"
@@ -57,7 +48,6 @@
 <script setup>
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Link2 } from 'lucide-vue-next'
 import TimelineClipWaveform from '@/components/timeline/TimelineClipWaveform.vue'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineClipInteraction } from '@/composables/useTimelineClipInteraction'
@@ -86,15 +76,13 @@ const props = defineProps({
 
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
-const { editingClipId, formulas, pixelsPerTick, selectedClipIds, showClipWaveforms, tracks } = storeToRefs(dawStore)
-const isFormulaDropTarget = ref(false)
+const { editingClipId, pixelsPerTick, selectedClipIds, showClipWaveforms, tracks } = storeToRefs(dawStore)
 const pendingShiftSelectionAction = ref(null)
 const MIN_CLIP_RENDER_TICKS = 0.5
 
-const resolvedFormula = computed(() => resolveClipFormula(props.clip, formulas.value))
-const resolvedFormulaExpressions = computed(() => resolveClipFormulaExpressions(props.clip, formulas.value))
-const isReferenceClip = computed(() => Boolean(props.clip.formulaId))
-const resolvedFormulaName = computed(() => resolveClipFormulaName(props.clip, formulas.value))
+const resolvedFormula = computed(() => resolveClipFormula(props.clip))
+const resolvedFormulaExpressions = computed(() => resolveClipFormulaExpressions(props.clip))
+const resolvedFormulaName = computed(() => resolveClipFormulaName(props.clip))
 const showFormulaName = computed(() => Boolean(resolvedFormulaName.value))
 const clipWidth = computed(() =>
   Math.max(
@@ -128,21 +116,17 @@ function handleSelect(payload = {}) {
 
   if (shiftSelectionAction === 'remove') {
     dawStore.removeSelectedClip(props.clip.id)
-    dawStore.selectFormula(null)
     return
   }
 
   if (shiftSelectionAction === 'add') {
     dawStore.addSelectedClip(props.clip.id)
-    dawStore.selectFormula(props.clip.formulaId ?? null)
     return
   }
 
   if (!preserveMultiSelection || !isPartOfMultipleSelection.value) {
     dawStore.selectClip(props.clip.id)
   }
-
-  dawStore.selectFormula(props.clip.formulaId ?? null)
 }
 
 const {
@@ -191,10 +175,6 @@ const buttonClassName = computed(() => {
     return 'timeline-clip--dragging'
   }
 
-  if (isFormulaDropTarget.value) {
-    return 'timeline-clip--drop-target'
-  }
-
   return isSelected.value ? 'timeline-clip--selected' : 'timeline-clip--default'
 })
 
@@ -228,65 +208,17 @@ function handleContextMenu(event) {
       trackId: props.trackId
     },
     {
-      action: 'add-clip-formula-to-library',
-      clipId: props.clip.id,
-      label: props.clip.formulaId ? 'Show In Library' : 'Add To Library...',
-      trackId: props.trackId
-    },
-    {
       action: 'delete-clip',
       clipId: props.clip.id,
       label: 'Delete Clip'
     }
   ]
 
-  if (props.clip.formulaId) {
-    items.push({
-      action: 'detach-clip-formula',
-      clipId: props.clip.id,
-      label: 'Detach From Library',
-      trackId: props.trackId
-    })
-  }
-
   openContextMenu({
     x: event.clientX,
     y: event.clientY,
     items
   })
-}
-
-function handleFormulaDragOver(event) {
-  if (!getDroppedFormulaId(event)) {
-    return
-  }
-
-  isFormulaDropTarget.value = true
-}
-
-function handleFormulaDragLeave() {
-  isFormulaDropTarget.value = false
-}
-
-function handleFormulaDrop(event) {
-  const formulaId = getDroppedFormulaId(event)
-  isFormulaDropTarget.value = false
-
-  if (!formulaId) {
-    return
-  }
-
-  dawStore.assignFormulaToClip(props.trackId, props.clip.id, formulaId)
-}
-
-function getDroppedFormulaId(event) {
-  const formulaId = event.dataTransfer?.getData('formulaId')
-
-  if (formulaId) {
-    return formulaId
-  }
-
-  return event.dataTransfer?.getData('text/plain') || ''
 }
 
 onBeforeUnmount(() => {
@@ -316,11 +248,6 @@ onBeforeUnmount(() => {
 .timeline-clip--dragging {
   background: color-mix(in srgb, var(--track-color-light) 76%, transparent);
   cursor: grabbing;
-}
-
-.timeline-clip--drop-target {
-  background: color-mix(in srgb, var(--track-color-light) 92%, white 8%);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--track-color-light) 78%, white 22%);
 }
 
 .timeline-clip-handle {

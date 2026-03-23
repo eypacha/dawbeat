@@ -22,8 +22,8 @@ import {
 import {
   createClipFormulaFields,
   createFormula,
-  getClipFormulaExpressions,
-  getFormulaExpressions
+  getClipFormulaFieldsFromFormula,
+  getClipFormulaExpressions
 } from '@/services/formulaService'
 import { DEFAULT_BPM_MEASURE, normalizeBpmMeasureExpression } from '@/services/bpmService'
 import {
@@ -66,7 +66,6 @@ export function serializeProject(state) {
     variableTracks: state.variableTracks,
     valueTrackerTracks: state.valueTrackerTracks,
     valueTrackerLibraryItems: state.valueTrackerLibraryItems,
-    formulas: state.formulas,
     zoom: state.zoom,
     loopStart: state.loopStart,
     loopEnd: state.loopEnd,
@@ -227,17 +226,19 @@ function normalizeProjectPayload(project) {
     return null
   }
 
-  if (!Array.isArray(project.tracks) || !Array.isArray(project.formulas)) {
+  if (!Array.isArray(project.tracks)) {
     return null
   }
 
-  const formulas = project.formulas
+  const formulas = Array.isArray(project.formulas)
+    ? project.formulas
     .filter(isRecord)
     .map((formula) => createFormula(formula))
-  const formulaIds = new Set(formulas.map((formula) => formula.id))
+    : []
+  const formulasById = new Map(formulas.map((formula) => [formula.id, formula]))
   const usedVariableTrackNames = new Set()
   const tracks = project.tracks
-    .map((track) => normalizeTrack(track, formulaIds))
+    .map((track) => normalizeTrack(track, formulasById))
     .filter(Boolean)
   const variableTracks = Array.isArray(project.variableTracks)
     ? project.variableTracks
@@ -296,7 +297,6 @@ function normalizeProjectPayload(project) {
 
   const boundValueTrackerVariableNames = new Set(getBoundValueTrackerVariableNames(valueTrackerTracks))
   const requiredAutoVariableTrackNames = collectAutoVariableTrackNames([
-    ...formulas.flatMap((formula) => getFormulaExpressions(formula)),
     ...collectTrackInlineFormulas(tracks),
     ...collectVariableTrackFormulas(variableTracks)
   ])
@@ -322,7 +322,6 @@ function normalizeProjectPayload(project) {
     variableTracks,
     valueTrackerTracks,
     valueTrackerLibraryItems,
-    formulas,
     zoom: clamp(normalizeNumber(project.zoom, 1), MIN_ZOOM, MAX_ZOOM),
     loopStart,
     loopEnd,
@@ -372,7 +371,7 @@ function normalizeProjectAutomationLanes(project) {
   return automationLanes
 }
 
-function normalizeTrack(track, formulaIds) {
+function normalizeTrack(track, formulasById) {
   if (!isRecord(track)) {
     return null
   }
@@ -386,7 +385,7 @@ function normalizeTrack(track, formulaIds) {
     name: typeof track.name === 'string' && track.name.trim() ? track.name.trim() : undefined,
     height: normalizeTrackLaneHeight(track.height),
     clips: Array.isArray(track.clips)
-      ? track.clips.map((clip) => normalizeClip(clip, formulaIds)).filter(Boolean)
+      ? track.clips.map((clip) => normalizeClip(clip, formulasById)).filter(Boolean)
       : []
   }
 
@@ -459,21 +458,22 @@ function normalizeValueTrackerLibraryItem(item, projectVersion) {
   })
 }
 
-function normalizeClip(clip, formulaIds) {
+function normalizeClip(clip, formulasById) {
   if (!isRecord(clip)) {
     return null
   }
 
-  const hasValidFormulaId =
-    typeof clip.formulaId === 'string' && clip.formulaId && formulaIds.has(clip.formulaId)
-  const formulaFields = createClipFormulaFields(clip)
+  const referencedFormula =
+    typeof clip.formulaId === 'string' && clip.formulaId
+      ? formulasById.get(clip.formulaId) ?? null
+      : null
+  const formulaFields = referencedFormula
+    ? getClipFormulaFieldsFromFormula(referencedFormula)
+    : createClipFormulaFields(clip)
 
   return createTrackClip({
     id: typeof clip.id === 'string' && clip.id ? clip.id : undefined,
-    ...(!hasValidFormulaId ? formulaFields : {}),
-    formulaId: hasValidFormulaId ? clip.formulaId : null,
-    formulaName:
-      !hasValidFormulaId && typeof clip.formulaName === 'string' ? clip.formulaName : null,
+    ...formulaFields,
     start: normalizeNonNegativeNumber(clip.start, 0),
     duration: normalizePositiveNumber(clip.duration, 4)
   })

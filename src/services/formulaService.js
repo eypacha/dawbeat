@@ -108,10 +108,6 @@ export function createFormula(formula = {}) {
   }
 }
 
-export function getFormulaById(formulas, formulaId) {
-  return formulas.find((formula) => formula.id === formulaId) ?? null
-}
-
 export function getFormulaDisplayName(formula) {
   if (!formula) {
     return ''
@@ -239,35 +235,23 @@ export function getClipFormulaExpressions(clip, fallback = '') {
   return normalizeExpressionList([normalizedClipFormula.formula], fallback)
 }
 
-export function resolveClipFormulaExpressions(clip, formulas, fallback = '') {
-  if (typeof clip.formulaId === 'string' && clip.formulaId) {
-    return getFormulaExpressions(getFormulaById(formulas, clip.formulaId), fallback)
-  }
-
+export function resolveClipFormulaExpressions(clip, fallback = '') {
   return getClipFormulaExpressions(clip, fallback)
 }
 
-export function resolveClipFormulaDraft(clip, formulas) {
-  if (typeof clip?.formulaId === 'string' && clip.formulaId) {
-    return getFormulaDraft(getFormulaById(formulas, clip.formulaId))
-  }
-
+export function resolveClipFormulaDraft(clip) {
   return getClipFormulaDraft(clip)
 }
 
-export function resolveClipFormulaPrimaryExpression(clip, formulas, fallback = '') {
-  return resolveClipFormulaExpressions(clip, formulas, fallback)[0] ?? fallback
+export function resolveClipFormulaPrimaryExpression(clip, fallback = '') {
+  return resolveClipFormulaExpressions(clip, fallback)[0] ?? fallback
 }
 
-export function resolveClipFormula(clip, formulas, fallback = '') {
-  return getDisplayCodeFromExpressions(resolveClipFormulaExpressions(clip, formulas, fallback), fallback)
+export function resolveClipFormula(clip, fallback = '') {
+  return getDisplayCodeFromExpressions(resolveClipFormulaExpressions(clip, fallback), fallback)
 }
 
-export function resolveClipFormulaName(clip, formulas, fallback = '') {
-  if (typeof clip.formulaId === 'string' && clip.formulaId) {
-    return getFormulaById(formulas, clip.formulaId)?.name?.trim() ?? fallback
-  }
-
+export function resolveClipFormulaName(clip, fallback = '') {
   return clip.formulaName?.trim() ?? fallback
 }
 

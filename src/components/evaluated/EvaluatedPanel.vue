@@ -44,13 +44,12 @@ import { enqueueSnackbar } from '@/services/notifications'
 import { useDawStore } from '@/stores/dawStore'
 
 const dawStore = useDawStore()
-const { evalEffects, formulas, time, tracks, valueTrackerLiveInputs, valueTrackerTracks, variableTracks } = storeToRefs(dawStore)
+const { evalEffects, time, tracks, valueTrackerLiveInputs, valueTrackerTracks, variableTracks } = storeToRefs(dawStore)
 
 const activeFormula = computed(() =>
   getActiveFormula(
     time.value,
     tracks.value,
-    formulas.value,
     variableTracks.value,
     valueTrackerTracks.value,
     valueTrackerLiveInputs.value
