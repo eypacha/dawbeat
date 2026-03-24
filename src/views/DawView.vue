@@ -17,6 +17,7 @@
       <Toolbar />
 
       <main class="app-main-layout min-h-0 flex-1 gap-4 overflow-hidden" :style="mainLayoutStyle">
+        <FormulaLibrary :collapsed="libraryCollapsed" @toggle-collapse="toggleLibraryCollapsed" />
         <Timeline />
         <EffectsPanel :collapsed="effectsCollapsed" @toggle-collapse="toggleEffectsCollapsed" />
       </main>
@@ -134,6 +135,7 @@
 import { computed, reactive, ref, onBeforeUnmount, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import StartScreen from '@/components/boot/StartScreen.vue'
+import FormulaLibrary from '@/components/library/FormulaLibrary.vue'
 import EffectsPanel from '@/components/effects/EffectsPanel.vue'
 import EvaluatedPanel from '@/components/evaluated/EvaluatedPanel.vue'
 import AutomationCurveMenu from '@/components/timeline/AutomationCurveMenu.vue'
@@ -211,6 +213,7 @@ let disposeMidiClockTransport = null
 const transportPlayback = useTransportPlayback()
 const { enableAudio, stop } = transportPlayback
 const effectsCollapsed = ref(false)
+const libraryCollapsed = ref(false)
 const viewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWidth)
 const {
   audioReady,
@@ -326,7 +329,8 @@ const automationCompanionSelectedLane = computed(() =>
     : null
 )
 const mainLayoutStyle = computed(() => ({
-  '--effects-width': effectsCollapsed.value ? '56px' : '304px'
+  '--effects-width': effectsCollapsed.value ? '56px' : '304px',
+  '--library-width': libraryCollapsed.value ? '56px' : '280px'
 }))
 
 function syncViewportWidth() {
@@ -343,6 +347,10 @@ async function handleStart() {
 
 function toggleEffectsCollapsed() {
   effectsCollapsed.value = !effectsCollapsed.value
+}
+
+function toggleLibraryCollapsed() {
+  libraryCollapsed.value = !libraryCollapsed.value
 }
 
 function handleKeydown(event) {
@@ -748,13 +756,13 @@ onBeforeUnmount(() => {
 
 @media (min-width: 1024px) {
   .app-main-layout {
-    grid-template-columns: minmax(0, 1fr) var(--effects-width, 304px);
+    grid-template-columns: var(--library-width, 280px) minmax(0, 1fr) var(--effects-width, 304px);
   }
 }
 
 @media (min-width: 1280px) {
   .app-main-layout {
-    grid-template-columns: minmax(0, 1fr) var(--effects-width, 304px);
+    grid-template-columns: var(--library-width, 280px) minmax(0, 1fr) var(--effects-width, 304px);
   }
 }
 </style>
