@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath, URL } from 'node:url'
+import vueDeveloperTools from 'vite-plugin-vue-devtools'
 
 const BASE_PATH = '/dawbeat/'
 
@@ -17,6 +18,7 @@ export default defineConfig({
   },
   plugins: [
     vue(),
+    vueDeveloperTools(),
     tailwindcss()
   ],
 })
