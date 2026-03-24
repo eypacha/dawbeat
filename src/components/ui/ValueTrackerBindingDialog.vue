@@ -1,10 +1,11 @@
 <template>
-  <Modal :open="visible" size="sm" title="Value Tracker Binding" @close="handleCancel">
+  <Modal :open="visible" size="sm" title="Value Tracker Input" @close="handleCancel">
     <template #header>
       <div class="flex items-start justify-between gap-4">
         <div>
-          <p class="text-sm uppercase tracking-[0.24em] text-zinc-500">Value Tracker Binding</p>
+          <p class="text-sm uppercase tracking-[0.24em] text-zinc-500">Value Tracker Input</p>
           <p class="mt-2 text-xs text-zinc-500">{{ trackName || 'Unnamed Value Tracker' }}</p>
+          <p class="mt-1 text-xs text-amber-300/80">Variable · {{ trackVariableName || 'Unassigned' }}</p>
         </div>
 
         <IconButton label="Close" size="sm" @click="handleCancel">
@@ -15,7 +16,7 @@
 
     <div class="space-y-4">
       <div>
-        <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Current binding</p>
+        <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Current input</p>
         <p class="mt-1 text-sm text-zinc-200">{{ bindingSummary }}</p>
       </div>
 
@@ -25,10 +26,10 @@
           v-model="draft.type"
           class="mt-2 w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
         >
+          <option value="">None</option>
           <option value="midiCc">MIDI CC</option>
           <option value="midiNote">MIDI Note</option>
           <option value="keyboard">Keyboard</option>
-          <option value="variable">Variable</option>
         </select>
       </label>
 
@@ -122,18 +123,12 @@
         </div>
       </template>
 
-      <label v-else-if="draft.type === 'variable'" class="block">
-        <span class="text-xs uppercase tracking-[0.18em] text-zinc-500">Variable name</span>
-        <input
-          v-model="draft.variableName"
-          class="mt-2 w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-zinc-500"
-          placeholder="tempo, cutoff, env..."
-          type="text"
-        >
-      </label>
+      <div v-else-if="draft.type === 'keyboard'" class="rounded border border-zinc-800 bg-zinc-950/70 p-3 text-xs text-zinc-500">
+        Keyboard input still uses the selected Value Tracker target during live play and recording.
+      </div>
 
       <div v-else class="rounded border border-zinc-800 bg-zinc-950/70 p-3 text-xs text-zinc-500">
-        Keyboard input still uses the selected Value Tracker target during live play and recording.
+        This track keeps driving its variable from timeline clips, with no live input override.
       </div>
 
       <p v-if="midiState.error" class="text-xs text-red-300">
@@ -174,6 +169,10 @@ const props = defineProps({
     default: () => ({})
   },
   trackName: {
+    type: String,
+    default: ''
+  },
+  trackVariableName: {
     type: String,
     default: ''
   },
@@ -301,8 +300,7 @@ function getNormalizedDraftBinding() {
     controller: normalizeDraftNumber(draft.controller),
     deviceId: draft.deviceId || null,
     note: normalizeDraftNumber(draft.note),
-    type: draft.type || null,
-    variableName: draft.variableName || null
+    type: draft.type || null
   })
 }
 
@@ -314,8 +312,7 @@ function createBindingDraft(binding) {
     controller: formatNullableNumber(normalizedBinding.controller),
     deviceId: normalizedBinding.deviceId ?? '',
     note: formatNullableNumber(normalizedBinding.note),
-    type: normalizedBinding.type ?? 'midiCc',
-    variableName: normalizedBinding.variableName ?? ''
+    type: normalizedBinding.type ?? ''
   }
 }
 

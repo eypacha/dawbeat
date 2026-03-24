@@ -39,6 +39,25 @@ export function getNextVariableTrackName(variableTracks = []) {
   return getVariableTrackNameFromIndex(index)
 }
 
+export function getNextAvailableVariableTrackName(variableTracks = [], valueTrackerTracks = []) {
+  const usedNames = new Set([
+    ...(Array.isArray(variableTracks)
+      ? variableTracks
+          .map((variableTrack) => normalizeVariableTrackName(variableTrack?.name, ''))
+          .filter(Boolean)
+      : []),
+    ...getBoundValueTrackerVariableNames(valueTrackerTracks)
+  ])
+
+  let index = 0
+
+  while (usedNames.has(getVariableTrackNameFromIndex(index))) {
+    index += 1
+  }
+
+  return getVariableTrackNameFromIndex(index)
+}
+
 export function getFormulaAllowedIdentifiers(variableTracks = [], valueTrackerTracks = []) {
   const existingNames = Array.isArray(variableTracks)
     ? variableTracks

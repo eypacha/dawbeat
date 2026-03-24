@@ -112,7 +112,7 @@ import { TRACK_COLOR_PALETTE, getTrackColor } from '@/utils/colorUtils'
 import {
   collectAutoVariableTrackNames,
   DEFAULT_VARIABLE_CLIP_FORMULA,
-  getNextVariableTrackName
+  getNextAvailableVariableTrackName
 } from '@/services/variableTrackService'
 import {
   DEFAULT_VALUE_TRACKER_STEP_SUBDIVISION,
@@ -123,7 +123,6 @@ import {
   doesValueTrackerBindingMatchInput,
   getValueTrackerRecordedStepIndex,
   getValueTrackerValueAtTime,
-  getNextValueTrackerTrackName,
   isNumericValueTrackerInitializer,
   normalizeValueTrackerValue,
   normalizeValueTrackerValues,
@@ -170,6 +169,10 @@ function ensureNamedValueTrackerTracks(store, variableTrackNames = [], trackName
   const createdValueTrackerTrackIds = []
 
   for (const variableTrackName of variableTrackNames) {
+    if (findVariableTrack(store.variableTracks, variableTrackName)) {
+      continue
+    }
+
     const existingValueTrackerTrack = findValueTrackerTrackByVariableName(
       store.valueTrackerTracks,
       variableTrackName
@@ -180,11 +183,8 @@ function ensureNamedValueTrackerTracks(store, variableTrackNames = [], trackName
     }
 
     const nextValueTrackerTrack = createValueTrackerTrack({
-      binding: {
-        type: 'variable',
-        variableName: variableTrackName
-      },
-      name: trackName
+      name: trackName,
+      variableName: variableTrackName
     })
 
     nextValueTrackerTrack.clips.push(createValueTrackerClip({
@@ -1667,8 +1667,12 @@ export const useDawStore = defineStore('dawStore', {
       let autoCreatedTrackId = null
 
       if (!recordingTrack) {
+        const nextVariableName = getNextAvailableVariableTrackName(
+          this.variableTracks,
+          this.valueTrackerTracks
+        )
         recordingTrack = createValueTrackerTrack({
-          name: getNextValueTrackerTrackName(this.valueTrackerTracks)
+          variableName: nextVariableName
         })
         this.valueTrackerTracks.push(recordingTrack)
         autoCreatedTrackId = recordingTrack.id
@@ -2157,7 +2161,7 @@ export const useDawStore = defineStore('dawStore', {
     addVariableTrack() {
       return this.recordHistoryStep('add-variable-track', () => {
         const nextVariableTrack = createVariableTrack({
-          name: getNextVariableTrackName(this.variableTracks)
+          name: getNextAvailableVariableTrackName(this.variableTracks, this.valueTrackerTracks)
         })
 
         this.variableTracks.push(nextVariableTrack)
@@ -2167,8 +2171,12 @@ export const useDawStore = defineStore('dawStore', {
 
     addValueTrackerTrack() {
       return this.recordHistoryStep('add-value-tracker-track', () => {
+        const nextVariableName = getNextAvailableVariableTrackName(
+          this.variableTracks,
+          this.valueTrackerTracks
+        )
         const nextValueTrackerTrack = createValueTrackerTrack({
-          name: getNextValueTrackerTrackName(this.valueTrackerTracks)
+          variableName: nextVariableName
         })
 
         this.valueTrackerTracks.push(nextValueTrackerTrack)
@@ -2211,11 +2219,7 @@ export const useDawStore = defineStore('dawStore', {
         }
 
         const nextValueTrackerTrack = createValueTrackerTrack({
-          binding: {
-            type: 'variable',
-            variableName: variableTrackName
-          },
-          name: variableTrackName
+          variableName: variableTrackName
         })
 
         nextValueTrackerTrack.clips.push(createValueTrackerClip({

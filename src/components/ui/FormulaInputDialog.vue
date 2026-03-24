@@ -191,7 +191,10 @@ import Input from '@/components/ui/Input.vue'
 import Modal from '@/components/ui/Modal.vue'
 import { useDawStore } from '@/stores/dawStore'
 import { collectAutoVariableTrackNames, getFormulaAllowedIdentifiers } from '@/services/variableTrackService'
-import { isNumericValueTrackerInitializer } from '@/services/valueTrackerService'
+import {
+  getBoundValueTrackerVariableNames,
+  isNumericValueTrackerInitializer
+} from '@/services/valueTrackerService'
 import { renderFormulaTokensToHtmlWithOptions } from '@/utils/formulaTokenizer'
 import { validateFormulaWithOptions } from '@/utils/formulaValidation'
 
@@ -263,9 +266,7 @@ const draftExpressions = computed(() => draftStereo.value
 const existingVariableTrackNames = computed(
   () => new Set([
     ...variableTracks.value.map((variableTrack) => variableTrack.name).filter(Boolean),
-    ...valueTrackerTracks.value
-      .map((valueTrackerTrack) => valueTrackerTrack?.binding?.type === 'variable' ? valueTrackerTrack.binding.variableName : '')
-      .filter(Boolean)
+    ...getBoundValueTrackerVariableNames(valueTrackerTracks.value)
   ])
 )
 const missingAutoVariableTrackNames = computed(() =>

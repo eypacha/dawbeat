@@ -114,6 +114,7 @@
     <ValueTrackerBindingDialog
       :initial-binding="valueTrackerTrackBindingDialog.binding"
       :track-name="valueTrackerTrackBindingDialog.trackName"
+      :track-variable-name="valueTrackerTrackBindingDialog.trackVariableName"
       :visible="valueTrackerTrackBindingDialog.visible"
       @cancel="closeValueTrackerTrackBindingDialog"
       @confirm="confirmValueTrackerTrackBinding"
@@ -195,6 +196,7 @@ const valueTrackerTrackBindingDialog = reactive({
   binding: {},
   trackId: null,
   trackName: '',
+  trackVariableName: '',
   visible: false
 })
 const timelineSectionLabelDialog = reactive({
@@ -552,6 +554,7 @@ function handleContextMenuSelect(action, item) {
     valueTrackerTrackBindingDialog.binding = item.valueTrackerTrackBinding ?? {}
     valueTrackerTrackBindingDialog.trackId = item.valueTrackerTrackId ?? null
     valueTrackerTrackBindingDialog.trackName = item.valueTrackerTrackName ?? ''
+    valueTrackerTrackBindingDialog.trackVariableName = item.valueTrackerTrackVariableName ?? ''
     valueTrackerTrackBindingDialog.visible = true
   }
 }
@@ -634,6 +637,7 @@ function closeValueTrackerTrackBindingDialog() {
   valueTrackerTrackBindingDialog.binding = {}
   valueTrackerTrackBindingDialog.trackId = null
   valueTrackerTrackBindingDialog.trackName = ''
+  valueTrackerTrackBindingDialog.trackVariableName = ''
   valueTrackerTrackBindingDialog.visible = false
 }
 

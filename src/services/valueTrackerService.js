@@ -7,8 +7,7 @@ export const DEFAULT_VALUE_TRACKER_TRACK_NAME_PREFIX = 'Value Tracker'
 export const VALUE_TRACKER_BINDING_TYPES = Object.freeze([
   'midiCc',
   'midiNote',
-  'keyboard',
-  'variable'
+  'keyboard'
 ])
 
 export function createDefaultValueTrackerBinding(binding = {}) {
@@ -18,33 +17,20 @@ export function createDefaultValueTrackerBinding(binding = {}) {
     deviceId: normalizeNullableString(binding?.deviceId),
     channel: normalizeNullableInteger(binding?.channel),
     controller: normalizeNullableInteger(binding?.controller),
-    note: normalizeNullableInteger(binding?.note),
-    variableName: normalizeNullableString(binding?.variableName)
+    note: normalizeNullableInteger(binding?.note)
   }
 
   if (type === 'midiCc') {
     return {
       ...normalizedBinding,
-      note: null,
-      variableName: null
+      note: null
     }
   }
 
   if (type === 'midiNote') {
     return {
       ...normalizedBinding,
-      controller: null,
-      variableName: null
-    }
-  }
-
-  if (type === 'variable') {
-    return {
-      ...normalizedBinding,
-      channel: null,
-      controller: null,
-      deviceId: null,
-      note: null
+      controller: null
     }
   }
 
@@ -54,8 +40,7 @@ export function createDefaultValueTrackerBinding(binding = {}) {
       channel: null,
       controller: null,
       deviceId: null,
-      note: null,
-      variableName: null
+      note: null
     }
   }
 
@@ -64,14 +49,18 @@ export function createDefaultValueTrackerBinding(binding = {}) {
     deviceId: null,
     channel: null,
     controller: null,
-    note: null,
-    variableName: null
+    note: null
   }
 }
 
 export function normalizeValueTrackerTrackName(value, fallback = DEFAULT_VALUE_TRACKER_TRACK_NAME_PREFIX) {
   const trimmedValue = typeof value === 'string' ? value.trim() : ''
   return trimmedValue || fallback
+}
+
+export function getValueTrackerTrackDefaultName(variableName, fallback = DEFAULT_VALUE_TRACKER_TRACK_NAME_PREFIX) {
+  const normalizedVariableName = typeof variableName === 'string' ? variableName.trim() : ''
+  return normalizedVariableName ? `${normalizedVariableName} tracker` : fallback
 }
 
 export function getNextValueTrackerTrackName(valueTrackerTracks = []) {
@@ -426,10 +415,6 @@ export function doesValueTrackerBindingMatchInput(binding, input = {}) {
     return true
   }
 
-  if (normalizedBinding.type === 'variable') {
-    return normalizedBinding.variableName === normalizeNullableString(input?.variableName)
-  }
-
   return false
 }
 
@@ -438,12 +423,6 @@ export function getValueTrackerBindingSummary(binding, resolveDeviceName = null)
 
   if (normalizedBinding.type === 'keyboard') {
     return 'Keyboard target'
-  }
-
-  if (normalizedBinding.type === 'variable') {
-    return normalizedBinding.variableName
-      ? `Variable · ${normalizedBinding.variableName}`
-      : 'Variable binding'
   }
 
   if (normalizedBinding.type === 'midiCc') {
@@ -462,15 +441,11 @@ export function getValueTrackerBindingSummary(binding, resolveDeviceName = null)
     ].filter(Boolean).join(' · ')
   }
 
-  return 'No binding'
+  return 'No input binding'
 }
 
 export function getValueTrackerBoundVariableName(valueTrackerTrack) {
-  if (valueTrackerTrack?.binding?.type !== 'variable') {
-    return ''
-  }
-
-  return normalizeNullableString(valueTrackerTrack.binding.variableName) ?? ''
+  return normalizeNullableString(valueTrackerTrack?.variableName) ?? ''
 }
 
 export function getBoundValueTrackerVariableNames(valueTrackerTracks = []) {

@@ -33,6 +33,7 @@ import { normalizeTrackUnionOperator } from '@/services/trackUnionOperatorServic
 import { normalizeTimelineSectionLabels } from '@/services/timelineSectionLabelService'
 import {
   collectAutoVariableTrackNames,
+  getNextAvailableVariableTrackName,
   getNextVariableTrackName,
   normalizeVariableTrackName
 } from '@/services/variableTrackService'
@@ -49,12 +50,12 @@ import { DEFAULT_TRACK_COLOR, getTrackColor } from '@/utils/colorUtils'
 import { BASE_TICK_SIZE, MAX_ZOOM, MIN_ZOOM, TIMELINE_SNAP_SUBDIVISIONS, clamp } from '@/utils/timeUtils'
 
 const PROJECT_STORAGE_KEY = 'dawbeat-project'
-const PROJECT_VERSION = 18
+const PROJECT_VERSION = 19
 const SAVE_DEBOUNCE_MS = 400
 const DEFAULT_LOOP_START = 0
 const DEFAULT_LOOP_END = 16
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
-const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, PROJECT_VERSION])
+const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, PROJECT_VERSION])
 
 export function serializeProject(state) {
   return normalizeProjectPayload({
@@ -185,22 +186,27 @@ export function setupProjectPersistence(store) {
   )
 }
 
-function ensureNamedValueTrackerTracks(valueTrackerTracks, variableTrackNames = [], trackName = 'Value Tracker') {
+function ensureNamedValueTrackerTracks(
+  valueTrackerTracks,
+  variableTrackNames = [],
+  trackName = 'Value Tracker',
+  reservedVariableNames = new Set()
+) {
   if (!Array.isArray(variableTrackNames) || !variableTrackNames.length) {
     return
   }
 
   for (const variableTrackName of variableTrackNames) {
-    if (getBoundValueTrackerVariableNames(valueTrackerTracks).includes(variableTrackName)) {
+    if (
+      reservedVariableNames.has(variableTrackName) ||
+      getBoundValueTrackerVariableNames(valueTrackerTracks).includes(variableTrackName)
+    ) {
       continue
     }
 
     const nextValueTrackerTrack = createValueTrackerTrack({
-      binding: {
-        type: 'variable',
-        variableName: variableTrackName
-      },
-      name: trackName
+      name: trackName,
+      variableName: variableTrackName
     })
 
     nextValueTrackerTrack.clips.push(createValueTrackerClip({
@@ -237,7 +243,9 @@ function normalizeProjectPayload(project) {
     : []
   const valueTrackerTracks = Array.isArray(project.valueTrackerTracks)
     ? project.valueTrackerTracks
-        .map((valueTrackerTrack) => normalizeValueTrackerTrack(valueTrackerTrack, project.version))
+        .map((valueTrackerTrack) =>
+          normalizeValueTrackerTrack(valueTrackerTrack, project.version, usedVariableTrackNames)
+        )
         .filter(Boolean)
     : []
   const evalEffects = hasOwn(project, 'evalEffects')
@@ -250,7 +258,8 @@ function normalizeProjectPayload(project) {
         .filter((effect) => effect?.type === 'stereoOffset')
         .flatMap((effect) => getEvalEffectExpressions(effect))
     ),
-    'Stereo Offset'
+    'Stereo Offset',
+    usedVariableTrackNames
   )
   ensureNamedValueTrackerTracks(
     valueTrackerTracks,
@@ -259,7 +268,8 @@ function normalizeProjectPayload(project) {
         .filter((effect) => effect?.type === 'tReplacement')
         .flatMap((effect) => getEvalEffectExpressions(effect))
     ),
-    'T Replacement'
+    'T Replacement',
+    usedVariableTrackNames
   )
 
   const boundValueTrackerVariableNames = new Set(getBoundValueTrackerVariableNames(valueTrackerTracks))
@@ -384,15 +394,32 @@ function normalizeVariableTrack(variableTrack, usedNames) {
   return nextVariableTrack
 }
 
-function normalizeValueTrackerTrack(valueTrackerTrack, projectVersion) {
+function normalizeValueTrackerTrack(valueTrackerTrack, projectVersion, usedVariableNames = new Set()) {
   if (!isRecord(valueTrackerTrack)) {
     return null
   }
+
+  const legacyVariableName = valueTrackerTrack?.binding?.type === 'variable'
+    ? valueTrackerTrack.binding.variableName
+    : ''
+  const preferredVariableName = normalizeVariableTrackName(
+    valueTrackerTrack.variableName ?? legacyVariableName,
+    ''
+  )
+  const nextVariableName =
+    preferredVariableName && !usedVariableNames.has(preferredVariableName)
+      ? preferredVariableName
+      : getNextAvailableVariableTrackName(
+          [...usedVariableNames].map((name) => ({ name }))
+        )
+
+  usedVariableNames.add(nextVariableName)
 
   const nextValueTrackerTrack = createValueTrackerTrack({
     id: typeof valueTrackerTrack.id === 'string' && valueTrackerTrack.id ? valueTrackerTrack.id : undefined,
     height: normalizeValueTrackerTrackHeight(valueTrackerTrack.height),
     name: normalizeValueTrackerTrackName(valueTrackerTrack.name),
+    variableName: nextVariableName,
     binding: valueTrackerTrack.binding,
     clips: Array.isArray(valueTrackerTrack.clips)
       ? valueTrackerTrack.clips

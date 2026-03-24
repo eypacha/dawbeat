@@ -29,6 +29,12 @@
       </span>
       <span class="mt-1 truncate text-sm text-zinc-100">{{ valueTrackerTrack.name }}</span>
       <span
+        v-if="showVariableSummary"
+        class="mt-1 truncate text-[10px] text-amber-300/80"
+      >
+        {{ variableSummary }}
+      </span>
+      <span
         v-if="showBindingSummary"
         class="mt-1 truncate text-[10px]"
         :class="bindingClassName"
@@ -132,7 +138,8 @@ let creationHistoryActive = false
 let creationStartX = 0
 const visibleTickStep = computed(() => getVisibleTimelineTickStep(pixelsPerTick.value))
 const laneHeight = computed(() => props.valueTrackerTrack.height)
-const showBindingSummary = computed(() => laneHeight.value >= 72)
+const showVariableSummary = computed(() => laneHeight.value >= 56)
+const showBindingSummary = computed(() => laneHeight.value >= 82 && Boolean(props.valueTrackerTrack.binding?.type))
 
 const trackStyle = computed(() => ({
   '--track-color': '#f59e0b',
@@ -173,6 +180,11 @@ const keyboardButtonClassName = computed(() => {
 
   return 'border-yellow-300/45 bg-zinc-900/70 text-zinc-400 hover:border-yellow-200 hover:text-zinc-200'
 })
+const variableSummary = computed(() =>
+  props.valueTrackerTrack.variableName
+    ? `Variable · ${props.valueTrackerTrack.variableName}`
+    : 'Variable not assigned'
+)
 const bindingSummary = computed(() =>
   getValueTrackerBindingSummary(props.valueTrackerTrack.binding, getMidiInputDisplayName)
 )
@@ -253,10 +265,11 @@ function handleHeaderContextMenu(event) {
       },
       {
         action: 'edit-value-tracker-track-binding',
-        label: 'Edit Binding',
+        label: 'Edit Input Binding',
         valueTrackerTrackBinding: props.valueTrackerTrack.binding,
         valueTrackerTrackId: props.valueTrackerTrack.id,
-        valueTrackerTrackName: props.valueTrackerTrack.name
+        valueTrackerTrackName: props.valueTrackerTrack.name,
+        valueTrackerTrackVariableName: props.valueTrackerTrack.variableName
       },
       {
         action: 'delete-value-tracker-track',

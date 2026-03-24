@@ -9,6 +9,7 @@ import {
 import { DEFAULT_VARIABLE_CLIP_FORMULA, normalizeVariableTrackName } from '@/services/variableTrackService'
 import {
   createDefaultValueTrackerBinding,
+  getValueTrackerTrackDefaultName,
   getValueTrackerBoundVariableName,
   normalizeValueTrackerStepSubdivision,
   normalizeValueTrackerTrackName,
@@ -53,9 +54,15 @@ export function createVariableTrack(variableTrack = {}) {
 }
 
 export function createValueTrackerTrack(valueTrackerTrack = {}) {
+  const normalizedVariableName = normalizeVariableTrackName(valueTrackerTrack.variableName, '')
+
   return {
     id: valueTrackerTrack.id ?? createTrackId(),
-    name: normalizeValueTrackerTrackName(valueTrackerTrack.name),
+    name: normalizeValueTrackerTrackName(
+      valueTrackerTrack.name,
+      getValueTrackerTrackDefaultName(normalizedVariableName)
+    ),
+    variableName: normalizedVariableName,
     binding: createDefaultValueTrackerBinding(valueTrackerTrack.binding),
     height: normalizeValueTrackerTrackHeight(valueTrackerTrack.height),
     clips: Array.isArray(valueTrackerTrack.clips) ? [...valueTrackerTrack.clips] : []
