@@ -90,9 +90,27 @@
           </div>
           <div class="flex min-w-0 flex-1 items-start gap-2">
             <button class="min-w-0 flex-1 text-left" type="button">
-              <span class="block truncate text-sm text-white">{{ item.name }}</span>
+              <span class="block truncate text-sm text-white">
+                <template v-for="(part, index) in getHighlightedParts(item.name)" :key="`${item.id}-name-${index}`">
+                  <span
+                    :class="part.match
+                      ? 'rounded-[3px] bg-zinc-700/35 px-0.5 font-medium text-zinc-100 ring-1 ring-zinc-500/30 transition-colors duration-150'
+                      : ''"
+                  >
+                    {{ part.text }}
+                  </span>
+                </template>
+              </span>
               <span class="mt-1 block truncate text-xs text-zinc-500">
-                {{ item.formulaStereo ? `L: ${item.leftFormula} | R: ${item.rightFormula}` : item.formula }}
+                <template v-for="(part, index) in getHighlightedParts(getItemFormulaText(item))" :key="`${item.id}-formula-${index}`">
+                  <span
+                    :class="part.match
+                      ? 'rounded-[3px] bg-zinc-700/30 px-0.5 text-zinc-300 ring-1 ring-zinc-500/25 transition-colors duration-150'
+                      : ''"
+                  >
+                    {{ part.text }}
+                  </span>
+                </template>
               </span>
             </button>
             <div class="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
@@ -133,8 +151,9 @@ const libraryStore = useLibraryStore()
 const dawStore = useDawStore()
 const items = computed(() => libraryStore.items)
 const searchQuery = ref('')
+const normalizedSearchQuery = computed(() => searchQuery.value.trim().toLowerCase())
 const filteredItems = computed(() => {
-  const query = searchQuery.value.toLowerCase()
+  const query = normalizedSearchQuery.value
 
   if (!query) {
     return items.value
@@ -157,6 +176,42 @@ const filteredItems = computed(() => {
 
 function deleteFormula(id) {
   libraryStore.removeItem(id)
+}
+
+function getItemFormulaText(item) {
+  return item.formulaStereo ? `L: ${item.leftFormula} | R: ${item.rightFormula}` : (item.formula ?? '')
+}
+
+function getHighlightedParts(text) {
+  const sourceText = String(text ?? '')
+  const query = normalizedSearchQuery.value
+
+  if (!query) {
+    return [{ text: sourceText, match: false }]
+  }
+
+  const lowerSource = sourceText.toLowerCase()
+  const parts = []
+  let startIndex = 0
+
+  while (startIndex < sourceText.length) {
+    const matchIndex = lowerSource.indexOf(query, startIndex)
+
+    if (matchIndex === -1) {
+      parts.push({ text: sourceText.slice(startIndex), match: false })
+      break
+    }
+
+    if (matchIndex > startIndex) {
+      parts.push({ text: sourceText.slice(startIndex, matchIndex), match: false })
+    }
+
+    const matchEndIndex = matchIndex + query.length
+    parts.push({ text: sourceText.slice(matchIndex, matchEndIndex), match: true })
+    startIndex = matchEndIndex
+  }
+
+  return parts.length ? parts : [{ text: sourceText, match: false }]
 }
 
 function handleLibraryFormulaDragStart(event, item) {
