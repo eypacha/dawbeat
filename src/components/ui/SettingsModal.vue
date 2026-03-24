@@ -50,9 +50,20 @@
           <div class="flex items-center justify-between gap-4 border border-zinc-800 bg-zinc-950/70 p-4">
             <div>
               <p class="text-sm text-zinc-300">Reset local storage</p>
-              <p class="text-xs text-zinc-500">Clear the autosaved project and formula library, then reload the demo state.</p>
+              <p class="text-xs text-zinc-500">Clear the autosaved project, reset the formula library to defaults, then reload the demo state.</p>
             </div>
             <Button size="xs" variant="danger" @click="resetConfirmVisible = true">Reset</Button>
+          </div>
+
+          <div class="flex items-center justify-between gap-4 border border-zinc-800 bg-zinc-950/70 p-4">
+            <div>
+              <p class="text-sm text-zinc-300">Formula library backup</p>
+              <p class="text-xs text-zinc-500">Export your current library to JSON or restore it from a backup file.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <Button size="xs" variant="ghost" @click="handleExportLibrary">Export</Button>
+              <Button size="xs" variant="default" @click="openLibraryRestorePicker">Restore</Button>
+            </div>
           </div>
         </section>
 
@@ -208,12 +219,29 @@
 
   <ConfirmDialog
     confirm-label="Reset Project"
-    message="This will delete the autosaved project and formula library in local storage, then replace the current work with the demo state."
+    message="This will delete the autosaved project, reset the formula library to defaults, and replace the current work with the demo state."
     title="Reset Local Storage?"
     :visible="resetConfirmVisible"
     @cancel="resetConfirmVisible = false"
     @confirm="handleResetProject"
   />
+
+  <ConfirmDialog
+    confirm-label="Restore Library"
+    message="This will replace your current formula library with the backup file contents. This action cannot be undone."
+    title="Restore Library Backup?"
+    :visible="restoreConfirmVisible"
+    @cancel="cancelLibraryRestore"
+    @confirm="confirmLibraryRestore"
+  />
+
+  <input
+    ref="libraryRestoreInput"
+    accept="application/json,.json"
+    class="hidden"
+    type="file"
+    @change="handleLibraryRestoreFileChange"
+  >
 </template>
 
 <script setup>
@@ -254,6 +282,9 @@ const { showClipWaveforms, showEvaluatedPanel } = storeToRefs(dawStore)
 const { stop } = useTransportPlayback()
 const activeTab = ref('general')
 const resetConfirmVisible = ref(false)
+const restoreConfirmVisible = ref(false)
+const libraryRestoreInput = ref(null)
+const pendingLibraryRestoreItems = ref(null)
 const settingsTabs = [
   {
     id: 'general',
@@ -380,13 +411,98 @@ function formatNumberLabel(value) {
     .replace(/(\.\d)0$/, '$1')
 }
 
+function handleExportLibrary() {
+  if (typeof document === 'undefined' || typeof URL === 'undefined') {
+    enqueueSnackbar('Library export is not available in this environment', { variant: 'error' })
+    return
+  }
+
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    items: libraryStore.items
+  }
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  const date = new Date().toISOString().slice(0, 10)
+
+  link.href = url
+  link.download = `dawbeat-library-${date}.json`
+  document.body.append(link)
+  link.click()
+  link.remove()
+
+  window.setTimeout(() => {
+    URL.revokeObjectURL(url)
+  }, 0)
+
+  enqueueSnackbar('Library backup exported', { variant: 'success' })
+}
+
+function openLibraryRestorePicker() {
+  if (!libraryRestoreInput.value) {
+    return
+  }
+
+  libraryRestoreInput.value.value = ''
+  libraryRestoreInput.value.click()
+}
+
+function cancelLibraryRestore() {
+  restoreConfirmVisible.value = false
+  pendingLibraryRestoreItems.value = null
+}
+
+function confirmLibraryRestore() {
+  const nextItems = pendingLibraryRestoreItems.value
+
+  restoreConfirmVisible.value = false
+  pendingLibraryRestoreItems.value = null
+
+  if (!Array.isArray(nextItems)) {
+    enqueueSnackbar('Could not restore library from file', { variant: 'error' })
+    return
+  }
+
+  libraryStore.replaceItems(nextItems)
+  enqueueSnackbar(`Library restored (${nextItems.length} items)`, { variant: 'success' })
+}
+
+async function handleLibraryRestoreFileChange(event) {
+  const file = event.target?.files?.[0]
+
+  if (!file) {
+    return
+  }
+
+  try {
+    const raw = await file.text()
+    const parsed = JSON.parse(raw)
+    const nextItems = Array.isArray(parsed)
+      ? parsed
+      : (Array.isArray(parsed?.items) ? parsed.items : null)
+
+    if (!nextItems) {
+      throw new Error('Invalid backup file')
+    }
+
+    pendingLibraryRestoreItems.value = nextItems
+    restoreConfirmVisible.value = true
+  } catch {
+    pendingLibraryRestoreItems.value = null
+    enqueueSnackbar('Could not restore library from file', { variant: 'error' })
+  }
+}
+
 async function handleResetProject() {
   resetConfirmVisible.value = false
   await stop()
   clearProjectStorage()
-  libraryStore.clearItems()
+  libraryStore.resetToDefaultItems()
   dawStore.resetProject()
-  enqueueSnackbar('Project and library storage reset', { variant: 'success' })
+  enqueueSnackbar('Project reset and library restored to defaults', { variant: 'success' })
   emit('close')
 }
 </script>

@@ -1,17 +1,18 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { nanoid } from 'nanoid'
+import { createDefaultLibraryItems } from '@/data/defaultLibraryItems'
 
 const STORAGE_KEY = 'dawbeat-library'
 
 function loadFromStorage() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
+    if (!raw) return createDefaultLibraryItems()
     const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
+    return Array.isArray(parsed) ? parsed : createDefaultLibraryItems()
   } catch {
-    return []
+    return createDefaultLibraryItems()
   }
 }
 
@@ -69,8 +70,32 @@ export const useLibraryStore = defineStore('libraryStore', () => {
     }
   }
 
+  function replaceItems(nextItems) {
+    if (!Array.isArray(nextItems)) {
+      return
+    }
+
+    items.value = nextItems.map((item) => ({
+      id: item?.id || nanoid(),
+      name: item?.name || item?.formula || item?.leftFormula || 'Unnamed',
+      formula: item?.formula || '',
+      leftFormula: item?.leftFormula || '',
+      rightFormula: item?.rightFormula || '',
+      formulaStereo: Boolean(item?.formulaStereo),
+      duration: Number.isFinite(Number(item?.duration)) && Number(item.duration) > 0
+        ? Number(item.duration)
+        : 4
+    }))
+    persist()
+  }
+
   function clearItems() {
     items.value = []
+    persist()
+  }
+
+  function resetToDefaultItems() {
+    items.value = createDefaultLibraryItems()
     persist()
   }
 
@@ -80,6 +105,8 @@ export const useLibraryStore = defineStore('libraryStore', () => {
     removeItem,
     renameItem,
     updateItemFormula,
-    clearItems
+    replaceItems,
+    clearItems,
+    resetToDefaultItems
   }
 })
