@@ -41,9 +41,6 @@
     <div class="mt-4 flex min-h-0 flex-1 flex-col items-center justify-center">
       <BookOpen class="mb-3 h-8 w-8 text-zinc-700" />
       <p class="text-xs uppercase tracking-[0.3em] text-zinc-600">Formula Library</p>
-      <p class="mt-2 text-center text-[11px] leading-5 text-zinc-700">
-        Right-click a clip to add it here
-      </p>
     </div>
   </Panel>
 </template>
