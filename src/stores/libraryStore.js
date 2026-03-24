@@ -31,7 +31,44 @@ export const useLibraryStore = defineStore('libraryStore', () => {
     saveToStorage(items.value)
   }
 
+  function normalizeText(value) {
+    return String(value ?? '').trim()
+  }
+
+  function normalizeName(value) {
+    return normalizeText(value).toLowerCase()
+  }
+
+  function getFormulaFingerprint({ formula, leftFormula, rightFormula, formulaStereo }) {
+    if (formulaStereo) {
+      return `stereo:${normalizeText(leftFormula)}|${normalizeText(rightFormula)}`
+    }
+
+    return `mono:${normalizeText(formula)}`
+  }
+
   function addItem({ name, formula, leftFormula, rightFormula, formulaStereo, duration }) {
+    const normalizedName = normalizeName(name || formula || leftFormula || 'Unnamed')
+    const nextFormulaFingerprint = getFormulaFingerprint({
+      formula,
+      leftFormula,
+      rightFormula,
+      formulaStereo: Boolean(formulaStereo)
+    })
+
+    const hasDuplicateName = items.value.some((item) => normalizeName(item.name) === normalizedName)
+    if (hasDuplicateName) {
+      return { added: false, reason: 'duplicate-name' }
+    }
+
+    const hasDuplicateFormula = items.value.some((item) => {
+      return getFormulaFingerprint(item) === nextFormulaFingerprint
+    })
+
+    if (hasDuplicateFormula) {
+      return { added: false, reason: 'duplicate-formula' }
+    }
+
     const item = {
       id: nanoid(),
       name: name || formula || leftFormula || 'Unnamed',
@@ -44,6 +81,8 @@ export const useLibraryStore = defineStore('libraryStore', () => {
 
     items.value.unshift(item)
     persist()
+
+    return { added: true, item }
   }
 
   function removeItem(id) {

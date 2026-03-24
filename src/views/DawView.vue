@@ -429,7 +429,7 @@ function handleContextMenuSelect(action, item) {
     const draft = resolveClipFormulaDraft(clip)
     const displayFormula = resolveClipFormula(clip)
     const name = resolveClipFormulaName(clip) || displayFormula || 'Unnamed'
-    libraryStore.addItem({
+    const result = libraryStore.addItem({
       name,
       formula: draft.code,
       leftFormula: draft.leftCode,
@@ -437,6 +437,15 @@ function handleContextMenuSelect(action, item) {
       formulaStereo: draft.stereo,
       duration: clip.duration
     })
+
+    if (!result?.added) {
+      const duplicateMessage = result?.reason === 'duplicate-name'
+        ? `"${name}" already exists in Library (same name)`
+        : `"${name}" already exists in Library (same formula)`
+      enqueueSnackbar(duplicateMessage, { variant: 'warning' })
+      return
+    }
+
     enqueueSnackbar(`"${name}" added to Library`, { variant: 'success' })
     return
   }
