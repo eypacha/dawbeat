@@ -57,30 +57,44 @@
         </p>
       </div>
 
-      <div class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-1">
-        <div class="grid gap-2">
+      <div class="min-h-0 flex-1 overflow-auto border border-zinc-800 bg-zinc-950/70">
+        <article
+          v-for="item in items"
+          :key="item.id"
+          class="group flex w-full items-start gap-2 border-b border-zinc-800 px-4 py-2 transition-colors bg-zinc-900 text-zinc-100"
+        >
           <div
-            v-for="item in items"
-            :key="item.id"
-            class="group flex flex-col gap-1 border border-zinc-800 bg-zinc-950/50 px-3 py-2 transition-colors hover:border-zinc-700"
+            class="-ml-1 mt-0.5 flex h-5 w-4 shrink-0 cursor-grab items-center justify-center text-zinc-500 transition group-hover:text-zinc-300"
+            title="Drag formula"
+            draggable="true"
           >
-            <div class="flex items-center gap-2">
-              <span class="min-w-0 flex-1 truncate text-xs font-medium text-zinc-200">{{ item.name }}</span>
-              <span
-                class="shrink-0 text-[9px] uppercase tracking-[0.2em]"
-                :class="item.formulaStereo ? 'text-sky-500' : 'text-zinc-600'"
-              >{{ item.formulaStereo ? 'St' : 'Mo' }}</span>
-            </div>
-
-            <span class="truncate text-[10px] text-zinc-600">
-              {{ item.formulaStereo ? `L: ${item.leftFormula} | R: ${item.rightFormula}` : item.formula }}
-            </span>
-
-            <span class="text-[9px] uppercase tracking-[0.2em] text-zinc-700">
-              dur {{ item.duration }}
-            </span>
+            <GripVertical class="h-3.5 w-3.5" />
           </div>
-        </div>
+          <div class="flex min-w-0 flex-1 items-start gap-2">
+            <button class="min-w-0 flex-1 text-left" type="button">
+              <span class="block truncate text-sm text-white">{{ item.name }}</span>
+              <span class="mt-1 block truncate text-xs text-zinc-500">
+                {{ item.formulaStereo ? `L: ${item.leftFormula} | R: ${item.rightFormula}` : item.formula }}
+              </span>
+            </button>
+            <div class="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+              <button
+                class="flex h-6 w-6 items-center justify-center rounded border border-zinc-700 bg-zinc-950/80 text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100"
+                type="button"
+                title="Edit formula"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg>
+              </button>
+              <button
+                class="flex h-6 w-6 items-center justify-center rounded border border-zinc-700 bg-zinc-950/80 text-zinc-400 transition hover:border-red-500/50 hover:text-red-200"
+                type="button"
+                title="Delete formula"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>
+              </button>
+            </div>
+          </div>
+        </article>
       </div>
     </div>
   </Panel>
@@ -88,7 +102,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { BookOpen, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { BookOpen, ChevronLeft, ChevronRight, GripVertical } from 'lucide-vue-next'
 import Panel from '@/components/ui/Panel.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import { useLibraryStore } from '@/stores/libraryStore'
