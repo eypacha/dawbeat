@@ -89,6 +89,7 @@
                 class="flex h-6 w-6 items-center justify-center rounded border border-zinc-700 bg-zinc-950/80 text-zinc-400 transition hover:border-red-500/50 hover:text-red-200"
                 type="button"
                 title="Delete formula"
+                @click="deleteFormula(item.id)"
               >
                 <Trash2 class="h-3.5 w-3.5" />
               </button>
@@ -118,4 +119,9 @@ const emit = defineEmits(['toggle-collapse'])
 
 const libraryStore = useLibraryStore()
 const items = computed(() => libraryStore.items)
+
+function deleteFormula(id) {
+  libraryStore.removeItem(id)
+}
+
 </script>
