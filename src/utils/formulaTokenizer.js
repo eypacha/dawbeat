@@ -145,7 +145,7 @@ function getNumberEndIndex(source, startIndex) {
       endIndex += 1
     }
 
-    return endIndex
+    return getNumberExponentEndIndex(source, endIndex)
   }
 
   if (
@@ -177,7 +177,33 @@ function getNumberEndIndex(source, startIndex) {
     }
   }
 
-  return endIndex
+  return getNumberExponentEndIndex(source, endIndex)
+}
+
+function getNumberExponentEndIndex(source, endIndex) {
+  const exponentMarker = source[endIndex]
+
+  if (exponentMarker !== 'e' && exponentMarker !== 'E') {
+    return endIndex
+  }
+
+  let exponentIndex = endIndex + 1
+
+  if (source[exponentIndex] === '+' || source[exponentIndex] === '-') {
+    exponentIndex += 1
+  }
+
+  const exponentDigitsStartIndex = exponentIndex
+
+  while (exponentIndex < source.length && /\d/.test(source[exponentIndex])) {
+    exponentIndex += 1
+  }
+
+  if (exponentIndex === exponentDigitsStartIndex) {
+    return endIndex
+  }
+
+  return exponentIndex
 }
 
 export function renderFormulaTokensToHtml(expression = '') {
