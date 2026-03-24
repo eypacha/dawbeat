@@ -50,7 +50,7 @@
           <div class="flex items-center justify-between gap-4 border border-zinc-800 bg-zinc-950/70 p-4">
             <div>
               <p class="text-sm text-zinc-300">Reset local storage</p>
-              <p class="text-xs text-zinc-500">Clear the autosaved project and reload the demo state.</p>
+              <p class="text-xs text-zinc-500">Clear the autosaved project and formula library, then reload the demo state.</p>
             </div>
             <Button size="xs" variant="danger" @click="resetConfirmVisible = true">Reset</Button>
           </div>
@@ -208,7 +208,7 @@
 
   <ConfirmDialog
     confirm-label="Reset Project"
-    message="This will delete the autosaved project in local storage and replace the current work with the demo state."
+    message="This will delete the autosaved project and formula library in local storage, then replace the current work with the demo state."
     title="Reset Local Storage?"
     :visible="resetConfirmVisible"
     @cancel="resetConfirmVisible = false"
@@ -237,6 +237,7 @@ import {
 import { enqueueSnackbar } from '@/services/notifications'
 import { clearProjectStorage } from '@/services/projectPersistence'
 import { useDawStore } from '@/stores/dawStore'
+import { useLibraryStore } from '@/stores/libraryStore'
 
 defineProps({
   visible: {
@@ -248,6 +249,7 @@ defineProps({
 const emit = defineEmits(['close'])
 
 const dawStore = useDawStore()
+const libraryStore = useLibraryStore()
 const { showClipWaveforms, showEvaluatedPanel } = storeToRefs(dawStore)
 const { stop } = useTransportPlayback()
 const activeTab = ref('general')
@@ -382,8 +384,9 @@ async function handleResetProject() {
   resetConfirmVisible.value = false
   await stop()
   clearProjectStorage()
+  libraryStore.clearItems()
   dawStore.resetProject()
-  enqueueSnackbar('Project storage reset', { variant: 'success' })
+  enqueueSnackbar('Project and library storage reset', { variant: 'success' })
   emit('close')
 }
 </script>

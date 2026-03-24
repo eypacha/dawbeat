@@ -69,11 +69,17 @@ export const useLibraryStore = defineStore('libraryStore', () => {
     }
   }
 
+  function clearItems() {
+    items.value = []
+    persist()
+  }
+
   return {
     items,
     addItem,
     removeItem,
     renameItem,
-    updateItemFormula
+    updateItemFormula,
+    clearItems
   }
 })
