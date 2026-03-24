@@ -518,18 +518,6 @@ function handleContextMenuSelect(action, item) {
     return
   }
 
-  if (action === 'mutate-clip-formula') {
-    const didMutate = dawStore.mutateClipFormula(item.trackId, item.clipId)
-
-    if (!didMutate) {
-      enqueueSnackbar('No valid mutation was generated for this formula.', {
-        variant: 'warning'
-      })
-    }
-
-    return
-  }
-
   if (action === 'delete-clip') {
     dawStore.removeClip(item.clipId)
     return

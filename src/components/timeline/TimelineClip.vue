@@ -201,13 +201,7 @@ function handleContextMenu(event) {
       clipId: props.clip.id,
       label: 'Edit Clip'
     },
-    {
-      action: 'mutate-clip-formula',
-      clipId: props.clip.id,
-      label: 'Mutate Formula',
-      trackId: props.trackId
-    },
-    {
+      {
       action: 'delete-clip',
       clipId: props.clip.id,
       label: 'Delete Clip'
