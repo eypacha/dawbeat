@@ -9,48 +9,6 @@
       </div>
     </template>
 
-    <template v-if="showName">
-      <label class="block text-xs uppercase tracking-[0.18em] text-zinc-500">
-        Name
-      </label>
-
-      <Input
-        v-model="draftName"
-        class="mt-2"
-        :placeholder="namePlaceholder"
-      />
-    </template>
-
-    <template v-if="allowStereo">
-      <div class="mt-4 grid gap-2">
-        <span class="text-xs uppercase tracking-[0.18em] text-zinc-500">Mode</span>
-
-        <div class="grid grid-cols-2 gap-2">
-          <button
-            class="border px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] transition"
-            :class="!draftStereo
-              ? 'border-sky-500/40 bg-sky-500/10 text-sky-100'
-              : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-100'"
-            type="button"
-            @click="toggleStereo(false)"
-          >
-            Mono
-          </button>
-
-          <button
-            class="border px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] transition"
-            :class="draftStereo
-              ? 'border-sky-500/40 bg-sky-500/10 text-sky-100'
-              : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-100'"
-            type="button"
-            @click="toggleStereo(true)"
-          >
-            Stereo
-          </button>
-        </div>
-      </div>
-    </template>
-
     <template v-if="draftStereo">
       <label class="mt-4 block text-xs uppercase tracking-[0.18em] text-zinc-500">
         Left
@@ -137,6 +95,48 @@
           @keydown.ctrl.enter.prevent="handleEvalShortcut"
         />
       </div>
+    </template>
+
+    <template v-if="allowStereo">
+      <div class="mt-4 grid gap-2">
+        <span class="text-xs uppercase tracking-[0.18em] text-zinc-500">Mode</span>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button
+            class="border px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] transition"
+            :class="!draftStereo
+              ? 'border-sky-500/40 bg-sky-500/10 text-sky-100'
+              : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-100'"
+            type="button"
+            @click="toggleStereo(false)"
+          >
+            Mono
+          </button>
+
+          <button
+            class="border px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] transition"
+            :class="draftStereo
+              ? 'border-sky-500/40 bg-sky-500/10 text-sky-100'
+              : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-100'"
+            type="button"
+            @click="toggleStereo(true)"
+          >
+            Stereo
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <template v-if="showName">
+      <label class="mt-4 block text-xs uppercase tracking-[0.18em] text-zinc-500">
+        Name
+      </label>
+
+      <Input
+        v-model="draftName"
+        class="mt-2"
+        :placeholder="namePlaceholder"
+      />
     </template>
 
     <template #footer>

@@ -302,9 +302,15 @@ const editingFormulaRightValue = computed(() => editingClipFormulaDraft.value.ri
 
 const editingFormulaStereo = computed(() => editingClipFormulaDraft.value.stereo)
 
-const editingFormulaName = computed(() => '')
+const editingFormulaName = computed(() => {
+  if (editingClipRecord.value?.laneType !== 'track') {
+    return ''
+  }
 
-const showFormulaDialogNameField = computed(() => false)
+  return editingClipRecord.value.clip?.formulaName ?? ''
+})
+
+const showFormulaDialogNameField = computed(() => editingClipRecord.value?.laneType === 'track')
 const showFormulaDialogStereoToggle = computed(() => editingClipRecord.value?.laneType !== 'variable')
 const formulaDialogTitle = computed(() => {
   return editingClipRecord.value?.laneType === 'variable'
