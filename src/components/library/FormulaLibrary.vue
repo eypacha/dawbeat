@@ -65,8 +65,9 @@
         >
           <div
             class="-ml-1 mt-0.5 flex h-5 w-4 shrink-0 cursor-grab items-center justify-center text-zinc-500 transition group-hover:text-zinc-300"
-            title="Drag formula"
+            title="Drag formula to timeline to create a clip"
             draggable="true"
+            @dragstart="handleLibraryFormulaDragStart($event, item)"
           >
             <GripVertical class="h-3.5 w-3.5" />
           </div>
@@ -124,4 +125,12 @@ function deleteFormula(id) {
   libraryStore.removeItem(id)
 }
 
+function handleLibraryFormulaDragStart(event, item) {
+  if (!event.dataTransfer) {
+    return
+  }
+
+  event.dataTransfer.effectAllowed = 'copy'
+  event.dataTransfer.setData('application/x-dawbeat-library-formula-item', JSON.stringify(item))
+}
 </script>

@@ -2490,6 +2490,32 @@ export const useDawStore = defineStore('dawStore', {
       return nextClip.id
     },
 
+    addClipFromLibraryFormula(trackId, libraryItem, startTick) {
+      const track = findTrack(this.tracks, trackId)
+
+      if (!track) {
+        return null
+      }
+
+      const nextClip = createTrackClip({
+        start: startTick,
+        duration: DEFAULT_FORMULA_DROP_DURATION,
+        formula: libraryItem.formulaStereo ? null : (libraryItem.formula ?? null),
+        formulaStereo: libraryItem.formulaStereo ?? false,
+        leftFormula: libraryItem.leftFormula ?? null,
+        rightFormula: libraryItem.rightFormula ?? null,
+        formulaId: libraryItem.id,
+        formulaName: libraryItem.name
+      })
+
+      track.clips.push(nextClip)
+      sortTrackClips(track)
+      this.setSelectedClips([nextClip.id])
+      this.selectedTrackId = trackId
+
+      return nextClip.id
+    },
+
     addVariableClip(variableTrackName, clip) {
       const variableTrack = findVariableTrack(this.variableTracks, variableTrackName)
 

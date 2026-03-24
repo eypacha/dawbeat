@@ -81,6 +81,10 @@
       :style="laneStyle"
       @contextmenu="handleLaneContextMenu"
       @pointerdown="handleLanePointerDown"
+      @dragover.prevent="handleLaneDragOver"
+      @drop.prevent="handleLaneDrop"
+      @dragenter.prevent="handleLaneDragEnter"
+      @dragleave="handleLaneDragLeave"
     >
       <TimelineClipPreview
         v-if="creationPreview"
@@ -518,6 +522,80 @@ function getTrackReorderPlacement(event) {
 
   const { height, top } = currentTarget.getBoundingClientRect()
   return event.clientY >= top + height / 2 ? 'after' : 'before'
+}
+
+function handleLaneDragOver(event) {
+  const isLibraryFormula = isLibraryFormulaDropEvent(event)
+  
+  if (!isLibraryFormula) {
+    return
+  }
+
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'copy'
+  }
+
+  // Update preview position to follow cursor
+  const currentTick = getPointerTick(event)
+  
+  dawStore.setClipDragPreview({
+    start: currentTick,
+    duration: DEFAULT_FORMULA_DROP_DURATION,
+    targetLaneId: props.track.id
+  })
+}
+
+function handleLaneDragEnter(event) {
+  const isLibraryFormula = isLibraryFormulaDropEvent(event)
+  
+  if (!isLibraryFormula) {
+    return
+  }
+
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'copy'
+  }
+}
+
+function handleLaneDragLeave(event) {
+  // Only clear preview if we're leaving the lane element itself
+  if (event.target === laneElement.value) {
+    dawStore.clearClipDragPreview()
+  }
+}
+
+function handleLaneDrop(event) {
+  if (!isLibraryFormulaDropEvent(event)) {
+    return
+  }
+
+  const data = event.dataTransfer?.getData('application/x-dawbeat-library-formula-item')
+  if (!data) {
+    return
+  }
+
+  try {
+    const libraryItem = JSON.parse(data)
+    const startTick = getPointerTick(event)
+
+    dawStore.recordHistoryStep('create-clip-from-library-formula', () => {
+      dawStore.addClipFromLibraryFormula(props.track.id, libraryItem, startTick)
+    })
+  } catch (error) {
+    console.error('Failed to parse library formula item', error)
+  } finally {
+    // Clean up drag state
+    libraryFormulaDragAnchorTick = null
+    dawStore.clearClipDragPreview()
+  }
+}
+
+function isLibraryFormulaDropEvent(event) {
+  if (!event.dataTransfer?.types) {
+    return false
+  }
+
+  return Array.from(event.dataTransfer.types).includes('application/x-dawbeat-library-formula-item')
 }
 
 onBeforeUnmount(() => {
