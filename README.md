@@ -1,493 +1,147 @@
 # DawBeat
 
-Experimental DAW for composing bytebeat formulas on a timeline with real browser playback.
+Browser-based ByteBeat DAW focused on fast timeline composition, formula-driven sound design, automation, and live control.
 
-The app is no longer just a mockup of formula clips. It now integrates bytebeat playback, formula tracks, variable tracks, value tracker tracks, automation lanes, a library, effects, persistence, and offline export.
+![DawBeat UI](docs/screenshots/dawbeat-ui.png)
 
-## Screenshot
+## Overview
 
-![DawBeat UI placeholder screenshot](docs/screenshots/dawbeat-ui.png)
+DawBeat combines a lightweight DAW workflow with a ByteBeat-first approach:
 
-## Current Status
+- Formula clips (mono or stereo).
+- Variable tracks and value trackers to modulate formulas over time.
+- Parameter automation and an audio effects chain.
+- Playback, looping, automation recording, and offline export.
+- Mobile companion controls for automation lanes via QR link.
 
-Implemented today:
+The main app is desktop-oriented. On phones/tablets, the companion view is intended as a remote controller.
 
-- start screen to unlock audio before entering the app
-- real playback with Web Audio + `public/vendors/ByteBeat.js`
-- toolbar with `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, settings, `sampleRate` editing, editable BPM, BPM calculation based on a unit like `t >> 4`, and `MIDI Clock` badge/lock state
-- playhead scrubbing from the ruler and from the playhead itself
-- horizontal zoom with `Ctrl/Cmd + wheel`
-- timeline auto-scroll during playback
-- timeline with:
-  - formula tracks
-  - variable tracks
-  - value tracker tracks
-  - automation lanes
-  - editable loop region
-- vertical resizing for formula tracks, variable tracks, value tracker tracks, and automation lanes
-- clip creation by dragging over empty lanes
-- moving clips within a lane and across compatible tracks
-- clip start/end resize
-- duplication with `Alt/Option + drag`
-- temporary snap bypass with `Shift + drag`
-- marquee multi-selection with `Shift + drag`
-- moving and duplicating groups of selected clips
-- copy/paste of clips at the playhead
-- nudging selected clips with left/right arrows
-- undo/redo with store history
-- track reorder and duplication
-- track rename, color, mute, solo, and delete
-- per-track union operator (`|`, `+`, `-`, `*`, `<<`, `>>`, `&`, `^`, `%`)
-- fully working formula library with create, select, edit, delete, and drag and drop
-- clips with inline formula or `formulaId` reference
-- formula editing via dialog for clips, library formulas, and variable clips
-- hex editor for value tracker clips
-- binding dialog for value trackers with `keyboard`, `variable`, `midiCc`, and `midiNote`, including MIDI Learn
-- optional `MIDI Clock receive` from a selected MIDI input, with runtime effective BPM/hz and slave transport (`Start`, `Continue`, `Stop`)
-- value tracker clip recording from transport with lane preview and optional auto-creation of the destination track
-- initialization of missing variables from the formula editor
-- conversion of numeric initializers into value trackers from the formula editor
-- optional real-time evaluated expression panel
-- copy of evaluated formulas from the footer for `Channel`, `Left Channel`, and `Right Channel`
-- optional waveform preview per clip
-- formula effects: `Stereo Offset`, `T Replacement`
-- formula effects layer inside the `Master Gain` visualizer, rendered with `ByteBeat.js#getSamplesForTimeRange(...)`
-- currently exposed audio effects: `EQ3`, `Distortion`, `Stereo Widener`, `Feedback Delay`, `Compressor`, `Limiter`, `Reverb`, and `Master Gain`
-- automation lanes for `masterGain` and audio effect parameters
-- final audio visualizer inside the `Master Gain` card
-- per-segment automation curves with `Straight`, `Ease In`, `Ease Out`, and `Ease In-Out` (`Ease In-Out` by default)
-- phone automation companion via PeerJS, opened from each automation lane header with a QR modal
-- companion sessions persisted in `localStorage`, allowing the same phone to accumulate multiple automation lanes from the same host
-- automatic persistence in `localStorage`
-- JSON project import/export
-- offline WAV export
-- full desktop layout, compact layout with side drawers for Library/Effects, a general mobile placeholder for the main DAW UI, and a dedicated mobile automation companion route
+## Features
 
-## Important Notes
-
-- the timeline is no longer only about formula clips; `variableTracks` and `valueTrackerTracks` participate in the active expression
-- value tracker bindings model `keyboard`, `variable`, `midiCc`, and `midiNote`; today the wired paths are keyboard override for the selected target, `variable` binding resolution, and MIDI CC/Note input through `midiInputService`
-- the `keyboard` binding type still depends on the selected target; it does not route through a dedicated binding path the way `midiCc` and `midiNote` do
-- the main DAW still shows a placeholder on phones, but automation companion mode is already available on mobile through the dedicated QR flow
-- remote automation control has two modes: with `Record` disarmed it applies a live override; with `Record` armed it writes points into the lane at the current playhead time
-- live playback and offline export both support audio effects and automation, but they are still separate internal paths; if you touch audio or export, verify both
-- the automation companion session is stored separately from the project, and runtime-only remote override state is not serialized into project JSON
-- the repo contains some files that do not necessarily represent features currently exposed in the UI; for the real state, use `EffectsPanel.vue`, `dawStore.js`, and `projectPersistence.js` as source of truth
+- Multi-track timeline with clip editing and section labels.
+- Undo/redo history.
+- Formula evaluation with visual previews.
+- Variable tracks and value trackers with keyboard and MIDI input.
+- Automation lanes with curve controls and live automation input.
+- Audio effects (EQ, distortion, stereo widener, delay, compressor, reverb, limiter, and master gain).
+- WAV and MP3 export (full render or looped render passes).
+- Auto-save in localStorage plus JSON project import/export.
+- Web MIDI support:
+- MIDI input for bindings and live value capture.
+- MIDI Clock receive for transport sync and effective BPM/sample-rate locking.
+- PeerJS-based remote companion:
+- Shareable lane control link/QR.
+- Phone/tablet control on the companion route.
 
 ## Stack
 
-- Vue 3
-- Vite
-- Tailwind CSS 4
+- Vue 3 + Composition API
 - Pinia
-- PeerJS
-- qrcode
-- Web Audio API
-- Tone.js for part of the offline render path
-- `public/vendors/ByteBeat.js`
-- `lucide-vue-next`
+- Vue Router (hash history)
+- Vite
+- Tailwind CSS v4
+- Tone.js (audio/effects)
+- PeerJS (remote companion)
+- lamejs (MP3 encoding)
 
-## Running It
+## Requirements
 
-```bash
-pnpm install
-pnpm dev
-```
+- Node.js 20+ recommended
+- Yarn
+- Modern browser with Web Audio support
+- For MIDI: browser with Web MIDI support (usually secure context: HTTPS or localhost)
 
-Production build:
-
-```bash
-pnpm build
-```
-
-Local preview:
+## Installation
 
 ```bash
-pnpm preview
+yarn install
 ```
 
-## Current Interactions
+## Development
 
-- `Click` on formula clip: selects the clip
-- `Double click` on formula clip: opens formula editing for that clip
-- `Double click` on variable clip: opens variable formula editing
-- `Double click` on value tracker clip: opens the clip hex editor
-- `Drag` on formula clip: moves it with snap enabled
-- `Shift + drag` on clip: moves it without snap
-- `Alt/Option + drag` on clip: duplicates on drop
-- `Drag` across compatible tracks: moves the clip to the destination lane
-- `Drag` on side handles: resize
-- `Shift + drag` during resize: resize without snap
-- `Shift + drag` on an empty timeline area: marquee multi-selection
-- `Drag` on empty space in a lane: creates a clip of that lane type
-- `Drag` a formula from Library to a lane: creates a clip referencing that formula
-- `Drag` a formula from Library to a clip: reassigns the clip formula
-- `Drag` the track header: reorders tracks
-- `Click` in Library: selects a formula
-- `Double click` in Library: opens library formula editing
-- `Click` on automation lane: creates an automation point
-- `Drag` an automation point: moves the point
-- `Context menu` on automation point: changes the following segment curve or removes the point
-- `Click` on the phone button in an automation lane header: opens the QR modal for the automation companion
-- `Context menu` on value tracker header: rename, delete, or edit binding
-- `Click` on the keyboard target button of a value tracker: arms/disarms the track for keyboard override
-- `Settings > MIDI input`: enables/refreshes Web MIDI, shows recent messages, and allows configuring `MIDI Clock receive`
-- `Settings`: uses tabs; `MIDI` lives as a dedicated tab with inputs, clock, and debug
-- scanning another automation QR on the same phone adds that lane to the existing companion session for the same host
-- `Record`: starts/ends value tracker recording on the active target; if phone controllers are connected, it instead arms/disarms writing their moves into automation lanes
-- editing `BPM`: recalculates `sampleRate` for the current unit (`t >> n` or `t / n`)
-- editing the BPM unit (`t >> n` or `t / n`): recalculates BPM while keeping `sampleRate`
-- with `MIDI Clock` locked: `BPM`, unit, and `hz` become read-only and show the effective external values
-- `0-9` and `A-F`: send live input to the active value tracker for keyboard override
-- `Space`: play/pause
-- `L`: toggle loop
-- `Cmd/Ctrl + C`: copy selected clips
-- `Cmd/Ctrl + V`: paste clips at the playhead
-- `Cmd/Ctrl + Z`: undo
-- `Cmd/Ctrl + Shift + Z` or `Ctrl + Y`: redo
-- `ArrowLeft` / `ArrowRight`: nudge selected clips
-- `Delete` or `Backspace`: delete selected clip(s) or the selected automation point
-- `Esc`: clears selection when no editor is open
+```bash
+yarn dev
+```
 
-## Playback Rules
+Vite runs with --host, so you can open the app from other devices on your local network.
 
-- snap to grid is enabled by default
-- `Shift` disables snap only during the current gesture
-- `Alt/Option` confirms duplication on `pointerup`
-- muted tracks do not participate in the active expression
-- if at least one track is soloed, only `soloed` tracks participate in the active expression
-- `timelineEngine` combines active audible clips using each track’s `unionOperator`
-- then it prepends active definitions coming from `variableTracks` and `valueTrackerTracks`
-- `formulaService` resolves inline and referenced clips before applying eval effects
-- the evaluated panel shows the effective expression that reaches playback after eval effects are applied
-- `valueTrackerLiveInputs` allows live value tracker override during playback or scrub
-- during recording, keyboard/MIDI input can be captured into `valueTrackerRecordingSession` and consolidated as a clip when recording ends
+## Build and Preview
 
-## Formula Editor, Variables, and Value Trackers
+```bash
+yarn build
+yarn preview
+```
 
-- `FormulaInputDialog` validates and highlights formula tokens
-- if a formula uses missing variables, the dialog can initialize them
-- a text initializer creates a `variableTrack`
-- a numeric initializer can be converted into a `valueTrackerTrack` with `variable` binding
-- value tracker clips edit a per-step hex grid with `SET`, `HOLD`, and `EMPTY` states
-- `ValueTrackerBindingDialog` allows editing the binding, choosing device/channel/controller/note, and using MIDI Learn
-- `SettingsModal` exposes MIDI enable/refresh and debug for inputs/recent messages
-- the evaluated panel and playback use the combined result of tracks, variables, and value trackers according to the current time
+## Scripts
 
-## Effects and Automation
+- yarn dev: start development server.
+- yarn build: create production build.
+- yarn preview: preview production build locally.
 
-Current eval effects:
+## Quick Start
 
-- `Stereo Offset`
-- `T Replacement`
+1. Click START to initialize audio.
+2. Create or edit clips in the timeline.
+3. Adjust BPM/measure/sample rate from the transport toolbar.
+4. Enable loop to iterate on a section.
+5. Use Export to generate WAV or MP3.
+6. Save a project snapshot with Save JSON or load one with Open JSON.
 
-Currently exposed audio effects:
+You can also load bundled demos using Shuffle Demo.
 
-- `EQ3`
-- `Distortion`
-- `Stereo Widener`
-- `Feedback Delay`
-- `Compressor`
-- `Limiter`
-- `Reverb`
-- `Master Gain`
+## Keyboard Shortcuts
 
-Current automation:
+- Space: play/pause.
+- L: toggle loop.
+- ArrowLeft / ArrowRight: nudge selected clips.
+- Shift + ArrowLeft / Shift + ArrowRight: nudge without strict snap behavior.
+- ArrowUp / ArrowDown: adjust selected automation point value.
+- Cmd/Ctrl + C: copy selected clips.
+- Cmd/Ctrl + V: paste at playhead.
+- Cmd/Ctrl + Z: undo.
+- Cmd+Shift+Z or Ctrl+Y: redo.
+- 0-9 and A-F: quick value input for value trackers (hex-like input).
 
-- `masterGain` lane
-- per-audio-effect-parameter lanes
-- per-segment curves on automation points: `Straight`, `Ease In`, `Ease Out`, `Ease In-Out` (`Ease In-Out` by default)
-- remote phone controllers per automation lane through PeerJS + QR
-- with `Record` disarmed, remote phone moves apply live runtime overrides
-- with `Record` armed, remote phone moves write automation points and participate in history transactions
+## Mobile Companion
 
-Live playback resolves automation by time.
-Offline export renders the timeline, eval effects, master gain, supported audio effects, and offline automation for the current project.
+The app includes a dedicated remote-control route:
 
-## Persistence
+- Route: #/companion
+- Connection: scan/open the shared QR link from an automation lane.
+- Behavior: the companion sends gestures and values for subscribed lanes.
 
-- on startup, the app tries to load the project saved in `localStorage`
-- if none exists, it starts from the default entry returned by `demoProjectService` (from `src/data/*.json`)
-- `projectPersistence` normalizes imported projects and serializes the persistable state
-- the current project serializes `version: 18`
-- persisted fields include `tracks`, `variableTracks`, `valueTrackerTracks`, `valueTrackerLibraryItems`, `formulas`, `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`, `bpmMeasure`, `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate`, `tickSize`, `timelineSectionLabels`, `showClipWaveforms`, and `showEvaluatedPanel`, including `height` inside tracks and lanes
-- the automation companion stores its own controller session separately in `localStorage` so the same phone can reconnect and retain subscribed lanes for the same host
-- `automationLiveOverrides` and `automationRecordingArmed` are runtime-only and are not serialized into the project
-- `MIDI Clock receive` is not serialized into the project and does not write persisted `sampleRate`; it only applies a runtime override to the live engine
-- from the toolbar you can create an empty project, open JSON, save JSON, and export WAV
-- from Settings you can reset local storage, toggle waveform/evaluated panel, and inspect MIDI
+If you open the main app on mobile, you will see a desktop-only notice with guidance to use companion mode.
 
-## Current Structure
+## Project Persistence and Format
+
+- Auto-save: project state is saved in localStorage.
+- Exchange: JSON import/export for sharing and backup.
+- Version migration: payload normalization is applied on load for compatibility.
+
+## Project Structure
 
 ```text
 src/
   components/
-    boot/
-      StartScreen.vue
-    companion/
-      AutomationCompanionView.vue
-    editor/
-    effects/
-      AudioOutputVisualizer.vue
-      AudioBitCrusherItem.vue
-      AudioCompressorItem.vue
-      AudioDelayItem.vue
-      AudioDistortionItem.vue
-      AudioEqItem.vue
-      AudioLimiterItem.vue
-      AudioMasterGainItem.vue
-      AudioReverbItem.vue
-      AudioStereoWidenerItem.vue
-      EffectItem.vue
-      EffectsPanel.vue
-      EvalEffectItem.vue
-      EffectParamAutomationButton.vue
-    evaluated/
-      EvaluatedPanel.vue
-    library/
-      FormulaLibrary.vue
-    timeline/
-      AutomationCurveMenu.vue
-      Playhead.vue
-      Timeline.vue
-      TimelineAutomationLane.vue
-      TimelineClip.vue
-      TimelineClipPreview.vue
-      TimelineClipWaveform.vue
-      TimelineLoopRegion.vue
-      TimelineTrack.vue
-      TimelineValueTrackerClip.vue
-      TimelineValueTrackerTrack.vue
-      TimelineVariableClip.vue
-      TimelineVariableTrack.vue
-      TrackColorPalette.vue
-      TrackUnionOperatorMenu.vue
-    transport/
-      Toolbar.vue
-    ui/
-      AutomationCompanionModal.vue
-      Button.vue
-      CollapseTransition.vue
-      ConfirmDialog.vue
-      ContextMenu.vue
-      Divider.vue
-      Dropdown.vue
-      FormulaInputDialog.vue
-      IconButton.vue
-      Input.vue
-      Modal.vue
-      Panel.vue
-      SettingsModal.vue
-      SnackbarContainer.vue
-      SnackbarItem.vue
-      SideDrawer.vue
-      TextInputDialog.vue
-      Toolbar.vue
-      TrackPresentationDialog.vue
-      ValueTrackerBindingDialog.vue
-      ValueTrackerClipEditorDialog.vue
-  composables/
-    useContextMenu.js
-    usePointerEdgeAutoScroll.js
-    useTimelineClipInteraction.js
-    useTimelineLaneResize.js
-    useTimelineMarqueeSelection.js
-    useTransportPlayback.js
-  data/
-    demo.json
-    demo-boss-level.json
-    demo-stereo-madness.json
-  engine/
-    timelineEngine.js
-  i18n/
-    locales/
-  services/
-    audioEffectService.js
-    automationCompanionService.js
-    automationService.js
-    bpmService.js
-    bytebeatNodeLoader.js
-    bytebeatService.js
-    clipboard.js
-    dawStoreService.js
-    demoProjectService.js
-    evalEffectService.js
-    exportService.js
-    floatingWindowService.js
-    formulaMutationService.js
-    formulaService.js
-    formulaWaveformService.js
-    keyboardShortcuts.js
-    midiClockService.js
-    midiInputService.js
-    notifications.js
-    projectPersistence.js
-    snapService.js
-    timelineHeaderWidthService.js
-    timelineLaneLayoutService.js
-    timelineSectionLabelService.js
-    timelineService.js
-    trackPlaybackState.js
-    trackUnionOperatorService.js
-    valueTrackerInputService.js
-    valueTrackerService.js
-    variableTrackService.js
-    visualizerConfigService.js
-    visualizerFrameService.js
-    visualizerRenderer.js
-  stores/
-    dawStore.js
-  utils/
-    audioSettings.js
-    colorUtils.js
-    formulaTokenizer.js
-    formulaValidation.js
-    macroNodes.js
-    timeUtils.js
-    visualizerPalettes.js
-  views/
+    timeline/      # Timeline, lanes, menus, and editing
+    transport/     # Toolbar, transport, export/settings/about
+    effects/       # Audio effect UI
+    companion/     # Remote controller view
+    ui/            # Dialogs, panels, and base UI components
+  services/        # Domain logic (audio, MIDI, export, persistence, formulas, etc.)
+  stores/          # Global state (Pinia)
+  engine/          # Timeline/formula evaluation runtime
+  composables/     # Reusable UI and transport interactions
+  views/           # DawView and CompanionView
 ```
 
-## Current Architecture
+## Architecture Notes
 
-```text
-UI
-↓
-Pinia Store
-↓
-Services / Composables
-↓
-Timeline Engine
-↓
-Bytebeat Service / Export / Persistence
-↓
-Web Audio / Tone Offline / File APIs / localStorage
-```
+- In main.js, automatic project persistence is initialized only outside companion mode.
+- Hash-based routing is used to simplify static hosting.
+- Export rendering is offline and applies formulas, automation, and supported effects.
 
-Practical notes:
+## Current Status
 
-- `timelineEngine` decides the active expression based on time, audible tracks, active variables, and active value trackers
-- `formulaService` resolves name and code for both inline and referenced clips
-- `variableTrackService` and `valueTrackerService` participate in resolving definitions prepended to the active formula
-- `automationService` resolves `masterGain` and audio effect parameters by time
-- `automationCompanionService` owns PeerJS host/client state, QR routes, multi-lane controller sessions, and remote automation messages
-- `timelineLaneLayoutService` normalizes persistable lane heights
-- `valueTrackerInputService` and `midiInputService` centralize keyboard/MIDI input into the store
-- `bytebeatService` controls live audio, sample rate, master gain, and the real-time audio chain
-- `exportService` uses a separate offline Tone.js path to render WAV
-- `projectPersistence` normalizes, versions, and serializes projects
+This repository is under active development and already includes a full functional base for composition, automation, MIDI workflows, and export.
 
-Additional modules currently in active use:
-
-- `bpmService` centralizes BPM/unit conversion and normalization
-- `midiClockService` derives runtime effective sample rate from external MIDI Clock and controls transport sync events
-- `timelineSectionLabelService` manages section markers shown on the timeline and persisted in projects
-- `demoProjectService` resolves bundled demo projects from `src/data/*.json`
-- `formulaMutationService` encapsulates formula mutation helpers used by store actions
-- visualizer services (`visualizerConfigService`, `visualizerFrameService`, `visualizerRenderer`) power scope rendering settings and frame composition
-
-## Main Models
-
-Formula track:
-
-```js
-{
-  id: "track-id",
-  color: "#6366f1",
-  muted: false,
-  soloed: false,
-  unionOperator: "|",
-  name: undefined,
-  height: 80,
-  clips: []
-}
-```
-
-Formula clip:
-
-```js
-{
-  id: "clip-id",
-  formula: "t*(t>>5|t>>8)", // optional if not referencing the library
-  formulaId: "formula-id",  // optional
-  formulaName: "Bass",      // optional
-  start: 0,
-  duration: 4
-}
-```
-
-Variable track:
-
-```js
-{
-  name: "a",
-  height: 44,
-  clips: []
-}
-```
-
-Variable clip:
-
-```js
-{
-  id: "clip-id",
-  formula: "0",
-  start: 0,
-  duration: 4
-}
-```
-
-Value tracker track:
-
-```js
-{
-  id: "value-track-id",
-  name: "Value Tracker 1",
-  binding: {
-    type: null,
-    deviceId: null,
-    channel: null,
-    controller: null,
-    note: null,
-    variableName: null
-  },
-  height: 64,
-  clips: []
-}
-```
-
-Value tracker clip:
-
-```js
-{
-  id: "clip-id",
-  start: 0,
-  duration: 4,
-  stepSubdivision: 4,
-  values: [64, null, null, 96]
-}
-```
-
-Formula:
-
-```js
-{
-  id: "formula-id",
-  name: "Bass",
-  code: "t*(t>>5|t>>8)"
-}
-```
-
-Automation lane:
-
-```js
-{
-  id: "masterGain" || "audioEffect:<effectId>:<paramKey>",
-  type: "masterGain" || "audioEffectParam",
-  effectId: "audio-effect-id",   // only for audioEffectParam
-  effectType: "delay",           // only for audioEffectParam
-  paramKey: "wet",               // only for audioEffectParam
-  height: 52,
-  points: [{ time: 0, value: 1 }]
-}
-```

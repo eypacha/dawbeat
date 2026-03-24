@@ -40,9 +40,8 @@ Today it includes:
 - undo/redo with store history
 - track reorder and duplication
 - track rename, color, mute, solo, `unionOperator`, and delete
-- fully working formula library with create, select, edit, delete, and drag and drop
-- clips with inline formula or `formulaId` reference
-- formula editing through `FormulaInputDialog` for clips, library formulas, and variable clips
+- clips with inline formula
+- formula editing through `FormulaInputDialog` for clips and variable clips
 - hex editor for value tracker clips through `ValueTrackerClipEditorDialog`
 - binding dialog for value trackers through `ValueTrackerBindingDialog`, with `keyboard`, `variable`, `midiCc`, `midiNote`, and MIDI Learn
 - optional `MIDI Clock receive` from a single selected MIDI input, with runtime effective BPM/hz and slave transport (`Start`, `Continue`, `Stop`)
@@ -63,7 +62,7 @@ Today it includes:
 - JSON project import/export
 - offline WAV export with timeline render, eval effects, master gain, supported audio effects, and offline automation
 - keyboard override for value trackers with `0-9` and `A-F`
-- full desktop layout, compact layout with `SideDrawer` for Library/Effects, a general mobile placeholder for the main DAW UI, and a dedicated mobile automation companion route
+- full desktop layout with Library, Timeline, and Effects panels; a general mobile placeholder for the main DAW UI; and a dedicated mobile automation companion route
 
 ## What Not To Assume
 
@@ -85,10 +84,7 @@ Today there are separate dialogs and flows for:
 - automation point curves through context menu
 
 Do not assume clip and formula are always the same entity.
-Today a formula clip can:
-
-- store `formula` inline
-- reference a shared formula with `formulaId`
+Today a formula clip always stores a `formula` inline.
 
 Do not assume all modeled entities have a dedicated visible UI entrypoint.
 `variableTracks` and `valueTrackerTracks` can appear through:
@@ -119,8 +115,7 @@ Today it still depends on the selected target in the UI.
 Do not assume desktop, compact layout, and mobile share the same visible composition.
 Today the app uses:
 
-- desktop layout with Library + Timeline + Effects
-- compact layout with `SideDrawer` for Library and Effects
+- desktop layout with Library + Timeline + Effects panels
 - the current mobile placeholder instead of the full app for the main DAW route
 - a dedicated automation companion route on mobile for phone-based remote automation control
 
@@ -174,7 +169,6 @@ without degrading editing, playback, export, or project restore.
 The system must continue allowing:
 
 - creating and editing formula clips
-- assigning and detaching library formulas from clips
 - moving clips within a track and across tracks
 - duplicating clips and groups with modifiers
 - editing variable clip formulas
@@ -474,7 +468,6 @@ Relevant fields today:
   tracks: [],
   variableTracks: [],
   valueTrackerTracks: [],
-  formulas: [],
   audioEffects: [],
   evalEffects: [],
   automationLanes: [],
@@ -488,20 +481,18 @@ Relevant fields today:
   selectedClipId: null,
   selectedTrackId: null,
   selectedTimelineSectionLabelId: null,
-  selectedFormulaId: null,
-  selectedValueTrackerLibraryItemId: null,
   selectedValueTrackerTrackId: null,
   selectedAutomationPoint: null,
   editingClipId: null,
-  editingFormulaId: null,
   clipDragPreview: null,
   clipClipboard: null,
-  valueTrackerLibraryItems: [],
   valueTrackerRecordingSession: null,
   valueTrackerLiveInputs: {},
   historyPast: [],
   historyFuture: [],
-  historyTransaction: null
+  historyTransaction: null,
+  historyApplying: false,
+  historyRecording: false
 }
 ```
 
@@ -685,10 +676,7 @@ Rules:
 
 Current state:
 
-- `FormulaLibrary.vue` is part of the real flow
-- library formula selection exists
-- formula create, edit, and delete exist
-- formula clips can be linked to a shared formula or detached from it
+- formula clips store inline formula
 - variable clips store inline formula and do not use `formulaId`
 - value tracker clips store discrete steps/values
 - double click on a clip opens the correct editor according to `laneType`
@@ -698,13 +686,12 @@ Current state:
 - `FormulaInputDialog` can detect missing variables
 - `FormulaInputDialog` can initialize missing variables as variable tracks
 - `FormulaInputDialog` can convert numeric initializers into value trackers with `variable` binding
-- an inline clip can be promoted to the library with `addClipFormulaToLibrary`
 
 If this flow is modified:
 
 - do not duplicate resolution logic between clip and library
 - use `formulaService`, `variableTrackService`, and `valueTrackerService` where appropriate
-- preserve the flows `assignFormulaToClip`, `detachClipFormula`, `addClipFormulaToLibrary`, `ensureInitializedVariableTracks`, `ensureInitializedValueTrackerTracks`, `updateValueTrackerTrackBinding`, `startValueTrackerRecording`, and `finishValueTrackerRecording`
+- preserve the flows `ensureInitializedVariableTracks`, `ensureInitializedValueTrackerTracks`, `updateValueTrackerTrackBinding`, `startValueTrackerRecording`, and `finishValueTrackerRecording`
 
 ## Effects and Automation
 
