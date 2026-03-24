@@ -535,12 +535,23 @@ function handleLaneDragOver(event) {
     event.dataTransfer.dropEffect = 'copy'
   }
 
-  // Update preview position to follow cursor
+  // Update preview position to follow cursor.
   const currentTick = getPointerTick(event)
+  let duration = clipDragPreview.value?.duration ?? DEFAULT_FORMULA_DROP_DURATION
+  const data = event.dataTransfer?.getData('application/x-dawbeat-library-formula-item')
   
+  if (data) {
+    try {
+      const libraryItem = JSON.parse(data)
+      duration = libraryItem.duration ?? duration
+    } catch (error) {
+      // Keep last known duration when parsing fails.
+    }
+  }
+
   dawStore.setClipDragPreview({
     start: currentTick,
-    duration: DEFAULT_FORMULA_DROP_DURATION,
+    duration,
     targetLaneId: props.track.id
   })
 }
@@ -558,10 +569,8 @@ function handleLaneDragEnter(event) {
 }
 
 function handleLaneDragLeave(event) {
-  // Only clear preview if we're leaving the lane element itself
-  if (event.target === laneElement.value) {
-    dawStore.clearClipDragPreview()
-  }
+  // Keep ghost preview visible while dragging across lanes/areas.
+  // It is cleared on source dragend.
 }
 
 function handleLaneDrop(event) {
@@ -583,19 +592,16 @@ function handleLaneDrop(event) {
     })
   } catch (error) {
     console.error('Failed to parse library formula item', error)
-  } finally {
-    // Clean up drag state
-    libraryFormulaDragAnchorTick = null
-    dawStore.clearClipDragPreview()
   }
 }
 
 function isLibraryFormulaDropEvent(event) {
   if (!event.dataTransfer?.types) {
-    return false
+    return clipDragPreview.value?.targetLaneId === '__library-drag__'
   }
 
-  return Array.from(event.dataTransfer.types).includes('application/x-dawbeat-library-formula-item')
+  const transferTypes = Array.from(event.dataTransfer.types)
+  return transferTypes.includes('application/x-dawbeat-library-formula-item') || clipDragPreview.value?.targetLaneId === '__library-drag__'
 }
 
 onBeforeUnmount(() => {

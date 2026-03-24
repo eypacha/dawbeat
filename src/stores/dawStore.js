@@ -2499,7 +2499,7 @@ export const useDawStore = defineStore('dawStore', {
 
       const nextClip = createTrackClip({
         start: startTick,
-        duration: DEFAULT_FORMULA_DROP_DURATION,
+        duration: libraryItem.duration ?? DEFAULT_FORMULA_DROP_DURATION,
         formula: libraryItem.formulaStereo ? null : (libraryItem.formula ?? null),
         formulaStereo: libraryItem.formulaStereo ?? false,
         leftFormula: libraryItem.leftFormula ?? null,

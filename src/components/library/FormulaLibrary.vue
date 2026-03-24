@@ -68,6 +68,7 @@
             title="Drag formula to timeline to create a clip"
             draggable="true"
             @dragstart="handleLibraryFormulaDragStart($event, item)"
+            @dragend="handleLibraryFormulaDragEnd"
           >
             <GripVertical class="h-3.5 w-3.5" />
           </div>
@@ -101,6 +102,7 @@ import { BookOpen, ChevronLeft, ChevronRight, GripVertical, Pencil, Trash2 } fro
 import Panel from '@/components/ui/Panel.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import { useLibraryStore } from '@/stores/libraryStore'
+import { useDawStore } from '@/stores/dawStore'
 
 defineProps({
   collapsed: {
@@ -112,6 +114,7 @@ defineProps({
 const emit = defineEmits(['toggle-collapse'])
 
 const libraryStore = useLibraryStore()
+const dawStore = useDawStore()
 const items = computed(() => libraryStore.items)
 
 function deleteFormula(id) {
@@ -125,5 +128,17 @@ function handleLibraryFormulaDragStart(event, item) {
 
   event.dataTransfer.effectAllowed = 'copy'
   event.dataTransfer.setData('application/x-dawbeat-library-formula-item', JSON.stringify(item))
+
+  // Mark drag as active so timeline lanes can render ghost preview
+  // even when browsers hide custom drag data during dragover.
+  dawStore.setClipDragPreview({
+    start: 0,
+    duration: item.duration ?? 4,
+    targetLaneId: '__library-drag__'
+  })
+}
+
+function handleLibraryFormulaDragEnd() {
+  dawStore.clearClipDragPreview()
 }
 </script>
