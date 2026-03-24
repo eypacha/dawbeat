@@ -80,13 +80,6 @@
             </button>
             <div class="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
               <button
-                class="flex h-6 w-6 items-center justify-center rounded border border-zinc-700 bg-zinc-950/80 text-zinc-400 transition hover:border-zinc-500 hover:text-zinc-100"
-                type="button"
-                title="Edit formula"
-              >
-                <Pencil class="h-3.5 w-3.5" />
-              </button>
-              <button
                 class="flex h-6 w-6 items-center justify-center rounded border border-zinc-700 bg-zinc-950/80 text-zinc-400 transition hover:border-red-500/50 hover:text-red-200"
                 type="button"
                 title="Delete formula"
