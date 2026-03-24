@@ -45,7 +45,10 @@ export function tokenizeFormulaWithOptions(expression = '', options = {}) {
       continue
     }
 
-    if (/\d/.test(currentChar)) {
+    const startsWithNumber = /\d/.test(currentChar)
+      || (currentChar === '.' && /\d/.test(source[index + 1] ?? ''))
+
+    if (startsWithNumber) {
       const endIndex = getNumberEndIndex(source, index)
 
       tokens.push({
@@ -135,6 +138,16 @@ export function tokenizeFormulaWithOptions(expression = '', options = {}) {
 }
 
 function getNumberEndIndex(source, startIndex) {
+  if (source[startIndex] === '.') {
+    let endIndex = startIndex + 1
+
+    while (endIndex < source.length && /\d/.test(source[endIndex])) {
+      endIndex += 1
+    }
+
+    return endIndex
+  }
+
   if (
     source[startIndex] === '0' &&
     (source[startIndex + 1] === 'x' || source[startIndex + 1] === 'X')
@@ -154,6 +167,14 @@ function getNumberEndIndex(source, startIndex) {
 
   while (endIndex < source.length && /\d/.test(source[endIndex])) {
     endIndex += 1
+  }
+
+  if (source[endIndex] === '.') {
+    endIndex += 1
+
+    while (endIndex < source.length && /\d/.test(source[endIndex])) {
+      endIndex += 1
+    }
   }
 
   return endIndex

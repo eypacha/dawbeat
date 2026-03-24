@@ -152,25 +152,29 @@ const dawStore = useDawStore()
 const items = computed(() => libraryStore.items)
 const searchQuery = ref('')
 const normalizedSearchQuery = computed(() => searchQuery.value.trim().toLowerCase())
+const nameCollator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true })
 const filteredItems = computed(() => {
   const query = normalizedSearchQuery.value
+  const sourceItems = query
+    ? items.value.filter((item) => {
+      const searchableText = [
+        item.name,
+        item.formula,
+        item.leftFormula,
+        item.rightFormula
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
 
-  if (!query) {
-    return items.value
-  }
+      return searchableText.includes(query)
+    })
+    : items.value
 
-  return items.value.filter((item) => {
-    const searchableText = [
-      item.name,
-      item.formula,
-      item.leftFormula,
-      item.rightFormula
-    ]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase()
-
-    return searchableText.includes(query)
+  return [...sourceItems].sort((a, b) => {
+    const leftName = String(a?.name ?? '')
+    const rightName = String(b?.name ?? '')
+    return nameCollator.compare(leftName, rightName)
   })
 })
 
