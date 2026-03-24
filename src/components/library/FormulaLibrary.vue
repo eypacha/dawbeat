@@ -51,15 +51,31 @@
     </div>
 
     <div v-else class="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div class="px-1 pb-2">
+        <input
+          v-model.trim="searchQuery"
+          class="w-full border border-zinc-800 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-zinc-600"
+          placeholder="Search by name or formula"
+          type="text"
+        >
+      </div>
+
       <div class="flex items-center justify-between px-1 pb-2">
         <p class="text-[10px] uppercase tracking-[0.3em] text-zinc-600">
-          {{ items.length }} formula{{ items.length === 1 ? '' : 's' }}
+          {{ filteredItems.length }} / {{ items.length }} formula{{ filteredItems.length === 1 ? '' : 's' }}
         </p>
       </div>
 
       <div class="min-h-0 flex-1 overflow-auto border border-zinc-800 bg-zinc-950/70">
+        <div
+          v-if="filteredItems.length === 0"
+          class="flex h-full min-h-[120px] items-center justify-center px-4 text-center text-xs text-zinc-600"
+        >
+          No formulas match your search.
+        </div>
+
         <article
-          v-for="item in items"
+          v-for="item in filteredItems"
           :key="item.id"
           class="group flex w-full items-start gap-2 border-b border-zinc-800 px-4 py-2 transition-colors bg-zinc-900 text-zinc-100"
         >
@@ -97,8 +113,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { BookOpen, ChevronLeft, ChevronRight, GripVertical, Pencil, Trash2 } from 'lucide-vue-next'
+import { computed, ref } from 'vue'
+import { BookOpen, ChevronLeft, ChevronRight, GripVertical, Trash2 } from 'lucide-vue-next'
 import Panel from '@/components/ui/Panel.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import { useLibraryStore } from '@/stores/libraryStore'
@@ -116,6 +132,28 @@ const emit = defineEmits(['toggle-collapse'])
 const libraryStore = useLibraryStore()
 const dawStore = useDawStore()
 const items = computed(() => libraryStore.items)
+const searchQuery = ref('')
+const filteredItems = computed(() => {
+  const query = searchQuery.value.toLowerCase()
+
+  if (!query) {
+    return items.value
+  }
+
+  return items.value.filter((item) => {
+    const searchableText = [
+      item.name,
+      item.formula,
+      item.leftFormula,
+      item.rightFormula
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+
+    return searchableText.includes(query)
+  })
+})
 
 function deleteFormula(id) {
   libraryStore.removeItem(id)
