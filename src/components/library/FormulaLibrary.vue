@@ -83,14 +83,14 @@
                 type="button"
                 title="Edit formula"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg>
+                <Pencil class="h-3.5 w-3.5" />
               </button>
               <button
                 class="flex h-6 w-6 items-center justify-center rounded border border-zinc-700 bg-zinc-950/80 text-zinc-400 transition hover:border-red-500/50 hover:text-red-200"
                 type="button"
                 title="Delete formula"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg>
+                <Trash2 class="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
@@ -102,7 +102,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { BookOpen, ChevronLeft, ChevronRight, GripVertical } from 'lucide-vue-next'
+import { BookOpen, ChevronLeft, ChevronRight, GripVertical, Pencil, Trash2 } from 'lucide-vue-next'
 import Panel from '@/components/ui/Panel.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import { useLibraryStore } from '@/stores/libraryStore'
