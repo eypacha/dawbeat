@@ -173,9 +173,12 @@ import { enqueueSnackbar } from '@/services/notifications'
 import { getValueTrackerValueAtTime } from '@/services/valueTrackerService'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { useDawStore } from '@/stores/dawStore'
+import { useLibraryStore } from '@/stores/libraryStore'
+import { resolveClipFormula, resolveClipFormulaName } from '@/services/formulaService'
 import { TRACK_COLOR_PALETTE } from '@/utils/colorUtils'
 
 const dawStore = useDawStore()
+const libraryStore = useLibraryStore()
 const contextMenu = provideContextMenu()
 const confirmDialog = reactive({
   visible: false,
@@ -421,6 +424,23 @@ function handleGlobalContextMenu(event) {
 }
 
 function handleContextMenuSelect(action, item) {
+  if (action === 'add-to-library') {
+    const clip = item.clip
+    const draft = resolveClipFormulaDraft(clip)
+    const displayFormula = resolveClipFormula(clip)
+    const name = resolveClipFormulaName(clip) || displayFormula || 'Unnamed'
+    libraryStore.addItem({
+      name,
+      formula: draft.code,
+      leftFormula: draft.leftCode,
+      rightFormula: draft.rightCode,
+      formulaStereo: draft.stereo,
+      duration: clip.duration
+    })
+    enqueueSnackbar(`"${name}" added to Library`, { variant: 'success' })
+    return
+  }
+
   if (action === 'add-track') {
     dawStore.addTrack(item.beforeTrackId ?? null)
     return

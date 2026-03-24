@@ -201,7 +201,13 @@ function handleContextMenu(event) {
       clipId: props.clip.id,
       label: 'Edit Clip'
     },
-      {
+    {
+      action: 'add-to-library',
+      clipId: props.clip.id,
+      clip: props.clip,
+      label: 'Add to Library'
+    },
+    {
       action: 'delete-clip',
       clipId: props.clip.id,
       label: 'Delete Clip'
