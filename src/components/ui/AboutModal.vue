@@ -19,6 +19,16 @@
           github.com/eypacha/dawbeat
         </a>
       </p>
+      <p class="text-xs text-zinc-400">
+        <a
+          class="text-emerald-300 underline decoration-emerald-500/50 underline-offset-2 hover:text-emerald-200"
+          href="mailto:pachaguionbajo@gmail.com"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          pachaguionbajo@gmail.com
+        </a>
+      </p>
     </div>
 
     <template #footer>
