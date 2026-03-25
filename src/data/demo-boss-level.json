@@ -1,5 +1,5 @@
 {
-  "version": 18,
+  "version": 19,
   "tracks": [
     {
       "id": "c7f7a6b1-a6c7-4dac-bd13-c34a8051f9e6",
@@ -12,73 +12,84 @@
       "clips": [
         {
           "id": "cfe14b28-83fc-4fc7-b511-0369e5197318",
-          "formula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
-          "formulaName": "Boss level #6",
-          "start": 0,
-          "duration": 16,
           "formulaStereo": false,
+          "formula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
           "leftFormula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
-          "rightFormula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n"
+          "rightFormula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
+          "start": 0,
+          "duration": 16
         },
         {
           "id": "dd930be6-2f76-4dff-813c-a0f6c1c87282",
-          "formula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
-          "formulaName": "Neurofunk",
-          "start": 16,
-          "duration": 32,
           "formulaStereo": false,
+          "formula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
           "leftFormula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
-          "rightFormula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))"
+          "rightFormula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
+          "start": 16,
+          "duration": 32
         },
         {
           "id": "ba0f5542-4164-427d-a1d0-89344e78ff31",
-          "formula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
-          "formulaName": "Boss level #6",
-          "start": 48,
-          "duration": 16,
           "formulaStereo": false,
+          "formula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
           "leftFormula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
-          "rightFormula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n"
+          "rightFormula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
+          "start": 48,
+          "duration": 16
         },
         {
           "id": "21778889-9fff-4880-9221-afd2c669fe03",
-          "formula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
-          "formulaName": "Neurofunk",
-          "start": 63.75,
-          "duration": 16.5,
           "formulaStereo": false,
+          "formula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
           "leftFormula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
-          "rightFormula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))"
+          "rightFormula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
+          "start": 63.75,
+          "duration": 16.5
         },
         {
           "id": "c2daf320-6edc-467a-bfe6-94f5f97c6efe",
-          "formula": "t*((t&4096?t%65536<59392?0:t>>16:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
-          "formulaName": "Neurofunk 2",
-          "start": 80.25,
-          "duration": 31.75,
           "formulaStereo": false,
+          "formula": "t*((t&4096?t%65536<59392?0:t>>16:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
           "leftFormula": "t*((t&4096?t%65536<59392?0:t>>16:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
-          "rightFormula": "t*((t&4096?t%65536<59392?0:t>>16:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))"
+          "rightFormula": "t*((t&4096?t%65536<59392?0:t>>16:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
+          "start": 80.25,
+          "duration": 31.75
         },
         {
           "id": "304aaea7-1c09-4022-b202-643edc6ddff6",
-          "formula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
-          "formulaName": "Neurofunk",
-          "start": 112,
-          "duration": 16.25,
           "formulaStereo": false,
+          "formula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
           "leftFormula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
-          "rightFormula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))"
+          "rightFormula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
+          "start": 112,
+          "duration": 16.25
         },
         {
           "id": "85d0e7e6-7195-4d6a-baed-67b38d812848",
-          "formula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
-          "formulaName": "Boss level #6",
-          "start": 128.25,
-          "duration": 15.75,
           "formulaStereo": false,
+          "formula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
           "leftFormula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
-          "rightFormula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n"
+          "rightFormula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
+          "start": 128.25,
+          "duration": 15.75
+        },
+        {
+          "id": "e30449a2-f369-4105-b5fa-ab97ec13e1b2",
+          "formulaStereo": false,
+          "formula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
+          "leftFormula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
+          "rightFormula": "t*((t&4096?t%65536<59392?7:t>>6:16)+(1&t>>14))>>(3&-t>>(t&2048?2:10))",
+          "start": 144,
+          "duration": 16.25
+        },
+        {
+          "id": "6d490758-ca99-4bef-8044-deb24f688b1c",
+          "formulaStereo": false,
+          "formula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
+          "leftFormula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
+          "rightFormula": "t*((t&4096?6:16)+(1&t>>14))>>(3&t>>a)\n",
+          "start": 160.25,
+          "duration": 15.75
         }
       ]
     },
@@ -93,23 +104,30 @@
       "clips": [
         {
           "id": "68fde018-5959-47e4-b3ec-73809d2348a7",
-          "formula": "t>>(t&16384?t&4096?4:3:2)",
-          "formulaName": "Kick",
-          "start": 16,
-          "duration": 32,
           "formulaStereo": false,
+          "formula": "t>>(t&16384?t&4096?4:3:2)",
           "leftFormula": "t>>(t&16384?t&4096?4:3:2)",
-          "rightFormula": "t>>(t&16384?t&4096?4:3:2)"
+          "rightFormula": "t>>(t&16384?t&4096?4:3:2)",
+          "start": 16,
+          "duration": 32
         },
         {
           "id": "5f27252e-af7e-4562-8519-176b5349fa83",
-          "formula": "t>>(t&16384?t&4096?4:3:2)",
-          "formulaName": "Kick",
-          "start": 96,
-          "duration": 48,
           "formulaStereo": false,
+          "formula": "t>>(t&16384?t&4096?4:3:2)",
           "leftFormula": "t>>(t&16384?t&4096?4:3:2)",
-          "rightFormula": "t>>(t&16384?t&4096?4:3:2)"
+          "rightFormula": "t>>(t&16384?t&4096?4:3:2)",
+          "start": 96,
+          "duration": 48
+        },
+        {
+          "id": "d8ddbe66-922b-4702-a9ec-f47ac4c7c169",
+          "formulaStereo": false,
+          "formula": "t>>(t&16384?t&4096?4:3:2)",
+          "leftFormula": "t>>(t&16384?t&4096?4:3:2)",
+          "rightFormula": "t>>(t&16384?t&4096?4:3:2)",
+          "start": 144,
+          "duration": 32
         }
       ]
     },
@@ -124,63 +142,102 @@
       "clips": [
         {
           "id": "2ecadf15-9047-4f13-90a4-ac0018b55dac",
-          "formula": "t >> 2",
-          "formulaName": null,
-          "start": 6,
-          "duration": 2,
           "formulaStereo": false,
+          "formula": "t >> 2",
           "leftFormula": "t >> 2",
-          "rightFormula": "t >> 2"
+          "rightFormula": "t >> 2",
+          "start": 6,
+          "duration": 2
         },
         {
           "id": "95407f6b-18df-4bd2-935b-9b77a7a23c8e",
-          "formula": "t>>(t&4096?3:4)",
-          "formulaName": "",
-          "start": 8,
-          "duration": 24,
           "formulaStereo": false,
+          "formula": "t>>(t&4096?3:4)",
           "leftFormula": "t>>(t&4096?3:4)",
-          "rightFormula": "t>>(t&4096?3:4)"
+          "rightFormula": "t>>(t&4096?3:4)",
+          "start": 8,
+          "duration": 24
         },
         {
           "id": "31d867cb-9633-4f5f-80b5-c0db26cde4b1",
+          "formulaStereo": false,
           "formula": "t>>(t&4096?3:4)",
-          "formulaName": "",
-          "start": 56,
-          "duration": 8,
-          "formulaStereo": false,
           "leftFormula": "t>>(t&4096?3:4)",
-          "rightFormula": "t>>(t&4096?3:4)"
-        },
-        {
-          "id": "036d507b-6636-4bfd-9c42-fbdc222e7846",
-          "formula": "t*t>>12%25",
-          "formulaName": null,
-          "start": 108,
-          "duration": 4,
-          "formulaStereo": false,
-          "leftFormula": "t*t>>12%25",
-          "rightFormula": "t*t>>12%25"
+          "rightFormula": "t>>(t&4096?3:4)",
+          "start": 56,
+          "duration": 8
         },
         {
           "id": "4c587dbd-1131-4fef-aa13-5756e05b4296",
-          "formula": "t*t>>12%25",
-          "formulaName": null,
-          "start": 116,
-          "duration": 4,
           "formulaStereo": false,
+          "formula": "t*t>>12%25",
           "leftFormula": "t*t>>12%25",
-          "rightFormula": "t*t>>12%25"
+          "rightFormula": "t*t>>12%25",
+          "start": 116,
+          "duration": 4
         },
         {
           "id": "7d8cf6f9-ace2-4e5b-9991-3ae64dd5bf21",
-          "formula": "t*t>>12%25",
-          "formulaName": null,
-          "start": 124,
-          "duration": 4,
           "formulaStereo": false,
+          "formula": "t*t>>12%25",
           "leftFormula": "t*t>>12%25",
-          "rightFormula": "t*t>>12%25"
+          "rightFormula": "t*t>>12%25",
+          "start": 124,
+          "duration": 4
+        },
+        {
+          "id": "342f5fed-d940-4d0a-9733-d8208c155d31",
+          "formulaStereo": false,
+          "formula": "t*t>>12%25",
+          "leftFormula": "t*t>>12%25",
+          "rightFormula": "t*t>>12%25",
+          "start": 132,
+          "duration": 4
+        },
+        {
+          "id": "2610b04b-e423-4e61-8faf-9d2767df200e",
+          "formulaStereo": false,
+          "formula": "t*t>>12%25",
+          "leftFormula": "t*t>>12%25",
+          "rightFormula": "t*t>>12%25",
+          "start": 140,
+          "duration": 4
+        },
+        {
+          "id": "b784a57c-9fac-4032-a579-f577f3d71843",
+          "formulaStereo": false,
+          "formula": "t*t>>12%25",
+          "leftFormula": "t*t>>12%25",
+          "rightFormula": "t*t>>12%25",
+          "start": 148,
+          "duration": 4
+        },
+        {
+          "id": "1a3f4c13-8309-429c-b123-9b4de8011eb7",
+          "formulaStereo": false,
+          "formula": "t*t>>12%25",
+          "leftFormula": "t*t>>12%25",
+          "rightFormula": "t*t>>12%25",
+          "start": 156,
+          "duration": 4
+        },
+        {
+          "id": "3a7dc2e3-259d-4e80-aa93-3f4535a3e519",
+          "formulaStereo": false,
+          "formula": "t*t>>12%25",
+          "leftFormula": "t*t>>12%25",
+          "rightFormula": "t*t>>12%25",
+          "start": 164,
+          "duration": 4
+        },
+        {
+          "id": "83ad88c0-ed69-4fa0-b773-9b1962090d46",
+          "formulaStereo": false,
+          "formula": "t*t>>12%25",
+          "leftFormula": "t*t>>12%25",
+          "rightFormula": "t*t>>12%25",
+          "start": 172,
+          "duration": 4
         }
       ]
     }
@@ -190,13 +247,13 @@
     {
       "id": "8bcff566-2bfd-4ea1-b85f-80c182f72776",
       "name": "Stereo Offset",
+      "variableName": "b",
       "binding": {
-        "type": "variable",
+        "type": null,
         "deviceId": null,
         "channel": null,
         "controller": null,
-        "note": null,
-        "variableName": "b"
+        "note": null
       },
       "height": 64,
       "clips": [
@@ -325,13 +382,13 @@
     {
       "id": "f07e9c74-4612-42bf-bfe2-73e69b09b5af",
       "name": "a",
+      "variableName": "a",
       "binding": {
-        "type": "variable",
+        "type": null,
         "deviceId": null,
         "channel": null,
         "controller": null,
-        "note": null,
-        "variableName": "a"
+        "note": null
       },
       "height": 64,
       "clips": [
@@ -418,10 +475,10 @@
       ]
     }
   ],
-  "zoom": 0.3075461304187775,
+  "zoom": 0.5694444562182017,
   "loopStart": 111.75,
   "loopEnd": 144,
-  "loopEnabled": true,
+  "loopEnabled": false,
   "audioEffects": [
     {
       "id": "75f86f92-f8e9-46e4-8980-cef4dbefe964",
@@ -520,6 +577,21 @@
           "curve": "easeInOut",
           "time": 100,
           "value": 0.3546223958333333
+        },
+        {
+          "curve": "easeInOut",
+          "time": 145,
+          "value": 0.8894677056206597
+        },
+        {
+          "curve": "easeInOut",
+          "time": 175.25,
+          "value": 0
+        },
+        {
+          "curve": "easeInOut",
+          "time": 139.75,
+          "value": 0.22280103895399306
         }
       ]
     }
@@ -528,6 +600,7 @@
   "masterGain": 1,
   "sampleRate": 8000,
   "tickSize": 1024,
+  "timelineSectionLabels": [],
   "showClipWaveforms": true,
   "showEvaluatedPanel": true
 }
