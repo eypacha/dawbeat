@@ -4,9 +4,11 @@ import {
   MAX_PERIOD_FOR_OPTIMIZED_ANALYSIS
 } from '@/services/formulaAnalysis/analysisConfig'
 import { detectPeriod, renderSamples } from '@/services/formulaAnalysis/periodAnalyzer'
+import { detectPitch } from '@/services/formulaAnalysis/pitchAnalyzer'
 import { analyzeRange } from '@/services/formulaAnalysis/rangeAnalyzer'
 import { normalizeExpressionList } from '@/services/formulaService'
 import { getActiveVariableDefinitions, prependVariableDefinitions } from '@/services/variableTrackService'
+import { DEFAULT_SAMPLE_RATE } from '@/utils/audioSettings'
 
 const MATH_SCOPE_DECLARATION = Object.getOwnPropertyNames(Math)
   .filter((name) => typeof Math[name] !== 'undefined')
@@ -18,7 +20,8 @@ const DEFAULT_PERIOD_ANALYSIS_OPTIONS = Object.freeze({
   maxPeriod: ANALYSIS_WINDOW - 1,
   maxPeriodForOptimizedAnalysis: MAX_PERIOD_FOR_OPTIMIZED_ANALYSIS,
   precheckWindow: 64,
-  sampleCount: ANALYSIS_WINDOW
+  sampleCount: ANALYSIS_WINDOW,
+  sampleRate: DEFAULT_SAMPLE_RATE
 })
 
 const EMPTY_ANALYSIS_RESULT = Object.freeze({
@@ -28,7 +31,12 @@ const EMPTY_ANALYSIS_RESULT = Object.freeze({
   max: null,
   range: null,
   width: null,
-  normalizedRange: null
+  normalizedRange: null,
+  pitch: Object.freeze({
+    freq: null,
+    note: null,
+    confidence: 0
+  })
 })
 
 function normalizeFormulaExpressions(expressions) {
@@ -133,11 +141,13 @@ export function useFormulaInspector() {
         ? periodResult.period
         : null
     )
+    const pitchResult = detectPitch(samples, analysisOptions.sampleRate)
 
     return {
       ...EMPTY_ANALYSIS_RESULT,
       ...periodResult,
-      ...rangeResult
+      ...rangeResult,
+      pitch: pitchResult
     }
   }
 

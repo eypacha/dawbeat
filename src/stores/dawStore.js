@@ -1343,6 +1343,7 @@ export const useDawStore = defineStore('dawStore', {
     setSampleRate(value) {
       return this.recordHistoryStep('set-sample-rate', () => {
         this.sampleRate = normalizeSampleRate(value, this.sampleRate)
+        this.clearFormulaAnalysisCache()
       })
     },
 

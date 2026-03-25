@@ -15,7 +15,7 @@
       </p>
 
       <template v-else>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-3 gap-3">
           <div class="space-y-1">
             <p class="text-sm font-medium text-zinc-100">
               <template v-if="isAnalyzing">ANALYZING...</template>
@@ -31,8 +31,20 @@
           </div>
 
           <div class="space-y-1">
-            <p class="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Confidence</p>
+            <p class="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Period Confidence</p>
             <p class="text-sm font-medium" :class="confidenceClassName">{{ confidenceLabel }}</p>
+          </div>
+
+          <div class="space-y-1">
+            <p class="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Pitch</p>
+            <p class="text-sm font-medium text-zinc-100">
+              <template v-if="isAnalyzing">analyzing</template>
+              <template v-else>{{ pitchLabel }}</template>
+            </p>
+            <p class="text-[11px]" :class="pitchConfidenceClassName">
+              <template v-if="isAnalyzing">analyzing</template>
+              <template v-else>{{ pitchConfidenceLabel }}</template>
+            </p>
           </div>
         </div>
 
@@ -46,7 +58,7 @@
           </div>
 
           <div class="space-y-1">
-            <p class="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Width</p>
+            <p class="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Values</p>
             <p class="text-sm font-medium text-zinc-100">
               <template v-if="isAnalyzing">analyzing</template>
               <template v-else>{{ widthLabel }}</template>
@@ -97,6 +109,7 @@ const dawStore = useDawStore()
 const { analyzeFormula } = useFormulaInspector()
 const {
   evalEffects,
+  sampleRate,
   tracks,
   valueTrackerTracks,
   variableTracks
@@ -110,7 +123,12 @@ const analysisResult = ref({
   max: null,
   range: null,
   width: null,
-  normalizedRange: null
+  normalizedRange: null,
+  pitch: {
+    freq: null,
+    note: null,
+    confidence: 0
+  }
 })
 
 const targetClipRecord = computed(() => {
@@ -172,6 +190,56 @@ const confidenceClassName = computed(() => {
   }
 
   return 'text-zinc-400'
+})
+
+const pitchConfidenceLabel = computed(() => {
+  const pitchConfidence = Number(analysisResult.value?.pitch?.confidence)
+
+  if (pitchConfidence < 0.25) {
+    return 'none'
+  }
+
+  if (pitchConfidence >= 0.95) {
+    return 'high'
+  }
+
+  if (pitchConfidence >= 0.8) {
+    return 'medium'
+  }
+
+  return 'low'
+})
+
+const pitchConfidenceClassName = computed(() => {
+  if (pitchConfidenceLabel.value === 'high') {
+    return 'text-emerald-300'
+  }
+
+  if (pitchConfidenceLabel.value === 'medium') {
+    return 'text-amber-300'
+  }
+
+  if (pitchConfidenceLabel.value === 'low') {
+    return 'text-rose-300'
+  }
+
+  return 'text-zinc-400'
+})
+
+const pitchLabel = computed(() => {
+  const pitch = analysisResult.value?.pitch
+
+  if (!pitch?.note || !Number.isFinite(pitch?.freq)) {
+    return 'none detected'
+  }
+
+  const roundedFrequency = pitch.freq >= 100 ? Math.round(pitch.freq) : Number(pitch.freq.toFixed(1))
+
+  if (pitchConfidenceLabel.value !== 'high') {
+    return `variable (${roundedFrequency} Hz)`
+  }
+
+  return `${pitch.note} (${roundedFrequency} Hz)`
 })
 
 const hasRangeMetrics = computed(() =>
@@ -247,7 +315,8 @@ async function waitUntilModalIsVisible() {
 watch(
   () => ({
     analysisCacheKey: analysisCacheKey.value,
-    open: props.open
+    open: props.open,
+    sampleRate: sampleRate.value
   }),
   async ({ analysisCacheKey: nextAnalysisCacheKey, open }) => {
     const nextRequestVersion = requestVersion.value + 1
@@ -262,7 +331,12 @@ watch(
         max: null,
         range: null,
         width: null,
-        normalizedRange: null
+        normalizedRange: null,
+        pitch: {
+          freq: null,
+          note: null,
+          confidence: 0
+        }
       }
       return
     }
@@ -276,7 +350,12 @@ watch(
         max: null,
         range: null,
         width: null,
-        normalizedRange: null
+        normalizedRange: null,
+        pitch: {
+          freq: null,
+          note: null,
+          confidence: 0
+        }
       }
       return
     }
@@ -288,7 +367,8 @@ watch(
       Object.hasOwn(cachedResult, 'max') &&
       Object.hasOwn(cachedResult, 'range') &&
       Object.hasOwn(cachedResult, 'width') &&
-      Object.hasOwn(cachedResult, 'normalizedRange')
+      Object.hasOwn(cachedResult, 'normalizedRange') &&
+      Object.hasOwn(cachedResult, 'pitch')
 
     if (cachedResult && hasCachedRangeMetrics) {
       analysisResult.value = cachedResult
@@ -305,7 +385,9 @@ watch(
     }
 
     const evaluator = createFormulaEvaluatorFromExpressions(renderableExpressions.value)
-    const nextAnalysisResult = analyzeFormula(evaluator)
+    const nextAnalysisResult = analyzeFormula(evaluator, {
+      sampleRate: sampleRate.value
+    })
 
     if (requestVersion.value !== nextRequestVersion) {
       isAnalyzing.value = false
