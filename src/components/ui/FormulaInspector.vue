@@ -16,7 +16,10 @@
 
       <template v-else>
         <div class="space-y-1">
-          <p class="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Period</p>
+          <p class="text-sm font-medium text-zinc-100">
+            <template v-if="analysisResult?.period">PERIOD {{ periodTicksLabel }}</template>
+            <template v-else>PERIOD -</template>
+          </p>
           <p class="text-sm font-medium text-zinc-100">
             <template v-if="analysisResult?.period">{{ analysisResult.period }} samples</template>
             <template v-else>none detected</template>
@@ -131,6 +134,22 @@ const confidenceClassName = computed(() => {
   }
 
   return 'text-zinc-400'
+})
+
+const periodTicksLabel = computed(() => {
+  const periodSamples = Number(analysisResult.value?.period)
+
+  if (!Number.isFinite(periodSamples) || periodSamples <= 0) {
+    return '-'
+  }
+
+  const periodTicks = periodSamples / 4096
+
+  if (Number.isInteger(periodTicks)) {
+    return String(periodTicks)
+  }
+
+  return periodTicks.toFixed(3).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1')
 })
 
 watch(

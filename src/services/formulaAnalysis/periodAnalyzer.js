@@ -20,7 +20,7 @@ function normalizeByteSample(value) {
     return 0
   }
 
-  return Math.max(0, Math.min(255, Math.trunc(numericValue)))
+  return (numericValue | 0) & 255
 }
 
 function normalizeMaxPeriod(maxPeriod = DEFAULT_MAX_PERIOD, sampleLength = 0) {
