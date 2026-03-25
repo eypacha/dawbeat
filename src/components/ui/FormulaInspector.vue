@@ -40,6 +40,10 @@
                             <template v-if="isAnalyzing">analyzing</template>
                             <template v-else>{{ pitchConfidenceLabel }}</template>
                         </p>
+                        <p class="text-[11px] text-zinc-400">
+                            <template v-if="isAnalyzing">analyzing</template>
+                            <template v-else>Stability: {{ pitchStabilityLabel }}</template>
+                        </p>
                     </div>
                 </div>
 
@@ -157,6 +161,11 @@ const analysisResult = ref({
         freq: null,
         note: null,
         confidence: 0
+    },
+    pitchStability: {
+        stability: 'low',
+        variance: 0,
+        samplesAnalyzed: 0
     },
     activity: {
         value: 0,
@@ -276,6 +285,16 @@ const pitchLabel = computed(() => {
     const roundedFrequency = pitch.freq >= 100 ? Math.round(pitch.freq) : Number(pitch.freq.toFixed(1))
 
     return `${pitch.note} (${roundedFrequency} Hz)`
+})
+
+const pitchStabilityLabel = computed(() => {
+    const stability = analysisResult.value?.pitchStability?.stability
+
+    if (stability === 'high' || stability === 'medium' || stability === 'low') {
+        return stability
+    }
+
+    return 'low'
 })
 
 const activityLabel = computed(() => {
@@ -420,6 +439,11 @@ watch(
                     note: null,
                     confidence: 0
                 },
+                pitchStability: {
+                    stability: 'low',
+                    variance: 0,
+                    samplesAnalyzed: 0
+                },
                 activity: {
                     value: 0,
                     normalized: 0,
@@ -450,6 +474,11 @@ watch(
                     note: null,
                     confidence: 0
                 },
+                pitchStability: {
+                    stability: 'low',
+                    variance: 0,
+                    samplesAnalyzed: 0
+                },
                 activity: {
                     value: 0,
                     normalized: 0,
@@ -474,6 +503,7 @@ watch(
             Object.hasOwn(cachedResult, 'width') &&
             Object.hasOwn(cachedResult, 'normalizedRange') &&
             Object.hasOwn(cachedResult, 'pitch') &&
+            Object.hasOwn(cachedResult, 'pitchStability') &&
             Object.hasOwn(cachedResult, 'activity') &&
             Object.hasOwn(cachedResult, 'bitplanes')
 

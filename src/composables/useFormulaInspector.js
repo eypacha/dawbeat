@@ -7,6 +7,7 @@ import { analyzeActivity } from '@/services/formulaAnalysis/activityAnalyzer'
 import { analyzeBitplanes } from '@/services/formulaAnalysis/bitplaneAnalyzer'
 import { detectPeriod, renderSamples } from '@/services/formulaAnalysis/periodAnalyzer'
 import { detectPitch } from '@/services/formulaAnalysis/pitchAnalyzer'
+import { analyzePitchStability } from '@/services/formulaAnalysis/pitchStabilityAnalyzer'
 import { analyzeRange } from '@/services/formulaAnalysis/rangeAnalyzer'
 import { normalizeExpressionList } from '@/services/formulaService'
 import { getActiveVariableDefinitions, prependVariableDefinitions } from '@/services/variableTrackService'
@@ -38,6 +39,11 @@ const EMPTY_ANALYSIS_RESULT = Object.freeze({
     freq: null,
     note: null,
     confidence: 0
+  }),
+  pitchStability: Object.freeze({
+    stability: 'low',
+    variance: 0,
+    samplesAnalyzed: 0
   }),
   activity: Object.freeze({
     value: 0,
@@ -157,6 +163,7 @@ export function useFormulaInspector() {
         : null
     )
     const pitchResult = detectPitch(samples, analysisOptions.sampleRate)
+    const pitchStabilityResult = analyzePitchStability(samples, analysisOptions.sampleRate)
     const activityResult = analyzeActivity(samples, periodResult.period)
     const bitplaneResult = analyzeBitplanes(samples, periodResult.period)
 
@@ -165,6 +172,7 @@ export function useFormulaInspector() {
       ...periodResult,
       ...rangeResult,
       pitch: pitchResult,
+      pitchStability: pitchStabilityResult,
       activity: activityResult,
       bitplanes: bitplaneResult
     }
