@@ -14,14 +14,24 @@
             {{ expression.label }}
           </span>
 
-          <IconButton
-            :icon="Copy"
-            :label="`Copy ${expression.label}`"
-            size="sm"
-            title="Copy formula"
-            variant="plain"
-            @click="copyExpression(expression)"
-          />
+          <div class="flex items-center gap-1">
+            <IconButton
+              :icon="Search"
+              :label="`Inspect ${expression.label}`"
+              size="sm"
+              title="Inspect formula"
+              variant="plain"
+              @click="inspectExpression(expression)"
+            />
+            <IconButton
+              :icon="Copy"
+              :label="`Copy ${expression.label}`"
+              size="sm"
+              title="Copy formula"
+              variant="plain"
+              @click="copyExpression(expression)"
+            />
+          </div>
         </div>
 
         <pre class="min-h-[4.5rem] overflow-auto px-4 py-3 text-xs leading-6 text-zinc-200 whitespace-pre-wrap break-words">{{ expression.code }}</pre>
@@ -33,7 +43,7 @@
 <script setup>
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Copy } from 'lucide-vue-next'
+import { Copy, Search } from 'lucide-vue-next'
 import { getActiveFormula } from '@/engine/timelineEngine'
 import IconButton from '@/components/ui/IconButton.vue'
 import Panel from '@/components/ui/Panel.vue'
@@ -42,6 +52,8 @@ import { applyEvalEffects, getEvaluatedDisplayExpressions } from '@/services/eva
 import { hasRenderableFormulaInput } from '@/services/formulaService'
 import { enqueueSnackbar } from '@/services/notifications'
 import { useDawStore } from '@/stores/dawStore'
+
+const emit = defineEmits(['inspect-expression'])
 
 const dawStore = useDawStore()
 const { evalEffects, time, tracks, valueTrackerLiveInputs, valueTrackerTracks, variableTracks } = storeToRefs(dawStore)
@@ -65,6 +77,19 @@ const evaluatedExpressions = computed(() => {
 })
 
 const displayExpressions = computed(() => getEvaluatedDisplayExpressions(evaluatedExpressions.value))
+
+function inspectExpression(expression) {
+  const code = expression?.code ?? ''
+
+  if (!code.trim()) {
+    return
+  }
+
+  emit('inspect-expression', {
+    code,
+    label: expression?.label ?? 'Formula'
+  })
+}
 
 async function copyExpression(expression) {
   try {

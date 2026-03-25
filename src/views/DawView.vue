@@ -22,7 +22,10 @@
         <EffectsPanel :collapsed="effectsCollapsed" @toggle-collapse="toggleEffectsCollapsed" />
       </main>
 
-      <EvaluatedPanel v-if="showEvaluatedPanel" />
+      <EvaluatedPanel
+        v-if="showEvaluatedPanel"
+        @inspect-expression="openFormulaInspectorFromEvaluatedPanel"
+      />
     </div>
 
     <ContextMenu
@@ -129,6 +132,7 @@
 
     <FormulaInspector
       :clip-id="formulaInspectorDialog.clipId"
+      :expressions="formulaInspectorDialog.expressions"
       :open="formulaInspectorDialog.visible"
       @close="closeFormulaInspectorDialog"
     />
@@ -213,6 +217,7 @@ const valueTrackerTrackBindingDialog = reactive({
 })
 const formulaInspectorDialog = reactive({
   clipId: null,
+  expressions: [],
   visible: false
 })
 const timelineSectionLabelDialog = reactive({
@@ -490,6 +495,7 @@ function handleContextMenuSelect(action, item) {
     if (item.clipId) {
       dawStore.selectClip(item.clipId)
       formulaInspectorDialog.clipId = item.clipId
+      formulaInspectorDialog.expressions = []
       formulaInspectorDialog.visible = true
     }
 
@@ -689,7 +695,20 @@ function closeValueTrackerTrackBindingDialog() {
 
 function closeFormulaInspectorDialog() {
   formulaInspectorDialog.clipId = null
+  formulaInspectorDialog.expressions = []
   formulaInspectorDialog.visible = false
+}
+
+function openFormulaInspectorFromEvaluatedPanel(expression) {
+  const code = typeof expression?.code === 'string' ? expression.code.trim() : ''
+
+  if (!code) {
+    return
+  }
+
+  formulaInspectorDialog.clipId = null
+  formulaInspectorDialog.expressions = [code]
+  formulaInspectorDialog.visible = true
 }
 
 function confirmValueTrackerTrackBinding(nextBinding) {

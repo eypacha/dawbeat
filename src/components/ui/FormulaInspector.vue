@@ -1,11 +1,15 @@
 <template>
     <Modal :open="open" size="sm" title="Formula Inspector" @close="emit('close')">
         <div class="space-y-3 text-xs text-zinc-200">
-            <p v-if="!targetClipRecord" class="text-zinc-400">
-                Select a formula clip to analyze its period.
+            <p v-if="!hasInspectionTarget" class="text-zinc-400">
+                Select a formula clip or inspect a formula from the evaluated output panel.
             </p>
 
-            <p v-else-if="targetClipRecord.laneType !== 'track'" class="text-zinc-400">
+            <p v-else-if="!hasExpressionInput" class="text-zinc-400">
+                Could not resolve a renderable formula for analysis.
+            </p>
+
+            <p v-else-if="targetClipRecord && targetClipRecord.laneType !== 'track'" class="text-zinc-400">
                 Period analysis is available for formula clips.
             </p>
 
@@ -123,13 +127,17 @@ import {
     useFormulaInspector
 } from '@/composables/useFormulaInspector'
 import { findTimelineClip } from '@/services/dawStoreService'
-import { resolveClipFormulaExpressions } from '@/services/formulaService'
+import { normalizeExpressionList, resolveClipFormulaExpressions } from '@/services/formulaService'
 import { useDawStore } from '@/stores/dawStore'
 
 const props = defineProps({
     clipId: {
         type: String,
         default: null
+    },
+    expressions: {
+        type: Array,
+        default: () => []
     },
     open: {
         type: Boolean,
@@ -193,8 +201,22 @@ const targetClipRecord = computed(() => {
     )
 })
 
+const externalExpressions = computed(() => normalizeExpressionList(props.expressions))
+
+const hasInspectionTarget = computed(() =>
+    externalExpressions.value.length > 0 || Boolean(targetClipRecord.value)
+)
+
 const renderableExpressions = computed(() => {
-    if (!props.open || !targetClipRecord.value?.clip || targetClipRecord.value.laneType !== 'track') {
+    if (!props.open) {
+        return []
+    }
+
+    if (externalExpressions.value.length) {
+        return externalExpressions.value
+    }
+
+    if (!targetClipRecord.value?.clip || targetClipRecord.value.laneType !== 'track') {
         return []
     }
 
@@ -206,6 +228,8 @@ const renderableExpressions = computed(() => {
         variableTracks: variableTracks.value
     })
 })
+
+const hasExpressionInput = computed(() => renderableExpressions.value.length > 0)
 
 const analysisCacheKey = computed(() => createFormulaAnalysisCacheKey(renderableExpressions.value))
 
