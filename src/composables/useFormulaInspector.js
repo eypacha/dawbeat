@@ -1,5 +1,10 @@
 import { applyEvalEffects } from '@/services/evalEffectService'
+import {
+  ANALYSIS_WINDOW,
+  MAX_PERIOD_FOR_OPTIMIZED_ANALYSIS
+} from '@/services/formulaAnalysis/analysisConfig'
 import { detectPeriod, renderSamples } from '@/services/formulaAnalysis/periodAnalyzer'
+import { analyzeRange } from '@/services/formulaAnalysis/rangeAnalyzer'
 import { normalizeExpressionList } from '@/services/formulaService'
 import { getActiveVariableDefinitions, prependVariableDefinitions } from '@/services/variableTrackService'
 
@@ -8,20 +13,21 @@ const MATH_SCOPE_DECLARATION = Object.getOwnPropertyNames(Math)
   .map((name) => `${name} = Math.${name}`)
   .join(', ')
 
-const PERIOD_ANALYSIS_MAX_TICKS = 32
-const PERIOD_ANALYSIS_SAMPLES_PER_TICK = 4096
-const PERIOD_ANALYSIS_MAX_PERIOD = PERIOD_ANALYSIS_MAX_TICKS * PERIOD_ANALYSIS_SAMPLES_PER_TICK
-
 const DEFAULT_PERIOD_ANALYSIS_OPTIONS = Object.freeze({
   matchThreshold: 0.99,
-  maxPeriod: PERIOD_ANALYSIS_MAX_PERIOD,
+  maxPeriod: ANALYSIS_WINDOW - 1,
+  maxPeriodForOptimizedAnalysis: MAX_PERIOD_FOR_OPTIMIZED_ANALYSIS,
   precheckWindow: 64,
-  sampleCount: PERIOD_ANALYSIS_MAX_PERIOD * 2
+  sampleCount: ANALYSIS_WINDOW
 })
 
 const EMPTY_ANALYSIS_RESULT = Object.freeze({
   period: null,
-  confidence: 0
+  confidence: 0,
+  min: null,
+  max: null,
+  range: null,
+  normalizedRange: null
 })
 
 function normalizeFormulaExpressions(expressions) {
@@ -101,7 +107,7 @@ export function createFormulaAnalysisCacheKey(expressions = []) {
 }
 
 export function useFormulaInspector() {
-  function analyzeFormulaPeriod(formulaEvaluator, options = {}) {
+  function analyzeFormula(formulaEvaluator, options = {}) {
     if (typeof formulaEvaluator !== 'function') {
       return EMPTY_ANALYSIS_RESULT
     }
@@ -116,13 +122,30 @@ export function useFormulaInspector() {
       return EMPTY_ANALYSIS_RESULT
     }
 
-    return detectPeriod(samples, analysisOptions.maxPeriod, {
+    const periodResult = detectPeriod(samples, analysisOptions.maxPeriod, {
       matchThreshold: analysisOptions.matchThreshold,
       precheckWindow: analysisOptions.precheckWindow
     })
+    const rangeResult = analyzeRange(
+      samples,
+      Number.isFinite(periodResult.period) && periodResult.period <= analysisOptions.maxPeriodForOptimizedAnalysis
+        ? periodResult.period
+        : null
+    )
+
+    return {
+      ...EMPTY_ANALYSIS_RESULT,
+      ...periodResult,
+      ...rangeResult
+    }
+  }
+
+  function analyzeFormulaPeriod(formulaEvaluator, options = {}) {
+    return analyzeFormula(formulaEvaluator, options)
   }
 
   return {
+    analyzeFormula,
     analyzeFormulaPeriod
   }
 }

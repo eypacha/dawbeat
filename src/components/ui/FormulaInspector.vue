@@ -15,22 +15,51 @@
       </p>
 
       <template v-else>
-        <div class="space-y-1">
-          <p class="text-sm font-medium text-zinc-100">
-            <template v-if="isAnalyzing">ANALYZING...</template>
-            <template v-else-if="analysisResult?.period">PERIOD {{ periodTicksLabel }}</template>
-            <template v-else>PERIOD</template>
-          </p>
-          <p class="text-sm font-medium text-zinc-100">
-            <template v-if="isAnalyzing">analyzing</template>
-            <template v-else-if="analysisResult?.period">{{ analysisResult.period }} samples</template>
-            <template v-else>none detected</template>
-          </p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <p class="text-sm font-medium text-zinc-100">
+              <template v-if="isAnalyzing">ANALYZING...</template>
+              <template v-else-if="analysisResult?.period">PERIOD {{ periodTicksLabel }}</template>
+              <template v-else>PERIOD</template>
+            </p>
+
+            <p class="text-sm font-medium text-zinc-100">
+              <template v-if="isAnalyzing">analyzing</template>
+              <template v-else-if="analysisResult?.period">{{ analysisResult.period }} samples</template>
+              <template v-else>none detected</template>
+            </p>
+          </div>
+
+          <div class="space-y-1">
+            <p class="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Confidence</p>
+            <p class="text-sm font-medium" :class="confidenceClassName">{{ confidenceLabel }}</p>
+          </div>
         </div>
 
-        <div class="space-y-1">
-          <p class="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Confidence</p>
-          <p class="text-sm font-medium" :class="confidenceClassName">{{ confidenceLabel }}</p>
+        <div class="grid grid-cols-3 gap-3">
+          <div class="space-y-1">
+            <p class="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Range</p>
+            <p class="text-sm font-medium text-zinc-100">
+              <template v-if="isAnalyzing">analyzing</template>
+              <template v-else>{{ rangeLabel }}</template>
+            </p>
+          </div>
+
+          <div class="space-y-1">
+            <p class="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Width</p>
+            <p class="text-sm font-medium text-zinc-100">
+              <template v-if="isAnalyzing">analyzing</template>
+              <template v-else>{{ widthLabel }}</template>
+            </p>
+          </div>
+
+          <div class="space-y-1">
+            <p class="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Coverage</p>
+            <p class="text-sm font-medium text-zinc-100">
+              <template v-if="isAnalyzing">analyzing</template>
+              <template v-else>{{ coverageLabel }}</template>
+            </p>
+          </div>
         </div>
       </template>
     </div>
@@ -41,6 +70,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import Modal from '@/components/ui/Modal.vue'
+import { ANALYSIS_SAMPLES_PER_TICK } from '@/services/formulaAnalysis/analysisConfig'
 import {
   buildRenderableFormulaExpressions,
   createFormulaAnalysisCacheKey,
@@ -64,7 +94,7 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 
 const dawStore = useDawStore()
-const { analyzeFormulaPeriod } = useFormulaInspector()
+const { analyzeFormula } = useFormulaInspector()
 const {
   evalEffects,
   tracks,
@@ -75,7 +105,11 @@ const requestVersion = ref(0)
 const isAnalyzing = ref(false)
 const analysisResult = ref({
   period: null,
-  confidence: 0
+  confidence: 0,
+  min: null,
+  max: null,
+  range: null,
+  normalizedRange: null
 })
 
 const targetClipRecord = computed(() => {
@@ -139,6 +173,43 @@ const confidenceClassName = computed(() => {
   return 'text-zinc-400'
 })
 
+const hasRangeMetrics = computed(() =>
+  Number.isFinite(analysisResult.value?.min) &&
+  Number.isFinite(analysisResult.value?.max) &&
+  Number.isFinite(analysisResult.value?.range) &&
+  Number.isFinite(analysisResult.value?.normalizedRange)
+)
+
+const rangeLabel = computed(() => {
+  if (!hasRangeMetrics.value) {
+    return 'none'
+  }
+
+  return `${analysisResult.value.min} - ${analysisResult.value.max}`
+})
+
+const widthLabel = computed(() => {
+  if (!hasRangeMetrics.value) {
+    return 'none'
+  }
+
+  return String(analysisResult.value.range)
+})
+
+const coverageLabel = computed(() => {
+  if (!hasRangeMetrics.value) {
+    return 'none'
+  }
+
+  const coverage = analysisResult.value.normalizedRange * 100
+
+  if (Number.isInteger(coverage)) {
+    return `${coverage}%`
+  }
+
+  return `${coverage.toFixed(1).replace(/\.0$/, '')}%`
+})
+
 const periodTicksLabel = computed(() => {
   const periodSamples = Number(analysisResult.value?.period)
 
@@ -146,7 +217,7 @@ const periodTicksLabel = computed(() => {
     return '-'
   }
 
-  const periodTicks = periodSamples / 4096
+  const periodTicks = periodSamples / ANALYSIS_SAMPLES_PER_TICK
 
   if (Number.isInteger(periodTicks)) {
     return String(periodTicks)
@@ -185,7 +256,11 @@ watch(
       isAnalyzing.value = false
       analysisResult.value = {
         period: null,
-        confidence: 0
+        confidence: 0,
+        min: null,
+        max: null,
+        range: null,
+        normalizedRange: null
       }
       return
     }
@@ -194,8 +269,26 @@ watch(
       isAnalyzing.value = false
       analysisResult.value = {
         period: null,
-        confidence: 0
+        confidence: 0,
+        min: null,
+        max: null,
+        range: null,
+        normalizedRange: null
       }
+      return
+    }
+
+    const cachedResult = dawStore.getFormulaAnalysisByKey(nextAnalysisCacheKey)
+    const hasCachedRangeMetrics =
+      cachedResult &&
+      Object.hasOwn(cachedResult, 'min') &&
+      Object.hasOwn(cachedResult, 'max') &&
+      Object.hasOwn(cachedResult, 'range') &&
+      Object.hasOwn(cachedResult, 'normalizedRange')
+
+    if (cachedResult && hasCachedRangeMetrics) {
+      analysisResult.value = cachedResult
+      isAnalyzing.value = false
       return
     }
 
@@ -208,7 +301,7 @@ watch(
     }
 
     const evaluator = createFormulaEvaluatorFromExpressions(renderableExpressions.value)
-    const nextAnalysisResult = analyzeFormulaPeriod(evaluator)
+    const nextAnalysisResult = analyzeFormula(evaluator)
 
     if (requestVersion.value !== nextRequestVersion) {
       isAnalyzing.value = false
