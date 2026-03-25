@@ -17,11 +17,13 @@
       <template v-else>
         <div class="space-y-1">
           <p class="text-sm font-medium text-zinc-100">
-            <template v-if="analysisResult?.period">PERIOD {{ periodTicksLabel }}</template>
+            <template v-if="isAnalyzing">ANALYZING...</template>
+            <template v-else-if="analysisResult?.period">PERIOD {{ periodTicksLabel }}</template>
             <template v-else>PERIOD -</template>
           </p>
           <p class="text-sm font-medium text-zinc-100">
-            <template v-if="analysisResult?.period">{{ analysisResult.period }} samples</template>
+            <template v-if="isAnalyzing">analyzing</template>
+            <template v-else-if="analysisResult?.period">{{ analysisResult.period }} samples</template>
             <template v-else>none detected</template>
           </p>
         </div>
@@ -36,7 +38,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import Modal from '@/components/ui/Modal.vue'
 import {
@@ -70,6 +72,7 @@ const {
   variableTracks
 } = storeToRefs(dawStore)
 const requestVersion = ref(0)
+const isAnalyzing = ref(false)
 const analysisResult = ref({
   period: null,
   confidence: 0
@@ -152,6 +155,23 @@ const periodTicksLabel = computed(() => {
   return periodTicks.toFixed(3).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1')
 })
 
+function waitForPaint() {
+  return new Promise((resolve) => {
+    if (typeof requestAnimationFrame !== 'function') {
+      resolve()
+      return
+    }
+
+    requestAnimationFrame(() => resolve())
+  })
+}
+
+async function waitUntilModalIsVisible() {
+  await nextTick()
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  await waitForPaint()
+}
+
 watch(
   () => ({
     analysisCacheKey: analysisCacheKey.value,
@@ -162,6 +182,7 @@ watch(
     requestVersion.value = nextRequestVersion
 
     if (!open) {
+      isAnalyzing.value = false
       analysisResult.value = {
         period: null,
         confidence: 0
@@ -170,6 +191,7 @@ watch(
     }
 
     if (!nextAnalysisCacheKey) {
+      isAnalyzing.value = false
       analysisResult.value = {
         period: null,
         confidence: 0
@@ -177,16 +199,11 @@ watch(
       return
     }
 
-    const cachedResult = dawStore.getFormulaAnalysisByKey(nextAnalysisCacheKey)
-
-    if (cachedResult) {
-      analysisResult.value = cachedResult
-      return
-    }
-
-    await Promise.resolve()
+    isAnalyzing.value = true
+    await waitUntilModalIsVisible()
 
     if (requestVersion.value !== nextRequestVersion) {
+      isAnalyzing.value = false
       return
     }
 
@@ -194,12 +211,17 @@ watch(
     const nextAnalysisResult = analyzeFormulaPeriod(evaluator)
 
     if (requestVersion.value !== nextRequestVersion) {
+      isAnalyzing.value = false
       return
     }
 
     dawStore.setFormulaAnalysisByKey(nextAnalysisCacheKey, nextAnalysisResult)
     analysisResult.value = nextAnalysisResult
+    isAnalyzing.value = false
   },
-  { immediate: true }
+  {
+    immediate: true,
+    flush: 'post'
+  }
 )
 </script>

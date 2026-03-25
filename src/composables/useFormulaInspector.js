@@ -8,11 +8,15 @@ const MATH_SCOPE_DECLARATION = Object.getOwnPropertyNames(Math)
   .map((name) => `${name} = Math.${name}`)
   .join(', ')
 
+const PERIOD_ANALYSIS_MAX_TICKS = 32
+const PERIOD_ANALYSIS_SAMPLES_PER_TICK = 4096
+const PERIOD_ANALYSIS_MAX_PERIOD = PERIOD_ANALYSIS_MAX_TICKS * PERIOD_ANALYSIS_SAMPLES_PER_TICK
+
 const DEFAULT_PERIOD_ANALYSIS_OPTIONS = Object.freeze({
   matchThreshold: 0.99,
-  maxPeriod: 4096,
+  maxPeriod: PERIOD_ANALYSIS_MAX_PERIOD,
   precheckWindow: 64,
-  sampleCount: 8192
+  sampleCount: PERIOD_ANALYSIS_MAX_PERIOD * 2
 })
 
 const EMPTY_ANALYSIS_RESULT = Object.freeze({
