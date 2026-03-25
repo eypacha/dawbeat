@@ -242,7 +242,8 @@ function createInitialState() {
     selectedTimelineSectionLabelId: null,
     selectedValueTrackerTrackId: null,
     valueTrackerRecordingSession: null,
-    valueTrackerLiveInputs: {}
+    valueTrackerLiveInputs: {},
+    formulaAnalysisCache: {}
   }
 }
 
@@ -404,6 +405,7 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   store.tracks = normalizedProject.tracks
   store.variableTracks = normalizedProject.variableTracks
   store.valueTrackerTracks = normalizedProject.valueTrackerTracks
+  store.formulaAnalysisCache = {}
   clearTransientSelectionState(store)
   store.playing = nextPlaying
   store.time = nextTime
@@ -449,6 +451,21 @@ function syncSelectedClipState(store, clipIds) {
   store.selectedClipIds = nextSelectedClipIds
   store.selectedClipId = nextSelectedClipIds[0] ?? null
   store.selectedTimelineSectionLabelId = null
+}
+
+function hasClipFormulaUpdates(updates = {}) {
+  if (!updates || typeof updates !== 'object') {
+    return false
+  }
+
+  return [
+    'formula',
+    'formulaId',
+    'formulaName',
+    'formulaStereo',
+    'leftFormula',
+    'rightFormula'
+  ].some((key) => Object.hasOwn(updates, key))
 }
 
 function collectSelectedClipEntries(tracks, variableTracks, valueTrackerTracks, clipIds) {
@@ -697,12 +714,49 @@ export const useDawStore = defineStore('dawStore', {
     activeValueTrackerTrackForKeyboardInput: (state) => resolveActiveValueTrackerTrackForKeyboardInput(state),
     isAutomationRecordingArmed: (state) => Boolean(state.automationRecordingArmed),
     isValueTrackerRecording: (state) => Boolean(state.valueTrackerRecordingSession),
+    getFormulaAnalysisByKey: (state) => (cacheKey) =>
+      typeof cacheKey === 'string' && cacheKey ? state.formulaAnalysisCache[cacheKey] ?? null : null,
     pixelsPerTick: (state) => BASE_PIXELS_PER_TICK * state.zoom,
     canRedo: (state) => !state.playing && state.historyFuture.length > 0,
     canUndo: (state) => !state.playing && state.historyPast.length > 0
   },
 
   actions: {
+    setFormulaAnalysisByKey(cacheKey, result) {
+      if (typeof cacheKey !== 'string' || !cacheKey) {
+        return false
+      }
+
+      this.formulaAnalysisCache = {
+        ...this.formulaAnalysisCache,
+        [cacheKey]: result
+      }
+
+      return true
+    },
+
+    removeFormulaAnalysisByKey(cacheKey) {
+      if (
+        typeof cacheKey !== 'string' ||
+        !cacheKey ||
+        !Object.hasOwn(this.formulaAnalysisCache, cacheKey)
+      ) {
+        return false
+      }
+
+      const nextFormulaAnalysisCache = {
+        ...this.formulaAnalysisCache
+      }
+
+      delete nextFormulaAnalysisCache[cacheKey]
+      this.formulaAnalysisCache = nextFormulaAnalysisCache
+      return true
+    },
+
+    clearFormulaAnalysisCache() {
+      this.formulaAnalysisCache = {}
+    },
+
     createProjectSnapshot() {
       return serializeProject(this.$state)
     },
@@ -2568,6 +2622,10 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       Object.assign(clip, updates)
+
+      if (hasClipFormulaUpdates(updates)) {
+        this.clearFormulaAnalysisCache()
+      }
     },
 
     updateVariableClip(variableTrackName, clipId, updates) {
@@ -2586,6 +2644,10 @@ export const useDawStore = defineStore('dawStore', {
       Object.assign(clip, updates, {
         formula: typeof updates?.formula === 'string' ? updates.formula : clip.formula
       })
+
+      if (Object.hasOwn(updates ?? {}, 'formula')) {
+        this.clearFormulaAnalysisCache()
+      }
     },
 
     updateValueTrackerClip(valueTrackerTrackId, clipId, updates) {
@@ -2634,10 +2696,12 @@ export const useDawStore = defineStore('dawStore', {
 
       if (result.laneType === 'variable') {
         clip.formula = draft.code
+        this.clearFormulaAnalysisCache()
         return
       }
 
       Object.assign(clip, getClipFormulaFieldsFromDraft(draft))
+      this.clearFormulaAnalysisCache()
     },
 
     saveClipFormulaDraftAndName(clipId, draft) {
@@ -2659,11 +2723,13 @@ export const useDawStore = defineStore('dawStore', {
 
       if (result.laneType === 'variable') {
         clip.formula = draft.code
+        this.clearFormulaAnalysisCache()
         return
       }
 
       Object.assign(clip, getClipFormulaFieldsFromDraft(draft))
       clip.formulaName = draft.name
+      this.clearFormulaAnalysisCache()
     },
 
     saveValueTrackerClipDraft(clipId, draft) {

@@ -127,6 +127,12 @@
       @close="closeAutomationCompanionModal"
     />
 
+    <FormulaInspector
+      :clip-id="formulaInspectorDialog.clipId"
+      :open="formulaInspectorDialog.visible"
+      @close="closeFormulaInspectorDialog"
+    />
+
     <SnackbarContainer />
   </div>
 </template>
@@ -138,6 +144,7 @@ import StartScreen from '@/components/boot/StartScreen.vue'
 import FormulaLibrary from '@/components/library/FormulaLibrary.vue'
 import EffectsPanel from '@/components/effects/EffectsPanel.vue'
 import EvaluatedPanel from '@/components/evaluated/EvaluatedPanel.vue'
+import FormulaInspector from '@/components/ui/FormulaInspector.vue'
 import AutomationCurveMenu from '@/components/timeline/AutomationCurveMenu.vue'
 import Timeline from '@/components/timeline/Timeline.vue'
 import TrackUnionOperatorMenu from '@/components/timeline/TrackUnionOperatorMenu.vue'
@@ -202,6 +209,10 @@ const valueTrackerTrackBindingDialog = reactive({
   trackId: null,
   trackName: '',
   trackVariableName: '',
+  visible: false
+})
+const formulaInspectorDialog = reactive({
+  clipId: null,
   visible: false
 })
 const timelineSectionLabelDialog = reactive({
@@ -475,6 +486,16 @@ function handleContextMenuSelect(action, item) {
     return
   }
 
+  if (action === 'open-formula-inspector') {
+    if (item.clipId) {
+      dawStore.selectClip(item.clipId)
+      formulaInspectorDialog.clipId = item.clipId
+      formulaInspectorDialog.visible = true
+    }
+
+    return
+  }
+
   if (action === 'copy-clip') {
     dawStore.copyClip(item.clipId)
     return
@@ -664,6 +685,11 @@ function closeValueTrackerTrackBindingDialog() {
   valueTrackerTrackBindingDialog.trackName = ''
   valueTrackerTrackBindingDialog.trackVariableName = ''
   valueTrackerTrackBindingDialog.visible = false
+}
+
+function closeFormulaInspectorDialog() {
+  formulaInspectorDialog.clipId = null
+  formulaInspectorDialog.visible = false
 }
 
 function confirmValueTrackerTrackBinding(nextBinding) {
