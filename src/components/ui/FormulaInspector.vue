@@ -19,7 +19,7 @@
           <p class="text-sm font-medium text-zinc-100">
             <template v-if="isAnalyzing">ANALYZING...</template>
             <template v-else-if="analysisResult?.period">PERIOD {{ periodTicksLabel }}</template>
-            <template v-else>PERIOD -</template>
+            <template v-else>PERIOD</template>
           </p>
           <p class="text-sm font-medium text-zinc-100">
             <template v-if="isAnalyzing">analyzing</template>
