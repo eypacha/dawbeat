@@ -3,6 +3,8 @@ import {
   ANALYSIS_WINDOW,
   MAX_PERIOD_FOR_OPTIMIZED_ANALYSIS
 } from '@/services/formulaAnalysis/analysisConfig'
+import { analyzeActivity } from '@/services/formulaAnalysis/activityAnalyzer'
+import { analyzeBitplanes } from '@/services/formulaAnalysis/bitplaneAnalyzer'
 import { detectPeriod, renderSamples } from '@/services/formulaAnalysis/periodAnalyzer'
 import { detectPitch } from '@/services/formulaAnalysis/pitchAnalyzer'
 import { analyzeRange } from '@/services/formulaAnalysis/rangeAnalyzer'
@@ -36,6 +38,19 @@ const EMPTY_ANALYSIS_RESULT = Object.freeze({
     freq: null,
     note: null,
     confidence: 0
+  }),
+  activity: Object.freeze({
+    value: 0,
+    normalized: 0,
+    level: 'low'
+  }),
+  bitplanes: Object.freeze({
+    bits: Object.freeze(
+      Array.from({ length: 8 }, (_, offset) => ({
+        bit: 7 - offset,
+        activity: 0
+      }))
+    )
   })
 })
 
@@ -142,12 +157,16 @@ export function useFormulaInspector() {
         : null
     )
     const pitchResult = detectPitch(samples, analysisOptions.sampleRate)
+    const activityResult = analyzeActivity(samples, periodResult.period)
+    const bitplaneResult = analyzeBitplanes(samples, periodResult.period)
 
     return {
       ...EMPTY_ANALYSIS_RESULT,
       ...periodResult,
       ...rangeResult,
-      pitch: pitchResult
+      pitch: pitchResult,
+      activity: activityResult,
+      bitplanes: bitplaneResult
     }
   }
 
