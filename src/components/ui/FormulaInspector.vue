@@ -275,10 +275,6 @@ const pitchLabel = computed(() => {
 
     const roundedFrequency = pitch.freq >= 100 ? Math.round(pitch.freq) : Number(pitch.freq.toFixed(1))
 
-    if (pitchConfidenceLabel.value !== 'high') {
-        return `variable (${roundedFrequency} Hz)`
-    }
-
     return `${pitch.note} (${roundedFrequency} Hz)`
 })
 
