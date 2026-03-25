@@ -27,6 +27,7 @@ export function analyzeRange(samples = [], period = null) {
       min: null,
       max: null,
       range: null,
+      width: null,
       normalizedRange: null
     }
   }
@@ -47,11 +48,13 @@ export function analyzeRange(samples = [], period = null) {
   }
 
   const range = max - min
+  const width = range + 1
 
   return {
     min,
     max,
     range,
-    normalizedRange: range / 255
+    width,
+    normalizedRange: width / 256
   }
 }

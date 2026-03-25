@@ -109,6 +109,7 @@ const analysisResult = ref({
   min: null,
   max: null,
   range: null,
+  width: null,
   normalizedRange: null
 })
 
@@ -176,7 +177,7 @@ const confidenceClassName = computed(() => {
 const hasRangeMetrics = computed(() =>
   Number.isFinite(analysisResult.value?.min) &&
   Number.isFinite(analysisResult.value?.max) &&
-  Number.isFinite(analysisResult.value?.range) &&
+  Number.isFinite(analysisResult.value?.width) &&
   Number.isFinite(analysisResult.value?.normalizedRange)
 )
 
@@ -193,7 +194,7 @@ const widthLabel = computed(() => {
     return 'none'
   }
 
-  return String(analysisResult.value.range)
+  return String(analysisResult.value.width)
 })
 
 const coverageLabel = computed(() => {
@@ -260,6 +261,7 @@ watch(
         min: null,
         max: null,
         range: null,
+        width: null,
         normalizedRange: null
       }
       return
@@ -273,6 +275,7 @@ watch(
         min: null,
         max: null,
         range: null,
+        width: null,
         normalizedRange: null
       }
       return
@@ -284,6 +287,7 @@ watch(
       Object.hasOwn(cachedResult, 'min') &&
       Object.hasOwn(cachedResult, 'max') &&
       Object.hasOwn(cachedResult, 'range') &&
+      Object.hasOwn(cachedResult, 'width') &&
       Object.hasOwn(cachedResult, 'normalizedRange')
 
     if (cachedResult && hasCachedRangeMetrics) {

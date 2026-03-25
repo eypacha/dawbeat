@@ -27,6 +27,7 @@ const EMPTY_ANALYSIS_RESULT = Object.freeze({
   min: null,
   max: null,
   range: null,
+  width: null,
   normalizedRange: null
 })
 
