@@ -62,7 +62,26 @@
         </div>
       </div>
 
+      <div v-if="shared">
+        <label class="block text-xs uppercase tracking-[0.1em] text-zinc-400 mb-2 mt-4">
+          Share Link
+        </label>
+        <input
+          class="w-full border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none select-all"
+          :value="shareUrl"
+          readonly
+        />
+      </div>
+
       <div class="flex justify-end gap-2 pt-4">
+        <button
+          v-if="!shared"
+          class="border border-blue-700 bg-blue-900 px-3 py-2 text-xs uppercase tracking-[0.18em] text-blue-100 transition hover:border-blue-500 hover:bg-blue-700"
+          type="button"
+          @click="handleShare"
+        >
+          Share
+        </button>
         <button
           class="border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-600 hover:text-zinc-100"
           type="button"
@@ -91,11 +110,16 @@ const props = defineProps({
   name: String,
   description: String,
   author: String,
-  license: String
+  license: String,
+  shared: Boolean,
+  shareUrl: String
 })
 
 
-const emit = defineEmits(['update:open', 'save'])
+const emit = defineEmits(['update:open', 'save', 'share'])
+function handleShare() {
+  emit('share')
+}
 
 const nameDraft = ref(props.name || '')
 const descriptionDraft = ref(props.description || '')

@@ -333,14 +333,18 @@
       :name="projectTitle"
       :author="projectAuthor"
       :license="dawStore.projectLicense"
+      :shared="dawStore.shared"
+      :shareUrl="shareUrl.value"
       :open="projectInfoDialogVisible"
       @update:open="projectInfoDialogVisible = $event"
       @save="handleSaveProjectInfo"
+      @share="handleShareProjectInfo"
     />
   </Panel>
 </template>
 
 <script setup>
+const shareUrl = ref('')
 import { computed, nextTick, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Circle, Download, EllipsisVertical, FilePlus, FolderOpen, Info, LoaderCircle, Pause, Play, Redo2, Repeat, Settings2, Shuffle, Square, Undo2 } from 'lucide-vue-next'
@@ -675,6 +679,13 @@ function handleSaveProjectInfo(data) {
   dawStore.setProjectAuthor(data.author)
   dawStore.setProjectLicense(data.license)
   projectInfoDialogVisible.value = false
+}
+
+async function handleShareProjectInfo() {
+  // Marcar como compartido y obtener el link
+  dawStore.shared = true
+  const { shareUrl: url } = await dawStore.shareProject()
+  shareUrl.value = url
 }
 
 function cycleTransportDisplayMode() {

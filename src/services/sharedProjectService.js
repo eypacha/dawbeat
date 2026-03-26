@@ -167,7 +167,9 @@ function sortKeysDeep(value) {
 }
 
 async function computeSnapshotHash(snapshot) {
-  const canonical = JSON.stringify(sortKeysDeep(snapshot))
+  // Exclude fields that should not affect the hash (like shared)
+  const { shared, ...hashableSnapshot } = snapshot
+  const canonical = JSON.stringify(sortKeysDeep(hashableSnapshot))
   const encoded = new TextEncoder().encode(canonical)
   const hashBuffer = await crypto.subtle.digest('SHA-256', encoded)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
