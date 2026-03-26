@@ -40,10 +40,6 @@
                             <template v-if="isAnalyzing">analyzing</template>
                             <template v-else>{{ pitchLabel }}</template>
                         </p>
-                        <p class="text-[11px]" :class="pitchConfidenceClassName">
-                            <template v-if="isAnalyzing">analyzing</template>
-                            <template v-else>{{ pitchConfidenceLabel }}</template>
-                        </p>
                         <p class="text-[11px] text-zinc-400">
                             <template v-if="isAnalyzing">analyzing</template>
                             <template v-else>Stability: {{ pitchStabilityLabel }}</template>
@@ -259,40 +255,6 @@ const confidenceClassName = computed(() => {
     }
 
     if (confidenceLabel.value === 'low') {
-        return 'text-rose-300'
-    }
-
-    return 'text-zinc-400'
-})
-
-const pitchConfidenceLabel = computed(() => {
-    const pitchConfidence = Number(analysisResult.value?.pitch?.confidence)
-
-    if (pitchConfidence < 0.25) {
-        return 'none'
-    }
-
-    if (pitchConfidence >= 0.95) {
-        return 'high'
-    }
-
-    if (pitchConfidence >= 0.8) {
-        return 'medium'
-    }
-
-    return 'low'
-})
-
-const pitchConfidenceClassName = computed(() => {
-    if (pitchConfidenceLabel.value === 'high') {
-        return 'text-emerald-300'
-    }
-
-    if (pitchConfidenceLabel.value === 'medium') {
-        return 'text-amber-300'
-    }
-
-    if (pitchConfidenceLabel.value === 'low') {
         return 'text-rose-300'
     }
 
