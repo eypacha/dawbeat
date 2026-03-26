@@ -90,16 +90,46 @@
           </div>
           <div class="flex min-w-0 flex-1 items-start gap-2">
             <button class="min-w-0 flex-1 text-left" type="button">
-              <span class="block truncate text-sm text-white">
-                <template v-for="(part, index) in getHighlightedParts(item.name)" :key="`${item.id}-name-${index}`">
+              <span
+                :ref="(element) => setNameViewportRef(item.id, element)"
+                class="library-item-name-marquee block overflow-hidden text-sm text-white"
+                :class="isNameMarqueeActive(item.id) ? 'is-overflowing' : ''"
+                :style="getNameMarqueeStyle(item.id)"
+                @mouseenter="handleNameMouseEnter(item.id)"
+                @mouseleave="handleNameMouseLeave(item.id)"
+              >
+                <span class="library-item-name-track">
                   <span
-                    :class="part.match
-                      ? 'rounded-[3px] bg-zinc-700/35 px-0.5 font-medium text-zinc-100 ring-1 ring-zinc-500/30 transition-colors duration-150'
-                      : ''"
+                    :ref="(element) => setNameContentRef(item.id, element)"
+                    class="library-item-name-copy"
                   >
-                    {{ part.text }}
+                    <template v-for="(part, index) in getHighlightedParts(item.name)" :key="`${item.id}-name-${index}`">
+                      <span
+                        :class="part.match
+                          ? 'rounded-[3px] bg-zinc-700/35 px-0.5 font-medium text-zinc-100 ring-1 ring-zinc-500/30 transition-colors duration-150'
+                          : ''"
+                      >
+                        {{ part.text }}
+                      </span>
+                    </template>
                   </span>
-                </template>
+
+                  <span
+                    v-if="isNameMarqueeActive(item.id)"
+                    aria-hidden="true"
+                    class="library-item-name-copy"
+                  >
+                    <template v-for="(part, index) in getHighlightedParts(item.name)" :key="`${item.id}-name-duplicate-${index}`">
+                      <span
+                        :class="part.match
+                          ? 'rounded-[3px] bg-zinc-700/35 px-0.5 font-medium text-zinc-100 ring-1 ring-zinc-500/30 transition-colors duration-150'
+                          : ''"
+                      >
+                        {{ part.text }}
+                      </span>
+                    </template>
+                  </span>
+                </span>
               </span>
               <span class="mt-1 block truncate text-xs text-zinc-500">
                 <template v-for="(part, index) in getHighlightedParts(getItemFormulaText(item))" :key="`${item.id}-formula-${index}`">
@@ -131,12 +161,16 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { BookOpen, ChevronLeft, ChevronRight, GripVertical, Trash2 } from 'lucide-vue-next'
 import Panel from '@/components/ui/Panel.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import { useLibraryStore } from '@/stores/libraryStore'
 import { useDawStore } from '@/stores/dawStore'
+
+const NAME_MARQUEE_GAP_PX = 24
+const NAME_MARQUEE_MIN_DURATION_SECONDS = 5
+const NAME_MARQUEE_PIXELS_PER_SECOND = 32
 
 defineProps({
   collapsed: {
@@ -153,6 +187,10 @@ const items = computed(() => libraryStore.items)
 const searchQuery = ref('')
 const normalizedSearchQuery = computed(() => searchQuery.value.trim().toLowerCase())
 const nameCollator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true })
+const nameViewportElements = new Map()
+const nameContentElements = new Map()
+const nameMarqueeStyles = reactive({})
+const activeNameMarqueeId = ref(null)
 const filteredItems = computed(() => {
   const query = normalizedSearchQuery.value
   const sourceItems = query
@@ -177,6 +215,74 @@ const filteredItems = computed(() => {
     return nameCollator.compare(leftName, rightName)
   })
 })
+
+function setNameViewportRef(id, element) {
+  if (element) {
+    nameViewportElements.set(id, element)
+    return
+  }
+
+  nameViewportElements.delete(id)
+  delete nameMarqueeStyles[id]
+
+  if (activeNameMarqueeId.value === id) {
+    activeNameMarqueeId.value = null
+  }
+}
+
+function setNameContentRef(id, element) {
+  if (element) {
+    nameContentElements.set(id, element)
+    return
+  }
+
+  nameContentElements.delete(id)
+  delete nameMarqueeStyles[id]
+}
+
+function getNameMarqueeStyle(id) {
+  return nameMarqueeStyles[id] ?? null
+}
+
+function isNameMarqueeActive(id) {
+  return activeNameMarqueeId.value === id
+}
+
+function handleNameMouseEnter(id) {
+  const viewportElement = nameViewportElements.get(id)
+  const contentElement = nameContentElements.get(id)
+
+  if (!viewportElement || !contentElement) {
+    return
+  }
+
+  const viewportWidth = Math.ceil(viewportElement.clientWidth)
+  const contentWidth = Math.ceil(contentElement.scrollWidth)
+
+  if (contentWidth <= viewportWidth) {
+    delete nameMarqueeStyles[id]
+    activeNameMarqueeId.value = null
+    return
+  }
+
+  const distance = contentWidth + NAME_MARQUEE_GAP_PX
+  const durationSeconds = Math.max(
+    NAME_MARQUEE_MIN_DURATION_SECONDS,
+    distance / NAME_MARQUEE_PIXELS_PER_SECOND
+  )
+
+  nameMarqueeStyles[id] = {
+    '--library-name-marquee-distance': `${distance}px`,
+    '--library-name-marquee-duration': `${durationSeconds}s`
+  }
+  activeNameMarqueeId.value = id
+}
+
+function handleNameMouseLeave(id) {
+  if (activeNameMarqueeId.value === id) {
+    activeNameMarqueeId.value = null
+  }
+}
 
 function deleteFormula(id) {
   libraryStore.removeItem(id)
@@ -239,3 +345,38 @@ function handleLibraryFormulaDragEnd() {
   dawStore.clearClipDragPreview()
 }
 </script>
+
+<style scoped>
+.library-item-name-marquee {
+  --library-name-marquee-gap: 24px;
+}
+
+.library-item-name-track {
+  display: inline-flex;
+  min-width: max-content;
+  max-width: none;
+  align-items: center;
+  column-gap: var(--library-name-marquee-gap);
+  will-change: transform;
+}
+
+.library-item-name-copy {
+  display: inline-flex;
+  min-width: max-content;
+  white-space: nowrap;
+}
+
+.library-item-name-marquee.is-overflowing:hover .library-item-name-track {
+  animation: library-item-name-marquee-scroll var(--library-name-marquee-duration, 7s) linear infinite;
+}
+
+@keyframes library-item-name-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-1 * var(--library-name-marquee-distance, 0px)));
+  }
+}
+</style>
