@@ -94,7 +94,7 @@
                 </div>
             </section>
 
-            <section class="mt-16 border border-zinc-800 bg-zinc-900/70 px-6 py-10 text-center sm:px-10">
+            <section class="mt-14">
                 <h2 class="text-2xl font-semibold tracking-tight text-zinc-100 sm:text-3xl">Start composing</h2>
                 <a href="/#/app"
                     class="mt-6 inline-flex items-center justify-center border border-cyan-400/70 bg-cyan-500/15 px-6 py-3 text-xs font-medium uppercase tracking-[0.2em] text-cyan-100 transition hover:border-cyan-300 hover:bg-cyan-500/25">
