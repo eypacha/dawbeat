@@ -97,7 +97,8 @@ export function serializeProject(state) {
     showEvaluatedPanel: state.showEvaluatedPanel,
     timelineAutoscrollEnabled: state.timelineAutoscrollEnabled,
     snapToGridEnabled: state.snapToGridEnabled,
-    snapSubdivision: state.snapSubdivision
+    snapSubdivision: state.snapSubdivision,
+    savedAt: new Date().toISOString()
   })
 }
 
