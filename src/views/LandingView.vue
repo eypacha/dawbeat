@@ -4,7 +4,7 @@
       <p class="text-xs uppercase tracking-[0.28em] text-zinc-500">DawBeat</p>
       <h1 class="mt-4 text-4xl font-semibold tracking-tight text-zinc-100 sm:text-6xl">Bytebeat DAW in your browser</h1>
       <p class="mt-6 max-w-2xl text-sm text-zinc-400 sm:text-base">
-        Compose formulas, automate effects, record value trackers, and share immutable snapshots.
+        Compose formulas, automate effects, record value trackers, and share!
       </p>
 
       <div class="mt-10 flex flex-wrap items-center gap-3">
