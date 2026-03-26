@@ -547,6 +547,30 @@ function sortClipEntriesForClipboard(tracks, variableTracks, valueTrackerTracks,
   })
 }
 
+function createClipboardClipItems(entries, tracks, variableTracks, valueTrackerTracks, anchorStart = null) {
+  if (!entries.length) {
+    return []
+  }
+
+  const sortedEntries = sortClipEntriesForClipboard(tracks, variableTracks, valueTrackerTracks, entries)
+  const baseAnchorStart = Number.isFinite(anchorStart) ? anchorStart : (sortedEntries[0]?.clip.start ?? 0)
+
+  return sortedEntries.map((entry) => {
+    const inlineClipFormulaFields = createClipFormulaFields(entry.clip)
+
+    return {
+      duration: entry.clip.duration,
+      ...inlineClipFormulaFields,
+      stepSubdivision: entry.laneType === 'valueTracker' ? entry.clip.stepSubdivision : null,
+      values: entry.laneType === 'valueTracker' ? [...(entry.clip.values ?? [])] : null,
+      sourceLaneId: entry.laneId,
+      sourceLaneType: entry.laneType,
+      sourceTrackId: entry.laneType === 'track' ? entry.laneId : null,
+      startOffset: entry.clip.start - baseAnchorStart
+    }
+  })
+}
+
 function buildClipClipboard(entries, tracks, variableTracks, valueTrackerTracks) {
   if (!entries.length) {
     return null
@@ -560,25 +584,19 @@ function buildClipClipboard(entries, tracks, variableTracks, valueTrackerTracks)
     kind: 'clips',
     anchorStart,
     anchorTickOffset: anchorStart - anchorTickStart,
-    clips: sortedEntries.map((entry) => {
-      const inlineClipFormulaFields = createClipFormulaFields(entry.clip)
-
-      return {
-        duration: entry.clip.duration,
-        ...inlineClipFormulaFields,
-        stepSubdivision: entry.laneType === 'valueTracker' ? entry.clip.stepSubdivision : null,
-        values: entry.laneType === 'valueTracker' ? [...(entry.clip.values ?? [])] : null,
-        sourceLaneId: entry.laneId,
-        sourceLaneType: entry.laneType,
-        sourceTrackId: entry.laneType === 'track' ? entry.laneId : null,
-        startOffset: entry.clip.start - anchorStart
-      }
-    }),
+    clips: createClipboardClipItems(sortedEntries, tracks, variableTracks, valueTrackerTracks, anchorStart),
     sourceLaneIds: [...new Set(sortedEntries.map((entry) => `${entry.laneType}:${entry.laneId}`))]
   }
 }
 
-function buildGroupClipboard(group, entries, tracks, variableTracks, valueTrackerTracks) {
+function createGroupClipboardContent(
+  group,
+  entries,
+  tracks,
+  variableTracks,
+  valueTrackerTracks,
+  anchorStart = null
+) {
   if (!group || !entries.length) {
     return null
   }
@@ -590,29 +608,129 @@ function buildGroupClipboard(group, entries, tracks, variableTracks, valueTracke
   const groupTrackIndex = Number.isInteger(group.trackIndex)
     ? group.trackIndex
     : Math.min(...sortedEntries.map((entry) => entry.trackIndex ?? 0))
+
+  return {
+    clips: sortedEntries.map((entry) => {
+      const inlineClipFormulaFields = createClipFormulaFields(entry.clip)
+
+      return {
+        duration: entry.clip.duration,
+        ...inlineClipFormulaFields,
+        laneType: entry.laneType,
+        stepSubdivision: entry.laneType === 'valueTracker' ? entry.clip.stepSubdivision : null,
+        values: entry.laneType === 'valueTracker' ? [...(entry.clip.values ?? [])] : null,
+        startOffset: entry.clip.start - groupStart,
+        trackOffset: (entry.trackIndex ?? 0) - groupTrackIndex
+      }
+    }),
+    name: group.name,
+    startOffset: groupStart - (Number.isFinite(anchorStart) ? anchorStart : groupStart),
+    trackIndex: groupTrackIndex
+  }
+}
+
+function buildGroupClipboard(group, entries, tracks, variableTracks, valueTrackerTracks) {
+  const groupContent = createGroupClipboardContent(
+    group,
+    entries,
+    tracks,
+    variableTracks,
+    valueTrackerTracks
+  )
+
+  if (!groupContent) {
+    return null
+  }
+
+  const groupStart = Number.isFinite(Number(group.start))
+    ? Number(group.start)
+    : Math.min(...entries.map((entry) => entry.clip.start))
   const anchorTickStart = Math.floor(Math.max(0, groupStart))
 
   return {
     kind: 'group',
     anchorStart: groupStart,
     anchorTickOffset: groupStart - anchorTickStart,
-    group: {
-      clips: sortedEntries.map((entry) => {
-        const inlineClipFormulaFields = createClipFormulaFields(entry.clip)
+    group: groupContent
+  }
+}
 
-        return {
-          duration: entry.clip.duration,
-          ...inlineClipFormulaFields,
-          laneType: entry.laneType,
-          stepSubdivision: entry.laneType === 'valueTracker' ? entry.clip.stepSubdivision : null,
-          values: entry.laneType === 'valueTracker' ? [...(entry.clip.values ?? [])] : null,
-          startOffset: entry.clip.start - groupStart,
-          trackOffset: (entry.trackIndex ?? 0) - groupTrackIndex
-        }
-      }),
-      name: group.name,
-      trackIndex: groupTrackIndex
-    }
+function buildClipboardFromSelection(clipIds, groups, tracks, variableTracks, valueTrackerTracks) {
+  const selectedEntries = getSelectedClipEntriesWithTrackIndex(
+    tracks,
+    variableTracks,
+    valueTrackerTracks,
+    clipIds
+  )
+
+  if (!selectedEntries.length) {
+    return null
+  }
+
+  const selectedClipIdSet = new Set(selectedEntries.map((entry) => entry.clipId))
+  const selectedGroups = (groups ?? [])
+    .filter((group) => {
+      const groupClipIds = getGroupClipIds(group)
+      return groupClipIds.length && groupClipIds.every((clipId) => selectedClipIdSet.has(clipId))
+    })
+    .sort((leftGroup, rightGroup) => {
+      const startDelta = (Number(leftGroup.start) || 0) - (Number(rightGroup.start) || 0)
+
+      if (startDelta !== 0) {
+        return startDelta
+      }
+
+      return (Number(leftGroup.trackIndex) || 0) - (Number(rightGroup.trackIndex) || 0)
+    })
+
+  if (!selectedGroups.length) {
+    return buildClipClipboard(selectedEntries, tracks, variableTracks, valueTrackerTracks)
+  }
+
+  const groupedClipIdSet = new Set(selectedGroups.flatMap((group) => getGroupClipIds(group)))
+  const looseEntries = selectedEntries.filter((entry) => !groupedClipIdSet.has(entry.clipId))
+
+  if (selectedGroups.length === 1 && !looseEntries.length) {
+    return buildGroupClipboard(
+      selectedGroups[0],
+      selectedEntries,
+      tracks,
+      variableTracks,
+      valueTrackerTracks
+    )
+  }
+
+  const anchorStart = Math.min(
+    ...selectedGroups.map((group) => Number(group.start) || 0),
+    ...looseEntries.map((entry) => entry.clip.start)
+  )
+  const normalizedAnchorStart = Number.isFinite(anchorStart) ? anchorStart : 0
+  const anchorTickStart = Math.floor(Math.max(0, normalizedAnchorStart))
+
+  return {
+    kind: 'mixed',
+    anchorStart: normalizedAnchorStart,
+    anchorTickOffset: normalizedAnchorStart - anchorTickStart,
+    clips: createClipboardClipItems(
+      looseEntries,
+      tracks,
+      variableTracks,
+      valueTrackerTracks,
+      normalizedAnchorStart
+    ),
+    groups: selectedGroups
+      .map((group) => {
+        const groupEntries = selectedEntries.filter((entry) => entry.clip.groupId === group.id)
+        return createGroupClipboardContent(
+          group,
+          groupEntries,
+          tracks,
+          variableTracks,
+          valueTrackerTracks,
+          normalizedAnchorStart
+        )
+      })
+      .filter(Boolean)
   }
 }
 
@@ -765,6 +883,42 @@ function sortLaneClips(entry) {
 function hasPasteTargetForClipboard(clipboard, tracks, variableTracks, valueTrackerTracks) {
   if (!clipboard) {
     return false
+  }
+
+  if (clipboard.kind === 'mixed') {
+    const groupDescriptors = Array.isArray(clipboard.groups) ? clipboard.groups : []
+    const clipDescriptors = Array.isArray(clipboard.clips) ? clipboard.clips : []
+    const groupsHaveTargets = groupDescriptors.every((groupDescriptor) =>
+      Array.isArray(groupDescriptor?.clips) &&
+      groupDescriptor.clips.length &&
+      groupDescriptor.clips.every((groupClip) => {
+        if (groupClip?.laneType === 'variable') {
+          return Boolean(variableTracks.length)
+        }
+
+        if (groupClip?.laneType === 'valueTracker') {
+          return Boolean(valueTrackerTracks.length)
+        }
+
+        return Boolean(tracks.length)
+      })
+    )
+
+    const clipsHaveTargets = clipDescriptors.length
+      ? clipDescriptors.some((clipboardClip) => {
+          if (clipboardClip?.sourceLaneType === 'variable') {
+            return Boolean(variableTracks.length)
+          }
+
+          if (clipboardClip?.sourceLaneType === 'valueTracker') {
+            return Boolean(valueTrackerTracks.length)
+          }
+
+          return Boolean(tracks.length)
+        })
+      : false
+
+    return (groupDescriptors.length && groupsHaveTargets) || clipsHaveTargets
   }
 
   if (clipboard.kind === 'group') {
@@ -2236,6 +2390,16 @@ export const useDawStore = defineStore('dawStore', {
       return true
     },
 
+    recalculateAllGroupBounds() {
+      if (!Array.isArray(this.groups) || !this.groups.length) {
+        return
+      }
+
+      for (const group of [...this.groups]) {
+        this.recalculateGroupBounds(group.id)
+      }
+    },
+
     createGroup(clipIds = this.selectedClipIds) {
       return this.recordHistoryStep('create-group', () => {
         const selectedEntries = getSelectedClipEntriesWithTrackIndex(
@@ -2513,15 +2677,23 @@ export const useDawStore = defineStore('dawStore', {
       syncSelectedClipState(this, [])
     },
 
-    copySelectedClips() {
-      const selectedClipEntries = collectSelectedClipEntries(
-        this.tracks,
-        this.variableTracks,
-        this.valueTrackerTracks,
-        this.selectedClipIds
+    addSelectedClips(clipIds) {
+      syncSelectedClipState(this, filterClipIdsByEditingGroup(this, [...this.selectedClipIds, ...clipIds]))
+    },
+
+    removeSelectedClipIds(clipIds) {
+      const clipIdSet = new Set(normalizeSelectedClipIds(clipIds))
+
+      syncSelectedClipState(
+        this,
+        this.selectedClipIds.filter((selectedClipId) => !clipIdSet.has(selectedClipId))
       )
-      const nextClipboard = buildClipClipboard(
-        selectedClipEntries,
+    },
+
+    copySelectedClips() {
+      const nextClipboard = buildClipboardFromSelection(
+        this.selectedClipIds,
+        this.groups,
         this.tracks,
         this.variableTracks,
         this.valueTrackerTracks
@@ -2561,6 +2733,17 @@ export const useDawStore = defineStore('dawStore', {
       return true
     },
 
+    cutSelectedClips() {
+      const selectedClipIds = [...this.selectedClipIds]
+
+      if (!selectedClipIds.length || !this.copySelectedClips()) {
+        return false
+      }
+
+      this.removeSelectedClips(selectedClipIds)
+      return true
+    },
+
     pasteClipboardAtTick(anchorTick, target = null) {
       if (!this.canPasteClipsAtPlayhead) {
         return []
@@ -2570,7 +2753,7 @@ export const useDawStore = defineStore('dawStore', {
         const clipboard = this.clipClipboard
 
         if (
-          (!clipboard?.clips?.length && clipboard?.kind !== 'group') ||
+          (!clipboard?.clips?.length && clipboard?.kind !== 'group' && clipboard?.kind !== 'mixed') ||
           (!this.tracks.length && !this.variableTracks.length && !this.valueTrackerTracks.length)
         ) {
           return []
@@ -2678,6 +2861,182 @@ export const useDawStore = defineStore('dawStore', {
             }))
           })
           this.recalculateGroupBounds(nextGroupId)
+          this.setSelectedClips(pastedClipIds)
+          this.selectedTrackId = pastedAnchorTrackId
+          return pastedClipIds
+        }
+
+        if (clipboard.kind === 'mixed') {
+          const lanesInOrder = getClipLanesInOrder(this.tracks, this.variableTracks, this.valueTrackerTracks)
+          const laneByIndex = new Map(lanesInOrder.map((laneEntry) => [laneEntry.trackIndex, laneEntry]))
+          const laneIndexByKey = new Map(
+            lanesInOrder.map((laneEntry) => [`${laneEntry.laneType}:${laneEntry.laneId}`, laneEntry.trackIndex])
+          )
+          const groupDescriptors = Array.isArray(clipboard.groups) ? clipboard.groups : []
+          const looseClips = Array.isArray(clipboard.clips) ? clipboard.clips : []
+          const canOverrideSingleGroup = groupDescriptors.length === 1 && !looseClips.length
+          const groupOverrideLaneIndex = canOverrideSingleGroup && target?.laneId && target?.laneType
+            ? laneIndexByKey.get(`${target.laneType}:${target.laneId}`)
+            : undefined
+
+          for (const groupDescriptor of groupDescriptors) {
+            const groupClips = Array.isArray(groupDescriptor?.clips) ? groupDescriptor.clips : []
+
+            if (!groupClips.length) {
+              continue
+            }
+
+            const baseTrackIndex = Number.isInteger(groupOverrideLaneIndex)
+              ? groupOverrideLaneIndex
+              : Math.max(0, Math.floor(Number(groupDescriptor?.trackIndex) || 0))
+            const groupStart = pasteAnchorStart + (Number(groupDescriptor?.startOffset) || 0)
+            const targetLaneEntries = []
+
+            for (const groupClip of groupClips) {
+              const targetTrackIndex = baseTrackIndex + Math.max(0, Math.floor(Number(groupClip.trackOffset) || 0))
+              const targetLaneEntry = laneByIndex.get(targetTrackIndex)
+
+              if (!targetLaneEntry || targetLaneEntry.laneType !== groupClip.laneType) {
+                return []
+              }
+
+              targetLaneEntries.push(targetLaneEntry)
+            }
+
+            const nextGroupId = createGroupId()
+            const groupPastedClipIds = []
+
+            for (const [index, groupClip] of groupClips.entries()) {
+              const targetLaneEntry = targetLaneEntries[index]
+              const desiredStart = groupStart + (Number(groupClip.startOffset) || 0)
+              const nextStart = clampClipPlacementStart(
+                targetLaneEntry.lane,
+                desiredStart,
+                groupClip.duration
+              )
+              const nextClip = targetLaneEntry.laneType === 'variable'
+                ? createVariableTrackClip({
+                    duration: groupClip.duration,
+                    formula: groupClip.formula ?? null,
+                    groupId: nextGroupId,
+                    start: nextStart
+                  })
+                : targetLaneEntry.laneType === 'valueTracker'
+                  ? createValueTrackerClip({
+                      duration: groupClip.duration,
+                      groupId: nextGroupId,
+                      start: nextStart,
+                      stepSubdivision: groupClip.stepSubdivision,
+                      values: groupClip.values
+                    })
+                  : createTrackClip({
+                      duration: groupClip.duration,
+                      ...createClipFormulaFields(groupClip),
+                      groupId: nextGroupId,
+                      start: nextStart
+                    })
+
+              targetLaneEntry.lane.clips.push(nextClip)
+              pastedClipIds.push(nextClip.id)
+              groupPastedClipIds.push(nextClip.id)
+              touchedLaneEntries.push(targetLaneEntry)
+
+              if (pastedAnchorTrackId === null) {
+                pastedAnchorTrackId = targetLaneEntry.laneType === 'track' ? targetLaneEntry.lane.id : null
+              }
+            }
+
+            if (!groupPastedClipIds.length) {
+              continue
+            }
+
+            this.groups.push({
+              id: nextGroupId,
+              name: generateGroupName(this.groups),
+              start: groupStart,
+              trackIndex: baseTrackIndex,
+              duration: 1,
+              clips: groupPastedClipIds.map((clipId) => ({
+                clipId,
+                timeOffset: 0,
+                trackOffset: 0
+              }))
+            })
+            this.recalculateGroupBounds(nextGroupId)
+          }
+
+          const sourceTrackLaneIds = getClipboardSourceLaneIdSet({ clips: looseClips }, 'track')
+          const sourceVariableLaneIds = getClipboardSourceLaneIdSet({ clips: looseClips }, 'variable')
+          const sourceValueTrackerLaneIds = getClipboardSourceLaneIdSet({ clips: looseClips }, 'valueTracker')
+
+          const overrideEnabledByType = {
+            track: sourceTrackLaneIds.size <= 1,
+            variable: sourceVariableLaneIds.size <= 1,
+            valueTracker: sourceValueTrackerLaneIds.size <= 1
+          }
+
+          const overrideTarget = {
+            laneId: target?.laneId ?? null,
+            laneType: target?.laneType ?? null
+          }
+
+          for (const clipboardClip of looseClips) {
+            const clipLaneType = clipboardClip?.sourceLaneType === 'variable'
+              ? 'variable'
+              : clipboardClip?.sourceLaneType === 'valueTracker'
+                ? 'valueTracker'
+                : 'track'
+
+            const scopedOverrideTarget = overrideEnabledByType[clipLaneType] ? overrideTarget : null
+            const targetEntry = resolvePasteTargetLane(this, clipboardClip, scopedOverrideTarget)
+
+            if (!targetEntry.lane) {
+              continue
+            }
+
+            const desiredStart = pasteAnchorStart + clipboardClip.startOffset
+            const nextStart = clampClipPlacementStart(
+              targetEntry.lane,
+              desiredStart,
+              clipboardClip.duration
+            )
+
+            const nextClip = targetEntry.laneType === 'variable'
+              ? createVariableTrackClip({
+                  duration: clipboardClip.duration,
+                  formula: clipboardClip.formula ?? null,
+                  start: nextStart
+                })
+              : targetEntry.laneType === 'valueTracker'
+                ? createValueTrackerClip({
+                    duration: clipboardClip.duration,
+                    start: nextStart,
+                    stepSubdivision: clipboardClip.stepSubdivision,
+                    values: clipboardClip.values
+                  })
+                : createTrackClip({
+                    duration: clipboardClip.duration,
+                    ...createClipFormulaFields(clipboardClip),
+                    start: nextStart
+                  })
+
+            targetEntry.lane.clips.push(nextClip)
+            pastedClipIds.push(nextClip.id)
+            touchedLaneEntries.push(targetEntry)
+
+            if (pastedAnchorTrackId === null) {
+              pastedAnchorTrackId = targetEntry.laneType === 'track' ? targetEntry.lane.id : null
+            }
+          }
+
+          if (!pastedClipIds.length) {
+            return []
+          }
+
+          for (const touchedLaneEntry of touchedLaneEntries) {
+            sortLaneClips(touchedLaneEntry)
+          }
+
           this.setSelectedClips(pastedClipIds)
           this.selectedTrackId = pastedAnchorTrackId
           return pastedClipIds
@@ -2871,6 +3230,7 @@ export const useDawStore = defineStore('dawStore', {
 
         if (!beforeTrackId) {
           this.tracks.push(nextTrack)
+          this.recalculateAllGroupBounds()
           return nextTrack.id
         }
 
@@ -2878,10 +3238,12 @@ export const useDawStore = defineStore('dawStore', {
 
         if (insertIndex === -1) {
           this.tracks.push(nextTrack)
+          this.recalculateAllGroupBounds()
           return nextTrack.id
         }
 
         this.tracks.splice(insertIndex, 0, nextTrack)
+        this.recalculateAllGroupBounds()
         return nextTrack.id
       })
     },
@@ -2893,6 +3255,7 @@ export const useDawStore = defineStore('dawStore', {
         })
 
         this.variableTracks.push(nextVariableTrack)
+        this.recalculateAllGroupBounds()
         return nextVariableTrack.name
       })
     },
@@ -2908,6 +3271,7 @@ export const useDawStore = defineStore('dawStore', {
         })
 
         this.valueTrackerTracks.push(nextValueTrackerTrack)
+        this.recalculateAllGroupBounds()
         return nextValueTrackerTrack.id
       })
     },
@@ -3010,6 +3374,8 @@ export const useDawStore = defineStore('dawStore', {
           this.recalculateGroupBounds(groupId)
         }
 
+        this.recalculateAllGroupBounds()
+
         this.setSelectedClips(
           this.selectedClipIds.filter((selectedClipId) => !removedClipIds.has(selectedClipId))
         )
@@ -3064,6 +3430,8 @@ export const useDawStore = defineStore('dawStore', {
           this.recalculateGroupBounds(groupId)
         }
 
+        this.recalculateAllGroupBounds()
+
         if (this.selectedValueTrackerTrackId === removedValueTrackerTrack.id) {
           this.selectedValueTrackerTrackId = null
         }
@@ -3100,6 +3468,7 @@ export const useDawStore = defineStore('dawStore', {
         }
 
         this.tracks.splice(trackIndex + 1, 0, duplicatedTrack)
+        this.recalculateAllGroupBounds()
         this.clearClipSelection()
         this.selectedTrackId = duplicatedTrack.id
         return duplicatedTrack.id
@@ -3126,6 +3495,8 @@ export const useDawStore = defineStore('dawStore', {
         for (const groupId of touchedGroupIds) {
           this.recalculateGroupBounds(groupId)
         }
+
+        this.recalculateAllGroupBounds()
         this.setSelectedClips(
           this.selectedClipIds.filter((selectedClipId) => !removedClipIds.has(selectedClipId))
         )
@@ -3139,6 +3510,7 @@ export const useDawStore = defineStore('dawStore', {
     reorderTrack(trackId, targetTrackId, placement = 'before') {
       return this.recordHistoryStep('reorder-track', () => {
         this.tracks = reorderEntries(this.tracks, trackId, targetTrackId, placement)
+        this.recalculateAllGroupBounds()
       })
     },
 

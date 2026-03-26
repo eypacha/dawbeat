@@ -163,6 +163,11 @@ function getClipGroupClipIds() {
     : []
 }
 
+function isClipGroupFullySelected() {
+  const clipGroupIds = getClipGroupClipIds()
+  return Boolean(clipGroupIds.length) && clipGroupIds.every((clipId) => selectedClipIds.value.includes(clipId))
+}
+
 function handleSelect(payload = {}) {
   if (isOutsideEditingGroup.value) {
     return
@@ -170,10 +175,31 @@ function handleSelect(payload = {}) {
 
   if (shouldSelectWholeGroup.value) {
     const clipGroupIds = getClipGroupClipIds()
+    const preserveMultiSelection = payload?.preserveMultiSelection === true
+    const groupIsFullySelected = isClipGroupFullySelected()
+    const shiftSelectionAction = payload?.shiftKey === true && payload?.disableShiftToggle !== true
+      ? pendingShiftSelectionAction.value ?? (groupIsFullySelected ? 'remove' : 'add')
+      : null
+
+    pendingShiftSelectionAction.value = null
 
     if (clipGroupIds.length) {
       dawStore.selectTrack(props.trackId)
-      dawStore.setSelectedClips(clipGroupIds)
+
+      if (shiftSelectionAction === 'remove') {
+        dawStore.removeSelectedClipIds(clipGroupIds)
+        return
+      }
+
+      if (shiftSelectionAction === 'add') {
+        dawStore.addSelectedClips(clipGroupIds)
+        return
+      }
+
+      if (!preserveMultiSelection || !groupIsFullySelected || selectedClipIds.value.length === clipGroupIds.length) {
+        dawStore.setSelectedClips(clipGroupIds)
+      }
+
       return
     }
   }
@@ -238,8 +264,7 @@ function handleClipPointerDown(event) {
     const clipGroupIds = getClipGroupClipIds()
 
     if (clipGroupIds.length) {
-      dawStore.selectTrack(props.trackId)
-      dawStore.setSelectedClips(clipGroupIds)
+      handleSelect({ preserveMultiSelection: true, shiftKey: event.shiftKey })
     }
 
     pendingShiftSelectionAction.value = null

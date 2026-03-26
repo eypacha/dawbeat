@@ -187,7 +187,7 @@
             :class="groupVisual.isEditing ? 'border-sky-300/70 bg-zinc-900/90 text-sky-100' : 'border-zinc-400/45 bg-zinc-900/85 text-zinc-200 hover:border-zinc-300/60'"
             data-context-menu-enabled="true"
             type="button"
-            @click.stop="handleGroupHeaderClick(groupVisual.id)"
+            @click.stop="handleGroupHeaderClick(groupVisual.id, { fromClick: true, shiftKey: $event.shiftKey })"
             @contextmenu.stop.prevent="handleGroupContextMenu($event, groupVisual.id)"
             @pointerdown.stop="handleGroupPointerDown($event, groupVisual.id)"
           >
@@ -242,6 +242,7 @@ const draggingTrackId = ref(null)
 const trackDropTarget = ref(null)
 let scrubPointerId = null
 const groupDragState = ref(null)
+const ignoreNextGroupHeaderClick = ref(false)
 
 const {
   active: marqueeSelectionActive,
@@ -553,14 +554,50 @@ function getGroupById(groupId) {
   return groups.value.find((group) => group.id === groupId) ?? null
 }
 
-function handleGroupHeaderClick(groupId) {
+function isGroupFullySelected(group) {
+  const groupClipIds = Array.isArray(group?.clips)
+    ? group.clips.map((entry) => entry?.clipId).filter(Boolean)
+    : []
+
+  return Boolean(groupClipIds.length) && groupClipIds.every((clipId) => selectedClipIdSet.value.has(clipId))
+}
+
+function handleGroupHeaderClick(groupId, payload = {}) {
+  if (payload?.fromClick && ignoreNextGroupHeaderClick.value) {
+    ignoreNextGroupHeaderClick.value = false
+    return
+  }
+
   const group = getGroupById(groupId)
 
   if (!group) {
     return
   }
 
-  dawStore.setSelectedClips((group.clips ?? []).map((entry) => entry.clipId))
+  const groupClipIds = (group.clips ?? []).map((entry) => entry.clipId).filter(Boolean)
+
+  if (!groupClipIds.length) {
+    return
+  }
+
+  const preserveMultiSelection = payload?.preserveMultiSelection === true
+  const shiftSelectionAction = payload?.shiftKey === true
+    ? (isGroupFullySelected(group) ? 'remove' : 'add')
+    : null
+
+  if (shiftSelectionAction === 'remove') {
+    dawStore.removeSelectedClipIds(groupClipIds)
+    return
+  }
+
+  if (shiftSelectionAction === 'add') {
+    dawStore.addSelectedClips(groupClipIds)
+    return
+  }
+
+  if (!preserveMultiSelection || !isGroupFullySelected(group) || selectedClipIds.value.length === groupClipIds.length) {
+    dawStore.setSelectedClips(groupClipIds)
+  }
 }
 
 function handleGroupContextMenu(event, groupId) {
@@ -589,7 +626,14 @@ function handleGroupPointerDown(event, groupId) {
   }
 
   event.preventDefault()
-  handleGroupHeaderClick(groupId)
+  ignoreNextGroupHeaderClick.value = true
+
+  if (event.shiftKey) {
+    handleGroupHeaderClick(groupId, { shiftKey: true })
+    return
+  }
+
+  handleGroupHeaderClick(groupId, { preserveMultiSelection: true })
 
   const pointerLaneIndex = getLaneIndexFromClientY(event.clientY)
 
@@ -637,6 +681,9 @@ function handleGroupPointerUp() {
   }
 
   cleanupGroupDrag()
+  window.setTimeout(() => {
+    ignoreNextGroupHeaderClick.value = false
+  }, 0)
 }
 
 function handleGroupPointerCancel() {
@@ -656,6 +703,9 @@ function handleGroupPointerCancel() {
   }
 
   cleanupGroupDrag()
+  window.setTimeout(() => {
+    ignoreNextGroupHeaderClick.value = false
+  }, 0)
 }
 
 function cleanupGroupDrag() {

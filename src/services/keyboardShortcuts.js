@@ -108,6 +108,7 @@ export function initKeyboardShortcuts({ dawStore, transport }) {
     }
 
     const isCopyShortcut = (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'c'
+    const isCutShortcut = (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'x'
     const isPasteShortcut = (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'v'
     const isUndoShortcut = (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'z'
     const isRedoShortcut =
@@ -118,6 +119,12 @@ export function initKeyboardShortcuts({ dawStore, transport }) {
     if (isCopyShortcut && dawStore.selectedClipIds.length) {
       event.preventDefault()
       dawStore.copySelectedClips()
+      return
+    }
+
+    if (isCutShortcut && dawStore.selectedClipIds.length) {
+      event.preventDefault()
+      dawStore.cutSelectedClips()
       return
     }
 
