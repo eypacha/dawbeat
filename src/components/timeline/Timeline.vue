@@ -181,7 +181,7 @@ const FIXED_TIMELINE_TICKS = 256
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
 const { seekToTime } = useTransportPlayback()
-const { automationLanes, editingClipId, loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, tickSize, time, timelineSectionLabels, tracks, valueTrackerTracks, variableTracks } =
+const { automationLanes, editingClipId, loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, tickSize, time, timelineAutoscrollEnabled, timelineSectionLabels, tracks, valueTrackerTracks, variableTracks } =
   storeToRefs(dawStore)
 const scrollContainer = ref(null)
 const timelineSurfaceElement = ref(null)
@@ -395,6 +395,10 @@ function cleanupTrackReorder() {
 
 watch(time, (nextTime) => {
   if (!scrollContainer.value) {
+    return
+  }
+
+  if (!timelineAutoscrollEnabled.value) {
     return
   }
 

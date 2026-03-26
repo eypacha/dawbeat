@@ -111,6 +111,20 @@
           :title="loopEnabled ? 'Disable loop playback' : 'Enable loop playback'"
           @click="dawStore.toggleLoop()"
         />
+
+        <Dropdown
+          :items="transportOptions"
+          @select="handleTransportOptionSelect"
+        >
+          <template #trigger>
+            <IconButton
+              :icon="EllipsisVertical"
+              class="border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700"
+              label="Transport options"
+              title="More transport options"
+            />
+          </template>
+        </Dropdown>
       </div>
 
       <div :class="rightGroupClassName">
@@ -265,7 +279,7 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Circle, Download, FilePlus, FolderOpen, Info, LoaderCircle, Pause, Play, Redo2, Repeat, Settings2, Shuffle, Square, Undo2 } from 'lucide-vue-next'
+import { Circle, Download, EllipsisVertical, FilePlus, FolderOpen, Info, LoaderCircle, Pause, Play, Redo2, Repeat, Settings2, Shuffle, Square, Undo2 } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { automationCompanionHostState } from '@/services/automationCompanionService'
 import { getRandomDemoProjectEntry } from '@/services/demoProjectService'
@@ -288,13 +302,14 @@ import { ticksToSamples } from '@/utils/timeUtils'
 import AboutModal from '@/components/ui/AboutModal.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import Divider from '@/components/ui/Divider.vue'
+import Dropdown from '@/components/ui/Dropdown.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import Panel from '@/components/ui/Panel.vue'
 import SettingsModal from '@/components/ui/SettingsModal.vue'
 
 const dawStore = useDawStore()
 const { play, pause, stop, toggleRecord } = useTransportPlayback()
-const { automationRecordingArmed, bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, sampleRate, tickSize, time } = storeToRefs(dawStore)
+const { automationRecordingArmed, bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, sampleRate, tickSize, time, timelineAutoscrollEnabled } = storeToRefs(dawStore)
 const bpmDraft = ref(formatBpmValue(getBpmFromSampleRate(sampleRate.value, bpmMeasure.value)))
 const bpmMeasureDraft = ref(bpmMeasure.value)
 const projectFileInput = ref(null)
@@ -425,6 +440,12 @@ const recordButtonTitle = computed(() => {
 
   return 'Record into the active Value Tracker track'
 })
+const transportOptions = computed(() => ([
+  {
+    action: 'toggle-autoscroll',
+    label: `Autoscroll: ${timelineAutoscrollEnabled.value ? 'On' : 'Off'}`
+  }
+]))
 
 watch([sampleRate, bpmMeasure, midiClockLocked, () => midiClockState.effectiveSampleRate, () => midiClockState.externalBpm], () => {
   sampleRateDraft.value = formatSampleRateValue(displayedSampleRate.value)
@@ -517,6 +538,14 @@ function cycleTransportDisplayMode() {
   }
 
   transportDisplayMode.value = 'sample'
+}
+
+function handleTransportOptionSelect(item) {
+  if (item?.action !== 'toggle-autoscroll') {
+    return
+  }
+
+  dawStore.setTimelineAutoscrollEnabled(!timelineAutoscrollEnabled.value)
 }
 
 function formatTransportClock(sampleTime, currentSampleRate) {
