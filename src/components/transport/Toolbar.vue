@@ -454,6 +454,7 @@ const transportOptions = computed(() => ([
   },
   {
     action: 'snap-subdivision-submenu',
+    disabled: !snapToGridEnabled.value,
     label: 'Snap amount',
     children: SNAP_SUBDIVISION_OPTIONS.map((subdivision) => ({
       action: 'set-snap-subdivision',

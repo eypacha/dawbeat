@@ -16,7 +16,11 @@
         @mouseleave="handleParentLeave(item)"
       >
         <button
-          class="flex w-full items-center gap-2 px-3 py-1.5 text-left transition hover:bg-zinc-700"
+          :class="[
+            'flex w-full items-center gap-2 px-3 py-1.5 text-left transition',
+            item.disabled ? 'cursor-not-allowed text-zinc-500' : 'hover:bg-zinc-700'
+          ]"
+          :disabled="item.disabled"
           type="button"
           @click="handleParentClick(item)"
         >
@@ -42,7 +46,11 @@
           <button
             v-for="child in item.children"
             :key="itemKey(child)"
-            class="flex w-full items-center gap-2 px-3 py-1.5 text-left transition hover:bg-zinc-700"
+            :class="[
+              'flex w-full items-center gap-2 px-3 py-1.5 text-left transition',
+              child.disabled ? 'cursor-not-allowed text-zinc-500' : 'hover:bg-zinc-700'
+            ]"
+            :disabled="child.disabled"
             type="button"
             @click="handleSelect(child)"
           >
@@ -88,6 +96,10 @@ function toggle() {
 }
 
 function handleSelect(item) {
+  if (item?.disabled) {
+    return
+  }
+
   emit('select', item)
   close()
 }
@@ -101,6 +113,10 @@ function hasChildren(item) {
 }
 
 function handleParentClick(item) {
+  if (item?.disabled) {
+    return
+  }
+
   if (!hasChildren(item)) {
     handleSelect(item)
     return
@@ -111,7 +127,7 @@ function handleParentClick(item) {
 }
 
 function handleParentHover(item) {
-  if (!hasChildren(item)) {
+  if (!hasChildren(item) || item?.disabled) {
     return
   }
 
@@ -119,7 +135,7 @@ function handleParentHover(item) {
 }
 
 function handleParentLeave(item) {
-  if (!hasChildren(item)) {
+  if (!hasChildren(item) || item?.disabled) {
     return
   }
 
