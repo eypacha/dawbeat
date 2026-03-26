@@ -41,11 +41,22 @@
             @click="handleProjectDownload"
           />
 
-          <div class="flex items-center border border-zinc-800 bg-zinc-950 px-2 py-1">
+          <div class="flex w-44 items-center px-1 py-1">
+            <button
+              v-if="!isEditingProjectTitle"
+              class="w-full truncate text-left text-xs text-zinc-300 transition hover:text-zinc-100"
+              type="button"
+              title="Click to edit project title"
+              @click="beginProjectTitleEdit"
+            >
+              {{ projectTitle }}
+            </button>
+
             <input
+              v-else
+              ref="projectTitleInput"
               v-model="projectTitleDraft"
-              class="w-40 bg-transparent text-xs text-zinc-100 outline-none"
-              placeholder="Project title"
+              class="w-full border-b border-zinc-700 bg-transparent text-xs text-zinc-100 outline-none"
               spellcheck="false"
               title="Project title used for JSON and audio export filenames"
               type="text"
@@ -328,6 +339,8 @@ const { automationRecordingArmed, bpmMeasure, canRedo, canUndo, isValueTrackerRe
 const bpmDraft = ref(formatBpmValue(getBpmFromSampleRate(sampleRate.value, bpmMeasure.value)))
 const bpmMeasureDraft = ref(bpmMeasure.value)
 const projectTitleDraft = ref(projectTitle.value)
+const projectTitleInput = ref(null)
+const isEditingProjectTitle = ref(false)
 const projectFileInput = ref(null)
 const sampleRateDraft = ref(String(sampleRate.value))
 const aboutVisible = ref(false)
@@ -505,6 +518,10 @@ watch([sampleRate, bpmMeasure, midiClockLocked, () => midiClockState.effectiveSa
 })
 
 watch(projectTitle, () => {
+  if (isEditingProjectTitle.value) {
+    return
+  }
+
   projectTitleDraft.value = projectTitle.value
 })
 
@@ -584,10 +601,20 @@ function resetBpmMeasureDraft() {
 function commitProjectTitle() {
   dawStore.setProjectTitle(projectTitleDraft.value)
   projectTitleDraft.value = projectTitle.value
+  isEditingProjectTitle.value = false
 }
 
 function resetProjectTitleDraft() {
   projectTitleDraft.value = projectTitle.value
+  isEditingProjectTitle.value = false
+}
+
+async function beginProjectTitleEdit() {
+  projectTitleDraft.value = projectTitle.value
+  isEditingProjectTitle.value = true
+  await nextTick()
+  projectTitleInput.value?.focus()
+  projectTitleInput.value?.select()
 }
 
 function cycleTransportDisplayMode() {
