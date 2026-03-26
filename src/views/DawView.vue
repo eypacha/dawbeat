@@ -50,8 +50,6 @@
     </Panel>
   </section>
 
-  <StartScreen v-else-if="!audioReady" @start="handleStart" />
-
   <section
     v-else-if="isMobileLayout"
     class="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-zinc-100"
@@ -205,7 +203,6 @@
 import { computed, reactive, ref, onBeforeUnmount, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
-import StartScreen from '@/components/boot/StartScreen.vue'
 import FormulaLibrary from '@/components/library/FormulaLibrary.vue'
 import EffectsPanel from '@/components/effects/EffectsPanel.vue'
 import EvaluatedPanel from '@/components/evaluated/EvaluatedPanel.vue'
@@ -298,7 +295,7 @@ const valueTrackerDialogHistoryActive = ref(false)
 let disposeKeyboardShortcuts = null
 let disposeMidiClockTransport = null
 const transportPlayback = useTransportPlayback()
-const { enableAudio, stop } = transportPlayback
+const { stop } = transportPlayback
 const effectsCollapsed = ref(false)
 const libraryCollapsed = ref(false)
 const sharedProjectLoadState = ref('idle')
@@ -306,7 +303,6 @@ const sharedProjectLoadError = ref('')
 const lastLoadedSharedSnapshotId = ref('')
 const viewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWidth)
 const {
-  audioReady,
   automationLanes,
   editingClipId,
   editingGroup,
@@ -474,10 +470,6 @@ async function loadSharedProjectFromRoute(snapshotId) {
 
 function goToDawHome() {
   router.replace({ path: '/app' })
-}
-
-async function handleStart() {
-  await enableAudio()
 }
 
 function toggleEffectsCollapsed() {
