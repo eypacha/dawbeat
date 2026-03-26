@@ -152,6 +152,7 @@ function createEmptyProject() {
     showEvaluatedPanel: true,
     showClipWaveforms: true,
     timelineAutoscrollEnabled: true,
+    snapToGridEnabled: true,
     tickSize: BASE_TICK_SIZE,
     timelineSectionLabels: [],
     tracks: [createTrack()],
@@ -227,6 +228,7 @@ function createInitialState() {
     showEvaluatedPanel: project.showEvaluatedPanel,
     showClipWaveforms: project.showClipWaveforms,
     timelineAutoscrollEnabled: project.timelineAutoscrollEnabled,
+    snapToGridEnabled: project.snapToGridEnabled,
     tickSize: project.tickSize,
     timelineSectionLabels: project.timelineSectionLabels,
     tracks: project.tracks,
@@ -403,6 +405,7 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   store.showEvaluatedPanel = normalizedProject.showEvaluatedPanel
   store.showClipWaveforms = normalizedProject.showClipWaveforms
   store.timelineAutoscrollEnabled = normalizedProject.timelineAutoscrollEnabled
+  store.snapToGridEnabled = normalizedProject.snapToGridEnabled
   store.tickSize = normalizedProject.tickSize
   store.timelineSectionLabels = normalizedProject.timelineSectionLabels
   store.tracks = normalizedProject.tracks
@@ -1414,6 +1417,11 @@ export const useDawStore = defineStore('dawStore', {
     setTimelineAutoscrollEnabled(value) {
       this.timelineAutoscrollEnabled = Boolean(value)
       return this.timelineAutoscrollEnabled
+    },
+
+    setSnapToGridEnabled(value) {
+      this.snapToGridEnabled = Boolean(value)
+      return this.snapToGridEnabled
     },
 
     resetMasterGain() {

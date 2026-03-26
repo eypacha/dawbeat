@@ -122,7 +122,7 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTimelineLaneResize } from '@/composables/useTimelineLaneResize'
-import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
+import { getDraggedTick, resolvePointerEventSnap } from '@/services/snapService'
 import { getFormulaTrackDisplayName } from '@/services/timelineHeaderWidthService'
 import { isTrackAudible } from '@/services/trackPlaybackState'
 import { getTrackUnionOperatorOption, TRACK_UNION_OPERATOR_OPTIONS } from '@/services/trackUnionOperatorService'
@@ -495,7 +495,7 @@ function getPointerTick(event, offsetPx = 0) {
   const laneRect = laneElement.value.getBoundingClientRect()
   const relativeX = Math.max(0, event.clientX - laneRect.left - offsetPx)
   const rawTick = pixelsToTicks(relativeX, pixelsPerTick.value)
-  return getDraggedTick(rawTick, shouldSnapFromPointerEvent(event))
+  return getDraggedTick(rawTick, resolvePointerEventSnap(event, dawStore.snapToGridEnabled))
 }
 
 function cleanupCreation() {

@@ -50,7 +50,7 @@ import { DEFAULT_TRACK_COLOR, getTrackColor } from '@/utils/colorUtils'
 import { BASE_TICK_SIZE, MAX_ZOOM, MIN_ZOOM, TIMELINE_SNAP_SUBDIVISIONS, clamp } from '@/utils/timeUtils'
 
 const PROJECT_STORAGE_KEY = 'dawbeat-project'
-const PROJECT_VERSION = 20
+const PROJECT_VERSION = 21
 const SAVE_DEBOUNCE_MS = 400
 const DEFAULT_LOOP_START = 0
 const DEFAULT_LOOP_END = 16
@@ -77,7 +77,8 @@ export function serializeProject(state) {
     timelineSectionLabels: state.timelineSectionLabels,
     showClipWaveforms: state.showClipWaveforms,
     showEvaluatedPanel: state.showEvaluatedPanel,
-    timelineAutoscrollEnabled: state.timelineAutoscrollEnabled
+    timelineAutoscrollEnabled: state.timelineAutoscrollEnabled,
+    snapToGridEnabled: state.snapToGridEnabled
   })
 }
 
@@ -321,6 +322,9 @@ function normalizeProjectPayload(project) {
       : true,
     timelineAutoscrollEnabled: hasOwn(project, 'timelineAutoscrollEnabled')
       ? Boolean(project.timelineAutoscrollEnabled)
+      : true,
+    snapToGridEnabled: hasOwn(project, 'snapToGridEnabled')
+      ? Boolean(project.snapToGridEnabled)
       : true
   }
 }

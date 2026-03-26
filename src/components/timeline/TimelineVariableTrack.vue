@@ -64,7 +64,7 @@ import TimelineClipPreview from '@/components/timeline/TimelineClipPreview.vue'
 import TimelineVariableClip from '@/components/timeline/TimelineVariableClip.vue'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineLaneResize } from '@/composables/useTimelineLaneResize'
-import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
+import { getDraggedTick, resolvePointerEventSnap } from '@/services/snapService'
 import { buildCreatedClip, clampClipPlacementStart, getTrackCreateBounds } from '@/services/timelineService'
 import { useDawStore } from '@/stores/dawStore'
 import { getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
@@ -273,7 +273,7 @@ function getPointerTick(event) {
   const laneRect = laneElement.value.getBoundingClientRect()
   const relativeX = Math.max(0, event.clientX - laneRect.left)
   const rawTick = pixelsToTicks(relativeX, pixelsPerTick.value)
-  return getDraggedTick(rawTick, shouldSnapFromPointerEvent(event))
+  return getDraggedTick(rawTick, resolvePointerEventSnap(event, dawStore.snapToGridEnabled))
 }
 
 function cleanupCreation() {

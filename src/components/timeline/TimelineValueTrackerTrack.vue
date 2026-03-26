@@ -103,7 +103,7 @@ import TimelineValueTrackerClip from '@/components/timeline/TimelineValueTracker
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineLaneResize } from '@/composables/useTimelineLaneResize'
 import { getMidiInputDisplayName, midiState } from '@/services/midiInputService'
-import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
+import { getDraggedTick, resolvePointerEventSnap } from '@/services/snapService'
 import { buildCreatedClip, clampClipPlacementStart, getTrackCreateBounds } from '@/services/timelineService'
 import { createSparseRecordedValueTrackerValues, getValueTrackerBindingSummary } from '@/services/valueTrackerService'
 import { useDawStore } from '@/stores/dawStore'
@@ -410,7 +410,7 @@ function getPointerTick(event, offsetPx = 0) {
   const laneRect = laneElement.value.getBoundingClientRect()
   const relativeX = Math.max(0, event.clientX - laneRect.left - offsetPx)
   const rawTick = pixelsToTicks(relativeX, pixelsPerTick.value)
-  return getDraggedTick(rawTick, shouldSnapFromPointerEvent(event))
+  return getDraggedTick(rawTick, resolvePointerEventSnap(event, dawStore.snapToGridEnabled))
 }
 
 function cleanupCreation() {

@@ -90,7 +90,7 @@ import {
   getAutomationLaneConfig,
   interpolateAutomationSegmentValue
 } from '@/services/automationService'
-import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
+import { getDraggedTick, resolvePointerEventSnap } from '@/services/snapService'
 import { useDawStore } from '@/stores/dawStore'
 import { clamp, getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
 
@@ -375,7 +375,7 @@ function getPointFromEvent(event) {
   return {
     time: getDraggedTick(
       pixelsToTicks(relativeX, pixelsPerTick.value),
-      shouldSnapFromPointerEvent(event)
+      resolvePointerEventSnap(event, dawStore.snapToGridEnabled)
     ),
     value: clamp(minValue + (1 - relativeY / normalizedLaneHeight) * valueRange, minValue, maxValue)
   }

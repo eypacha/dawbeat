@@ -153,7 +153,7 @@ export function useTimelineClipInteraction({
     }
 
     const shouldClearDuplicateClickGuard = ignoreNextClick.value
-    const shouldSnap = event.shiftKey !== true
+    const shouldSnap = dawStore.snapToGridEnabled && event.shiftKey !== true
 
     if (isDragging.value) {
       if (dragSelectedClipIds.length > 1) {
@@ -255,7 +255,7 @@ export function useTimelineClipInteraction({
     const deltaX = getHorizontalPointerDelta(pointerState.clientX)
     const dragDistance = Math.hypot(deltaX, pointerState.clientY - dragStartY)
     const deltaTicks = deltaX / pixelsPerTick.value
-    const shouldSnap = pointerState.shiftKey !== true
+    const shouldSnap = dawStore.snapToGridEnabled && pointerState.shiftKey !== true
 
     if (isDragging.value) {
       if (deferSelectionOnPointerDown && dragDistance > DRAG_SELECTION_THRESHOLD_PX) {

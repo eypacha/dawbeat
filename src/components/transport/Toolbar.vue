@@ -309,7 +309,7 @@ import SettingsModal from '@/components/ui/SettingsModal.vue'
 
 const dawStore = useDawStore()
 const { play, pause, stop, toggleRecord } = useTransportPlayback()
-const { automationRecordingArmed, bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, sampleRate, tickSize, time, timelineAutoscrollEnabled } = storeToRefs(dawStore)
+const { automationRecordingArmed, bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, sampleRate, snapToGridEnabled, tickSize, time, timelineAutoscrollEnabled } = storeToRefs(dawStore)
 const bpmDraft = ref(formatBpmValue(getBpmFromSampleRate(sampleRate.value, bpmMeasure.value)))
 const bpmMeasureDraft = ref(bpmMeasure.value)
 const projectFileInput = ref(null)
@@ -444,6 +444,10 @@ const transportOptions = computed(() => ([
   {
     action: 'toggle-autoscroll',
     label: `Autoscroll: ${timelineAutoscrollEnabled.value ? 'On' : 'Off'}`
+  },
+  {
+    action: 'toggle-snap-to-grid',
+    label: `Snap to grid: ${snapToGridEnabled.value ? 'On' : 'Off'}`
   }
 ]))
 
@@ -541,11 +545,18 @@ function cycleTransportDisplayMode() {
 }
 
 function handleTransportOptionSelect(item) {
-  if (item?.action !== 'toggle-autoscroll') {
+  if (!item?.action) {
     return
   }
 
-  dawStore.setTimelineAutoscrollEnabled(!timelineAutoscrollEnabled.value)
+  if (item.action === 'toggle-autoscroll') {
+    dawStore.setTimelineAutoscrollEnabled(!timelineAutoscrollEnabled.value)
+    return
+  }
+
+  if (item.action === 'toggle-snap-to-grid') {
+    dawStore.setSnapToGridEnabled(!snapToGridEnabled.value)
+  }
 }
 
 function formatTransportClock(sampleTime, currentSampleRate) {

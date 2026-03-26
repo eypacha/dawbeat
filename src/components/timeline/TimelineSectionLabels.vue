@@ -37,7 +37,7 @@
 import { onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useContextMenu } from '@/composables/useContextMenu'
-import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
+import { getDraggedTick, resolvePointerEventSnap } from '@/services/snapService'
 import { useDawStore } from '@/stores/dawStore'
 import { pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
 
@@ -88,7 +88,10 @@ function handleStripContextMenu(event) {
       {
         action: 'create-timeline-section-label',
         label: 'Add Section Label',
-        time: getTimeFromClientX(event.clientX, shouldSnapFromPointerEvent(event))
+        time: getTimeFromClientX(
+          event.clientX,
+          resolvePointerEventSnap(event, dawStore.snapToGridEnabled)
+        )
       }
     ]
   })
@@ -148,7 +151,10 @@ function handleLabelPointerMove(event) {
 
   dawStore.moveTimelineSectionLabel(
     dragLabelId,
-    getTimeFromClientX(event.clientX, shouldSnapFromPointerEvent(event)),
+    getTimeFromClientX(
+      event.clientX,
+      resolvePointerEventSnap(event, dawStore.snapToGridEnabled)
+    ),
     false
   )
 }

@@ -165,7 +165,7 @@ import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineMarqueeSelection } from '@/composables/useTimelineMarqueeSelection'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { getTimelineTrackLabelWidth } from '@/services/timelineHeaderWidthService'
-import { getDraggedTick, shouldSnapFromPointerEvent } from '@/services/snapService'
+import { getDraggedTick, resolvePointerEventSnap, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { useDawStore } from '@/stores/dawStore'
 import {
   getVisibleTimelineTickStep,
@@ -333,7 +333,10 @@ function handleRulerContextMenu(event) {
       {
         action: 'create-timeline-section-label',
         label: 'Add Section Label',
-        time: getTimelineTickFromClientX(event.clientX, shouldSnapFromPointerEvent(event))
+        time: getTimelineTickFromClientX(
+          event.clientX,
+          resolvePointerEventSnap(event, dawStore.snapToGridEnabled)
+        )
       }
     ]
   })
