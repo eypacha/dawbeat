@@ -50,6 +50,7 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineClipInteraction } from '@/composables/useTimelineClipInteraction'
+import { createGroupContextMenuItems } from '@/services/groupContextMenuService'
 import {
   getValueTrackerEventCount,
   getValueTrackerResolvedValues,
@@ -309,34 +310,7 @@ function handleContextMenu(event) {
     openContextMenu({
       x: event.clientX,
       y: event.clientY,
-      items: [
-        {
-          action: 'edit-group',
-          groupId: clipGroup.id,
-          label: 'Edit'
-        },
-        {
-          action: 'rename-group',
-          groupId: clipGroup.id,
-          groupName: clipGroup.name,
-          label: 'Rename'
-        },
-        {
-          action: 'ungroup',
-          groupId: clipGroup.id,
-          label: 'Ungropu'
-        },
-        {
-          action: 'copy-group',
-          groupId: clipGroup.id,
-          label: 'Copy'
-        },
-        {
-          action: 'delete-group',
-          groupId: clipGroup.id,
-          label: 'Delete group'
-        }
-      ]
+      items: createGroupContextMenuItems(clipGroup)
     })
     return
   }

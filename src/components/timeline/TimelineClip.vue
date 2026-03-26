@@ -70,6 +70,7 @@ import {
   resolveClipFormulaExpressions,
   resolveClipFormulaName
 } from '@/services/formulaService'
+import { createGroupContextMenuItems } from '@/services/groupContextMenuService'
 import { useDawStore } from '@/stores/dawStore'
 import { ticksToPixels } from '@/utils/timeUtils'
 
@@ -247,34 +248,7 @@ function handleContextMenu(event) {
     openContextMenu({
       x: event.clientX,
       y: event.clientY,
-      items: [
-        {
-          action: 'edit-group',
-          groupId: clipGroup.id,
-          label: 'Edit'
-        },
-        {
-          action: 'rename-group',
-          groupId: clipGroup.id,
-          groupName: clipGroup.name,
-          label: 'Rename'
-        },
-        {
-          action: 'ungroup',
-          groupId: clipGroup.id,
-          label: 'Ungropu'
-        },
-        {
-          action: 'copy-group',
-          groupId: clipGroup.id,
-          label: 'Copy'
-        },
-        {
-          action: 'delete-group',
-          groupId: clipGroup.id,
-          label: 'Delete group'
-        }
-      ]
+      items: createGroupContextMenuItems(clipGroup)
     })
     return
   }

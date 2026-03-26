@@ -202,6 +202,7 @@ import TimelineValueTrackerTrack from '@/components/timeline/TimelineValueTracke
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineMarqueeSelection } from '@/composables/useTimelineMarqueeSelection'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
+import { createGroupContextMenuItems } from '@/services/groupContextMenuService'
 import { getTimelineTrackLabelWidth } from '@/services/timelineHeaderWidthService'
 import { getDraggedTick, resolvePointerEventSnap, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { useDawStore } from '@/stores/dawStore'
@@ -533,34 +534,7 @@ function handleGroupContextMenu(event, groupId) {
   openContextMenu({
     x: event.clientX,
     y: event.clientY,
-    items: [
-      {
-        action: 'edit-group',
-        groupId,
-        label: 'Edit'
-      },
-      {
-        action: 'rename-group',
-        groupId,
-        groupName: group.name,
-        label: 'Rename'
-      },
-      {
-        action: 'ungroup',
-        groupId,
-        label: 'Ungropu'
-      },
-      {
-        action: 'copy-group',
-        groupId,
-        label: 'Copy'
-      },
-      {
-        action: 'delete-group',
-        groupId,
-        label: 'Delete group'
-      }
-    ]
+    items: createGroupContextMenuItems(group)
   })
 }
 
