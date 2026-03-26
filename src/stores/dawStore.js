@@ -722,6 +722,18 @@ function hasPasteTargetForClipboard(clipboard, tracks, variableTracks, valueTrac
   })
 }
 
+function getClipboardSourceLaneIdSet(clipboard, laneType) {
+  if (!clipboard?.clips?.length) {
+    return new Set()
+  }
+
+  return new Set(
+    clipboard.clips
+      .filter((clipboardClip) => clipboardClip?.sourceLaneType === laneType && clipboardClip?.sourceLaneId)
+      .map((clipboardClip) => clipboardClip.sourceLaneId)
+  )
+}
+
 export const useDawStore = defineStore('dawStore', {
   state: createInitialState,
 
@@ -2067,13 +2079,30 @@ export const useDawStore = defineStore('dawStore', {
 
         this.editingClipId = null
 
+        const sourceTrackLaneIds = getClipboardSourceLaneIdSet(clipboard, 'track')
+        const sourceVariableLaneIds = getClipboardSourceLaneIdSet(clipboard, 'variable')
+        const sourceValueTrackerLaneIds = getClipboardSourceLaneIdSet(clipboard, 'valueTracker')
+
+        const overrideEnabledByType = {
+          track: sourceTrackLaneIds.size <= 1,
+          variable: sourceVariableLaneIds.size <= 1,
+          valueTracker: sourceValueTrackerLaneIds.size <= 1
+        }
+
         const overrideTarget = {
           laneId: target?.laneId ?? null,
           laneType: target?.laneType ?? null
         }
 
         for (const clipboardClip of clipboard.clips) {
-          const targetEntry = resolvePasteTargetLane(this, clipboardClip, overrideTarget)
+          const clipLaneType = clipboardClip?.sourceLaneType === 'variable'
+            ? 'variable'
+            : clipboardClip?.sourceLaneType === 'valueTracker'
+              ? 'valueTracker'
+              : 'track'
+
+          const scopedOverrideTarget = overrideEnabledByType[clipLaneType] ? overrideTarget : null
+          const targetEntry = resolvePasteTargetLane(this, clipboardClip, scopedOverrideTarget)
 
           if (!targetEntry.lane) {
             continue
