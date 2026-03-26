@@ -197,9 +197,30 @@ export function downloadProjectFile(state, filename = createProjectFilename(stat
 
 export function setupProjectPersistence(store) {
   let saveTimeoutId = 0
+  let lastSharedState = Boolean(store.shared)
+  let sharedSnapshotKey = lastSharedState ? getProjectSnapshotKey(store.$state) : null
 
   store.$subscribe(
     (_mutation, state) => {
+      const projectSnapshotKey = getProjectSnapshotKey(state)
+      let nextSharedState = Boolean(state.shared)
+
+      if (nextSharedState) {
+        if (!lastSharedState) {
+          sharedSnapshotKey = projectSnapshotKey
+        } else if (sharedSnapshotKey !== null && projectSnapshotKey !== sharedSnapshotKey) {
+          nextSharedState = false
+        }
+      } else if (sharedSnapshotKey !== null && projectSnapshotKey === sharedSnapshotKey) {
+        nextSharedState = true
+      }
+
+      if (nextSharedState !== Boolean(state.shared)) {
+        store.shared = nextSharedState
+        return
+      }
+
+      lastSharedState = nextSharedState
       window.clearTimeout(saveTimeoutId)
       saveTimeoutId = window.setTimeout(() => {
         saveProject(state)
@@ -207,6 +228,11 @@ export function setupProjectPersistence(store) {
     },
     { detached: true }
   )
+}
+
+function getProjectSnapshotKey(state) {
+  const snapshot = serializeProject(state)
+  return snapshot ? JSON.stringify(snapshot) : ''
 }
 
 function ensureNamedValueTrackerTracks(

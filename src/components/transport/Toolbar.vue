@@ -676,7 +676,6 @@ async function handleShareProjectInfo() {
     const { shareUrl: url, snapshotId, reused } = await dawStore.shareProject()
     console.log('[SHARE] shareProject() result:', { url, snapshotId, reused })
     shareUrl.value = url
-    dawStore.shared = true
     if (reused) {
       console.log('[SHARE] Project already existed, reused snapshotId:', snapshotId)
     } else {
