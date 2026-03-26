@@ -42,10 +42,10 @@
           />
 
           <IconButton
-            :icon="Info"
-            label="Info"
+            :icon="Share"
+            label="Share"
             size="sm"
-            title="Edit project info (name, description)"
+            title="Compartir proyecto (nombre, descripción)"
             @click="projectInfoDialogVisible = true"
           />
 
@@ -74,18 +74,6 @@
             >
           </div>
 
-          <button
-            class="border border-zinc-800 bg-zinc-950 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-700 hover:text-zinc-100 disabled:cursor-default disabled:opacity-40"
-            :disabled="sharingProject"
-            :title="sharingProject ? 'Creating share link...' : 'Create an immutable shared snapshot link'"
-            type="button"
-            @click="handleShareProject"
-          >
-            <span v-if="!sharingProject">Share</span>
-            <span v-else class="flex items-center justify-center">
-              <LoaderCircle class="h-3.5 w-3.5 animate-spin" :stroke-width="2.25" />
-            </span>
-          </button>
 
           <span
             v-if="isSharedProject"
@@ -347,7 +335,7 @@
 const shareUrl = ref('')
 import { computed, nextTick, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Circle, Download, EllipsisVertical, FilePlus, FolderOpen, Info, LoaderCircle, Pause, Play, Redo2, Repeat, Settings2, Shuffle, Square, Undo2 } from 'lucide-vue-next'
+import { Circle, Download, EllipsisVertical, FilePlus, FolderOpen, Info, LoaderCircle, Pause, Play, Redo2, Repeat, Settings2, Shuffle, Square, Undo2, Share } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { automationCompanionHostState } from '@/services/automationCompanionService'
 import { getRandomDemoProjectEntry } from '@/services/demoProjectService'

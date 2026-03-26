@@ -73,29 +73,34 @@
         />
       </div>
 
-      <div class="flex justify-end gap-2 pt-4">
-        <button
-          v-if="!shared"
-          class="border border-blue-700 bg-blue-900 px-3 py-2 text-xs uppercase tracking-[0.18em] text-blue-100 transition hover:border-blue-500 hover:bg-blue-700"
-          type="button"
-          @click="handleShare"
-        >
-          Share
-        </button>
-        <button
-          class="border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-600 hover:text-zinc-100"
-          type="button"
-          @click="handleClose"
-        >
-          Cancel
-        </button>
-        <button
-          class="border border-zinc-600 bg-zinc-800 px-3 py-2 text-xs uppercase tracking-[0.18em] text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-700"
-          type="button"
-          @click="handleSave"
-        >
-          Save
-        </button>
+      <div class="flex flex-col items-end gap-2 pt-4">
+        <div class="flex justify-end gap-2 w-full">
+          <button
+            v-if="!shared"
+            class="border border-blue-700 bg-blue-900 px-3 py-2 text-xs uppercase tracking-[0.18em] text-blue-100 transition hover:border-blue-500 hover:bg-blue-700"
+            type="button"
+            @click="handleShare"
+          >
+            Share
+          </button>
+          <button
+            class="border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-600 hover:text-zinc-100"
+            type="button"
+            @click="handleClose"
+          >
+            Cancel
+          </button>
+          <button
+            class="border border-zinc-600 bg-zinc-800 px-3 py-2 text-xs uppercase tracking-[0.18em] text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-700"
+            type="button"
+            @click="handleSave"
+          >
+            Save
+          </button>
+        </div>
+        <span class="mt-1 w-full block text-[11px] text-zinc-500 leading-tight text-right">
+          Sharing creates a public snapshot of this project.<br/>The link will remain accessible.
+        </span>
       </div>
     </div>
   </Modal>
