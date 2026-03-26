@@ -66,11 +66,24 @@
         <label class="block text-xs uppercase tracking-[0.1em] text-zinc-400 mb-2 mt-4">
           Share Link
         </label>
-        <input
-          class="w-full border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none select-all"
-          :value="shareUrl"
-          readonly
-        />
+        <div class="flex items-stretch gap-2">
+          <input
+            ref="shareUrlInput"
+            class="min-w-0 flex-1 border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none"
+            :value="shareUrl"
+            readonly
+            @click="selectShareUrl"
+            @focus="selectShareUrl"
+          />
+          <IconButton
+            :icon="shareUrlCopied ? Check : Copy"
+            :disabled="!shareUrl"
+            :label="shareUrlCopied ? 'Share link copied' : 'Copy share link'"
+            size="md"
+            title="Copy share link"
+            @click="handleCopyShareUrl"
+          />
+        </div>
       </div>
 
       <div class="flex flex-col items-end gap-2 pt-4">
@@ -107,7 +120,10 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { onBeforeUnmount, ref, watch } from 'vue'
+import { Check, Copy } from 'lucide-vue-next'
+import { copyTextToClipboard } from '@/services/clipboard'
+import IconButton from '@/components/ui/IconButton.vue'
 import Modal from '@/components/ui/Modal.vue'
 
 const props = defineProps({
@@ -130,6 +146,24 @@ const nameDraft = ref(props.name || '')
 const descriptionDraft = ref(props.description || '')
 const authorDraft = ref(props.author || '')
 const licenseDraft = ref(props.license && props.license !== '' ? props.license : 'CC0')
+const shareUrlInput = ref(null)
+const shareUrlCopied = ref(false)
+
+let shareUrlCopiedTimeoutId = null
+
+function clearShareUrlCopiedTimeout() {
+  if (shareUrlCopiedTimeoutId === null) {
+    return
+  }
+
+  window.clearTimeout(shareUrlCopiedTimeoutId)
+  shareUrlCopiedTimeoutId = null
+}
+
+function resetShareUrlCopiedState() {
+  clearShareUrlCopiedTimeout()
+  shareUrlCopied.value = false
+}
 
 watch(() => props.open, (newOpen) => {
   if (newOpen) {
@@ -138,7 +172,37 @@ watch(() => props.open, (newOpen) => {
     authorDraft.value = props.author || ''
     licenseDraft.value = props.license && props.license !== '' ? props.license : 'CC0'
   }
+
+  resetShareUrlCopiedState()
 })
+
+watch(() => props.shareUrl, () => {
+  resetShareUrlCopiedState()
+})
+
+function selectShareUrl(event) {
+  const input = event?.target instanceof HTMLInputElement ? event.target : shareUrlInput.value
+  input?.select()
+}
+
+async function handleCopyShareUrl() {
+  if (!props.shareUrl) {
+    return
+  }
+
+  try {
+    await copyTextToClipboard(props.shareUrl)
+    selectShareUrl()
+    shareUrlCopied.value = true
+    clearShareUrlCopiedTimeout()
+    shareUrlCopiedTimeoutId = window.setTimeout(() => {
+      shareUrlCopied.value = false
+      shareUrlCopiedTimeoutId = null
+    }, 2000)
+  } catch {
+    resetShareUrlCopiedState()
+  }
+}
 
 function handleSave() {
   emit('save', {
@@ -152,4 +216,8 @@ function handleSave() {
 function handleClose() {
   emit('update:open', false)
 }
+
+onBeforeUnmount(() => {
+  clearShareUrlCopiedTimeout()
+})
 </script>
