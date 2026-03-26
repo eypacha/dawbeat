@@ -148,6 +148,8 @@ function createDefaultProject() {
 function createEmptyProject() {
   return {
     projectTitle: DEFAULT_PROJECT_TITLE,
+    projectDescription: '',
+    projectAuthor: '',
     projectMeta: null,
     audioEffects: [],
     automationLanes: getDefaultAutomationLanes(),
@@ -229,6 +231,8 @@ function createInitialState() {
     sharedProjectMeta: project.projectMeta,
     evalEffects: project.evalEffects,
     projectTitle: project.projectTitle,
+    projectDescription: project.projectDescription,
+    projectAuthor: project.projectAuthor,
     editingClipId: null,
     editingGroupId: null,
     loopEnabled: project.loopEnabled,
@@ -433,6 +437,8 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   store.bpmMeasure = normalizedProject.bpmMeasure
   store.evalEffects = normalizedProject.evalEffects
   store.projectTitle = normalizedProject.projectTitle
+  store.projectDescription = normalizedProject.projectDescription
+  store.projectAuthor = normalizedProject.projectAuthor
   store.sharedProjectMeta = normalizedProject.projectMeta
   store.loopEnabled = normalizedProject.loopEnabled
   store.loopStart = normalizedProject.loopStart
@@ -1820,6 +1826,16 @@ export const useDawStore = defineStore('dawStore', {
       return this.recordHistoryStep('set-project-title', () => {
         this.projectTitle = normalizeProjectTitle(value, this.projectTitle)
       })
+    },
+
+    setProjectDescription(value) {
+      const normalized = typeof value === 'string' ? value.trim() : ''
+      this.projectDescription = normalized
+    },
+
+    setProjectAuthor(value) {
+      const normalized = typeof value === 'string' ? value.trim() : ''
+      this.projectAuthor = normalized
     },
 
     setShowClipWaveforms(value) {

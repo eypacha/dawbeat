@@ -41,25 +41,20 @@
             @click="handleProjectDownload"
           />
 
-          <button
-            class="border border-zinc-800 bg-zinc-950 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-700 hover:text-zinc-100 disabled:cursor-default disabled:opacity-40"
-            :disabled="sharingProject"
-            :title="sharingProject ? 'Creating share link...' : 'Create an immutable shared snapshot link'"
-            type="button"
-            @click="handleShareProject"
-          >
-            <span v-if="!sharingProject">Share</span>
-            <span v-else class="flex items-center justify-center">
-              <LoaderCircle class="h-3.5 w-3.5 animate-spin" :stroke-width="2.25" />
-            </span>
-          </button>
+          <IconButton
+            :icon="Info"
+            label="Info"
+            size="sm"
+            title="Edit project info (name, description)"
+            @click="projectInfoDialogVisible = true"
+          />
 
           <div class="flex w-44 items-center px-1 py-1">
             <button
               v-if="!isEditingProjectTitle"
               class="w-full truncate text-left text-xs text-zinc-300 transition hover:text-zinc-100"
               type="button"
-              title="Click to edit project title"
+              title="Project title used for JSON and audio export filenames"
               @click="beginProjectTitleEdit"
             >
               {{ projectTitle }}
@@ -78,6 +73,19 @@
               @keydown.esc.prevent="resetProjectTitleDraft"
             >
           </div>
+
+          <button
+            class="border border-zinc-800 bg-zinc-950 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-700 hover:text-zinc-100 disabled:cursor-default disabled:opacity-40"
+            :disabled="sharingProject"
+            :title="sharingProject ? 'Creating share link...' : 'Create an immutable shared snapshot link'"
+            type="button"
+            @click="handleShareProject"
+          >
+            <span v-if="!sharingProject">Share</span>
+            <span v-else class="flex items-center justify-center">
+              <LoaderCircle class="h-3.5 w-3.5 animate-spin" :stroke-width="2.25" />
+            </span>
+          </button>
 
           <span
             v-if="isSharedProject"
@@ -319,6 +327,15 @@
       @close="exportModalVisible = false"
       @export="handleExport"
     />
+
+    <ProjectInfoDialog
+      :description="projectDescription"
+      :name="projectTitle"
+      :author="projectAuthor"
+      :open="projectInfoDialogVisible"
+      @update:open="projectInfoDialogVisible = $event"
+      @save="handleSaveProjectInfo"
+    />
   </Panel>
 </template>
 
@@ -353,13 +370,15 @@ import Dropdown from '@/components/ui/Dropdown.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import Panel from '@/components/ui/Panel.vue'
 import SettingsModal from '@/components/ui/SettingsModal.vue'
+import ProjectInfoDialog from '@/components/ui/ProjectInfoDialog.vue'
 
 const dawStore = useDawStore()
 const { play, pause, stop, toggleRecord } = useTransportPlayback()
-const { automationRecordingArmed, bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, projectTitle, sampleRate, sharedProjectMeta, snapSubdivision, snapToGridEnabled, tickSize, time, timelineAutoscrollEnabled } = storeToRefs(dawStore)
+const { automationRecordingArmed, bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, projectTitle, projectDescription, projectAuthor, sampleRate, sharedProjectMeta, snapSubdivision, snapToGridEnabled, tickSize, time, timelineAutoscrollEnabled } = storeToRefs(dawStore)
 const bpmDraft = ref(formatBpmValue(getBpmFromSampleRate(sampleRate.value, bpmMeasure.value)))
 const bpmMeasureDraft = ref(bpmMeasure.value)
 const projectTitleDraft = ref(projectTitle.value)
+const projectDescriptionDraft = ref(projectDescription.value)
 const projectTitleInput = ref(null)
 const isEditingProjectTitle = ref(false)
 const projectFileInput = ref(null)
@@ -373,6 +392,7 @@ const shuffleDemoConfirmVisible = ref(false)
 const sharingProject = ref(false)
 const lastShuffledDemoProjectId = ref(null)
 const transportDisplayMode = ref('sample')
+const projectInfoDialogVisible = ref(false)
 const toolbarLayoutClassName = 'grid grid-cols-[max-content_minmax(0,1fr)_max-content_minmax(0,1fr)_max-content] items-center gap-4 px-4 py-1'
 const leftGroupClassName = 'col-[1] flex min-w-0 items-center gap-4'
 const transportControlsGroupClassName = 'col-[3] flex shrink-0 items-center justify-center gap-2 text-xs text-zinc-400'
@@ -638,6 +658,20 @@ async function beginProjectTitleEdit() {
   await nextTick()
   projectTitleInput.value?.focus()
   projectTitleInput.value?.select()
+}
+
+function commitProjectDescription() {
+  dawStore.setProjectDescription(projectDescriptionDraft.value)
+}
+
+function resetProjectDescriptionDraft() {
+  projectDescriptionDraft.value = projectDescription.value
+}
+
+function handleSaveProjectInfo(data) {
+  dawStore.setProjectTitle(data.name)
+  dawStore.setProjectDescription(data.description)
+  projectInfoDialogVisible.value = false
 }
 
 function cycleTransportDisplayMode() {
