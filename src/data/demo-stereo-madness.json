@@ -1,5 +1,5 @@
 {
-  "version": 18,
+  "version": 25,
   "projectTitle": "Stereo Madness",
   "tracks": [
     {
@@ -368,5 +368,6 @@
     }
   ],
   "showClipWaveforms": true,
-  "showEvaluatedPanel": true
+  "showEvaluatedPanel": true,
+  "projectAuthor": "Ey Pacha!"
 }

@@ -1,5 +1,5 @@
 {
-  "version": 19,
+  "version": 25,
   "projectTitle": "Boss Level",
   "tracks": [
     {
@@ -603,5 +603,6 @@
   "tickSize": 1024,
   "timelineSectionLabels": [],
   "showClipWaveforms": true,
-  "showEvaluatedPanel": true
+  "showEvaluatedPanel": true,
+  "projectAuthor": "Ey Pacha!"
 }

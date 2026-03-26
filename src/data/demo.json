@@ -1,6 +1,7 @@
 {
-  "version": 18,
+  "version": 25,
   "projectTitle": "Demo #1",
+  "projectAuthor": "Ey Pacha!",
   "tracks": [
     {
       "id": "c7f7a6b1-a6c7-4dac-bd13-c34a8051f9e6",

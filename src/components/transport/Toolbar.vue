@@ -671,6 +671,7 @@ function resetProjectDescriptionDraft() {
 function handleSaveProjectInfo(data) {
   dawStore.setProjectTitle(data.name)
   dawStore.setProjectDescription(data.description)
+  dawStore.setProjectAuthor(data.author)
   projectInfoDialogVisible.value = false
 }
 
