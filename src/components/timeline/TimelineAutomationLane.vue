@@ -375,7 +375,8 @@ function getPointFromEvent(event) {
   return {
     time: getDraggedTick(
       pixelsToTicks(relativeX, pixelsPerTick.value),
-      resolvePointerEventSnap(event, dawStore.snapToGridEnabled)
+      resolvePointerEventSnap(event, dawStore.snapToGridEnabled),
+      dawStore.snapSubdivision
     ),
     value: clamp(minValue + (1 - relativeY / normalizedLaneHeight) * valueRange, minValue, maxValue)
   }

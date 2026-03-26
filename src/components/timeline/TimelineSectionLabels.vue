@@ -192,7 +192,11 @@ function getTimeFromClientX(clientX, shouldSnap = true) {
   }
 
   const relativeX = Math.min(Math.max(clientX - stripRect.left, 0), stripRect.width)
-  return getDraggedTick(pixelsToTicks(relativeX, pixelsPerTick.value), shouldSnap)
+  return getDraggedTick(
+    pixelsToTicks(relativeX, pixelsPerTick.value),
+    shouldSnap,
+    dawStore.snapSubdivision
+  )
 }
 
 function cleanupLabelDrag() {

@@ -47,15 +47,22 @@ import {
 import { DEFAULT_FORMULA_DROP_DURATION } from '@/services/timelineService'
 import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
 import { DEFAULT_TRACK_COLOR, getTrackColor } from '@/utils/colorUtils'
-import { BASE_TICK_SIZE, MAX_ZOOM, MIN_ZOOM, TIMELINE_SNAP_SUBDIVISIONS, clamp } from '@/utils/timeUtils'
+import {
+  BASE_TICK_SIZE,
+  MAX_ZOOM,
+  MIN_ZOOM,
+  TIMELINE_SNAP_SUBDIVISIONS,
+  clamp,
+  normalizeSnapSubdivisions
+} from '@/utils/timeUtils'
 
 const PROJECT_STORAGE_KEY = 'dawbeat-project'
-const PROJECT_VERSION = 21
+const PROJECT_VERSION = 22
 const SAVE_DEBOUNCE_MS = 400
 const DEFAULT_LOOP_START = 0
 const DEFAULT_LOOP_END = 16
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
-const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, PROJECT_VERSION])
+const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, PROJECT_VERSION])
 
 export function serializeProject(state) {
   return normalizeProjectPayload({
@@ -78,7 +85,8 @@ export function serializeProject(state) {
     showClipWaveforms: state.showClipWaveforms,
     showEvaluatedPanel: state.showEvaluatedPanel,
     timelineAutoscrollEnabled: state.timelineAutoscrollEnabled,
-    snapToGridEnabled: state.snapToGridEnabled
+    snapToGridEnabled: state.snapToGridEnabled,
+    snapSubdivision: state.snapSubdivision
   })
 }
 
@@ -325,7 +333,10 @@ function normalizeProjectPayload(project) {
       : true,
     snapToGridEnabled: hasOwn(project, 'snapToGridEnabled')
       ? Boolean(project.snapToGridEnabled)
-      : true
+      : true,
+    snapSubdivision: hasOwn(project, 'snapSubdivision')
+      ? normalizeSnapSubdivisions(project.snapSubdivision)
+      : TIMELINE_SNAP_SUBDIVISIONS
   }
 }
 

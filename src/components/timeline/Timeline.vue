@@ -387,7 +387,8 @@ function getTimelinePixelsFromClientX(clientX) {
 function getTimelineTickFromClientX(clientX, shouldSnap = true) {
   return getDraggedTick(
     pixelsToTicks(getTimelinePixelsFromClientX(clientX), pixelsPerTick.value),
-    shouldSnap
+    shouldSnap,
+    dawStore.snapSubdivision
   )
 }
 

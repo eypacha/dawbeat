@@ -8,6 +8,6 @@ export function resolvePointerEventSnap(event, snapEnabled = true) {
   return Boolean(snapEnabled) && shouldSnapFromPointerEvent(event)
 }
 
-export function getDraggedTick(nextTick, shouldSnap = true) {
-  return maybeSnapTicks(Math.max(0, nextTick), shouldSnap)
+export function getDraggedTick(nextTick, shouldSnap = true, subdivisions) {
+  return maybeSnapTicks(Math.max(0, nextTick), shouldSnap, subdivisions)
 }

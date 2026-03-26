@@ -273,7 +273,11 @@ function getPointerTick(event) {
   const laneRect = laneElement.value.getBoundingClientRect()
   const relativeX = Math.max(0, event.clientX - laneRect.left)
   const rawTick = pixelsToTicks(relativeX, pixelsPerTick.value)
-  return getDraggedTick(rawTick, resolvePointerEventSnap(event, dawStore.snapToGridEnabled))
+  return getDraggedTick(
+    rawTick,
+    resolvePointerEventSnap(event, dawStore.snapToGridEnabled),
+    dawStore.snapSubdivision
+  )
 }
 
 function cleanupCreation() {

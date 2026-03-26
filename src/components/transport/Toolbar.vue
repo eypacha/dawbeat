@@ -298,6 +298,7 @@ import ExportModal from '@/components/ui/ExportModal.vue'
 import { downloadProjectFile, importProjectFile } from '@/services/projectPersistence'
 import { enqueueSnackbar } from '@/services/notifications'
 import { MAX_SAMPLE_RATE, MIN_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
+import { SNAP_SUBDIVISION_OPTIONS } from '@/utils/timeUtils'
 import { ticksToSamples } from '@/utils/timeUtils'
 import AboutModal from '@/components/ui/AboutModal.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
@@ -309,7 +310,7 @@ import SettingsModal from '@/components/ui/SettingsModal.vue'
 
 const dawStore = useDawStore()
 const { play, pause, stop, toggleRecord } = useTransportPlayback()
-const { automationRecordingArmed, bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, sampleRate, snapToGridEnabled, tickSize, time, timelineAutoscrollEnabled } = storeToRefs(dawStore)
+const { automationRecordingArmed, bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, sampleRate, snapSubdivision, snapToGridEnabled, tickSize, time, timelineAutoscrollEnabled } = storeToRefs(dawStore)
 const bpmDraft = ref(formatBpmValue(getBpmFromSampleRate(sampleRate.value, bpmMeasure.value)))
 const bpmMeasureDraft = ref(bpmMeasure.value)
 const projectFileInput = ref(null)
@@ -443,11 +444,23 @@ const recordButtonTitle = computed(() => {
 const transportOptions = computed(() => ([
   {
     action: 'toggle-autoscroll',
-    label: `Autoscroll: ${timelineAutoscrollEnabled.value ? 'On' : 'Off'}`
+    checked: timelineAutoscrollEnabled.value,
+    label: 'Autoscroll'
   },
   {
     action: 'toggle-snap-to-grid',
-    label: `Snap to grid: ${snapToGridEnabled.value ? 'On' : 'Off'}`
+    checked: snapToGridEnabled.value,
+    label: 'Snap to grid'
+  },
+  {
+    action: 'snap-subdivision-submenu',
+    label: 'Snap amount',
+    children: SNAP_SUBDIVISION_OPTIONS.map((subdivision) => ({
+      action: 'set-snap-subdivision',
+      checked: snapSubdivision.value === subdivision,
+      label: formatSnapSubdivisionLabel(subdivision),
+      subdivision
+    }))
   }
 ]))
 
@@ -556,7 +569,20 @@ function handleTransportOptionSelect(item) {
 
   if (item.action === 'toggle-snap-to-grid') {
     dawStore.setSnapToGridEnabled(!snapToGridEnabled.value)
+    return
   }
+
+  if (item.action === 'set-snap-subdivision') {
+    dawStore.setSnapSubdivision(item.subdivision)
+  }
+}
+
+function formatSnapSubdivisionLabel(subdivision) {
+  if (subdivision === 1) {
+    return '1'
+  }
+
+  return `1/${subdivision}`
 }
 
 function formatTransportClock(sampleTime, currentSampleRate) {

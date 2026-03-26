@@ -36,7 +36,6 @@ import {
   createAudioEffect,
   createDistortionAudioEffect,
   createDelayAudioEffect,
-  createCompressorAudioEffect,
   createEqAudioEffect,
   createLimiterAudioEffect,
   createReverbAudioEffect,
@@ -104,6 +103,7 @@ import {
   TIMELINE_SNAP_SUBDIVISIONS,
   clamp,
   getClipEnd,
+  normalizeSnapSubdivisions,
   snapTicks
 } from '@/utils/timeUtils'
 import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
@@ -153,6 +153,7 @@ function createEmptyProject() {
     showClipWaveforms: true,
     timelineAutoscrollEnabled: true,
     snapToGridEnabled: true,
+    snapSubdivision: TIMELINE_SNAP_SUBDIVISIONS,
     tickSize: BASE_TICK_SIZE,
     timelineSectionLabels: [],
     tracks: [createTrack()],
@@ -229,6 +230,7 @@ function createInitialState() {
     showClipWaveforms: project.showClipWaveforms,
     timelineAutoscrollEnabled: project.timelineAutoscrollEnabled,
     snapToGridEnabled: project.snapToGridEnabled,
+    snapSubdivision: project.snapSubdivision,
     tickSize: project.tickSize,
     timelineSectionLabels: project.timelineSectionLabels,
     tracks: project.tracks,
@@ -406,6 +408,7 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   store.showClipWaveforms = normalizedProject.showClipWaveforms
   store.timelineAutoscrollEnabled = normalizedProject.timelineAutoscrollEnabled
   store.snapToGridEnabled = normalizedProject.snapToGridEnabled
+  store.snapSubdivision = normalizedProject.snapSubdivision
   store.tickSize = normalizedProject.tickSize
   store.timelineSectionLabels = normalizedProject.timelineSectionLabels
   store.tracks = normalizedProject.tracks
@@ -1058,7 +1061,7 @@ export const useDawStore = defineStore('dawStore', {
         }
 
         const normalizedTime = shouldSnap
-          ? snapTicks(nextTime)
+          ? snapTicks(nextTime, this.snapSubdivision)
           : normalizeTimelineSectionLabelTime(nextTime, timelineSectionLabel.time)
 
         timelineSectionLabel.time = normalizeTimelineSectionLabelTime(
@@ -1283,7 +1286,7 @@ export const useDawStore = defineStore('dawStore', {
           return false
         }
 
-        const nextTime = Math.max(0, snapTicks(point.time) + normalizedDeltaTicks)
+        const nextTime = Math.max(0, snapTicks(point.time, this.snapSubdivision) + normalizedDeltaTicks)
 
         if (nextTime === point.time) {
           return false
@@ -1422,6 +1425,11 @@ export const useDawStore = defineStore('dawStore', {
     setSnapToGridEnabled(value) {
       this.snapToGridEnabled = Boolean(value)
       return this.snapToGridEnabled
+    },
+
+    setSnapSubdivision(value) {
+      this.snapSubdivision = normalizeSnapSubdivisions(value, this.snapSubdivision)
+      return this.snapSubdivision
     },
 
     resetMasterGain() {
@@ -1666,18 +1674,18 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     setLoopStart(tick) {
-      const snappedTick = snapTicks(Math.max(0, tick))
+      const snappedTick = snapTicks(Math.max(0, tick), this.snapSubdivision)
       this.loopStart = Math.min(snappedTick, this.loopEnd - MIN_LOOP_DURATION)
     },
 
     setLoopEnd(tick) {
-      const snappedTick = snapTicks(Math.max(0, tick))
+      const snappedTick = snapTicks(Math.max(0, tick), this.snapSubdivision)
       this.loopEnd = Math.max(snappedTick, this.loopStart + MIN_LOOP_DURATION)
     },
 
     setLoopRange(startTick, endTick) {
-      const snappedStart = snapTicks(Math.max(0, startTick))
-      const snappedEnd = snapTicks(Math.max(0, endTick))
+      const snappedStart = snapTicks(Math.max(0, startTick), this.snapSubdivision)
+      const snappedEnd = snapTicks(Math.max(0, endTick), this.snapSubdivision)
 
       this.loopStart = snappedStart
       this.loopEnd = Math.max(snappedEnd, snappedStart + MIN_LOOP_DURATION)
@@ -2846,7 +2854,7 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       clip.start = clampClipStart(track, clipId, snappedStart)
     },
 
@@ -2863,7 +2871,7 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       clip.start = clampClipStart(variableTrack, clipId, snappedStart)
     },
 
@@ -2880,7 +2888,7 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       clip.start = clampClipStart(valueTrackerTrack, clipId, snappedStart)
     },
 
@@ -2902,7 +2910,7 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       const desiredDelta = snappedStart - anchorEntry.clip.start
       const clipIdsByLaneKey = new Map()
 
@@ -2983,7 +2991,7 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       clip.start = clampClipPlacementStart(track, snappedStart, clip.duration, clipId)
       sortTrackClips(track)
     },
@@ -3001,7 +3009,7 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       clip.start = clampClipPlacementStart(variableTrack, snappedStart, clip.duration, clipId)
       sortVariableTrackClips(variableTrack)
     },
@@ -3019,7 +3027,7 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       clip.start = clampClipPlacementStart(valueTrackerTrack, snappedStart, clip.duration, clipId)
       sortValueTrackerTrackClips(valueTrackerTrack)
     },
@@ -3045,7 +3053,7 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       const [clip] = sourceTrack.clips.splice(clipIndex, 1)
-      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       const clampedStart = clampClipPlacementStart(targetTrack, snappedStart, clip.duration)
 
       clip.start = clampedStart
@@ -3074,7 +3082,7 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       const [clip] = sourceValueTrackerTrack.clips.splice(clipIndex, 1)
-      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       const clampedStart = clampClipPlacementStart(targetValueTrackerTrack, snappedStart, clip.duration)
 
       clip.start = clampedStart
@@ -3096,7 +3104,7 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       const clipEnd = getClipEnd(clip)
-      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       const clampedStart = clampClipResizeStart(track, clipId, snappedStart)
 
       clip.start = clampedStart
@@ -3117,7 +3125,7 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       const clipEnd = getClipEnd(clip)
-      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       const clampedStart = clampClipResizeStart(variableTrack, clipId, snappedStart)
 
       clip.start = clampedStart
@@ -3140,7 +3148,7 @@ export const useDawStore = defineStore('dawStore', {
       const previousStart = clip.start
       const previousDuration = clip.duration
       const clipEnd = getClipEnd(clip)
-      const snappedStart = getDraggedTick(nextStart, shouldSnap)
+      const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       const clampedStart = clampClipResizeStart(valueTrackerTrack, clipId, snappedStart)
 
       clip.start = clampedStart
@@ -3167,7 +3175,7 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      const snappedEnd = getDraggedTick(nextEnd, shouldSnap)
+      const snappedEnd = getDraggedTick(nextEnd, shouldSnap, this.snapSubdivision)
       const clampedEnd = clampClipResizeEnd(track, clipId, snappedEnd)
 
       clip.duration = clampedEnd - clip.start
@@ -3186,7 +3194,7 @@ export const useDawStore = defineStore('dawStore', {
         return
       }
 
-      const snappedEnd = getDraggedTick(nextEnd, shouldSnap)
+      const snappedEnd = getDraggedTick(nextEnd, shouldSnap, this.snapSubdivision)
       const clampedEnd = clampClipResizeEnd(variableTrack, clipId, snappedEnd)
 
       clip.duration = clampedEnd - clip.start
@@ -3206,7 +3214,7 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       const previousDuration = clip.duration
-      const snappedEnd = getDraggedTick(nextEnd, shouldSnap)
+      const snappedEnd = getDraggedTick(nextEnd, shouldSnap, this.snapSubdivision)
       const clampedEnd = clampClipResizeEnd(valueTrackerTrack, clipId, snappedEnd)
 
       clip.duration = clampedEnd - clip.start

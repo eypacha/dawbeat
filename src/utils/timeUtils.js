@@ -4,6 +4,7 @@ export const MAX_ZOOM = 4
 export const TRACK_LABEL_WIDTH = 144
 export const DEFAULT_TIMELINE_TICKS = 32
 export const TIMELINE_SNAP_SUBDIVISIONS = 4
+export const SNAP_SUBDIVISION_OPTIONS = [1, 2, 4, 8, 16]
 export const BASE_TICK_SIZE = 1024
 export const TICK_DURATION_MULTIPLIER = 4
 
@@ -37,12 +38,22 @@ export function pixelsToTicks(pixels, pixelsPerTick = BASE_PIXELS_PER_TICK) {
   return pixels / pixelsPerTick
 }
 
-export function snapTicks(ticks, subdivisions = TIMELINE_SNAP_SUBDIVISIONS) {
-  return Math.round(ticks * subdivisions) / subdivisions
+export function normalizeSnapSubdivisions(value, fallback = TIMELINE_SNAP_SUBDIVISIONS) {
+  const normalizedValue = Math.round(Number(value))
+  return SNAP_SUBDIVISION_OPTIONS.includes(normalizedValue) ? normalizedValue : fallback
 }
 
-export function maybeSnapTicks(ticks, shouldSnap = true) {
-  return shouldSnap ? snapTicks(ticks) : ticks
+export function snapTicks(ticks, subdivisions = TIMELINE_SNAP_SUBDIVISIONS) {
+  const normalizedSubdivisions = normalizeSnapSubdivisions(subdivisions)
+  return Math.round(ticks * normalizedSubdivisions) / normalizedSubdivisions
+}
+
+export function maybeSnapTicks(
+  ticks,
+  shouldSnap = true,
+  subdivisions = TIMELINE_SNAP_SUBDIVISIONS
+) {
+  return shouldSnap ? snapTicks(ticks, subdivisions) : ticks
 }
 
 export function ticksToSamples(ticks, tickSize) {

@@ -274,7 +274,11 @@ export function useTimelineClipInteraction({
         duplicateDragActivated = true
       }
 
-      dragDesiredStart = getDraggedTick(dragStartTick + deltaTicks, shouldSnap)
+        dragDesiredStart = getDraggedTick(
+          dragStartTick + deltaTicks,
+          shouldSnap,
+          dawStore.snapSubdivision
+        )
       dragTargetLaneId =
         dragSelectedClipIds.length > 1 ? dragSourceLaneId : getDragTargetLaneId(pointerState)
 
@@ -343,11 +347,11 @@ export function useTimelineClipInteraction({
       return dragDesiredStart
     }
 
-    return clampClipPlacementStart(
-      targetLane,
-      getDraggedTick(dragDesiredStart, shouldSnap),
-      clip.duration
-    )
+      return clampClipPlacementStart(
+        targetLane,
+        getDraggedTick(dragDesiredStart, shouldSnap, dawStore.snapSubdivision),
+        clip.duration
+      )
   }
 
   function syncDragPreview(shouldSnap = true) {
@@ -357,7 +361,7 @@ export function useTimelineClipInteraction({
         duration: clip.duration,
         sourceLaneId: dragSourceLaneId,
         sourceTrackId: dragSourceLaneId,
-        start: getDuplicatePreviewStart(dragTargetLaneId, shouldSnap),
+          start: getDuplicatePreviewStart(dragTargetLaneId, shouldSnap, dawStore.snapSubdivision),
         targetLaneId: dragTargetLaneId,
         targetTrackId: dragTargetLaneId
       })
@@ -381,11 +385,11 @@ export function useTimelineClipInteraction({
       duration: clip.duration,
       sourceLaneId: dragSourceLaneId,
       sourceTrackId: dragSourceLaneId,
-      start: clampClipPlacementStart(
-        targetLane,
-        getDraggedTick(dragDesiredStart, shouldSnap),
-        clip.duration
-      ),
+        start: clampClipPlacementStart(
+          targetLane,
+          getDraggedTick(dragDesiredStart, shouldSnap, dawStore.snapSubdivision),
+          clip.duration
+        ),
       targetLaneId: dragTargetLaneId,
       targetTrackId: dragTargetLaneId
     })
