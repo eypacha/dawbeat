@@ -119,23 +119,11 @@
 
         <div
           v-for="groupVisual in groupVisuals"
-          :key="groupVisual.id"
-          class="pointer-events-none absolute z-20 border border-dashed"
-          :class="groupVisual.isEditing ? 'border-sky-300/80 bg-sky-500/10' : 'border-zinc-300/35 bg-zinc-200/5'"
+          :key="`${groupVisual.id}:background`"
+          class="pointer-events-none absolute z-0 border"
+          :class="groupVisual.isEditing ? 'border-sky-300/80' : ''"
           :style="groupVisual.style"
-        >
-          <button
-            class="pointer-events-auto absolute left-1 top-1 inline-flex max-w-[calc(100%-8px)] items-center truncate rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]"
-            :class="groupVisual.isEditing ? 'border-sky-300/70 bg-zinc-900/90 text-sky-100' : 'border-zinc-400/45 bg-zinc-900/85 text-zinc-200 hover:border-zinc-300/60'"
-            data-context-menu-enabled="true"
-            type="button"
-            @click.stop="handleGroupHeaderClick(groupVisual.id)"
-            @contextmenu.stop.prevent="handleGroupContextMenu($event, groupVisual.id)"
-            @pointerdown.stop="handleGroupPointerDown($event, groupVisual.id)"
-          >
-            {{ groupVisual.name }}
-          </button>
-        </div>
+        />
 
         <TimelineVariableTrack
           v-for="(variableTrack, variableTrackIndex) in variableTracks"
@@ -182,6 +170,30 @@
           :track-label-width="trackLabelWidth"
           :timeline-width="timelineWidthStyle"
         />
+
+        <div
+          v-for="groupVisual in groupVisuals"
+          :key="`${groupVisual.id}:label`"
+          class="pointer-events-none absolute z-20"
+          :style="{
+            left: groupVisual.style.left,
+            top: groupVisual.style.top,
+            width: groupVisual.style.width,
+            height: groupVisual.style.height
+          }"
+        >
+          <button
+            class="pointer-events-auto absolute left-1 top-1 inline-flex max-w-[calc(100%-8px)] items-center truncate rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]"
+            :class="groupVisual.isEditing ? 'border-sky-300/70 bg-zinc-900/90 text-sky-100' : 'border-zinc-400/45 bg-zinc-900/85 text-zinc-200 hover:border-zinc-300/60'"
+            data-context-menu-enabled="true"
+            type="button"
+            @click.stop="handleGroupHeaderClick(groupVisual.id)"
+            @contextmenu.stop.prevent="handleGroupContextMenu($event, groupVisual.id)"
+            @pointerdown.stop="handleGroupPointerDown($event, groupVisual.id)"
+          >
+            {{ groupVisual.name }}
+          </button>
+        </div>
       </div>
     </div>
   </Panel>
@@ -206,6 +218,7 @@ import { createGroupContextMenuItems } from '@/services/groupContextMenuService'
 import { getTimelineTrackLabelWidth } from '@/services/timelineHeaderWidthService'
 import { getDraggedTick, resolvePointerEventSnap, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { useDawStore } from '@/stores/dawStore'
+import { getTrackColor } from '@/utils/colorUtils'
 import {
   BASE_PIXELS_PER_TICK,
   getVisibleTimelineTickStep,
@@ -287,6 +300,29 @@ const clipLaneMetrics = computed(() => {
     return metric
   })
 })
+
+function hexToRgba(hex, alpha = 1) {
+  const normalizedHex = getTrackColor(hex).replace('#', '')
+
+  return `rgba(${Number.parseInt(normalizedHex.slice(0, 2), 16)}, ${Number.parseInt(normalizedHex.slice(2, 4), 16)}, ${Number.parseInt(normalizedHex.slice(4, 6), 16)}, ${alpha})`
+}
+
+function getClipLaneColor(trackIndex) {
+  if (trackIndex < variableTracks.value.length) {
+    return '#e4e4e7'
+  }
+
+  const valueTrackerStartIndex = variableTracks.value.length
+  const valueTrackerEndIndex = valueTrackerStartIndex + valueTrackerTracks.value.length
+
+  if (trackIndex >= valueTrackerStartIndex && trackIndex < valueTrackerEndIndex) {
+    return '#f59e0b'
+  }
+
+  const formulaTrackIndex = trackIndex - valueTrackerEndIndex
+  return getTrackColor(tracks.value[formulaTrackIndex]?.color)
+}
+
 const selectedClipIdSet = computed(() => new Set(selectedClipIds.value))
 const groupVisuals = computed(() => {
   return groups.value
@@ -302,6 +338,7 @@ const groupVisuals = computed(() => {
       const top = firstMetric.top
       const height = (lastMetric.top + lastMetric.height) - firstMetric.top
       const selectedClipCount = (group.clips ?? []).filter((entry) => selectedClipIdSet.value.has(entry.clipId)).length
+      const laneColor = getClipLaneColor(group.trackIndex)
 
       return {
         id: group.id,
@@ -309,6 +346,8 @@ const groupVisuals = computed(() => {
         isSelected: selectedClipCount > 0 && selectedClipCount === (group.clips?.length ?? 0),
         name: group.name,
         style: {
+          backgroundColor: hexToRgba(laneColor, editingGroup.value?.id === group.id ? 0.28 : 0.5),
+          borderColor: editingGroup.value?.id === group.id ? undefined : hexToRgba(laneColor, 0.42),
           left: `${trackLabelWidth.value + ticksToPixels(group.start, pixelsPerTick.value)}px`,
           top: `${top}px`,
           width: `${Math.max(1, ticksToPixels(group.duration, pixelsPerTick.value))}px`,
