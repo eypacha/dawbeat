@@ -87,7 +87,7 @@
             v-for="timelineSectionLabel in timelineSectionLabels"
             :key="timelineSectionLabel.id"
             class="absolute inset-y-0 w-px border-l border-dashed border-sky-400/20"
-            :style="{ left: `${ticksToPixels(timelineSectionLabel.time, pixelsPerTick)}px` }"
+            :style="{ left: `${trackLabelWidth + ticksToPixels(timelineSectionLabel.time, pixelsPerTick)}px` }"
           />
         </div>
 
