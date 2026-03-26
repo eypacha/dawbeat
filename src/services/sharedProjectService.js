@@ -60,12 +60,17 @@ export function createSharedProjectUrl(snapshotId, locationOrigin = window?.loca
   return `${locationOrigin}/#/p/${normalizedSnapshotId}`
 }
 
-export async function createSharedProjectSnapshot(snapshot) {
+export async function createSharedProjectSnapshot(snapshot, name = '') {
   const client = requireSupabaseClient()
+
+  const normalizedName = typeof name === 'string' ? name.trim() : ''
 
   const { data, error } = await client
     .from('projects')
-    .insert({ data: snapshot })
+    .insert({
+      data: snapshot,
+      name: normalizedName || null
+    })
     .select('id')
     .single()
 
