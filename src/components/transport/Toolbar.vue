@@ -42,11 +42,19 @@
           />
 
           <IconButton
-            :icon="Share"
+            :icon="Info"
+            label="Project Info"
+            size="sm"
+            title="Edit project metadata"
+            @click="projectInfoDialogVisible = true"
+          />
+
+          <IconButton
+            :icon="Share2"
             label="Share"
             size="sm"
-            title="Compartir proyecto (nombre, descripción)"
-            @click="projectInfoDialogVisible = true"
+            title="Create a share link for the current project"
+            @click="shareProjectDialogVisible = true"
           />
 
           <div class="flex w-44 items-center px-1 py-1">
@@ -269,7 +277,7 @@
           />
 
           <IconButton
-            :icon="Info"
+            :icon="CircleHelp"
             label="About"
             size="sm"
             title="About DawBeat"
@@ -321,21 +329,26 @@
       :name="projectTitle"
       :author="projectAuthor"
       :license="dawStore.projectLicense"
-      :shared="dawStore.shared"
-      :shareUrl="shareUrl"
       :open="projectInfoDialogVisible"
       @update:open="projectInfoDialogVisible = $event"
       @save="handleSaveProjectInfo"
-      @share="handleShareProjectInfo"
+    />
+
+    <ShareProjectDialog
+      :open="shareProjectDialogVisible"
+      :shareUrl="shareUrl"
+      :shared="dawStore.shared"
+      :sharing="sharingProject"
+      @update:open="shareProjectDialogVisible = $event"
+      @share="handleShareProject"
     />
   </Panel>
 </template>
 
 <script setup>
-const shareUrl = ref('')
 import { computed, nextTick, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Circle, Download, EllipsisVertical, FilePlus, FolderOpen, Info, LoaderCircle, Pause, Play, Redo2, Repeat, Settings2, Shuffle, Square, Undo2, Share } from 'lucide-vue-next'
+import { Circle, CircleHelp, Download, EllipsisVertical, FilePlus, FolderOpen, Info, LoaderCircle, Pause, Play, Redo2, Repeat, Settings2, Share2, Shuffle, Square, Undo2 } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { automationCompanionHostState } from '@/services/automationCompanionService'
 import { getRandomDemoProjectEntry } from '@/services/demoProjectService'
@@ -364,14 +377,15 @@ import IconButton from '@/components/ui/IconButton.vue'
 import Panel from '@/components/ui/Panel.vue'
 import SettingsModal from '@/components/ui/SettingsModal.vue'
 import ProjectInfoDialog from '@/components/ui/ProjectInfoDialog.vue'
+import ShareProjectDialog from '@/components/ui/ShareProjectDialog.vue'
 
+const shareUrl = ref('')
 const dawStore = useDawStore()
 const { play, pause, stop, toggleRecord } = useTransportPlayback()
 const { automationRecordingArmed, bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, projectTitle, projectDescription, projectAuthor, sampleRate, sharedProjectMeta, snapSubdivision, snapToGridEnabled, tickSize, time, timelineAutoscrollEnabled } = storeToRefs(dawStore)
 const bpmDraft = ref(formatBpmValue(getBpmFromSampleRate(sampleRate.value, bpmMeasure.value)))
 const bpmMeasureDraft = ref(bpmMeasure.value)
 const projectTitleDraft = ref(projectTitle.value)
-const projectDescriptionDraft = ref(projectDescription.value)
 const projectTitleInput = ref(null)
 const isEditingProjectTitle = ref(false)
 const projectFileInput = ref(null)
@@ -386,6 +400,7 @@ const sharingProject = ref(false)
 const lastShuffledDemoProjectId = ref(null)
 const transportDisplayMode = ref('sample')
 const projectInfoDialogVisible = ref(false)
+const shareProjectDialogVisible = ref(false)
 const toolbarLayoutClassName = 'grid grid-cols-[max-content_minmax(0,1fr)_max-content_minmax(0,1fr)_max-content] items-center gap-4 px-4 py-1'
 const leftGroupClassName = 'col-[1] flex min-w-0 items-center gap-4'
 const transportControlsGroupClassName = 'col-[3] flex shrink-0 items-center justify-center gap-2 text-xs text-zinc-400'
@@ -653,38 +668,12 @@ async function beginProjectTitleEdit() {
   projectTitleInput.value?.select()
 }
 
-function commitProjectDescription() {
-  dawStore.setProjectDescription(projectDescriptionDraft.value)
-}
-
-function resetProjectDescriptionDraft() {
-  projectDescriptionDraft.value = projectDescription.value
-}
-
 function handleSaveProjectInfo(data) {
   dawStore.setProjectTitle(data.name)
   dawStore.setProjectDescription(data.description)
   dawStore.setProjectAuthor(data.author)
   dawStore.setProjectLicense(data.license)
   projectInfoDialogVisible.value = false
-}
-
-async function handleShareProjectInfo() {
-  console.log('[SHARE] Share button clicked')
-  try {
-    console.log('[SHARE] Calling dawStore.shareProject()')
-    const { shareUrl: url, snapshotId, reused } = await dawStore.shareProject()
-    console.log('[SHARE] shareProject() result:', { url, snapshotId, reused })
-    shareUrl.value = url
-    if (reused) {
-      console.log('[SHARE] Project already existed, reused snapshotId:', snapshotId)
-    } else {
-      console.log('[SHARE] New project shared, new snapshotId:', snapshotId)
-    }
-    console.log('[SHARE] Final share URL:', url)
-  } catch (err) {
-    console.error('[SHARE] Error sharing project:', err)
-  }
 }
 
 function cycleTransportDisplayMode() {
@@ -799,39 +788,6 @@ function handleProjectDownload() {
   downloadProjectFile(dawStore.$state)
 }
 
-// Safari loses the user-gesture context after any async await, so navigator.clipboard.writeText
-// called after a network request will always throw on Safari. Instead we start a ClipboardItem
-// write synchronously (preserving the gesture) and resolve it with the actual text later.
-function startDeferredClipboardWrite() {
-  if (typeof ClipboardItem === 'undefined' || !navigator?.clipboard?.write) {
-    return null
-  }
-
-  let resolveBlob
-  const blobPromise = new Promise((resolve) => {
-    resolveBlob = resolve
-  })
-  const writePromise = navigator.clipboard
-    .write([new ClipboardItem({ 'text/plain': blobPromise })])
-    .then(() => true)
-    .catch(() => false)
-
-  return { writePromise, resolveBlob }
-}
-
-async function copyTextToClipboard(value) {
-  if (navigator?.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(value)
-      return true
-    } catch {
-      return false
-    }
-  }
-
-  return false
-}
-
 async function handleShareProject() {
   if (sharingProject.value) {
     return
@@ -840,42 +796,19 @@ async function handleShareProject() {
   sharingProject.value = true
 
   try {
-    // Initiate the clipboard write synchronously before any await so Safari keeps the user gesture.
-    const deferred = startDeferredClipboardWrite()
-
-    console.log('[SHARE] Calling dawStore.shareProject() from handleShareProject')
-    const { shareUrl, snapshotId, reused } = await dawStore.shareProject()
-    console.log('[SHARE] shareProject() result:', { shareUrl, snapshotId, reused })
-
-    let copied = false
-
-    if (deferred) {
-      deferred.resolveBlob(new Blob([shareUrl], { type: 'text/plain' }))
-      copied = await deferred.writePromise
-    }
-
-    if (!copied) {
-      copied = await copyTextToClipboard(shareUrl)
-    }
+    console.log('[SHARE] Calling dawStore.shareProject()')
+    const { shareUrl: url, snapshotId, reused } = await dawStore.shareProject()
+    console.log('[SHARE] shareProject() result:', { url, snapshotId, reused })
+    shareUrl.value = url
 
     if (reused) {
       console.log('[SHARE] Project already existed, reused snapshotId:', snapshotId)
-      enqueueSnackbar(copied ? 'Link to existing snapshot copied' : `This project was already shared. URL: ${shareUrl}`,
-        {
-          variant: copied ? 'info' : 'info',
-          duration: copied ? undefined : null
-        }
-      )
+      enqueueSnackbar('Share link ready for the current snapshot.', { variant: 'info' })
     } else {
       console.log('[SHARE] New project shared, new snapshotId:', snapshotId)
-      enqueueSnackbar(copied ? 'Link to new snapshot copied' : `New share URL: ${shareUrl}`,
-        {
-          variant: copied ? 'success' : 'success',
-          duration: copied ? undefined : null
-        }
-      )
+      enqueueSnackbar('New share link created.', { variant: 'success' })
     }
-    console.log('[SHARE] Final share URL:', shareUrl)
+    console.log('[SHARE] Final share URL:', url)
   } catch (error) {
     console.error('[SHARE] Could not create shared snapshot', error)
     enqueueSnackbar('Could not create a share link.', { variant: 'error' })

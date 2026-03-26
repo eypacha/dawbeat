@@ -62,40 +62,8 @@
         </div>
       </div>
 
-      <div v-if="shared">
-        <label class="block text-xs uppercase tracking-[0.1em] text-zinc-400 mb-2 mt-4">
-          Share Link
-        </label>
-        <div class="flex items-stretch gap-2">
-          <input
-            ref="shareUrlInput"
-            class="min-w-0 flex-1 border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none"
-            :value="shareUrl"
-            readonly
-            @click="selectShareUrl"
-            @focus="selectShareUrl"
-          />
-          <IconButton
-            :icon="shareUrlCopied ? Check : Copy"
-            :disabled="!shareUrl"
-            :label="shareUrlCopied ? 'Share link copied' : 'Copy share link'"
-            size="md"
-            title="Copy share link"
-            @click="handleCopyShareUrl"
-          />
-        </div>
-      </div>
-
       <div class="flex flex-col items-end gap-2 pt-4">
         <div class="flex justify-end gap-2 w-full">
-          <button
-            v-if="!shared"
-            class="border border-blue-700 bg-blue-900 px-3 py-2 text-xs uppercase tracking-[0.18em] text-blue-100 transition hover:border-blue-500 hover:bg-blue-700"
-            type="button"
-            @click="handleShare"
-          >
-            Share
-          </button>
           <button
             class="border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-600 hover:text-zinc-100"
             type="button"
@@ -112,7 +80,7 @@
           </button>
         </div>
         <span class="mt-1 w-full block text-[11px] text-zinc-500 leading-tight text-right">
-          Sharing creates a public snapshot of this project.<br/>The link will remain accessible.
+          This metadata is used in exports and shared snapshots.
         </span>
       </div>
     </div>
@@ -120,10 +88,7 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, ref, watch } from 'vue'
-import { Check, Copy } from 'lucide-vue-next'
-import { copyTextToClipboard } from '@/services/clipboard'
-import IconButton from '@/components/ui/IconButton.vue'
+import { ref, watch } from 'vue'
 import Modal from '@/components/ui/Modal.vue'
 
 const props = defineProps({
@@ -131,39 +96,16 @@ const props = defineProps({
   name: String,
   description: String,
   author: String,
-  license: String,
-  shared: Boolean,
-  shareUrl: String
+  license: String
 })
 
 
-const emit = defineEmits(['update:open', 'save', 'share'])
-function handleShare() {
-  emit('share')
-}
+const emit = defineEmits(['update:open', 'save'])
 
 const nameDraft = ref(props.name || '')
 const descriptionDraft = ref(props.description || '')
 const authorDraft = ref(props.author || '')
 const licenseDraft = ref(props.license && props.license !== '' ? props.license : 'CC0')
-const shareUrlInput = ref(null)
-const shareUrlCopied = ref(false)
-
-let shareUrlCopiedTimeoutId = null
-
-function clearShareUrlCopiedTimeout() {
-  if (shareUrlCopiedTimeoutId === null) {
-    return
-  }
-
-  window.clearTimeout(shareUrlCopiedTimeoutId)
-  shareUrlCopiedTimeoutId = null
-}
-
-function resetShareUrlCopiedState() {
-  clearShareUrlCopiedTimeout()
-  shareUrlCopied.value = false
-}
 
 watch(() => props.open, (newOpen) => {
   if (newOpen) {
@@ -172,37 +114,7 @@ watch(() => props.open, (newOpen) => {
     authorDraft.value = props.author || ''
     licenseDraft.value = props.license && props.license !== '' ? props.license : 'CC0'
   }
-
-  resetShareUrlCopiedState()
 })
-
-watch(() => props.shareUrl, () => {
-  resetShareUrlCopiedState()
-})
-
-function selectShareUrl(event) {
-  const input = event?.target instanceof HTMLInputElement ? event.target : shareUrlInput.value
-  input?.select()
-}
-
-async function handleCopyShareUrl() {
-  if (!props.shareUrl) {
-    return
-  }
-
-  try {
-    await copyTextToClipboard(props.shareUrl)
-    selectShareUrl()
-    shareUrlCopied.value = true
-    clearShareUrlCopiedTimeout()
-    shareUrlCopiedTimeoutId = window.setTimeout(() => {
-      shareUrlCopied.value = false
-      shareUrlCopiedTimeoutId = null
-    }, 2000)
-  } catch {
-    resetShareUrlCopiedState()
-  }
-}
 
 function handleSave() {
   emit('save', {
@@ -216,8 +128,4 @@ function handleSave() {
 function handleClose() {
   emit('update:open', false)
 }
-
-onBeforeUnmount(() => {
-  clearShareUrlCopiedTimeout()
-})
 </script>
