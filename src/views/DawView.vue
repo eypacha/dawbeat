@@ -1,5 +1,56 @@
 <template>
-  <StartScreen v-if="!audioReady" @start="handleStart" />
+  <section
+    v-if="sharedProjectLoadState === 'loading'"
+    class="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-zinc-100"
+  >
+    <Panel class="w-full max-w-xl" padding="lg">
+      <div class="space-y-3">
+        <p class="text-xs uppercase tracking-[0.22em] text-zinc-500">Shared project</p>
+        <h1 class="text-lg text-zinc-100">Loading snapshot...</h1>
+      </div>
+    </Panel>
+  </section>
+
+  <section
+    v-else-if="sharedProjectLoadState === 'not-found'"
+    class="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-zinc-100"
+  >
+    <Panel class="w-full max-w-xl" padding="lg">
+      <div class="space-y-4">
+        <p class="text-xs uppercase tracking-[0.22em] text-zinc-500">Shared project</p>
+        <h1 class="text-xl text-zinc-100">Project not found</h1>
+        <button
+          class="mx-auto border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs uppercase tracking-[0.18em] text-zinc-200 transition hover:border-zinc-500 hover:text-zinc-50"
+          type="button"
+          @click="goToDawHome"
+        >
+          Back to DawBeat
+        </button>
+      </div>
+    </Panel>
+  </section>
+
+  <section
+    v-else-if="sharedProjectLoadState === 'error'"
+    class="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-center text-zinc-100"
+  >
+    <Panel class="w-full max-w-xl" padding="lg">
+      <div class="space-y-4">
+        <p class="text-xs uppercase tracking-[0.22em] text-zinc-500">Shared project</p>
+        <h1 class="text-xl text-zinc-100">Could not load shared project</h1>
+        <p class="text-sm text-zinc-400">{{ sharedProjectLoadError }}</p>
+        <button
+          class="mx-auto border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs uppercase tracking-[0.18em] text-zinc-200 transition hover:border-zinc-500 hover:text-zinc-50"
+          type="button"
+          @click="goToDawHome"
+        >
+          Back to DawBeat
+        </button>
+      </div>
+    </Panel>
+  </section>
+
+  <StartScreen v-else-if="!audioReady" @start="handleStart" />
 
   <section
     v-else-if="isMobileLayout"
@@ -153,6 +204,7 @@
 <script setup>
 import { computed, reactive, ref, onBeforeUnmount, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useRoute, useRouter } from 'vue-router'
 import StartScreen from '@/components/boot/StartScreen.vue'
 import FormulaLibrary from '@/components/library/FormulaLibrary.vue'
 import EffectsPanel from '@/components/effects/EffectsPanel.vue'
@@ -199,6 +251,8 @@ import { TRACK_COLOR_PALETTE } from '@/utils/colorUtils'
 
 const dawStore = useDawStore()
 const libraryStore = useLibraryStore()
+const route = useRoute()
+const router = useRouter()
 const contextMenu = provideContextMenu()
 const confirmDialog = reactive({
   visible: false,
@@ -247,6 +301,9 @@ const transportPlayback = useTransportPlayback()
 const { enableAudio, stop } = transportPlayback
 const effectsCollapsed = ref(false)
 const libraryCollapsed = ref(false)
+const sharedProjectLoadState = ref('idle')
+const sharedProjectLoadError = ref('')
+const lastLoadedSharedSnapshotId = ref('')
 const viewportWidth = ref(typeof window === 'undefined' ? 1440 : window.innerWidth)
 const {
   audioReady,
@@ -373,6 +430,50 @@ function syncViewportWidth() {
   }
 
   viewportWidth.value = window.innerWidth
+}
+
+async function loadSharedProjectFromRoute(snapshotId) {
+  const normalizedSnapshotId = typeof snapshotId === 'string' ? snapshotId.trim() : ''
+
+  if (!normalizedSnapshotId) {
+    sharedProjectLoadState.value = 'idle'
+    sharedProjectLoadError.value = ''
+    lastLoadedSharedSnapshotId.value = ''
+    return
+  }
+
+  if (
+    sharedProjectLoadState.value === 'ready' &&
+    lastLoadedSharedSnapshotId.value === normalizedSnapshotId
+  ) {
+    return
+  }
+
+  sharedProjectLoadState.value = 'loading'
+  sharedProjectLoadError.value = ''
+
+  try {
+    await stop()
+    const result = await dawStore.loadSharedProject(normalizedSnapshotId)
+
+    if (!result?.ok) {
+      sharedProjectLoadState.value = 'not-found'
+      return
+    }
+
+    lastLoadedSharedSnapshotId.value = normalizedSnapshotId
+    sharedProjectLoadState.value = 'ready'
+  } catch (error) {
+    console.error('Could not load shared snapshot', error)
+    sharedProjectLoadState.value = 'error'
+    sharedProjectLoadError.value = error instanceof Error
+      ? error.message
+      : 'Unexpected snapshot loading error.'
+  }
+}
+
+function goToDawHome() {
+  router.replace({ path: '/' })
 }
 
 async function handleStart() {
@@ -871,6 +972,7 @@ function updateValueTrackerDialog(nextDraft) {
 
 onMounted(() => {
   installAutomationCompanionHost(dawStore)
+  void loadSharedProjectFromRoute(route.params.id)
   syncViewportWidth()
   window.addEventListener('resize', syncViewportWidth)
   window.addEventListener('keydown', handleKeydown)
@@ -881,6 +983,13 @@ onMounted(() => {
     transport: transportPlayback
   })
 })
+
+watch(
+  () => route.params.id,
+  (snapshotId) => {
+    void loadSharedProjectFromRoute(snapshotId)
+  }
+)
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', syncViewportWidth)

@@ -10,6 +10,10 @@ const router = createRouter({
       component: DawView
     },
     {
+      path: '/p/:id',
+      component: DawView
+    },
+    {
       path: '/companion',
       component: CompanionView
     }

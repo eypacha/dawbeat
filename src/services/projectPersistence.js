@@ -63,7 +63,7 @@ import {
 } from '@/utils/timeUtils'
 
 const PROJECT_STORAGE_KEY = 'dawbeat-project'
-const PROJECT_VERSION = 23
+const PROJECT_VERSION = 24
 const SAVE_DEBOUNCE_MS = 400
 const DEFAULT_LOOP_START = 0
 const DEFAULT_LOOP_END = 16
@@ -74,6 +74,7 @@ export function serializeProject(state) {
   return normalizeProjectPayload({
     version: PROJECT_VERSION,
     projectTitle: state.projectTitle,
+    projectMeta: state.sharedProjectMeta,
     tracks: state.tracks,
     variableTracks: state.variableTracks,
     valueTrackerTracks: state.valueTrackerTracks,
@@ -322,6 +323,7 @@ function normalizeProjectPayload(project) {
   return {
     version: PROJECT_VERSION,
     projectTitle: normalizeProjectTitle(project.projectTitle, DEFAULT_PROJECT_TITLE),
+    projectMeta: normalizeProjectMeta(project.projectMeta),
     tracks,
     variableTracks,
     valueTrackerTracks,
@@ -355,6 +357,25 @@ function normalizeProjectPayload(project) {
     snapSubdivision: hasOwn(project, 'snapSubdivision')
       ? normalizeSnapSubdivisions(project.snapSubdivision)
       : TIMELINE_SNAP_SUBDIVISIONS
+  }
+}
+
+function normalizeProjectMeta(projectMeta) {
+  if (!isRecord(projectMeta)) {
+    return null
+  }
+
+  if (projectMeta.source !== 'shared') {
+    return null
+  }
+
+  if (typeof projectMeta.snapshotId !== 'string' || !projectMeta.snapshotId.trim()) {
+    return null
+  }
+
+  return {
+    source: 'shared',
+    snapshotId: projectMeta.snapshotId.trim()
   }
 }
 

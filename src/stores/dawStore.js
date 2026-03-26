@@ -81,6 +81,11 @@ import {
 } from '@/services/formulaService'
 import { DEFAULT_BPM_MEASURE, normalizeBpmMeasureExpression } from '@/services/bpmService'
 import {
+  createSharedProjectSnapshot,
+  createSharedProjectUrl,
+  fetchSharedProjectSnapshot
+} from '@/services/sharedProjectService'
+import {
   normalizeAutomationLaneHeight,
   normalizeTrackLaneHeight,
   normalizeValueTrackerTrackHeight,
@@ -143,6 +148,7 @@ function createDefaultProject() {
 function createEmptyProject() {
   return {
     projectTitle: DEFAULT_PROJECT_TITLE,
+    projectMeta: null,
     audioEffects: [],
     automationLanes: getDefaultAutomationLanes(),
     bpmMeasure: DEFAULT_BPM_MEASURE,
@@ -220,6 +226,7 @@ function createInitialState() {
     bpmMeasure: project.bpmMeasure,
     clipDragPreview: null,
     clipClipboard: null,
+    sharedProjectMeta: project.projectMeta,
     evalEffects: project.evalEffects,
     projectTitle: project.projectTitle,
     editingClipId: null,
@@ -277,6 +284,25 @@ function clearTransientSelectionState(store) {
   store.valueTrackerRecordingSession = null
   store.valueTrackerLiveInputs = {}
   syncSelectedClipState(store, [])
+}
+
+function normalizeSharedProjectMeta(sharedProjectMeta) {
+  if (!sharedProjectMeta || typeof sharedProjectMeta !== 'object') {
+    return null
+  }
+
+  if (sharedProjectMeta.source !== 'shared') {
+    return null
+  }
+
+  if (typeof sharedProjectMeta.snapshotId !== 'string' || !sharedProjectMeta.snapshotId.trim()) {
+    return null
+  }
+
+  return {
+    source: 'shared',
+    snapshotId: sharedProjectMeta.snapshotId.trim()
+  }
 }
 
 function resolveActiveValueTrackerTrackForKeyboardInput(state) {
@@ -407,6 +433,7 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   store.bpmMeasure = normalizedProject.bpmMeasure
   store.evalEffects = normalizedProject.evalEffects
   store.projectTitle = normalizedProject.projectTitle
+  store.sharedProjectMeta = normalizedProject.projectMeta
   store.loopEnabled = normalizedProject.loopEnabled
   store.loopStart = normalizedProject.loopStart
   store.loopEnd = normalizedProject.loopEnd
@@ -1112,6 +1139,52 @@ export const useDawStore = defineStore('dawStore', {
   },
 
   actions: {
+    setSharedProjectMeta(sharedProjectMeta) {
+      this.sharedProjectMeta = normalizeSharedProjectMeta(sharedProjectMeta)
+    },
+
+    async shareProject() {
+      const snapshot = this.createProjectSnapshot()
+
+      if (!snapshot) {
+        throw new Error('Could not serialize the current project.')
+      }
+
+      const snapshotId = await createSharedProjectSnapshot(snapshot)
+
+      return {
+        snapshotId,
+        shareUrl: createSharedProjectUrl(snapshotId)
+      }
+    },
+
+    async loadSharedProject(snapshotId) {
+      const snapshot = await fetchSharedProjectSnapshot(snapshotId)
+
+      if (!snapshot) {
+        return {
+          notFound: true,
+          ok: false
+        }
+      }
+
+      if (!applyProjectState(this, snapshot)) {
+        throw new Error('The shared snapshot payload is invalid.')
+      }
+
+      this.sharedProjectMeta = normalizeSharedProjectMeta({
+        source: 'shared',
+        snapshotId
+      })
+      this.clipClipboard = null
+      this.clearHistory()
+
+      return {
+        notFound: false,
+        ok: true
+      }
+    },
+
     setFormulaAnalysisByKey(cacheKey, result) {
       if (typeof cacheKey !== 'string' || !cacheKey) {
         return false

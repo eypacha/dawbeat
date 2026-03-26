@@ -26,6 +26,7 @@ The main app is desktop-oriented. On phones/tablets, the companion view is inten
 - Audio effects (EQ, distortion, stereo widener, delay, compressor, reverb, limiter, and master gain).
 - WAV and MP3 export (full render or looped render passes).
 - Auto-save in localStorage plus JSON project import/export.
+- Immutable shared snapshots via Supabase (`/#/p/:id`).
 - Web MIDI support:
 - MIDI input for bindings and live value capture.
 - MIDI Clock receive for transport sync and effective BPM/sample-rate locking.
@@ -57,6 +58,53 @@ The main app is desktop-oriented. On phones/tablets, the companion view is inten
 yarn install
 ```
 
+## Supabase Snapshot Sharing Setup
+
+Set these env vars before running the app:
+
+```bash
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your-public-publishable-key
+# Optional fallback alias also accepted:
+# VITE_SUPABASE_ANON_KEY=your-public-anon-key
+```
+
+Create the snapshot table:
+
+```sql
+create table if not exists projects (
+  id uuid primary key default gen_random_uuid(),
+  data jsonb not null,
+  created_at timestamp default now()
+);
+```
+
+Enable RLS and public policies for this minimal version:
+
+```sql
+alter table projects enable row level security;
+
+create policy "public read"
+on projects for select
+using (true);
+
+create policy "public insert"
+on projects for insert
+with check (true);
+```
+
+Shared route format uses hash routing:
+
+```text
+/#/p/:id
+```
+
+Example:
+
+```text
+https://dawbeat.com/#/p/6f1c8c2e
+```
+
 ## Development
 
 ```bash
@@ -86,6 +134,7 @@ yarn preview
 4. Enable loop to iterate on a section.
 5. Use Export to generate WAV or MP3.
 6. Save a project snapshot with Save JSON or load one with Open JSON.
+7. Press Share to create an immutable Supabase snapshot and copy a shared URL.
 
 You can also load bundled demos using Shuffle Demo.
 

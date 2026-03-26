@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.100.1",
     "lamejs": "^1.2.1",
     "lucide-vue-next": "^0.517.0",
     "peerjs": "^1.5.5",

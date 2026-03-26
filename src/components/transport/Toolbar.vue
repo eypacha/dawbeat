@@ -41,6 +41,19 @@
             @click="handleProjectDownload"
           />
 
+          <button
+            class="border border-zinc-800 bg-zinc-950 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-700 hover:text-zinc-100 disabled:cursor-default disabled:opacity-40"
+            :disabled="sharingProject"
+            :title="sharingProject ? 'Creating share link...' : 'Create an immutable shared snapshot link'"
+            type="button"
+            @click="handleShareProject"
+          >
+            <span v-if="!sharingProject">Share</span>
+            <span v-else class="flex items-center justify-center">
+              <LoaderCircle class="h-3.5 w-3.5 animate-spin" :stroke-width="2.25" />
+            </span>
+          </button>
+
           <div class="flex w-44 items-center px-1 py-1">
             <button
               v-if="!isEditingProjectTitle"
@@ -65,6 +78,14 @@
               @keydown.esc.prevent="resetProjectTitleDraft"
             >
           </div>
+
+          <span
+            v-if="isSharedProject"
+            class="border border-emerald-700/40 bg-emerald-500/10 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-emerald-200"
+            title="This project was loaded from a shared snapshot"
+          >
+            Shared project
+          </span>
         </div>
 
         <Divider />
@@ -335,7 +356,7 @@ import SettingsModal from '@/components/ui/SettingsModal.vue'
 
 const dawStore = useDawStore()
 const { play, pause, stop, toggleRecord } = useTransportPlayback()
-const { automationRecordingArmed, bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, projectTitle, sampleRate, snapSubdivision, snapToGridEnabled, tickSize, time, timelineAutoscrollEnabled } = storeToRefs(dawStore)
+const { automationRecordingArmed, bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, projectTitle, sampleRate, sharedProjectMeta, snapSubdivision, snapToGridEnabled, tickSize, time, timelineAutoscrollEnabled } = storeToRefs(dawStore)
 const bpmDraft = ref(formatBpmValue(getBpmFromSampleRate(sampleRate.value, bpmMeasure.value)))
 const bpmMeasureDraft = ref(bpmMeasure.value)
 const projectTitleDraft = ref(projectTitle.value)
@@ -349,6 +370,7 @@ const exportingWav = ref(false)
 const exportModalVisible = ref(false)
 const newProjectConfirmVisible = ref(false)
 const shuffleDemoConfirmVisible = ref(false)
+const sharingProject = ref(false)
 const lastShuffledDemoProjectId = ref(null)
 const transportDisplayMode = ref('sample')
 const toolbarLayoutClassName = 'grid grid-cols-[max-content_minmax(0,1fr)_max-content_minmax(0,1fr)_max-content] items-center gap-4 px-4 py-1'
@@ -446,6 +468,7 @@ const midiClockStatusHint = computed(() => {
   return `${sourceName} is driving the transport at ${formatBpmValue(midiClockState.externalBpm)} bpm.`
 })
 const hasAutomationCompanionControllers = computed(() => automationCompanionHostState.controllers.length > 0)
+const isSharedProject = computed(() => sharedProjectMeta.value?.source === 'shared')
 const recordButtonActive = computed(() => isValueTrackerRecording.value || automationRecordingArmed.value)
 const recordButtonDisabled = computed(() =>
   hasAutomationCompanionControllers.value
@@ -727,6 +750,39 @@ function transportControlTitle(defaultTitle) {
 
 function handleProjectDownload() {
   downloadProjectFile(dawStore.$state)
+}
+
+async function copyTextToClipboard(value) {
+  if (navigator?.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value)
+    return true
+  }
+
+  return false
+}
+
+async function handleShareProject() {
+  if (sharingProject.value) {
+    return
+  }
+
+  sharingProject.value = true
+
+  try {
+    const { shareUrl } = await dawStore.shareProject()
+    const copied = await copyTextToClipboard(shareUrl)
+
+    enqueueSnackbar(copied ? 'Link copied' : `Share URL: ${shareUrl}`, {
+      variant: copied ? 'success' : 'warning'
+    })
+  } catch (error) {
+    console.error('Could not create shared snapshot', error)
+    enqueueSnackbar('Could not create a share link.', {
+      variant: 'error'
+    })
+  } finally {
+    sharingProject.value = false
+  }
 }
 
 async function applyIncomingProject(project) {
