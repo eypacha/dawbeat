@@ -1156,11 +1156,12 @@ export const useDawStore = defineStore('dawStore', {
         throw new Error('Could not serialize the current project.')
       }
 
-      const snapshotId = await createSharedProjectSnapshot(snapshot, this.projectTitle)
+      const { id: snapshotId, reused } = await createSharedProjectSnapshot(snapshot, this.projectTitle)
 
       return {
         snapshotId,
-        shareUrl: createSharedProjectUrl(snapshotId)
+        shareUrl: createSharedProjectUrl(snapshotId),
+        reused
       }
     },
 

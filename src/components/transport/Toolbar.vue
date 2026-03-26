@@ -787,10 +787,34 @@ function handleProjectDownload() {
   downloadProjectFile(dawStore.$state)
 }
 
+// Safari loses the user-gesture context after any async await, so navigator.clipboard.writeText
+// called after a network request will always throw on Safari. Instead we start a ClipboardItem
+// write synchronously (preserving the gesture) and resolve it with the actual text later.
+function startDeferredClipboardWrite() {
+  if (typeof ClipboardItem === 'undefined' || !navigator?.clipboard?.write) {
+    return null
+  }
+
+  let resolveBlob
+  const blobPromise = new Promise((resolve) => {
+    resolveBlob = resolve
+  })
+  const writePromise = navigator.clipboard
+    .write([new ClipboardItem({ 'text/plain': blobPromise })])
+    .then(() => true)
+    .catch(() => false)
+
+  return { writePromise, resolveBlob }
+}
+
 async function copyTextToClipboard(value) {
   if (navigator?.clipboard?.writeText) {
-    await navigator.clipboard.writeText(value)
-    return true
+    try {
+      await navigator.clipboard.writeText(value)
+      return true
+    } catch {
+      return false
+    }
   }
 
   return false
@@ -804,17 +828,40 @@ async function handleShareProject() {
   sharingProject.value = true
 
   try {
-    const { shareUrl } = await dawStore.shareProject()
-    const copied = await copyTextToClipboard(shareUrl)
+    // Initiate the clipboard write synchronously before any await so Safari keeps the user gesture.
+    const deferred = startDeferredClipboardWrite()
 
-    enqueueSnackbar(copied ? 'Link copied' : `Share URL: ${shareUrl}`, {
-      variant: copied ? 'success' : 'warning'
-    })
+    const { shareUrl, reused } = await dawStore.shareProject()
+
+    let copied = false
+
+    if (deferred) {
+      deferred.resolveBlob(new Blob([shareUrl], { type: 'text/plain' }))
+      copied = await deferred.writePromise
+    }
+
+    if (!copied) {
+      copied = await copyTextToClipboard(shareUrl)
+    }
+
+    if (reused) {
+      enqueueSnackbar(copied ? 'Link to existing snapshot copied' : `This project was already shared. URL: ${shareUrl}`,
+        {
+          variant: copied ? 'info' : 'info',
+          duration: copied ? undefined : null
+        }
+      )
+    } else {
+      enqueueSnackbar(copied ? 'Link to new snapshot copied' : `New share URL: ${shareUrl}`,
+        {
+          variant: copied ? 'success' : 'success',
+          duration: copied ? undefined : null
+        }
+      )
+    }
   } catch (error) {
     console.error('Could not create shared snapshot', error)
-    enqueueSnackbar('Could not create a share link.', {
-      variant: 'error'
-    })
+    enqueueSnackbar('Could not create a share link.', { variant: 'error' })
   } finally {
     sharingProject.value = false
   }

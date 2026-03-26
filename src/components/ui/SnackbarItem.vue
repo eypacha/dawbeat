@@ -1,11 +1,21 @@
 <template>
   <div :class="snackbarClassName" role="status">
-    {{ notification.message }}
+    <span class="break-all">{{ notification.message }}</span>
+    <button
+      v-if="notification.persistent"
+      class="ml-3 shrink-0 opacity-70 transition hover:opacity-100"
+      type="button"
+      aria-label="Dismiss"
+      @click="removeSnackbar(notification.id)"
+    >
+      ✕
+    </button>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { removeSnackbar } from '@/services/notifications'
 
 const props = defineProps({
   notification: {
@@ -25,7 +35,7 @@ const snackbarClassName = computed(() => {
           : 'bg-zinc-800'
 
   return [
-    'rounded px-4 py-2 text-sm shadow-lg',
+    'flex items-center gap-1 rounded px-4 py-2 text-sm shadow-lg',
     props.notification.variant === 'warning' ? '' : 'text-white',
     variantClassName
   ]

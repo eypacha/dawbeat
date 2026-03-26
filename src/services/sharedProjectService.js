@@ -145,6 +145,35 @@ function formatDurationTime(seconds) {
   return `${String(minutes).padStart(2, '0')}:${String(wholeSeconds).padStart(2, '0')}:${String(milliseconds).padStart(3, '0')}`
 }
 
+/**
+ * Produces a stable SHA-256 hex digest of the project snapshot JSON.
+ * Keys are sorted recursively so that insertion-order differences in objects
+ * do not produce different hashes for semantically identical projects.
+ */
+function sortKeysDeep(value) {
+  if (Array.isArray(value)) {
+    return value.map(sortKeysDeep)
+  }
+
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((key) => [key, sortKeysDeep(value[key])])
+    )
+  }
+
+  return value
+}
+
+async function computeSnapshotHash(snapshot) {
+  const canonical = JSON.stringify(sortKeysDeep(snapshot))
+  const encoded = new TextEncoder().encode(canonical)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', encoded)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
 function buildSharedProjectMetadata(snapshot = {}) {
   const sampleRate = normalizePositiveNumber(snapshot.sampleRate)
   const bpm = normalizePositiveNumber(getBpmFromSampleRate(sampleRate, snapshot.bpmMeasure))
@@ -174,6 +203,19 @@ export async function createSharedProjectSnapshot(snapshot, name = '') {
   const client = requireSupabaseClient()
 
   const normalizedName = typeof name === 'string' ? name.trim() : ''
+  const contentHash = await computeSnapshotHash(snapshot)
+
+  // If an identical snapshot already exists, reuse its id without inserting a duplicate.
+  const { data: existing } = await client
+    .from('projects')
+    .select('id')
+    .eq('content_hash', contentHash)
+    .maybeSingle()
+
+  if (existing?.id) {
+    return { id: existing.id, reused: true }
+  }
+
   const metadata = buildSharedProjectMetadata(snapshot)
 
   const { data, error } = await client
@@ -181,6 +223,7 @@ export async function createSharedProjectSnapshot(snapshot, name = '') {
     .insert({
       data: snapshot,
       name: normalizedName || null,
+      content_hash: contentHash,
       projectDescription: metadata.projectDescription || null,
       projectAuthor: metadata.projectAuthor || null,
       tempoBpm: metadata.bpm,
@@ -199,7 +242,7 @@ export async function createSharedProjectSnapshot(snapshot, name = '') {
     throw new Error('Share snapshot did not return an id.')
   }
 
-  return data.id
+  return { id: data.id, reused: false }
 }
 
 export async function fetchSharedProjectSnapshot(snapshotId) {
