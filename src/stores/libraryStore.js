@@ -109,6 +109,49 @@ export const useLibraryStore = defineStore('libraryStore', () => {
     }
   }
 
+  function updateItem(id, updates) {
+    const item = items.value.find((entry) => entry.id === id)
+    if (!item) {
+      return { updated: false, reason: 'not-found' }
+    }
+
+    const nextName = normalizeText(updates?.name ?? item.name) || 'Unnamed'
+    const nextFormulaStereo = Boolean(updates?.formulaStereo ?? item.formulaStereo)
+    const nextFormula = normalizeText(updates?.formula ?? item.formula)
+    const nextLeftFormula = normalizeText(updates?.leftFormula ?? item.leftFormula)
+    const nextRightFormula = normalizeText(updates?.rightFormula ?? item.rightFormula)
+    const nextNameKey = normalizeName(nextName)
+    const nextFormulaFingerprint = getFormulaFingerprint({
+      formula: nextFormula,
+      leftFormula: nextLeftFormula,
+      rightFormula: nextRightFormula,
+      formulaStereo: nextFormulaStereo
+    })
+
+    const hasDuplicateName = items.value.some((entry) => {
+      return entry.id !== id && normalizeName(entry.name) === nextNameKey
+    })
+    if (hasDuplicateName) {
+      return { updated: false, reason: 'duplicate-name' }
+    }
+
+    const hasDuplicateFormula = items.value.some((entry) => {
+      return entry.id !== id && getFormulaFingerprint(entry) === nextFormulaFingerprint
+    })
+    if (hasDuplicateFormula) {
+      return { updated: false, reason: 'duplicate-formula' }
+    }
+
+    item.name = nextName
+    item.formulaStereo = nextFormulaStereo
+    item.formula = nextFormulaStereo ? '' : nextFormula
+    item.leftFormula = nextFormulaStereo ? nextLeftFormula : ''
+    item.rightFormula = nextFormulaStereo ? nextRightFormula : ''
+    persist()
+
+    return { updated: true, item }
+  }
+
   function replaceItems(nextItems) {
     if (!Array.isArray(nextItems)) {
       return
@@ -144,6 +187,7 @@ export const useLibraryStore = defineStore('libraryStore', () => {
     removeItem,
     renameItem,
     updateItemFormula,
+    updateItem,
     replaceItems,
     clearItems,
     resetToDefaultItems

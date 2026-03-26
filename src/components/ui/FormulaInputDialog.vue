@@ -142,7 +142,7 @@
     <template #footer>
       <div class="flex w-full items-end justify-between gap-4">
         <div
-          v-if="missingAutoVariableTrackNames.length"
+          v-if="showVariableInitializers && missingAutoVariableTrackNames.length"
           class="flex min-w-0 flex-wrap items-end gap-3"
         >
           <label
@@ -174,7 +174,7 @@
         </div>
 
         <div class="ml-auto flex justify-end gap-2">
-          <Button :disabled="!formulaValid" @click="emitDraft()">Eval</Button>
+          <Button v-if="showEval" :disabled="!formulaValid" @click="emitDraft()">Eval</Button>
           <Button :disabled="!formulaValid" variant="primary" @click="emitSave()">Save</Button>
         </div>
       </div>
@@ -224,6 +224,14 @@ const props = defineProps({
     default: ''
   },
   showName: {
+    type: Boolean,
+    default: true
+  },
+  showEval: {
+    type: Boolean,
+    default: true
+  },
+  showVariableInitializers: {
     type: Boolean,
     default: true
   },
@@ -474,10 +482,19 @@ function handleEvalShortcut() {
     return
   }
 
-  emitDraft()
+  if (props.showEval) {
+    emitDraft()
+    return
+  }
+
+  emitSave()
 }
 
 function collectVariableInitializers() {
+  if (!props.showVariableInitializers) {
+    return {}
+  }
+
   return missingAutoVariableTrackNames.value.reduce((initializers, variableTrackName) => {
     initializers[variableTrackName] = getVariableInitializerDraft(variableTrackName)
     return initializers

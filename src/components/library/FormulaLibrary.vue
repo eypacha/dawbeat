@@ -143,7 +143,15 @@
                 </template>
               </span>
             </button>
-            <div class="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <div class="flex shrink-0 flex-col items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+              <button
+                class="flex h-6 w-6 items-center justify-center rounded border border-zinc-700 bg-zinc-950/80 text-zinc-400 transition hover:border-sky-500/50 hover:text-sky-200"
+                type="button"
+                title="Edit formula"
+                @click="openEditDialog(item)"
+              >
+                <Pencil class="h-3.5 w-3.5" />
+              </button>
               <button
                 class="flex h-6 w-6 items-center justify-center rounded border border-zinc-700 bg-zinc-950/80 text-zinc-400 transition hover:border-red-500/50 hover:text-red-200"
                 type="button"
@@ -158,13 +166,30 @@
       </div>
     </div>
   </Panel>
+
+  <FormulaInputDialog
+    :initial-name="editingItem.name"
+    :initial-left-value="editingItem.leftFormula"
+    :initial-right-value="editingItem.rightFormula"
+    :initial-stereo="editingItem.formulaStereo"
+    :initial-value="editingItem.formula"
+    :show-eval="false"
+    :show-variable-initializers="false"
+    :visible="isEditDialogVisible"
+    label="Formula"
+    title="Edit Library Formula"
+    @close="closeEditDialog"
+    @save="saveEditDialog"
+  />
 </template>
 
 <script setup>
 import { computed, reactive, ref } from 'vue'
-import { BookOpen, ChevronLeft, ChevronRight, GripVertical, Trash2 } from 'lucide-vue-next'
+import { BookOpen, ChevronLeft, ChevronRight, GripVertical, Pencil, Trash2 } from 'lucide-vue-next'
 import Panel from '@/components/ui/Panel.vue'
 import IconButton from '@/components/ui/IconButton.vue'
+import FormulaInputDialog from '@/components/ui/FormulaInputDialog.vue'
+import { enqueueSnackbar } from '@/services/notifications'
 import { useLibraryStore } from '@/stores/libraryStore'
 import { useDawStore } from '@/stores/dawStore'
 
@@ -191,6 +216,8 @@ const nameViewportElements = new Map()
 const nameContentElements = new Map()
 const nameMarqueeStyles = reactive({})
 const activeNameMarqueeId = ref(null)
+const isEditDialogVisible = ref(false)
+const editingItem = reactive(createEditingItemState())
 const filteredItems = computed(() => {
   const query = normalizedSearchQuery.value
   const sourceItems = query
@@ -286,6 +313,63 @@ function handleNameMouseLeave(id) {
 
 function deleteFormula(id) {
   libraryStore.removeItem(id)
+}
+
+function createEditingItemState() {
+  return {
+    id: null,
+    name: '',
+    formula: '',
+    leftFormula: '',
+    rightFormula: '',
+    formulaStereo: false
+  }
+}
+
+function resetEditingItem() {
+  Object.assign(editingItem, createEditingItemState())
+}
+
+function openEditDialog(item) {
+  Object.assign(editingItem, {
+    id: item.id,
+    name: item.name ?? '',
+    formula: item.formula ?? '',
+    leftFormula: item.leftFormula ?? '',
+    rightFormula: item.rightFormula ?? '',
+    formulaStereo: Boolean(item.formulaStereo)
+  })
+  isEditDialogVisible.value = true
+}
+
+function closeEditDialog() {
+  isEditDialogVisible.value = false
+  resetEditingItem()
+}
+
+function saveEditDialog(payload) {
+  if (!editingItem.id) {
+    return
+  }
+
+  const result = libraryStore.updateItem(editingItem.id, {
+    name: payload?.name,
+    formula: payload?.code,
+    leftFormula: payload?.leftCode,
+    rightFormula: payload?.rightCode,
+    formulaStereo: payload?.stereo
+  })
+
+  if (!result?.updated) {
+    const duplicateMessage = result?.reason === 'duplicate-name'
+      ? `"${payload?.name || editingItem.name}" already exists in Library (same name)`
+      : `"${payload?.name || editingItem.name}" already exists in Library (same formula)`
+    enqueueSnackbar(duplicateMessage, { variant: 'warning' })
+    return
+  }
+
+  enqueueSnackbar(`"${result.item.name}" updated in Library`, { variant: 'success' })
+  closeEditDialog()
 }
 
 function getItemFormulaText(item) {
