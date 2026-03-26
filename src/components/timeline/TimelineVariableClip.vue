@@ -1,7 +1,7 @@
 <template>
   <div
     class="timeline-variable-clip absolute inset-y-0 box-border overflow-hidden border px-1.5 py-0 text-left text-[10px] text-zinc-50 transition-colors"
-    :class="buttonClassName"
+    :class="[buttonClassName, isOutsideEditingGroup ? 'opacity-35 pointer-events-none' : '']"
     :style="clipStyle"
     :title="clipTitle"
     :data-clip-id="clip.id"
@@ -50,7 +50,7 @@ const props = defineProps({
 
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
-const { editingClipId, pixelsPerTick, selectedClipIds, variableTracks } = storeToRefs(dawStore)
+const { editingClipId, editingGroupId, pixelsPerTick, selectedClipIds, variableTracks } = storeToRefs(dawStore)
 const pendingShiftSelectionAction = ref(null)
 const MIN_CLIP_RENDER_TICKS = 0.5
 
@@ -67,10 +67,17 @@ const clipStyle = computed(() => ({
 }))
 
 const isEditing = computed(() => editingClipId.value === props.clip.id)
+const isOutsideEditingGroup = computed(() =>
+  Boolean(editingGroupId.value) && props.clip.groupId !== editingGroupId.value
+)
 const isSelected = computed(() => selectedClipIds.value.includes(props.clip.id))
 const isPartOfMultipleSelection = computed(() => isSelected.value && selectedClipIds.value.length > 1)
 
 function handleSelect(payload = {}) {
+  if (isOutsideEditingGroup.value) {
+    return
+  }
+
   if (ignoreNextClick.value) {
     return
   }
@@ -159,11 +166,56 @@ function handleEditStart() {
 
 function handleContextMenu(event) {
   handleSelect({ preserveMultiSelection: true })
+  const clipGroup = props.clip.groupId ? dawStore.getGroupById(props.clip.groupId) : null
+
+  if (clipGroup) {
+    openContextMenu({
+      x: event.clientX,
+      y: event.clientY,
+      items: [
+        {
+          action: 'edit-group',
+          groupId: clipGroup.id,
+          label: 'Edit'
+        },
+        {
+          action: 'rename-group',
+          groupId: clipGroup.id,
+          groupName: clipGroup.name,
+          label: 'Rename'
+        },
+        {
+          action: 'ungroup',
+          groupId: clipGroup.id,
+          label: 'Ungropu'
+        },
+        {
+          action: 'copy-group',
+          groupId: clipGroup.id,
+          label: 'Copy'
+        },
+        {
+          action: 'delete-group',
+          groupId: clipGroup.id,
+          label: 'Delete group'
+        }
+      ]
+    })
+    return
+  }
 
   openContextMenu({
     x: event.clientX,
     y: event.clientY,
     items: [
+      ...(selectedClipIds.value.length > 1
+        ? [
+            {
+              action: 'create-group-from-selection',
+              label: 'Group Selected Clips'
+            }
+          ]
+        : []),
       {
         action: 'copy-clip',
         clipId: props.clip.id,

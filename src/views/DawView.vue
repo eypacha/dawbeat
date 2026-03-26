@@ -115,6 +115,15 @@
       @confirm="confirmTimelineSectionLabel"
     />
 
+    <TextInputDialog
+      :initial-value="groupNameDialog.groupName"
+      label="Name"
+      title="Rename Group"
+      :visible="groupNameDialog.visible"
+      @cancel="closeGroupNameDialog"
+      @confirm="confirmGroupName"
+    />
+
     <ValueTrackerBindingDialog
       :initial-binding="valueTrackerTrackBindingDialog.binding"
       :track-name="valueTrackerTrackBindingDialog.trackName"
@@ -226,6 +235,11 @@ const timelineSectionLabelDialog = reactive({
   labelTime: 0,
   visible: false
 })
+const groupNameDialog = reactive({
+  groupId: null,
+  groupName: '',
+  visible: false
+})
 const valueTrackerDialogHistoryActive = ref(false)
 let disposeKeyboardShortcuts = null
 let disposeMidiClockTransport = null
@@ -238,6 +252,7 @@ const {
   audioReady,
   automationLanes,
   editingClipId,
+  editingGroup,
   selectedAutomationPoint,
   selectedClipId,
   selectedClipIds,
@@ -374,6 +389,11 @@ function toggleLibraryCollapsed() {
 
 function handleKeydown(event) {
   if (event.key === 'Escape') {
+    if (editingGroup.value) {
+      dawStore.exitGroupEdit()
+      return
+    }
+
     if (!editingClipId.value) {
       dawStore.clearClipSelection()
       dawStore.clearAutomationPointSelection()
@@ -504,6 +524,38 @@ function handleContextMenuSelect(action, item) {
 
   if (action === 'copy-clip') {
     dawStore.copyClip(item.clipId)
+    return
+  }
+
+  if (action === 'create-group-from-selection') {
+    dawStore.createGroup(item?.clipIds ?? dawStore.selectedClipIds)
+    return
+  }
+
+  if (action === 'edit-group') {
+    dawStore.enterGroupEdit(item.groupId)
+    return
+  }
+
+  if (action === 'rename-group') {
+    groupNameDialog.groupId = item.groupId ?? null
+    groupNameDialog.groupName = item.groupName ?? ''
+    groupNameDialog.visible = true
+    return
+  }
+
+  if (action === 'ungroup') {
+    dawStore.ungroup(item.groupId)
+    return
+  }
+
+  if (action === 'copy-group') {
+    dawStore.copyGroup(item.groupId)
+    return
+  }
+
+  if (action === 'delete-group') {
+    dawStore.deleteGroup(item.groupId)
     return
   }
 
@@ -679,6 +731,20 @@ function closeTimelineSectionLabelDialog() {
   timelineSectionLabelDialog.labelName = ''
   timelineSectionLabelDialog.labelTime = 0
   timelineSectionLabelDialog.visible = false
+}
+
+function closeGroupNameDialog() {
+  groupNameDialog.groupId = null
+  groupNameDialog.groupName = ''
+  groupNameDialog.visible = false
+}
+
+function confirmGroupName(nextName) {
+  if (groupNameDialog.groupId) {
+    dawStore.renameGroup(groupNameDialog.groupId, nextName)
+  }
+
+  closeGroupNameDialog()
 }
 
 function confirmTimelineSectionLabel(nextName) {

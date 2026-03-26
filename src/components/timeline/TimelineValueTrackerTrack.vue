@@ -2,6 +2,7 @@
   <div
     class="relative flex min-w-full w-max border-b border-zinc-800 bg-zinc-950/45"
     :data-clip-lane-id="valueTrackerTrack.id"
+    :data-timeline-clip-lane-index="clipLaneIndex"
     :data-value-tracker-track-id="valueTrackerTrack.id"
     :style="trackStyle"
   >
@@ -118,6 +119,10 @@ const props = defineProps({
   },
   timelineWidth: {
     type: String,
+    required: true
+  },
+  clipLaneIndex: {
+    type: Number,
     required: true
   },
   valueTrackerTrack: {

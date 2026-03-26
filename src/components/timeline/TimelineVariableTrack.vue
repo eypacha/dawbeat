@@ -2,6 +2,7 @@
   <div
     class="relative flex min-w-full w-max border-b border-zinc-800 bg-zinc-950/35"
     :data-clip-lane-id="variableTrack.name"
+    :data-timeline-clip-lane-index="clipLaneIndex"
     :data-variable-track-name="variableTrack.name"
   >
     <div
@@ -78,6 +79,10 @@ const props = defineProps({
   },
   timelineWidth: {
     type: String,
+    required: true
+  },
+  clipLaneIndex: {
+    type: Number,
     required: true
   },
   variableTrack: {

@@ -1,7 +1,7 @@
 <template>
   <div
     class="timeline-clip absolute inset-y-0 box-border overflow-hidden border px-2 py-1 text-left text-xs text-zinc-50 transition-colors"
-    :class="buttonClassName"
+    :class="[buttonClassName, isOutsideEditingGroup ? 'opacity-35 pointer-events-none' : '']"
     :style="clipStyle"
     :title="clipTitle"
     :data-clip-id="clip.id"
@@ -91,6 +91,7 @@ const props = defineProps({
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
 const {
+  editingGroupId,
   editingClipId,
   evalEffects,
   pixelsPerTick,
@@ -141,10 +142,17 @@ const clipStyle = computed(() => ({
 }))
 
 const isEditing = computed(() => editingClipId.value === props.clip.id)
+const isOutsideEditingGroup = computed(() =>
+  Boolean(editingGroupId.value) && props.clip.groupId !== editingGroupId.value
+)
 const isSelected = computed(() => selectedClipIds.value.includes(props.clip.id))
 const isPartOfMultipleSelection = computed(() => isSelected.value && selectedClipIds.value.length > 1)
 
 function handleSelect(payload = {}) {
+  if (isOutsideEditingGroup.value) {
+    return
+  }
+
   if (ignoreNextClick.value) {
     return
   }
@@ -233,8 +241,53 @@ function handleEditStart() {
 
 function handleContextMenu(event) {
   handleSelect({ preserveMultiSelection: true })
+  const clipGroup = props.clip.groupId ? dawStore.getGroupById(props.clip.groupId) : null
+
+  if (clipGroup) {
+    openContextMenu({
+      x: event.clientX,
+      y: event.clientY,
+      items: [
+        {
+          action: 'edit-group',
+          groupId: clipGroup.id,
+          label: 'Edit'
+        },
+        {
+          action: 'rename-group',
+          groupId: clipGroup.id,
+          groupName: clipGroup.name,
+          label: 'Rename'
+        },
+        {
+          action: 'ungroup',
+          groupId: clipGroup.id,
+          label: 'Ungropu'
+        },
+        {
+          action: 'copy-group',
+          groupId: clipGroup.id,
+          label: 'Copy'
+        },
+        {
+          action: 'delete-group',
+          groupId: clipGroup.id,
+          label: 'Delete group'
+        }
+      ]
+    })
+    return
+  }
 
   const items = [
+    ...(selectedClipIds.value.length > 1
+      ? [
+          {
+            action: 'create-group-from-selection',
+            label: 'Group Selected Clips'
+          }
+        ]
+      : []),
     {
       action: 'copy-clip',
       clipId: props.clip.id,

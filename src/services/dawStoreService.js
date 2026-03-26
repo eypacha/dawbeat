@@ -15,6 +15,7 @@ import {
   normalizeValueTrackerTrackName,
   normalizeValueTrackerValues
 } from '@/services/valueTrackerService'
+import { normalizeClipGroupId } from '@/services/groupService'
 
 export function createClipId() {
   if (globalThis.crypto?.randomUUID) {
@@ -221,7 +222,8 @@ export function createTrackClip(clip) {
   return {
     id: clip.id ?? createClipId(),
     ...clip,
-    ...formulaFields
+    ...formulaFields,
+    groupId: normalizeClipGroupId(clip.groupId)
   }
 }
 
@@ -241,6 +243,7 @@ export function createValueTrackerClip(clip = {}) {
     start: Number.isFinite(Number(clip.start)) ? Number(clip.start) : 0,
     duration,
     stepSubdivision,
+    groupId: normalizeClipGroupId(clip.groupId),
     values: normalizeValueTrackerValues(
       clip.values,
       duration,
@@ -252,6 +255,7 @@ export function createValueTrackerClip(clip = {}) {
 export function createDuplicateClip(sourceClip) {
   return {
     ...sourceClip,
+    groupId: null,
     values: Array.isArray(sourceClip?.values) ? [...sourceClip.values] : sourceClip?.values,
     id: createClipId()
   }

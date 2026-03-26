@@ -45,6 +45,7 @@ import {
   normalizeValueTrackerValues
 } from '@/services/valueTrackerService'
 import { DEFAULT_FORMULA_DROP_DURATION } from '@/services/timelineService'
+import { createGroupId, normalizeClipGroupId } from '@/services/groupService'
 import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
 import {
   createProjectFilenameFromTitle,
@@ -62,12 +63,12 @@ import {
 } from '@/utils/timeUtils'
 
 const PROJECT_STORAGE_KEY = 'dawbeat-project'
-const PROJECT_VERSION = 22
+const PROJECT_VERSION = 23
 const SAVE_DEBOUNCE_MS = 400
 const DEFAULT_LOOP_START = 0
 const DEFAULT_LOOP_END = 16
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
-const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, PROJECT_VERSION])
+const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, PROJECT_VERSION])
 
 export function serializeProject(state) {
   return normalizeProjectPayload({
@@ -76,6 +77,7 @@ export function serializeProject(state) {
     tracks: state.tracks,
     variableTracks: state.variableTracks,
     valueTrackerTracks: state.valueTrackerTracks,
+    groups: state.groups,
     zoom: state.zoom,
     loopStart: state.loopStart,
     loopEnd: state.loopEnd,
@@ -264,6 +266,14 @@ function normalizeProjectPayload(project) {
         )
         .filter(Boolean)
     : []
+  const groups = normalizeGroups(project.groups, tracks, variableTracks, valueTrackerTracks)
+  const clipGroupIdByClipId = new Map(
+    groups.flatMap((group) => group.clips.map((groupClip) => [groupClip.clipId, group.id]))
+  )
+
+  for (const clip of collectAllTimelineClips(tracks, variableTracks, valueTrackerTracks)) {
+    clip.groupId = clipGroupIdByClipId.get(clip.id) ?? null
+  }
   const evalEffects = hasOwn(project, 'evalEffects')
     ? normalizeEvalEffects(project.evalEffects)
     : [createStereoOffsetEvalEffect({ id: 'fx1' })]
@@ -315,6 +325,7 @@ function normalizeProjectPayload(project) {
     tracks,
     variableTracks,
     valueTrackerTracks,
+    groups,
     zoom: clamp(normalizeNumber(project.zoom, 1), MIN_ZOOM, MAX_ZOOM),
     loopStart,
     loopEnd,
@@ -468,6 +479,7 @@ function normalizeClip(clip) {
   return createTrackClip({
     id: typeof clip.id === 'string' && clip.id ? clip.id : undefined,
     ...formulaFields,
+    groupId: normalizeClipGroupId(clip.groupId),
     start: normalizeNonNegativeNumber(clip.start, 0),
     duration: normalizePositiveNumber(clip.duration, 4)
   })
@@ -481,6 +493,7 @@ function normalizeVariableClip(clip) {
   return createVariableTrackClip({
     id: typeof clip.id === 'string' && clip.id ? clip.id : undefined,
     formula: typeof clip.formula === 'string' ? clip.formula : undefined,
+    groupId: normalizeClipGroupId(clip.groupId),
     start: normalizeNonNegativeNumber(clip.start, 0),
     duration: normalizePositiveNumber(clip.duration, 4)
   })
@@ -504,11 +517,73 @@ function normalizeValueTrackerClip(clip, projectVersion) {
 
   return createValueTrackerClip({
     id: typeof clip.id === 'string' && clip.id ? clip.id : undefined,
+    groupId: normalizeClipGroupId(clip.groupId),
     start: normalizeNonNegativeNumber(clip.start, 0),
     duration,
     stepSubdivision,
     values
   })
+}
+
+function collectAllTimelineClips(tracks, variableTracks, valueTrackerTracks) {
+  return [
+    ...tracks.flatMap((track) => track?.clips ?? []),
+    ...variableTracks.flatMap((variableTrack) => variableTrack?.clips ?? []),
+    ...valueTrackerTracks.flatMap((valueTrackerTrack) => valueTrackerTrack?.clips ?? [])
+  ]
+}
+
+function normalizeGroups(groups, tracks, variableTracks, valueTrackerTracks) {
+  if (!Array.isArray(groups)) {
+    return []
+  }
+
+  const validClipIds = new Set(
+    collectAllTimelineClips(tracks, variableTracks, valueTrackerTracks).map((clip) => clip.id)
+  )
+  const assignedClipIds = new Set()
+  const normalizedGroups = []
+
+  for (const [groupIndex, group] of groups.entries()) {
+    if (!isRecord(group)) {
+      continue
+    }
+
+    const normalizedClips = []
+
+    for (const groupClip of Array.isArray(group.clips) ? group.clips : []) {
+      if (!isRecord(groupClip)) {
+        continue
+      }
+
+      const clipId = typeof groupClip.clipId === 'string' && groupClip.clipId
+      if (!clipId || !validClipIds.has(clipId) || assignedClipIds.has(clipId)) {
+        continue
+      }
+
+      assignedClipIds.add(clipId)
+      normalizedClips.push({
+        clipId,
+        timeOffset: normalizeNonNegativeNumber(groupClip.timeOffset, 0),
+        trackOffset: Math.max(0, Math.floor(normalizeNumber(groupClip.trackOffset, 0)))
+      })
+    }
+
+    if (!normalizedClips.length) {
+      continue
+    }
+
+    normalizedGroups.push({
+      id: typeof group.id === 'string' && group.id ? group.id : createGroupId(),
+      name: typeof group.name === 'string' && group.name.trim() ? group.name.trim() : `Group ${groupIndex + 1}`,
+      start: normalizeNonNegativeNumber(group.start, 0),
+      trackIndex: Math.max(0, Math.floor(normalizeNumber(group.trackIndex, 0))),
+      duration: normalizePositiveNumber(group.duration, 1),
+      clips: normalizedClips
+    })
+  }
+
+  return normalizedGroups
 }
 
 function normalizeAudioEffects(audioEffects) {

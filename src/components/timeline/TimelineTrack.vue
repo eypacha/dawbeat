@@ -3,6 +3,7 @@
     class="relative flex min-w-full w-max border-b border-zinc-800 last:border-b-0"
     :data-track-id="track.id"
     :data-clip-lane-id="track.id"
+    :data-timeline-clip-lane-index="clipLaneIndex"
     :style="trackColorStyle"
     @click="dawStore.selectTrack(track.id)"
   >
@@ -151,6 +152,10 @@ const props = defineProps({
     default: false
   },
   trackIndex: {
+    type: Number,
+    required: true
+  },
+  clipLaneIndex: {
     type: Number,
     required: true
   },

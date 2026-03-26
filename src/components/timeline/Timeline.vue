@@ -33,6 +33,20 @@
     </div>
 
     <div
+      v-if="editingGroup"
+      class="mb-3 flex items-center justify-between rounded-md border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-xs text-sky-100"
+    >
+      <span class="font-semibold">Editing Group: {{ editingGroup.name }}</span>
+      <button
+        class="rounded border border-sky-400/40 bg-zinc-950/70 px-2 py-1 text-[11px] text-sky-100 hover:border-sky-300"
+        type="button"
+        @click="dawStore.exitGroupEdit()"
+      >
+        Exit
+      </button>
+    </div>
+
+    <div
       ref="scrollContainer"
       class="flex-1 overflow-auto border border-zinc-800 bg-zinc-950/80"
       data-timeline-scroll-container="true"
@@ -103,17 +117,39 @@
           :style="marqueeSelectionStyle"
         />
 
+        <div
+          v-for="groupVisual in groupVisuals"
+          :key="groupVisual.id"
+          class="pointer-events-none absolute z-20 border border-dashed"
+          :class="groupVisual.isEditing ? 'border-sky-300/80 bg-sky-500/10' : 'border-zinc-300/35 bg-zinc-200/5'"
+          :style="groupVisual.style"
+        >
+          <button
+            class="pointer-events-auto absolute left-1 top-1 inline-flex max-w-[calc(100%-8px)] items-center truncate rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]"
+            :class="groupVisual.isEditing ? 'border-sky-300/70 bg-zinc-900/90 text-sky-100' : 'border-zinc-400/45 bg-zinc-900/85 text-zinc-200 hover:border-zinc-300/60'"
+            data-context-menu-enabled="true"
+            type="button"
+            @click.stop="handleGroupHeaderClick(groupVisual.id)"
+            @contextmenu.stop.prevent="handleGroupContextMenu($event, groupVisual.id)"
+            @pointerdown.stop="handleGroupPointerDown($event, groupVisual.id)"
+          >
+            {{ groupVisual.name }}
+          </button>
+        </div>
+
         <TimelineVariableTrack
-          v-for="variableTrack in variableTracks"
+          v-for="(variableTrack, variableTrackIndex) in variableTracks"
           :key="variableTrack.name"
+          :clip-lane-index="variableTrackIndex"
           :track-label-width="trackLabelWidth"
           :timeline-width="timelineWidthStyle"
           :variable-track="variableTrack"
         />
 
         <TimelineValueTrackerTrack
-          v-for="valueTrackerTrack in valueTrackerTracks"
+          v-for="(valueTrackerTrack, valueTrackerTrackIndex) in valueTrackerTracks"
           :key="valueTrackerTrack.id"
+          :clip-lane-index="variableTracks.length + valueTrackerTrackIndex"
           :track-label-width="trackLabelWidth"
           :timeline-width="timelineWidthStyle"
           :value-tracker-track="valueTrackerTrack"
@@ -122,6 +158,7 @@
         <TimelineTrack
           v-for="(track, index) in tracks"
           :key="track.id"
+          :clip-lane-index="variableTracks.length + valueTrackerTracks.length + index"
           :is-track-reorder-source="draggingTrackId === track.id"
           :track-label-width="trackLabelWidth"
           :track-index="index"
@@ -183,13 +220,14 @@ const FIXED_TIMELINE_TICKS = 256
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
 const { seekToTime } = useTransportPlayback()
-const { automationLanes, editingClipId, loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, tickSize, time, timelineAutoscrollEnabled, timelineSectionLabels, tracks, valueTrackerTracks, variableTracks } =
+const { automationLanes, editingClipId, editingGroup, groups, loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, selectedClipIds, tickSize, time, timelineAutoscrollEnabled, timelineSectionLabels, tracks, valueTrackerTracks, variableTracks } =
   storeToRefs(dawStore)
 const scrollContainer = ref(null)
 const timelineSurfaceElement = ref(null)
 const draggingTrackId = ref(null)
 const trackDropTarget = ref(null)
 let scrubPointerId = null
+const groupDragState = ref(null)
 
 const {
   active: marqueeSelectionActive,
@@ -229,6 +267,56 @@ const rulerStyle = computed(() => ({
   backgroundImage: 'linear-gradient(to right, rgba(63, 63, 70, 0.5) 1px, transparent 1px)',
   backgroundSize: `${ticksToPixels(visibleTickStep.value, pixelsPerTick.value)}px 100%`
 }))
+const clipLaneMetrics = computed(() => {
+  const clipLaneHeights = [
+    ...variableTracks.value.map((entry) => Number(entry?.height) || 44),
+    ...valueTrackerTracks.value.map((entry) => Number(entry?.height) || 64),
+    ...tracks.value.map((entry) => Number(entry?.height) || 80)
+  ]
+  let top = 0
+
+  return clipLaneHeights.map((height, index) => {
+    const metric = {
+      height,
+      index,
+      top
+    }
+
+    top += height
+    return metric
+  })
+})
+const selectedClipIdSet = computed(() => new Set(selectedClipIds.value))
+const groupVisuals = computed(() => {
+  return groups.value
+    .map((group) => {
+      const maxTrackOffset = Math.max(0, ...(group.clips ?? []).map((groupClip) => groupClip.trackOffset ?? 0))
+      const firstMetric = clipLaneMetrics.value[group.trackIndex]
+      const lastMetric = clipLaneMetrics.value[group.trackIndex + maxTrackOffset]
+
+      if (!firstMetric || !lastMetric) {
+        return null
+      }
+
+      const top = firstMetric.top
+      const height = (lastMetric.top + lastMetric.height) - firstMetric.top
+      const selectedClipCount = (group.clips ?? []).filter((entry) => selectedClipIdSet.value.has(entry.clipId)).length
+
+      return {
+        id: group.id,
+        isEditing: editingGroup.value?.id === group.id,
+        isSelected: selectedClipCount > 0 && selectedClipCount === (group.clips?.length ?? 0),
+        name: group.name,
+        style: {
+          left: `${trackLabelWidth.value + ticksToPixels(group.start, pixelsPerTick.value)}px`,
+          top: `${top}px`,
+          width: `${Math.max(1, ticksToPixels(group.duration, pixelsPerTick.value))}px`,
+          height: `${Math.max(1, height)}px`
+        }
+      }
+    })
+    .filter(Boolean)
+})
 
 function getPlayheadOffset(timeTicks, pixelsPerTickValue = pixelsPerTick.value) {
   return trackLabelWidth.value + ticksToPixels(timeTicks, pixelsPerTickValue)
@@ -421,6 +509,169 @@ function cleanupTrackReorder() {
   trackDropTarget.value = null
 }
 
+function getGroupById(groupId) {
+  return groups.value.find((group) => group.id === groupId) ?? null
+}
+
+function handleGroupHeaderClick(groupId) {
+  const group = getGroupById(groupId)
+
+  if (!group) {
+    return
+  }
+
+  dawStore.setSelectedClips((group.clips ?? []).map((entry) => entry.clipId))
+}
+
+function handleGroupContextMenu(event, groupId) {
+  const group = getGroupById(groupId)
+
+  if (!group) {
+    return
+  }
+
+  openContextMenu({
+    x: event.clientX,
+    y: event.clientY,
+    items: [
+      {
+        action: 'edit-group',
+        groupId,
+        label: 'Edit'
+      },
+      {
+        action: 'rename-group',
+        groupId,
+        groupName: group.name,
+        label: 'Rename'
+      },
+      {
+        action: 'ungroup',
+        groupId,
+        label: 'Ungropu'
+      },
+      {
+        action: 'copy-group',
+        groupId,
+        label: 'Copy'
+      },
+      {
+        action: 'delete-group',
+        groupId,
+        label: 'Delete group'
+      }
+    ]
+  })
+}
+
+function handleGroupPointerDown(event, groupId) {
+  if (event.button !== 0) {
+    return
+  }
+
+  const group = getGroupById(groupId)
+
+  if (!group) {
+    return
+  }
+
+  event.preventDefault()
+  handleGroupHeaderClick(groupId)
+
+  const pointerLaneIndex = getLaneIndexFromClientY(event.clientY)
+
+  dawStore.beginHistoryTransaction('move-group')
+  groupDragState.value = {
+    groupId,
+    pointerStartLaneIndex: pointerLaneIndex,
+    startClientX: event.clientX,
+    startStart: group.start,
+    startTrackIndex: group.trackIndex,
+    transactionActive: Boolean(dawStore.historyTransaction)
+  }
+
+  window.addEventListener('pointermove', handleGroupPointerMove)
+  window.addEventListener('pointerup', handleGroupPointerUp)
+  window.addEventListener('pointercancel', handleGroupPointerCancel)
+}
+
+function handleGroupPointerMove(event) {
+  if (!groupDragState.value) {
+    return
+  }
+
+  const shouldSnap = dawStore.snapToGridEnabled && event.shiftKey !== true
+  const deltaX = event.clientX - groupDragState.value.startClientX
+  const deltaTicks = deltaX / pixelsPerTick.value
+  const targetLaneIndex = getLaneIndexFromClientY(event.clientY)
+  const laneDelta = targetLaneIndex - groupDragState.value.pointerStartLaneIndex
+
+  dawStore.moveGroup(
+    groupDragState.value.groupId,
+    groupDragState.value.startStart + deltaTicks,
+    groupDragState.value.startTrackIndex + laneDelta,
+    shouldSnap
+  )
+}
+
+function handleGroupPointerUp() {
+  if (!groupDragState.value) {
+    return
+  }
+
+  if (groupDragState.value.transactionActive) {
+    dawStore.commitHistoryTransaction()
+  }
+
+  cleanupGroupDrag()
+}
+
+function handleGroupPointerCancel() {
+  if (!groupDragState.value) {
+    return
+  }
+
+  dawStore.moveGroup(
+    groupDragState.value.groupId,
+    groupDragState.value.startStart,
+    groupDragState.value.startTrackIndex,
+    false
+  )
+
+  if (groupDragState.value.transactionActive) {
+    dawStore.cancelHistoryTransaction()
+  }
+
+  cleanupGroupDrag()
+}
+
+function cleanupGroupDrag() {
+  groupDragState.value = null
+  window.removeEventListener('pointermove', handleGroupPointerMove)
+  window.removeEventListener('pointerup', handleGroupPointerUp)
+  window.removeEventListener('pointercancel', handleGroupPointerCancel)
+}
+
+function getLaneIndexFromClientY(clientY) {
+  const surfaceRect = timelineSurfaceElement.value?.getBoundingClientRect()
+
+  if (!surfaceRect || !clipLaneMetrics.value.length) {
+    return 0
+  }
+
+  const relativeY = Math.max(0, clientY - surfaceRect.top)
+
+  for (const laneMetric of clipLaneMetrics.value) {
+    const laneEnd = laneMetric.top + laneMetric.height
+
+    if (relativeY < laneEnd) {
+      return laneMetric.index
+    }
+  }
+
+  return clipLaneMetrics.value[clipLaneMetrics.value.length - 1].index
+}
+
 async function handleZoomCommand(event) {
   const command = event?.detail?.command
 
@@ -482,6 +733,7 @@ watch(time, (nextTime) => {
 
 onBeforeUnmount(() => {
   cleanupTrackReorder()
+  cleanupGroupDrag()
   scrubPointerId = null
   window.removeEventListener('dawbeat:timeline-zoom-command', handleZoomCommand)
   window.removeEventListener('pointermove', handleScrubPointerMove)

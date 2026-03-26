@@ -32,6 +32,7 @@ import {
   sortValueTrackerTrackClips,
   sortVariableTrackClips
 } from '@/services/dawStoreService'
+import { createGroupId, generateGroupName } from '@/services/groupService'
 import {
   createAudioEffect,
   createDistortionAudioEffect,
@@ -161,6 +162,7 @@ function createEmptyProject() {
     tracks: [createTrack()],
     variableTracks: [],
     valueTrackerTracks: [],
+    groups: [],
     zoom: 1
   }
 }
@@ -221,6 +223,7 @@ function createInitialState() {
     evalEffects: project.evalEffects,
     projectTitle: project.projectTitle,
     editingClipId: null,
+    editingGroupId: null,
     loopEnabled: project.loopEnabled,
     loopStart: project.loopStart,
     loopEnd: project.loopEnd,
@@ -239,6 +242,7 @@ function createInitialState() {
     tracks: project.tracks,
     variableTracks: project.variableTracks,
     valueTrackerTracks: project.valueTrackerTracks,
+    groups: project.groups ?? [],
     historyApplying: false,
     historyFuture: [],
     historyPast: [],
@@ -265,6 +269,7 @@ function clearTransientSelectionState(store) {
   store.automationRecordingArmed = false
   store.clipDragPreview = null
   store.editingClipId = null
+  store.editingGroupId = null
   store.selectedAutomationPoint = null
   store.selectedTrackId = null
   store.selectedTimelineSectionLabelId = null
@@ -418,6 +423,7 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   store.tracks = normalizedProject.tracks
   store.variableTracks = normalizedProject.variableTracks
   store.valueTrackerTracks = normalizedProject.valueTrackerTracks
+  store.groups = normalizedProject.groups ?? []
   store.formulaAnalysisCache = {}
   clearTransientSelectionState(store)
   store.playing = nextPlaying
@@ -747,6 +753,115 @@ function getClipboardSourceLaneIdSet(clipboard, laneType) {
   )
 }
 
+function getClipLanesInOrder(tracks, variableTracks, valueTrackerTracks) {
+  return [
+    ...variableTracks.map((lane, index) => ({
+      lane,
+      laneId: lane.name,
+      laneType: 'variable',
+      trackIndex: index
+    })),
+    ...valueTrackerTracks.map((lane, index) => ({
+      lane,
+      laneId: lane.id,
+      laneType: 'valueTracker',
+      trackIndex: variableTracks.length + index
+    })),
+    ...tracks.map((lane, index) => ({
+      lane,
+      laneId: lane.id,
+      laneType: 'track',
+      trackIndex: variableTracks.length + valueTrackerTracks.length + index
+    }))
+  ]
+}
+
+function getClipLaneIndexById(tracks, variableTracks, valueTrackerTracks) {
+  const laneIndexById = new Map()
+
+  for (const laneEntry of getClipLanesInOrder(tracks, variableTracks, valueTrackerTracks)) {
+    laneIndexById.set(`${laneEntry.laneType}:${laneEntry.laneId}`, laneEntry.trackIndex)
+  }
+
+  return laneIndexById
+}
+
+function getSelectedClipEntriesWithTrackIndex(tracks, variableTracks, valueTrackerTracks, clipIds) {
+  const laneIndexById = getClipLaneIndexById(tracks, variableTracks, valueTrackerTracks)
+
+  return collectSelectedClipEntries(tracks, variableTracks, valueTrackerTracks, clipIds)
+    .map((entry) => ({
+      ...entry,
+      trackIndex: laneIndexById.get(`${entry.laneType}:${entry.laneId}`)
+    }))
+    .filter((entry) => Number.isInteger(entry.trackIndex))
+}
+
+function getGroupById(groups, groupId) {
+  if (!Array.isArray(groups) || typeof groupId !== 'string' || !groupId) {
+    return null
+  }
+
+  return groups.find((group) => group.id === groupId) ?? null
+}
+
+function getGroupClipIds(group) {
+  return Array.isArray(group?.clips)
+    ? group.clips
+        .map((groupClip) => groupClip?.clipId)
+        .filter((clipId) => typeof clipId === 'string' && clipId)
+    : []
+}
+
+function filterClipIdsByEditingGroup(store, clipIds) {
+  const normalizedClipIds = normalizeSelectedClipIds(clipIds)
+
+  if (!store.editingGroupId) {
+    return normalizedClipIds
+  }
+
+  return normalizedClipIds.filter((clipId) => {
+    const result = findTimelineClip(store.tracks, store.variableTracks, store.valueTrackerTracks, clipId)
+    return result?.clip?.groupId === store.editingGroupId
+  })
+}
+
+function syncGroupsAfterClipRemoval(store, removedClipIds = []) {
+  const removedClipIdSet = new Set(normalizeSelectedClipIds(removedClipIds))
+
+  if (!removedClipIdSet.size || !Array.isArray(store.groups) || !store.groups.length) {
+    return []
+  }
+
+  const nextGroups = []
+  const touchedGroupIds = []
+
+  for (const group of store.groups) {
+    const nextGroupClips = (group.clips ?? []).filter((groupClip) => !removedClipIdSet.has(groupClip.clipId))
+
+    if (nextGroupClips.length !== (group.clips ?? []).length) {
+      touchedGroupIds.push(group.id)
+    }
+
+    if (!nextGroupClips.length) {
+      continue
+    }
+
+    nextGroups.push({
+      ...group,
+      clips: nextGroupClips
+    })
+  }
+
+  store.groups = nextGroups
+
+  if (store.editingGroupId && !getGroupById(store.groups, store.editingGroupId)) {
+    store.editingGroupId = null
+  }
+
+  return touchedGroupIds
+}
+
 export const useDawStore = defineStore('dawStore', {
   state: createInitialState,
 
@@ -774,7 +889,9 @@ export const useDawStore = defineStore('dawStore', {
       typeof cacheKey === 'string' && cacheKey ? state.formulaAnalysisCache[cacheKey] ?? null : null,
     pixelsPerTick: (state) => BASE_PIXELS_PER_TICK * state.zoom,
     canRedo: (state) => state.historyFuture.length > 0,
-    canUndo: (state) => state.historyPast.length > 0
+    canUndo: (state) => state.historyPast.length > 0,
+    getGroupById: (state) => (groupId) => getGroupById(state.groups, groupId),
+    editingGroup: (state) => getGroupById(state.groups, state.editingGroupId)
   },
 
   actions: {
@@ -2023,12 +2140,301 @@ export const useDawStore = defineStore('dawStore', {
       this.clipClipboard = null
     },
 
+    recalculateGroupBounds(groupId) {
+      const group = this.getGroupById(groupId)
+
+      if (!group) {
+        return false
+      }
+
+      const entries = getSelectedClipEntriesWithTrackIndex(
+        this.tracks,
+        this.variableTracks,
+        this.valueTrackerTracks,
+        getGroupClipIds(group)
+      )
+
+      if (!entries.length) {
+        return false
+      }
+
+      const minStart = Math.min(...entries.map((entry) => entry.clip.start))
+      const maxEnd = Math.max(...entries.map((entry) => getClipEnd(entry.clip)))
+      const minTrackIndex = Math.min(...entries.map((entry) => entry.trackIndex))
+
+      group.start = minStart
+      group.duration = maxEnd - minStart
+      group.trackIndex = minTrackIndex
+      group.clips = entries.map((entry) => ({
+        clipId: entry.clipId,
+        timeOffset: entry.clip.start - minStart,
+        trackOffset: entry.trackIndex - minTrackIndex
+      }))
+      return true
+    },
+
+    createGroup(clipIds = this.selectedClipIds) {
+      return this.recordHistoryStep('create-group', () => {
+        const selectedEntries = getSelectedClipEntriesWithTrackIndex(
+          this.tracks,
+          this.variableTracks,
+          this.valueTrackerTracks,
+          clipIds
+        )
+
+        if (selectedEntries.length < 2) {
+          return null
+        }
+
+        const nextGroupId = createGroupId()
+        const minStart = Math.min(...selectedEntries.map((entry) => entry.clip.start))
+        const maxEnd = Math.max(...selectedEntries.map((entry) => getClipEnd(entry.clip)))
+        const minTrackIndex = Math.min(...selectedEntries.map((entry) => entry.trackIndex))
+
+        for (const entry of selectedEntries) {
+          if (entry.clip.groupId && entry.clip.groupId !== nextGroupId) {
+            this.ungroup(entry.clip.groupId)
+          }
+
+          entry.clip.groupId = nextGroupId
+        }
+
+        this.groups.push({
+          id: nextGroupId,
+          name: generateGroupName(this.groups),
+          start: minStart,
+          trackIndex: minTrackIndex,
+          duration: maxEnd - minStart,
+          clips: selectedEntries.map((entry) => ({
+            clipId: entry.clipId,
+            timeOffset: entry.clip.start - minStart,
+            trackOffset: entry.trackIndex - minTrackIndex
+          }))
+        })
+
+        this.setSelectedClips(selectedEntries.map((entry) => entry.clipId))
+        return nextGroupId
+      })
+    },
+
+    moveGroup(groupId, newStart, newTrackIndex, shouldSnap = true) {
+      const group = this.getGroupById(groupId)
+
+      if (!group) {
+        return false
+      }
+
+      const entries = getSelectedClipEntriesWithTrackIndex(
+        this.tracks,
+        this.variableTracks,
+        this.valueTrackerTracks,
+        getGroupClipIds(group)
+      )
+
+      if (!entries.length) {
+        return false
+      }
+
+      const lanesInOrder = getClipLanesInOrder(this.tracks, this.variableTracks, this.valueTrackerTracks)
+      const laneByIndex = new Map(lanesInOrder.map((laneEntry) => [laneEntry.trackIndex, laneEntry]))
+      const nextStart = getDraggedTick(newStart, shouldSnap, this.snapSubdivision)
+      const timeDelta = nextStart - group.start
+      const nextTrackIndexValue = Math.max(0, Math.floor(Number(newTrackIndex) || 0))
+      const trackDelta = nextTrackIndexValue - group.trackIndex
+
+      if (trackDelta !== 0) {
+        for (const entry of entries) {
+          const targetLane = laneByIndex.get(entry.trackIndex + trackDelta)
+
+          if (!targetLane || targetLane.laneType !== entry.laneType) {
+            return false
+          }
+        }
+      }
+
+      for (const entry of entries) {
+        entry.clip.start += timeDelta
+      }
+
+      if (trackDelta !== 0) {
+        const clipsBySourceLane = new Map()
+
+        for (const entry of entries) {
+          const sourceKey = `${entry.laneType}:${entry.laneId}`
+
+          if (!clipsBySourceLane.has(sourceKey)) {
+            clipsBySourceLane.set(sourceKey, {
+              laneType: entry.laneType,
+              sourceLane: entry.lane,
+              clips: []
+            })
+          }
+
+          clipsBySourceLane.get(sourceKey).clips.push(entry.clip)
+        }
+
+        for (const sourceLaneEntry of clipsBySourceLane.values()) {
+          sourceLaneEntry.sourceLane.clips = sourceLaneEntry.sourceLane.clips.filter(
+            (clip) => !sourceLaneEntry.clips.includes(clip)
+          )
+        }
+
+        for (const entry of entries) {
+          const targetLane = laneByIndex.get(entry.trackIndex + trackDelta)
+          targetLane.lane.clips.push(entry.clip)
+        }
+      }
+
+      for (const laneEntry of lanesInOrder) {
+        sortLaneClips(laneEntry)
+      }
+
+      this.recalculateGroupBounds(groupId)
+      this.setSelectedClips(getGroupClipIds(this.getGroupById(groupId)))
+      return true
+    },
+
+    renameGroup(groupId, name) {
+      return this.recordHistoryStep('rename-group', () => {
+        const group = this.getGroupById(groupId)
+
+        if (!group || typeof name !== 'string') {
+          return false
+        }
+
+        const nextName = name.trim()
+
+        if (!nextName) {
+          return false
+        }
+
+        group.name = nextName
+        return true
+      })
+    },
+
+    copyGroup(groupId) {
+      const group = this.getGroupById(groupId)
+
+      if (!group) {
+        return false
+      }
+
+      const groupClipIds = getGroupClipIds(group)
+      const selectedClipEntries = collectSelectedClipEntries(
+        this.tracks,
+        this.variableTracks,
+        this.valueTrackerTracks,
+        groupClipIds
+      )
+      const nextClipboard = buildClipClipboard(
+        selectedClipEntries,
+        this.tracks,
+        this.variableTracks,
+        this.valueTrackerTracks
+      )
+
+      if (!nextClipboard) {
+        return false
+      }
+
+      this.clipClipboard = nextClipboard
+      this.setSelectedClips(groupClipIds)
+      return true
+    },
+
+    deleteGroup(groupId) {
+      return this.recordHistoryStep('delete-group', () => {
+        const group = this.getGroupById(groupId)
+
+        if (!group) {
+          return false
+        }
+
+        const groupClipIds = getGroupClipIds(group)
+
+        for (const clipId of groupClipIds) {
+          const result = findTimelineClip(this.tracks, this.variableTracks, this.valueTrackerTracks, clipId)
+
+          if (!result) {
+            continue
+          }
+
+          result.lane.clips.splice(result.clipIndex, 1)
+        }
+
+        this.groups = this.groups.filter((entry) => entry.id !== groupId)
+
+        if (this.editingGroupId === groupId) {
+          this.editingGroupId = null
+        }
+
+        if (groupClipIds.includes(this.editingClipId)) {
+          this.editingClipId = null
+        }
+
+        this.setSelectedClips(
+          this.selectedClipIds.filter((selectedClipId) => !groupClipIds.includes(selectedClipId))
+        )
+
+        return true
+      })
+    },
+
+    ungroup(groupId) {
+      return this.recordHistoryStep('ungroup', () => {
+        const group = this.getGroupById(groupId)
+
+        if (!group) {
+          return false
+        }
+
+        const clipIdSet = new Set(getGroupClipIds(group))
+
+        for (const clipId of clipIdSet) {
+          const result = findTimelineClip(this.tracks, this.variableTracks, this.valueTrackerTracks, clipId)
+
+          if (result?.clip) {
+            result.clip.groupId = null
+          }
+        }
+
+        this.groups = this.groups.filter((entry) => entry.id !== groupId)
+
+        if (this.editingGroupId === groupId) {
+          this.editingGroupId = null
+        }
+
+        return true
+      })
+    },
+
+    enterGroupEdit(groupId) {
+      const group = this.getGroupById(groupId)
+
+      if (!group) {
+        return false
+      }
+
+      this.editingGroupId = groupId
+      this.setSelectedClips(getGroupClipIds(group))
+      this.selectedTrackId = null
+      this.selectedTimelineSectionLabelId = null
+      this.selectedAutomationPoint = null
+      return true
+    },
+
+    exitGroupEdit() {
+      this.editingGroupId = null
+      return true
+    },
+
     setSelectedClips(clipIds) {
-      syncSelectedClipState(this, clipIds)
+      syncSelectedClipState(this, filterClipIdsByEditingGroup(this, clipIds))
     },
 
     addSelectedClip(clipId) {
-      syncSelectedClipState(this, [...this.selectedClipIds, clipId])
+      syncSelectedClipState(this, filterClipIdsByEditingGroup(this, [...this.selectedClipIds, clipId]))
     },
 
     removeSelectedClip(clipId) {
@@ -2434,6 +2840,11 @@ export const useDawStore = defineStore('dawStore', {
 
         const [removedVariableTrack] = this.variableTracks.splice(variableTrackIndex, 1)
         const removedClipIds = new Set(removedVariableTrack.clips.map((clip) => clip.id))
+        const touchedGroupIds = syncGroupsAfterClipRemoval(this, [...removedClipIds])
+
+        for (const groupId of touchedGroupIds) {
+          this.recalculateGroupBounds(groupId)
+        }
 
         this.setSelectedClips(
           this.selectedClipIds.filter((selectedClipId) => !removedClipIds.has(selectedClipId))
@@ -2483,6 +2894,11 @@ export const useDawStore = defineStore('dawStore', {
 
         const [removedValueTrackerTrack] = this.valueTrackerTracks.splice(valueTrackerTrackIndex, 1)
         const removedClipIds = new Set(removedValueTrackerTrack.clips.map((clip) => clip.id))
+        const touchedGroupIds = syncGroupsAfterClipRemoval(this, [...removedClipIds])
+
+        for (const groupId of touchedGroupIds) {
+          this.recalculateGroupBounds(groupId)
+        }
 
         if (this.selectedValueTrackerTrackId === removedValueTrackerTrack.id) {
           this.selectedValueTrackerTrackId = null
@@ -2541,6 +2957,11 @@ export const useDawStore = defineStore('dawStore', {
         }
 
         const removedClipIds = new Set(removedTrack.clips.map((clip) => clip.id))
+        const touchedGroupIds = syncGroupsAfterClipRemoval(this, [...removedClipIds])
+
+        for (const groupId of touchedGroupIds) {
+          this.recalculateGroupBounds(groupId)
+        }
         this.setSelectedClips(
           this.selectedClipIds.filter((selectedClipId) => !removedClipIds.has(selectedClipId))
         )
@@ -2866,6 +3287,10 @@ export const useDawStore = defineStore('dawStore', {
 
       const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       clip.start = clampClipStart(track, clipId, snappedStart)
+
+      if (clip.groupId) {
+        this.recalculateGroupBounds(clip.groupId)
+      }
     },
 
     moveVariableClip(variableTrackName, clipId, nextStart, shouldSnap = true) {
@@ -2883,6 +3308,10 @@ export const useDawStore = defineStore('dawStore', {
 
       const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       clip.start = clampClipStart(variableTrack, clipId, snappedStart)
+
+      if (clip.groupId) {
+        this.recalculateGroupBounds(clip.groupId)
+      }
     },
 
     moveValueTrackerClip(valueTrackerTrackId, clipId, nextStart, shouldSnap = true) {
@@ -2900,6 +3329,10 @@ export const useDawStore = defineStore('dawStore', {
 
       const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       clip.start = clampClipStart(valueTrackerTrack, clipId, snappedStart)
+
+      if (clip.groupId) {
+        this.recalculateGroupBounds(clip.groupId)
+      }
     },
 
     moveSelectedClips(anchorClipId, nextStart, shouldSnap = true) {
@@ -2946,10 +3379,15 @@ export const useDawStore = defineStore('dawStore', {
 
       const clampedDelta = Math.max(minDelta, Math.min(desiredDelta, maxDelta))
       const touchedLaneEntries = new Map()
+      const touchedGroupIds = new Set()
 
       for (const entry of selectedClipEntries) {
         entry.clip.start += clampedDelta
         touchedLaneEntries.set(`${entry.laneType}:${entry.laneId}`, entry)
+
+        if (entry.clip.groupId) {
+          touchedGroupIds.add(entry.clip.groupId)
+        }
       }
 
       for (const touchedLaneEntry of touchedLaneEntries.values()) {
@@ -2957,6 +3395,10 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       this.selectedTrackId = anchorEntry.laneType === 'track' ? anchorEntry.laneId : null
+
+      for (const groupId of touchedGroupIds) {
+        this.recalculateGroupBounds(groupId)
+      }
     },
 
     nudgeSelectedClips(deltaTicks, shouldSnap = true, anchorClipId = this.selectedClipId) {
@@ -3004,6 +3446,10 @@ export const useDawStore = defineStore('dawStore', {
       const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       clip.start = clampClipPlacementStart(track, snappedStart, clip.duration, clipId)
       sortTrackClips(track)
+
+      if (clip.groupId) {
+        this.recalculateGroupBounds(clip.groupId)
+      }
     },
 
     placeVariableClip(variableTrackName, clipId, nextStart, shouldSnap = true) {
@@ -3022,6 +3468,10 @@ export const useDawStore = defineStore('dawStore', {
       const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       clip.start = clampClipPlacementStart(variableTrack, snappedStart, clip.duration, clipId)
       sortVariableTrackClips(variableTrack)
+
+      if (clip.groupId) {
+        this.recalculateGroupBounds(clip.groupId)
+      }
     },
 
     placeValueTrackerClip(valueTrackerTrackId, clipId, nextStart, shouldSnap = true) {
@@ -3040,6 +3490,10 @@ export const useDawStore = defineStore('dawStore', {
       const snappedStart = getDraggedTick(nextStart, shouldSnap, this.snapSubdivision)
       clip.start = clampClipPlacementStart(valueTrackerTrack, snappedStart, clip.duration, clipId)
       sortValueTrackerTrackClips(valueTrackerTrack)
+
+      if (clip.groupId) {
+        this.recalculateGroupBounds(clip.groupId)
+      }
     },
 
     moveClipToTrack(sourceTrackId, targetTrackId, clipId, nextStart, shouldSnap = true) {
@@ -3070,6 +3524,10 @@ export const useDawStore = defineStore('dawStore', {
       targetTrack.clips.push(clip)
       sortTrackClips(targetTrack)
       this.selectedTrackId = targetTrackId
+
+      if (clip.groupId) {
+        this.recalculateGroupBounds(clip.groupId)
+      }
     },
 
     moveValueTrackerClipToTrack(sourceValueTrackerTrackId, targetValueTrackerTrackId, clipId, nextStart, shouldSnap = true) {
@@ -3098,6 +3556,10 @@ export const useDawStore = defineStore('dawStore', {
       clip.start = clampedStart
       targetValueTrackerTrack.clips.push(clip)
       sortValueTrackerTrackClips(targetValueTrackerTrack)
+
+      if (clip.groupId) {
+        this.recalculateGroupBounds(clip.groupId)
+      }
     },
 
     resizeClipStart(trackId, clipId, nextStart, shouldSnap = true) {
@@ -3119,6 +3581,10 @@ export const useDawStore = defineStore('dawStore', {
 
       clip.start = clampedStart
       clip.duration = clipEnd - clampedStart
+
+      if (clip.groupId) {
+        this.recalculateGroupBounds(clip.groupId)
+      }
     },
 
     resizeVariableClipStart(variableTrackName, clipId, nextStart, shouldSnap = true) {
@@ -3140,6 +3606,10 @@ export const useDawStore = defineStore('dawStore', {
 
       clip.start = clampedStart
       clip.duration = clipEnd - clampedStart
+
+      if (clip.groupId) {
+        this.recalculateGroupBounds(clip.groupId)
+      }
     },
 
     resizeValueTrackerClipStart(valueTrackerTrackId, clipId, nextStart, shouldSnap = true) {
@@ -3170,6 +3640,10 @@ export const useDawStore = defineStore('dawStore', {
         previousStart,
         stepSubdivision: clip.stepSubdivision
       })
+
+      if (clip.groupId) {
+        this.recalculateGroupBounds(clip.groupId)
+      }
     },
 
     resizeClipEnd(trackId, clipId, nextEnd, shouldSnap = true) {
@@ -3189,6 +3663,10 @@ export const useDawStore = defineStore('dawStore', {
       const clampedEnd = clampClipResizeEnd(track, clipId, snappedEnd)
 
       clip.duration = clampedEnd - clip.start
+
+      if (clip.groupId) {
+        this.recalculateGroupBounds(clip.groupId)
+      }
     },
 
     resizeVariableClipEnd(variableTrackName, clipId, nextEnd, shouldSnap = true) {
@@ -3208,6 +3686,10 @@ export const useDawStore = defineStore('dawStore', {
       const clampedEnd = clampClipResizeEnd(variableTrack, clipId, snappedEnd)
 
       clip.duration = clampedEnd - clip.start
+
+      if (clip.groupId) {
+        this.recalculateGroupBounds(clip.groupId)
+      }
     },
 
     resizeValueTrackerClipEnd(valueTrackerTrackId, clipId, nextEnd, shouldSnap = true) {
@@ -3235,6 +3717,10 @@ export const useDawStore = defineStore('dawStore', {
         previousStart: clip.start,
         stepSubdivision: clip.stepSubdivision
       })
+
+      if (clip.groupId) {
+        this.recalculateGroupBounds(clip.groupId)
+      }
     },
 
     duplicateClip(trackId, clipId) {
@@ -3362,7 +3848,18 @@ export const useDawStore = defineStore('dawStore', {
           return
         }
 
+        const removedGroupId = result.clip.groupId
+
         result.lane.clips.splice(result.clipIndex, 1)
+        const touchedGroupIds = syncGroupsAfterClipRemoval(this, [clipId])
+
+        for (const groupId of touchedGroupIds) {
+          this.recalculateGroupBounds(groupId)
+        }
+
+        if (removedGroupId) {
+          this.recalculateGroupBounds(removedGroupId)
+        }
         this.editingClipId = null
         this.removeSelectedClip(clipId)
       })
@@ -3376,6 +3873,8 @@ export const useDawStore = defineStore('dawStore', {
           return
         }
 
+        const touchedGroupIds = new Set()
+
         for (const clipId of selectedClipIds) {
           const result = findTimelineClip(
             this.tracks,
@@ -3388,7 +3887,19 @@ export const useDawStore = defineStore('dawStore', {
             continue
           }
 
+          if (result.clip?.groupId) {
+            touchedGroupIds.add(result.clip.groupId)
+          }
+
           result.lane.clips.splice(result.clipIndex, 1)
+        }
+
+        for (const groupId of syncGroupsAfterClipRemoval(this, selectedClipIds)) {
+          touchedGroupIds.add(groupId)
+        }
+
+        for (const groupId of touchedGroupIds) {
+          this.recalculateGroupBounds(groupId)
         }
 
         if (selectedClipIds.includes(this.editingClipId)) {
@@ -3400,6 +3911,14 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     setEditingClip(clipId) {
+      if (clipId && this.editingGroupId) {
+        const result = findTimelineClip(this.tracks, this.variableTracks, this.valueTrackerTracks, clipId)
+
+        if (result?.clip?.groupId !== this.editingGroupId) {
+          return
+        }
+      }
+
       this.editingClipId = clipId
     },
 
