@@ -31,11 +31,42 @@ let currentAudioEffects = []
 let masterGainValue = 1
 let transportMuted = true
 let masterGainNode = null
+let transportGainNode = null
+let transportFadeGeneration = 0
 let outputAnalyserNode = null
 let outputChannelSplitterNode = null
 let outputLeftAnalyserNode = null
 let outputRightAnalyserNode = null
 const audioEffectNodes = new Map()
+
+/** Short fade on the dedicated transport gain to avoid clicks on play/pause/stop. */
+const TRANSPORT_FADE_SEC = 0.012
+
+function bumpTransportFadeGeneration() {
+  transportFadeGeneration += 1
+  return transportFadeGeneration
+}
+
+function waitTransportFadeMs() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, Math.ceil(TRANSPORT_FADE_SEC * 1000) + 5)
+  })
+}
+
+function rampTransportGainTo(target) {
+  const node = ensureTransportGainNode()
+
+  if (!node || !audioContext) {
+    return
+  }
+
+  const param = node.gain
+  const now = audioContext.currentTime
+
+  param.cancelScheduledValues(now)
+  param.setValueAtTime(param.value, now)
+  param.linearRampToValueAtTime(target, now + TRANSPORT_FADE_SEC)
+}
 
 function safeDisconnect(node) {
   if (!node) {
@@ -67,10 +98,22 @@ function ensureMasterGainNode() {
   }
 
   if (!masterGainNode) {
-    masterGainNode = new GainNode(audioContext, { gain: transportMuted ? 0 : masterGainValue })
+    masterGainNode = new GainNode(audioContext, { gain: masterGainValue })
   }
 
   return masterGainNode
+}
+
+function ensureTransportGainNode() {
+  if (!audioContext) {
+    return null
+  }
+
+  if (!transportGainNode) {
+    transportGainNode = new GainNode(audioContext, { gain: transportMuted ? 0 : 1 })
+  }
+
+  return transportGainNode
 }
 
 function ensureOutputAnalyserNode() {
@@ -124,10 +167,6 @@ function ensureOutputStereoAnalyserNodes() {
     right: outputRightAnalyserNode,
     splitter: outputChannelSplitterNode
   }
-}
-
-function getOutputGainValue() {
-  return transportMuted ? 0 : masterGainValue
 }
 
 function connectOutputNodeToDestination(outputNode) {
@@ -337,34 +376,36 @@ async function connectAudioGraph(audioEffects = currentAudioEffects) {
   }
 
   safeDisconnect(byteBeatNode)
-  const outputNode = ensureMasterGainNode()
+  const masterOut = ensureMasterGainNode()
+  const transportOut = ensureTransportGainNode()
   const nodes = await syncAudioEffectNodes(audioEffects)
 
-  if (!outputNode) {
+  if (!masterOut || !transportOut) {
     return
   }
 
-  safeDisconnect(outputNode)
+  safeDisconnect(masterOut)
+  safeDisconnect(transportOut)
 
   if (!nodes.length) {
-    toneConnect(byteBeatNode, outputNode)
-    connectOutputNodeToDestination(outputNode)
-    return
+    toneConnect(byteBeatNode, masterOut)
+  } else {
+    for (const node of nodes) {
+      safeDisconnect(node)
+    }
+
+    let previousNode = byteBeatNode
+
+    for (const node of nodes) {
+      toneConnect(previousNode, node)
+      previousNode = node
+    }
+
+    toneConnect(previousNode, masterOut)
   }
 
-  for (const node of nodes) {
-    safeDisconnect(node)
-  }
-
-  let previousNode = byteBeatNode
-
-  for (const node of nodes) {
-    toneConnect(previousNode, node)
-    previousNode = node
-  }
-
-  toneConnect(previousNode, outputNode)
-  connectOutputNodeToDestination(outputNode)
+  toneConnect(masterOut, transportOut)
+  connectOutputNodeToDestination(transportOut)
 }
 
 function buildCompiledExpressions(expressions) {
@@ -425,6 +466,7 @@ async function createNode(providedAudioContext) {
   byteBeatNode.setDesiredSampleRate(desiredSampleRate)
   await byteBeatNode.setExpressions([SILENT_FORMULA], true)
   ensureMasterGainNode()
+  ensureTransportGainNode()
   currentExpressionsKey = null
 
   return byteBeatNode
@@ -449,13 +491,9 @@ const bytebeatService = {
   async play({ resetTime = true } = {}) {
     const node = await this.init()
 
+    bumpTransportFadeGeneration()
     this.releaseHeldSample()
     transportMuted = false
-    const outputNode = ensureMasterGainNode()
-
-    if (outputNode) {
-      outputNode.gain.value = getOutputGainValue()
-    }
 
     if (resetTime) {
       node.reset()
@@ -466,6 +504,7 @@ const bytebeatService = {
     }
 
     await connectAudioGraph()
+    rampTransportGainTo(1)
   },
 
   async unlock() {
@@ -483,10 +522,12 @@ const bytebeatService = {
 
     heldSample = this.getCurrentSample()
     transportMuted = true
-    const outputNode = ensureMasterGainNode()
+    const gen = bumpTransportFadeGeneration()
+    rampTransportGainTo(0)
+    await waitTransportFadeMs()
 
-    if (outputNode) {
-      outputNode.gain.value = 0
+    if (gen !== transportFadeGeneration) {
+      return
     }
 
     await this.setExpressions([SILENT_FORMULA], false, true)
@@ -498,16 +539,18 @@ const bytebeatService = {
     }
 
     heldSample = null
+    transportMuted = true
+    const gen = bumpTransportFadeGeneration()
+    rampTransportGainTo(0)
+    await waitTransportFadeMs()
+
+    if (gen !== transportFadeGeneration) {
+      return
+    }
+
     byteBeatNode.reset()
     currentExpressionsKey = null
     sampleOffset = 0
-    transportMuted = true
-    const outputNode = ensureMasterGainNode()
-
-    if (outputNode) {
-      outputNode.gain.value = 0
-    }
-
     await this.setExpressions([''], true, true)
   },
 
@@ -530,7 +573,7 @@ const bytebeatService = {
     const outputNode = ensureMasterGainNode()
 
     if (outputNode) {
-      outputNode.gain.value = getOutputGainValue()
+      outputNode.gain.value = masterGainValue
     }
   },
 
