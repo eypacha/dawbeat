@@ -9,7 +9,7 @@ import { useDawStore } from '@/stores/dawStore'
 const app = createApp(App)
 const pinia = createPinia()
 
-const isCompanionRoute = typeof window !== 'undefined' && window.location.hash.startsWith('#/companion')
+const isCompanionRoute = typeof window !== 'undefined' && window.location.hash.startsWith('#/app/companion')
 
 if (!isCompanionRoute) {
   const dawStore = useDawStore(pinia)

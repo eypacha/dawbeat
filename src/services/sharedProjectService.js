@@ -59,7 +59,7 @@ export function createSharedProjectUrl(snapshotId, locationOrigin = window?.loca
     throw new Error('Could not resolve location origin.')
   }
 
-  return `${locationOrigin}/#/p/${normalizedSnapshotId}`
+  return `${locationOrigin}/#/app/p/${normalizedSnapshotId}`
 }
 
 function normalizePositiveNumber(value) {

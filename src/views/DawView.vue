@@ -473,7 +473,7 @@ async function loadSharedProjectFromRoute(snapshotId) {
 }
 
 function goToDawHome() {
-  router.replace({ path: '/' })
+  router.replace({ path: '/app' })
 }
 
 async function handleStart() {

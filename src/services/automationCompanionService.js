@@ -4,7 +4,7 @@ import { enqueueSnackbar } from '@/services/notifications'
 
 const HOST_PEER_ID_PARAM = 'hostPeerId'
 const LANE_ID_PARAM = 'laneId'
-const COMPANION_HASH_PREFIX = '#/companion'
+const COMPANION_HASH_PREFIX = '#/app/companion'
 const COMPANION_SESSION_STORAGE_KEY = 'dawbeat-automation-companion-session'
 const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '::1'])
 
