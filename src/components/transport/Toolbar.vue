@@ -552,7 +552,7 @@ const transportOptions = computed(() => ([
       },
       {
         action: 'zoom-to-fit-project',
-        label: 'Zoom to fit project'
+        label: 'Fit to project'
       },
       {
         action: 'reset-zoom',
