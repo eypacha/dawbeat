@@ -428,6 +428,18 @@ function syncViewportWidth() {
   viewportWidth.value = window.innerWidth
 }
 
+async function consumeSharedProjectRoute(snapshotId) {
+  const currentRouteSnapshotId = typeof route.params.id === 'string'
+    ? route.params.id.trim()
+    : ''
+
+  if (!snapshotId || currentRouteSnapshotId !== snapshotId) {
+    return
+  }
+
+  await router.replace({ path: '/app' })
+}
+
 async function loadSharedProjectFromRoute(snapshotId) {
   const normalizedSnapshotId = typeof snapshotId === 'string' ? snapshotId.trim() : ''
 
@@ -459,6 +471,7 @@ async function loadSharedProjectFromRoute(snapshotId) {
 
     lastLoadedSharedSnapshotId.value = normalizedSnapshotId
     sharedProjectLoadState.value = 'ready'
+    await consumeSharedProjectRoute(normalizedSnapshotId)
   } catch (error) {
     console.error('Could not load shared snapshot', error)
     sharedProjectLoadState.value = 'error'
