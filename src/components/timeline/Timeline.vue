@@ -243,6 +243,8 @@ const trackDropTarget = ref(null)
 let scrubPointerId = null
 const groupDragState = ref(null)
 const ignoreNextGroupHeaderClick = ref(false)
+const clipLaneMetrics = ref([])
+let pendingLaneMetricSyncFrame = null
 
 const {
   active: marqueeSelectionActive,
@@ -282,7 +284,7 @@ const rulerStyle = computed(() => ({
   backgroundImage: 'linear-gradient(to right, rgba(63, 63, 70, 0.5) 1px, transparent 1px)',
   backgroundSize: `${ticksToPixels(visibleTickStep.value, pixelsPerTick.value)}px 100%`
 }))
-const clipLaneMetrics = computed(() => {
+function createFallbackClipLaneMetrics() {
   const clipLaneHeights = [
     ...variableTracks.value.map((entry) => Number(entry?.height) || 44),
     ...valueTrackerTracks.value.map((entry) => Number(entry?.height) || 64),
@@ -300,7 +302,56 @@ const clipLaneMetrics = computed(() => {
     top += height
     return metric
   })
-})
+}
+
+function syncClipLaneMetricsFromDom() {
+  const surfaceElement = timelineSurfaceElement.value
+
+  if (!surfaceElement) {
+    clipLaneMetrics.value = createFallbackClipLaneMetrics()
+    return
+  }
+
+  const surfaceRect = surfaceElement.getBoundingClientRect()
+  const laneElements = [...surfaceElement.querySelectorAll('[data-timeline-clip-lane-index]')]
+
+  if (!laneElements.length) {
+    clipLaneMetrics.value = createFallbackClipLaneMetrics()
+    return
+  }
+
+  const nextMetrics = laneElements
+    .map((laneElement) => {
+      const laneIndex = Number(laneElement.getAttribute('data-timeline-clip-lane-index'))
+
+      if (!Number.isInteger(laneIndex)) {
+        return null
+      }
+
+      const laneRect = laneElement.getBoundingClientRect()
+
+      return {
+        height: laneRect.height,
+        index: laneIndex,
+        top: laneRect.top - surfaceRect.top
+      }
+    })
+    .filter(Boolean)
+    .sort((leftMetric, rightMetric) => leftMetric.index - rightMetric.index)
+
+  clipLaneMetrics.value = nextMetrics.length ? nextMetrics : createFallbackClipLaneMetrics()
+}
+
+function scheduleClipLaneMetricSync() {
+  if (pendingLaneMetricSyncFrame !== null) {
+    cancelAnimationFrame(pendingLaneMetricSyncFrame)
+  }
+
+  pendingLaneMetricSyncFrame = requestAnimationFrame(() => {
+    pendingLaneMetricSyncFrame = null
+    syncClipLaneMetricsFromDom()
+  })
+}
 
 function hexToRgba(hex, alpha = 1) {
   const normalizedHex = getTrackColor(hex).replace('#', '')
@@ -326,11 +377,13 @@ function getClipLaneColor(trackIndex) {
 
 const selectedClipIdSet = computed(() => new Set(selectedClipIds.value))
 const groupVisuals = computed(() => {
+  const laneMetricsByIndex = new Map(clipLaneMetrics.value.map((metric) => [metric.index, metric]))
+
   return groups.value
     .map((group) => {
       const maxTrackOffset = Math.max(0, ...(group.clips ?? []).map((groupClip) => groupClip.trackOffset ?? 0))
-      const firstMetric = clipLaneMetrics.value[group.trackIndex]
-      const lastMetric = clipLaneMetrics.value[group.trackIndex + maxTrackOffset]
+      const firstMetric = laneMetricsByIndex.get(group.trackIndex)
+      const lastMetric = laneMetricsByIndex.get(group.trackIndex + maxTrackOffset)
 
       if (!firstMetric || !lastMetric) {
         return null
@@ -794,7 +847,32 @@ watch(time, (nextTime) => {
   scrollOffsetIntoView(playheadOffset)
 })
 
+watch(
+  [
+    () => variableTracks.value.map((track) => Number(track?.height) || 44),
+    () => valueTrackerTracks.value.map((track) => Number(track?.height) || 64),
+    () => tracks.value.map((track) => Number(track?.height) || 80),
+    () => variableTracks.value.length,
+    () => valueTrackerTracks.value.length,
+    () => tracks.value.length,
+    () => groups.value.length,
+    () => pixelsPerTick.value,
+    () => trackLabelWidth.value
+  ],
+  () => {
+    scheduleClipLaneMetricSync()
+  },
+  { deep: true }
+)
+
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', scheduleClipLaneMetricSync)
+
+  if (pendingLaneMetricSyncFrame !== null) {
+    cancelAnimationFrame(pendingLaneMetricSyncFrame)
+    pendingLaneMetricSyncFrame = null
+  }
+
   cleanupTrackReorder()
   cleanupGroupDrag()
   scrubPointerId = null
@@ -806,5 +884,9 @@ onBeforeUnmount(() => {
 
 onMounted(() => {
   window.addEventListener('dawbeat:timeline-zoom-command', handleZoomCommand)
+  window.addEventListener('resize', scheduleClipLaneMetricSync)
+  nextTick(() => {
+    scheduleClipLaneMetricSync()
+  })
 })
 </script>
