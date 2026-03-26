@@ -151,8 +151,9 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { getPlaybackEndTick } from '@/engine/timelineEngine'
 import Panel from '@/components/ui/Panel.vue'
 import TimelineAutomationLane from '@/components/timeline/TimelineAutomationLane.vue'
 import Playhead from '@/components/timeline/Playhead.vue'
@@ -168,6 +169,7 @@ import { getTimelineTrackLabelWidth } from '@/services/timelineHeaderWidthServic
 import { getDraggedTick, resolvePointerEventSnap, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { useDawStore } from '@/stores/dawStore'
 import {
+  BASE_PIXELS_PER_TICK,
   getVisibleTimelineTickStep,
   getSamplesPerTick,
   pixelsToTicks,
@@ -228,6 +230,42 @@ const rulerStyle = computed(() => ({
   backgroundSize: `${ticksToPixels(visibleTickStep.value, pixelsPerTick.value)}px 100%`
 }))
 
+function getPlayheadOffset(timeTicks, pixelsPerTickValue = pixelsPerTick.value) {
+  return trackLabelWidth.value + ticksToPixels(timeTicks, pixelsPerTickValue)
+}
+
+function getVisibleTimelineBounds(scrollLeft = scrollContainer.value?.scrollLeft ?? 0) {
+  const clientWidth = scrollContainer.value?.clientWidth ?? 0
+
+  return {
+    left: scrollLeft + trackLabelWidth.value,
+    right: scrollLeft + clientWidth
+  }
+}
+
+function scrollOffsetIntoView(contentOffset, padding = AUTO_SCROLL_PADDING) {
+  if (!scrollContainer.value) {
+    return
+  }
+
+  const { left, right } = getVisibleTimelineBounds(scrollContainer.value.scrollLeft)
+
+  if (contentOffset < left + padding) {
+    scrollContainer.value.scrollLeft = Math.max(
+      0,
+      contentOffset - trackLabelWidth.value - padding
+    )
+    return
+  }
+
+  if (contentOffset > right - padding) {
+    scrollContainer.value.scrollLeft = Math.max(
+      0,
+      contentOffset - scrollContainer.value.clientWidth + padding
+    )
+  }
+}
+
 function handleWheel(event) {
   if ((!event.ctrlKey && !event.metaKey) || !scrollContainer.value) {
     return
@@ -235,12 +273,11 @@ function handleWheel(event) {
 
   event.preventDefault()
 
-  const viewportLeft = scrollContainer.value.scrollLeft
-  const viewportRight = viewportLeft + scrollContainer.value.clientWidth
   const previousPixelsPerTick = pixelsPerTick.value
-  const previousPlayheadOffset = trackLabelWidth.value + ticksToPixels(time.value, previousPixelsPerTick)
+  const previousPlayheadOffset = getPlayheadOffset(time.value, previousPixelsPerTick)
+  const previousVisibleBounds = getVisibleTimelineBounds(scrollContainer.value.scrollLeft)
   const playheadWasVisible =
-    previousPlayheadOffset >= viewportLeft && previousPlayheadOffset <= viewportRight
+    previousPlayheadOffset >= previousVisibleBounds.left && previousPlayheadOffset <= previousVisibleBounds.right
   const containerRect = scrollContainer.value.getBoundingClientRect()
   const pointerOffsetX = event.clientX - containerRect.left
   const timelineX = scrollContainer.value.scrollLeft + pointerOffsetX - trackLabelWidth.value
@@ -256,21 +293,8 @@ function handleWheel(event) {
     return
   }
 
-  const nextPlayheadOffset = trackLabelWidth.value + ticksToPixels(time.value, pixelsPerTick.value)
-  const nextViewportLeft = scrollContainer.value.scrollLeft
-  const nextViewportRight = nextViewportLeft + scrollContainer.value.clientWidth
-
-  if (nextPlayheadOffset < nextViewportLeft + AUTO_SCROLL_PADDING) {
-    scrollContainer.value.scrollLeft = Math.max(0, nextPlayheadOffset - AUTO_SCROLL_PADDING)
-    return
-  }
-
-  if (nextPlayheadOffset > nextViewportRight - AUTO_SCROLL_PADDING) {
-    scrollContainer.value.scrollLeft = Math.max(
-      0,
-      nextPlayheadOffset - scrollContainer.value.clientWidth + AUTO_SCROLL_PADDING
-    )
-  }
+  const nextPlayheadOffset = getPlayheadOffset(time.value)
+  scrollOffsetIntoView(nextPlayheadOffset)
 }
 
 function handleTimelineSurfacePointerDownCapture(event) {
@@ -397,6 +421,43 @@ function cleanupTrackReorder() {
   trackDropTarget.value = null
 }
 
+async function handleZoomCommand(event) {
+  const command = event?.detail?.command
+
+  if (!command || !scrollContainer.value) {
+    return
+  }
+
+  if (command === 'reset-zoom') {
+    dawStore.setZoom(1)
+    return
+  }
+
+  const visibleTimelineWidth = Math.max(1, scrollContainer.value.clientWidth - trackLabelWidth.value)
+
+  if (command === 'zoom-to-loop') {
+    const loopDuration = Math.max(1 / dawStore.snapSubdivision, loopEnd.value - loopStart.value)
+    const nextZoom = visibleTimelineWidth / (BASE_PIXELS_PER_TICK * loopDuration)
+
+    dawStore.setZoom(nextZoom)
+    await nextTick()
+    scrollContainer.value.scrollLeft = Math.max(0, ticksToPixels(loopStart.value, pixelsPerTick.value))
+    return
+  }
+
+  if (command === 'zoom-to-fit-project') {
+    const projectEndTick = Math.max(
+      1,
+      getPlaybackEndTick(tracks.value, variableTracks.value, valueTrackerTracks.value)
+    )
+    const nextZoom = visibleTimelineWidth / (BASE_PIXELS_PER_TICK * projectEndTick)
+
+    dawStore.setZoom(nextZoom)
+    await nextTick()
+    scrollContainer.value.scrollLeft = 0
+  }
+}
+
 watch(time, (nextTime) => {
   if (!scrollContainer.value) {
     return
@@ -415,25 +476,20 @@ watch(time, (nextTime) => {
     return
   }
 
-  const playheadOffset = trackLabelWidth.value + ticksToPixels(nextTime, pixelsPerTick.value)
-  const viewportLeft = scrollContainer.value.scrollLeft
-  const viewportRight = viewportLeft + scrollContainer.value.clientWidth
-
-  if (playheadOffset < viewportLeft + AUTO_SCROLL_PADDING) {
-    scrollContainer.value.scrollLeft = Math.max(0, playheadOffset - AUTO_SCROLL_PADDING)
-    return
-  }
-
-  if (playheadOffset > viewportRight - AUTO_SCROLL_PADDING) {
-    scrollContainer.value.scrollLeft = playheadOffset - scrollContainer.value.clientWidth + AUTO_SCROLL_PADDING
-  }
+  const playheadOffset = getPlayheadOffset(nextTime)
+  scrollOffsetIntoView(playheadOffset)
 })
 
 onBeforeUnmount(() => {
   cleanupTrackReorder()
   scrubPointerId = null
+  window.removeEventListener('dawbeat:timeline-zoom-command', handleZoomCommand)
   window.removeEventListener('pointermove', handleScrubPointerMove)
   window.removeEventListener('pointerup', handleScrubPointerEnd)
   window.removeEventListener('pointercancel', handleScrubPointerEnd)
+})
+
+onMounted(() => {
+  window.addEventListener('dawbeat:timeline-zoom-command', handleZoomCommand)
 })
 </script>

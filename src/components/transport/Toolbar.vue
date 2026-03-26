@@ -462,6 +462,24 @@ const transportOptions = computed(() => ([
       label: formatSnapSubdivisionLabel(subdivision),
       subdivision
     }))
+  },
+  {
+    action: 'zoom-submenu',
+    label: 'Zoom',
+    children: [
+      {
+        action: 'zoom-to-loop',
+        label: 'Zoom to loop'
+      },
+      {
+        action: 'zoom-to-fit-project',
+        label: 'Zoom to fit project'
+      },
+      {
+        action: 'reset-zoom',
+        label: 'Reset zoom'
+      }
+    ]
   }
 ]))
 
@@ -575,6 +593,27 @@ function handleTransportOptionSelect(item) {
 
   if (item.action === 'set-snap-subdivision') {
     dawStore.setSnapSubdivision(item.subdivision)
+    return
+  }
+
+  if (item.action === 'zoom-to-loop') {
+    window.dispatchEvent(new CustomEvent('dawbeat:timeline-zoom-command', {
+      detail: { command: 'zoom-to-loop' }
+    }))
+    return
+  }
+
+  if (item.action === 'zoom-to-fit-project') {
+    window.dispatchEvent(new CustomEvent('dawbeat:timeline-zoom-command', {
+      detail: { command: 'zoom-to-fit-project' }
+    }))
+    return
+  }
+
+  if (item.action === 'reset-zoom') {
+    window.dispatchEvent(new CustomEvent('dawbeat:timeline-zoom-command', {
+      detail: { command: 'reset-zoom' }
+    }))
   }
 }
 
