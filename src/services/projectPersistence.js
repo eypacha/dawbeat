@@ -98,6 +98,7 @@ export function serializeProject(state) {
     timelineAutoscrollEnabled: state.timelineAutoscrollEnabled,
     snapToGridEnabled: state.snapToGridEnabled,
     snapSubdivision: state.snapSubdivision,
+    projectLicense: state.projectLicense || '',
     savedAt: new Date().toISOString()
   })
 }
@@ -328,6 +329,7 @@ function normalizeProjectPayload(project) {
     projectTitle: normalizeProjectTitle(project.projectTitle, DEFAULT_PROJECT_TITLE),
     projectDescription: normalizeProjectDescription(project.projectDescription),
     projectAuthor: normalizeProjectAuthor(project.projectAuthor),
+    projectLicense: typeof project.projectLicense === 'string' ? project.projectLicense : '',
     projectMeta: normalizeProjectMeta(project.projectMeta),
     tracks,
     variableTracks,

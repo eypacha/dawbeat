@@ -332,6 +332,7 @@
       :description="projectDescription"
       :name="projectTitle"
       :author="projectAuthor"
+      :license="dawStore.projectLicense"
       :open="projectInfoDialogVisible"
       @update:open="projectInfoDialogVisible = $event"
       @save="handleSaveProjectInfo"
@@ -672,6 +673,7 @@ function handleSaveProjectInfo(data) {
   dawStore.setProjectTitle(data.name)
   dawStore.setProjectDescription(data.description)
   dawStore.setProjectAuthor(data.author)
+  dawStore.setProjectLicense(data.license)
   projectInfoDialogVisible.value = false
 }
 

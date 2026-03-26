@@ -150,6 +150,7 @@ function createEmptyProject() {
     projectTitle: DEFAULT_PROJECT_TITLE,
     projectDescription: '',
     projectAuthor: '',
+    projectLicense: 'CC0',
     projectMeta: null,
     audioEffects: [],
     automationLanes: getDefaultAutomationLanes(),
@@ -233,6 +234,7 @@ function createInitialState() {
     projectTitle: project.projectTitle,
     projectDescription: project.projectDescription,
     projectAuthor: project.projectAuthor,
+    projectLicense: project.projectLicense || '',
     editingClipId: null,
     editingGroupId: null,
     loopEnabled: project.loopEnabled,
@@ -1145,6 +1147,9 @@ export const useDawStore = defineStore('dawStore', {
   },
 
   actions: {
+    setProjectLicense(license) {
+      this.projectLicense = typeof license === 'string' ? license : ''
+    },
     setSharedProjectMeta(sharedProjectMeta) {
       this.sharedProjectMeta = normalizeSharedProjectMeta(sharedProjectMeta)
     },

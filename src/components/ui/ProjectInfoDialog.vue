@@ -39,6 +39,29 @@
         />
       </div>
 
+      <div>
+        <label class="block text-xs uppercase tracking-[0.1em] text-zinc-400 mb-2">
+          License
+        </label>
+        <select
+          v-model="licenseDraft"
+          class="w-full border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none transition hover:border-zinc-600 focus:border-zinc-500"
+        >
+          <option value="CC0">CC0 (public domain) — No rights reserved</option>
+          <option value="CC-BY">CC-BY — Attribution required</option>
+          <option value="CC-BY-SA">CC-BY-SA — Attribution + ShareAlike</option>
+          <option value="MIT">MIT (for formulas)</option>
+          <option value="">No license / All rights reserved</option>
+        </select>
+        <div class="mt-2 text-xs text-zinc-400 min-h-[1.5em]">
+          <span v-if="licenseDraft === 'CC0'">Anyone can use, modify, and distribute without restriction or attribution.</span>
+          <span v-else-if="licenseDraft === 'CC-BY'">Anyone can use, modify, and distribute, but must give appropriate credit.</span>
+          <span v-else-if="licenseDraft === 'CC-BY-SA'">Anyone can use, modify, and distribute, must give credit and share under the same license.</span>
+          <span v-else-if="licenseDraft === 'MIT'">Permissive license for code/formulas. Attribution required.</span>
+          <span v-else>No explicit license. All rights reserved by default.</span>
+        </div>
+      </div>
+
       <div class="flex justify-end gap-2 pt-4">
         <button
           class="border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-600 hover:text-zinc-100"
@@ -67,20 +90,24 @@ const props = defineProps({
   open: Boolean,
   name: String,
   description: String,
-  author: String
+  author: String,
+  license: String
 })
+
 
 const emit = defineEmits(['update:open', 'save'])
 
 const nameDraft = ref(props.name || '')
 const descriptionDraft = ref(props.description || '')
 const authorDraft = ref(props.author || '')
+const licenseDraft = ref(props.license && props.license !== '' ? props.license : 'CC0')
 
 watch(() => props.open, (newOpen) => {
   if (newOpen) {
     nameDraft.value = props.name || ''
     descriptionDraft.value = props.description || ''
     authorDraft.value = props.author || ''
+    licenseDraft.value = props.license && props.license !== '' ? props.license : 'CC0'
   }
 })
 
@@ -88,7 +115,8 @@ function handleSave() {
   emit('save', {
     name: nameDraft.value,
     description: descriptionDraft.value,
-    author: authorDraft.value
+    author: authorDraft.value,
+    license: licenseDraft.value
   })
 }
 
