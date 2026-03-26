@@ -127,13 +127,13 @@ export function initKeyboardShortcuts({ dawStore, transport }) {
       return
     }
 
-    if (!dawStore.playing && isUndoShortcut && dawStore.canUndo) {
+    if (isUndoShortcut && dawStore.canUndo) {
       event.preventDefault()
       dawStore.undo()
       return
     }
 
-    if (!dawStore.playing && isRedoShortcut && dawStore.canRedo) {
+    if (isRedoShortcut && dawStore.canRedo) {
       event.preventDefault()
       dawStore.redo()
       return

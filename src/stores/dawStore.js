@@ -717,8 +717,8 @@ export const useDawStore = defineStore('dawStore', {
     getFormulaAnalysisByKey: (state) => (cacheKey) =>
       typeof cacheKey === 'string' && cacheKey ? state.formulaAnalysisCache[cacheKey] ?? null : null,
     pixelsPerTick: (state) => BASE_PIXELS_PER_TICK * state.zoom,
-    canRedo: (state) => !state.playing && state.historyFuture.length > 0,
-    canUndo: (state) => !state.playing && state.historyPast.length > 0
+    canRedo: (state) => state.historyFuture.length > 0,
+    canUndo: (state) => state.historyPast.length > 0
   },
 
   actions: {
@@ -866,7 +866,7 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     undo() {
-      if (this.playing || !this.historyPast.length) {
+      if (!this.historyPast.length) {
         return
       }
 
@@ -892,7 +892,7 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     redo() {
-      if (this.playing || !this.historyFuture.length) {
+      if (!this.historyFuture.length) {
         return
       }
 
