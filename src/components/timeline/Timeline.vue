@@ -11,7 +11,7 @@
           type="button"
           @click="dawStore.addTrack()"
         >
-          + Formula
+          + Track
         </button>
 
         <button
