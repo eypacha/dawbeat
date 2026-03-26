@@ -13,7 +13,7 @@
                     </p>
 
                     <div class="mt-8 flex flex-wrap items-center gap-4">
-                        <a href="/#/app"
+                        <a href="#/app"
                             class="inline-flex items-center justify-center border border-indigo-400/70 bg-indigo-500/15 px-5 py-3 text-xs font-medium uppercase tracking-[0.2em] text-indigo-100 transition hover:border-indigo-300 hover:bg-indigo-500/25">
                             Open App
                         </a>
@@ -96,7 +96,7 @@
 
             <section class="mt-14">
                 <h2 class="text-2xl font-semibold tracking-tight text-zinc-100 sm:text-3xl">Start composing</h2>
-                <a href="/#/app"
+                <a href="#/app"
                     class="mt-6 inline-flex items-center justify-center border border-cyan-400/70 bg-cyan-500/15 px-6 py-3 text-xs font-medium uppercase tracking-[0.2em] text-cyan-100 transition hover:border-cyan-300 hover:bg-cyan-500/25">
                     Open App
                 </a>

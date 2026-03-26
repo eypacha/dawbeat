@@ -174,7 +174,7 @@
         <div
           v-for="groupVisual in groupVisuals"
           :key="`${groupVisual.id}:label`"
-          class="pointer-events-none absolute z-20"
+          class="pointer-events-none absolute z-10"
           :style="{
             left: groupVisual.style.left,
             top: groupVisual.style.top,

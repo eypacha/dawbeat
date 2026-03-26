@@ -40,6 +40,35 @@ function normalizeSharedProjectId(value) {
   return value.trim()
 }
 
+function resolveLocationOrigin() {
+  if (typeof window === 'undefined' || !window.location?.origin) {
+    return ''
+  }
+
+  return window.location.origin
+}
+
+function normalizeBasePath(basePath) {
+  if (typeof basePath !== 'string') {
+    return '/'
+  }
+
+  const trimmedBasePath = basePath.trim()
+
+  if (!trimmedBasePath) {
+    return '/'
+  }
+
+  const withoutLeadingSlash = trimmedBasePath.replace(/^\/+/, '')
+  const withoutEdgeSlashes = withoutLeadingSlash.replace(/\/+$/, '')
+
+  if (!withoutEdgeSlashes) {
+    return '/'
+  }
+
+  return `/${withoutEdgeSlashes}/`
+}
+
 function isNotFoundError(error) {
   return error?.code === 'PGRST116' || error?.status === 406
 }
@@ -48,7 +77,11 @@ export function isSharedProjectConfigured() {
   return Boolean(getSupabaseClient())
 }
 
-export function createSharedProjectUrl(snapshotId, locationOrigin = window?.location?.origin) {
+export function createSharedProjectUrl(
+  snapshotId,
+  locationOrigin = resolveLocationOrigin(),
+  basePath = import.meta.env.BASE_URL
+) {
   const normalizedSnapshotId = normalizeSharedProjectId(snapshotId)
 
   if (!normalizedSnapshotId) {
@@ -59,7 +92,10 @@ export function createSharedProjectUrl(snapshotId, locationOrigin = window?.loca
     throw new Error('Could not resolve location origin.')
   }
 
-  return `${locationOrigin}/#/app/p/${normalizedSnapshotId}`
+  const normalizedOrigin = String(locationOrigin).replace(/\/+$/, '')
+  const normalizedBasePath = normalizeBasePath(basePath)
+
+  return `${normalizedOrigin}${normalizedBasePath}#/app/p/${normalizedSnapshotId}`
 }
 
 function normalizePositiveNumber(value) {

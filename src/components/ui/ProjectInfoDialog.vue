@@ -43,7 +43,7 @@
         <button
           class="border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-600 hover:text-zinc-100"
           type="button"
-          @click="emit('close')"
+          @click="handleClose"
         >
           Cancel
         </button>
@@ -90,5 +90,9 @@ function handleSave() {
     description: descriptionDraft.value,
     author: authorDraft.value
   })
+}
+
+function handleClose() {
+  emit('update:open', false)
 }
 </script>
