@@ -489,7 +489,7 @@ const bytebeatService = {
       outputNode.gain.value = 0
     }
 
-    await this.setExpressions([''], false, true)
+    await this.setExpressions([SILENT_FORMULA], false, true)
   },
 
   async stop() {
