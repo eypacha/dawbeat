@@ -208,6 +208,7 @@ export async function createSharedProjectSnapshot(snapshot, name = '') {
   const contentHash = await computeSnapshotHash(snapshot)
 
   // If an identical snapshot already exists, reuse its id without inserting a duplicate.
+  console.log('[SHARE] Checking for existing snapshot with hash:', contentHash)
   const { data: existing } = await client
     .from('projects')
     .select('id')
@@ -215,10 +216,12 @@ export async function createSharedProjectSnapshot(snapshot, name = '') {
     .maybeSingle()
 
   if (existing?.id) {
+    console.log('[SHARE] Existing snapshot found, id:', existing.id)
     return { id: existing.id, reused: true }
   }
 
   const metadata = buildSharedProjectMetadata(snapshot)
+  console.log('[SHARE] No existing snapshot, inserting new project', { metadata })
 
   const { data, error } = await client
     .from('projects')
@@ -237,13 +240,16 @@ export async function createSharedProjectSnapshot(snapshot, name = '') {
     .single()
 
   if (error) {
+    console.error('[SHARE] Error inserting new shared project:', error)
     throw error
   }
 
   if (!data?.id) {
+    console.error('[SHARE] Share snapshot did not return an id.')
     throw new Error('Share snapshot did not return an id.')
   }
 
+  console.log('[SHARE] New shared project inserted, id:', data.id)
   return { id: data.id, reused: false }
 }
 

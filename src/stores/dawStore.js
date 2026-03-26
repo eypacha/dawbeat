@@ -1165,9 +1165,12 @@ export const useDawStore = defineStore('dawStore', {
 
       const { id: snapshotId, reused } = await createSharedProjectSnapshot(snapshot, this.projectTitle)
 
+      const shareUrl = createSharedProjectUrl(snapshotId)
+      console.log('[SHARE] Created shareUrl:', shareUrl)
+
       return {
         snapshotId,
-        shareUrl: createSharedProjectUrl(snapshotId),
+        shareUrl,
         reused
       }
     },

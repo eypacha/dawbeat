@@ -322,7 +322,7 @@
       :author="projectAuthor"
       :license="dawStore.projectLicense"
       :shared="dawStore.shared"
-      :shareUrl="shareUrl.value"
+      :shareUrl="shareUrl"
       :open="projectInfoDialogVisible"
       @update:open="projectInfoDialogVisible = $event"
       @save="handleSaveProjectInfo"
@@ -670,10 +670,22 @@ function handleSaveProjectInfo(data) {
 }
 
 async function handleShareProjectInfo() {
-  // Marcar como compartido y obtener el link
-  dawStore.shared = true
-  const { shareUrl: url } = await dawStore.shareProject()
-  shareUrl.value = url
+  console.log('[SHARE] Share button clicked')
+  try {
+    console.log('[SHARE] Calling dawStore.shareProject()')
+    const { shareUrl: url, snapshotId, reused } = await dawStore.shareProject()
+    console.log('[SHARE] shareProject() result:', { url, snapshotId, reused })
+    shareUrl.value = url
+    dawStore.shared = true
+    if (reused) {
+      console.log('[SHARE] Project already existed, reused snapshotId:', snapshotId)
+    } else {
+      console.log('[SHARE] New project shared, new snapshotId:', snapshotId)
+    }
+    console.log('[SHARE] Final share URL:', url)
+  } catch (err) {
+    console.error('[SHARE] Error sharing project:', err)
+  }
 }
 
 function cycleTransportDisplayMode() {
@@ -832,7 +844,9 @@ async function handleShareProject() {
     // Initiate the clipboard write synchronously before any await so Safari keeps the user gesture.
     const deferred = startDeferredClipboardWrite()
 
-    const { shareUrl, reused } = await dawStore.shareProject()
+    console.log('[SHARE] Calling dawStore.shareProject() from handleShareProject')
+    const { shareUrl, snapshotId, reused } = await dawStore.shareProject()
+    console.log('[SHARE] shareProject() result:', { shareUrl, snapshotId, reused })
 
     let copied = false
 
@@ -846,6 +860,7 @@ async function handleShareProject() {
     }
 
     if (reused) {
+      console.log('[SHARE] Project already existed, reused snapshotId:', snapshotId)
       enqueueSnackbar(copied ? 'Link to existing snapshot copied' : `This project was already shared. URL: ${shareUrl}`,
         {
           variant: copied ? 'info' : 'info',
@@ -853,6 +868,7 @@ async function handleShareProject() {
         }
       )
     } else {
+      console.log('[SHARE] New project shared, new snapshotId:', snapshotId)
       enqueueSnackbar(copied ? 'Link to new snapshot copied' : `New share URL: ${shareUrl}`,
         {
           variant: copied ? 'success' : 'success',
@@ -860,8 +876,9 @@ async function handleShareProject() {
         }
       )
     }
+    console.log('[SHARE] Final share URL:', shareUrl)
   } catch (error) {
-    console.error('Could not create shared snapshot', error)
+    console.error('[SHARE] Could not create shared snapshot', error)
     enqueueSnackbar('Could not create a share link.', { variant: 'error' })
   } finally {
     sharingProject.value = false
@@ -966,4 +983,3 @@ async function handleProjectFileChange(event) {
   }
 }
 </script>
-
