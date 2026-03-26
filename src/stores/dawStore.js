@@ -557,6 +557,7 @@ function buildClipClipboard(entries, tracks, variableTracks, valueTrackerTracks)
   const anchorTickStart = Math.floor(Math.max(0, anchorStart))
 
   return {
+    kind: 'clips',
     anchorStart,
     anchorTickOffset: anchorStart - anchorTickStart,
     clips: sortedEntries.map((entry) => {
@@ -574,6 +575,44 @@ function buildClipClipboard(entries, tracks, variableTracks, valueTrackerTracks)
       }
     }),
     sourceLaneIds: [...new Set(sortedEntries.map((entry) => `${entry.laneType}:${entry.laneId}`))]
+  }
+}
+
+function buildGroupClipboard(group, entries, tracks, variableTracks, valueTrackerTracks) {
+  if (!group || !entries.length) {
+    return null
+  }
+
+  const sortedEntries = sortClipEntriesForClipboard(tracks, variableTracks, valueTrackerTracks, entries)
+  const groupStart = Number.isFinite(Number(group.start))
+    ? Number(group.start)
+    : Math.min(...sortedEntries.map((entry) => entry.clip.start))
+  const groupTrackIndex = Number.isInteger(group.trackIndex)
+    ? group.trackIndex
+    : Math.min(...sortedEntries.map((entry) => entry.trackIndex ?? 0))
+  const anchorTickStart = Math.floor(Math.max(0, groupStart))
+
+  return {
+    kind: 'group',
+    anchorStart: groupStart,
+    anchorTickOffset: groupStart - anchorTickStart,
+    group: {
+      clips: sortedEntries.map((entry) => {
+        const inlineClipFormulaFields = createClipFormulaFields(entry.clip)
+
+        return {
+          duration: entry.clip.duration,
+          ...inlineClipFormulaFields,
+          laneType: entry.laneType,
+          stepSubdivision: entry.laneType === 'valueTracker' ? entry.clip.stepSubdivision : null,
+          values: entry.laneType === 'valueTracker' ? [...(entry.clip.values ?? [])] : null,
+          startOffset: entry.clip.start - groupStart,
+          trackOffset: (entry.trackIndex ?? 0) - groupTrackIndex
+        }
+      }),
+      name: group.name,
+      trackIndex: groupTrackIndex
+    }
   }
 }
 
@@ -724,6 +763,30 @@ function sortLaneClips(entry) {
 }
 
 function hasPasteTargetForClipboard(clipboard, tracks, variableTracks, valueTrackerTracks) {
+  if (!clipboard) {
+    return false
+  }
+
+  if (clipboard.kind === 'group') {
+    const groupClips = clipboard.group?.clips
+
+    if (!Array.isArray(groupClips) || !groupClips.length) {
+      return false
+    }
+
+    return groupClips.every((groupClip) => {
+      if (groupClip?.laneType === 'variable') {
+        return Boolean(variableTracks.length)
+      }
+
+      if (groupClip?.laneType === 'valueTracker') {
+        return Boolean(valueTrackerTracks.length)
+      }
+
+      return Boolean(tracks.length)
+    })
+  }
+
   if (!clipboard?.clips?.length) {
     return false
   }
@@ -2321,13 +2384,14 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       const groupClipIds = getGroupClipIds(group)
-      const selectedClipEntries = collectSelectedClipEntries(
+      const selectedClipEntries = getSelectedClipEntriesWithTrackIndex(
         this.tracks,
         this.variableTracks,
         this.valueTrackerTracks,
         groupClipIds
       )
-      const nextClipboard = buildClipClipboard(
+      const nextClipboard = buildGroupClipboard(
+        group,
         selectedClipEntries,
         this.tracks,
         this.variableTracks,
@@ -2417,7 +2481,8 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       this.editingGroupId = groupId
-      this.setSelectedClips(getGroupClipIds(group))
+      this.clearClipSelection()
+      this.editingClipId = null
       this.selectedTrackId = null
       this.selectedTimelineSectionLabelId = null
       this.selectedAutomationPoint = null
@@ -2505,7 +2570,7 @@ export const useDawStore = defineStore('dawStore', {
         const clipboard = this.clipClipboard
 
         if (
-          !clipboard?.clips?.length ||
+          (!clipboard?.clips?.length && clipboard?.kind !== 'group') ||
           (!this.tracks.length && !this.variableTracks.length && !this.valueTrackerTracks.length)
         ) {
           return []
@@ -2518,6 +2583,105 @@ export const useDawStore = defineStore('dawStore', {
         let pastedAnchorTrackId = null
 
         this.editingClipId = null
+
+        if (clipboard.kind === 'group') {
+          const lanesInOrder = getClipLanesInOrder(this.tracks, this.variableTracks, this.valueTrackerTracks)
+          const laneByIndex = new Map(lanesInOrder.map((laneEntry) => [laneEntry.trackIndex, laneEntry]))
+          const laneIndexByKey = new Map(
+            lanesInOrder.map((laneEntry) => [`${laneEntry.laneType}:${laneEntry.laneId}`, laneEntry.trackIndex])
+          )
+          const groupClips = Array.isArray(clipboard.group?.clips) ? clipboard.group.clips : []
+
+          if (!groupClips.length) {
+            return []
+          }
+
+          const overrideLaneIndex = target?.laneId && target?.laneType
+            ? laneIndexByKey.get(`${target.laneType}:${target.laneId}`)
+            : undefined
+          const baseTrackIndex = Number.isInteger(overrideLaneIndex)
+            ? overrideLaneIndex
+            : Math.max(0, Math.floor(Number(clipboard.group?.trackIndex) || 0))
+
+          const targetLaneEntries = []
+
+          for (const groupClip of groupClips) {
+            const targetTrackIndex = baseTrackIndex + Math.max(0, Math.floor(Number(groupClip.trackOffset) || 0))
+            const targetLaneEntry = laneByIndex.get(targetTrackIndex)
+
+            if (!targetLaneEntry || targetLaneEntry.laneType !== groupClip.laneType) {
+              return []
+            }
+
+            targetLaneEntries.push(targetLaneEntry)
+          }
+
+          const nextGroupId = createGroupId()
+
+          for (const [index, groupClip] of groupClips.entries()) {
+            const targetLaneEntry = targetLaneEntries[index]
+            const desiredStart = pasteAnchorStart + (Number(groupClip.startOffset) || 0)
+            const nextStart = clampClipPlacementStart(
+              targetLaneEntry.lane,
+              desiredStart,
+              groupClip.duration
+            )
+            const nextClip = targetLaneEntry.laneType === 'variable'
+              ? createVariableTrackClip({
+                  duration: groupClip.duration,
+                  formula: groupClip.formula ?? null,
+                  groupId: nextGroupId,
+                  start: nextStart
+                })
+              : targetLaneEntry.laneType === 'valueTracker'
+                ? createValueTrackerClip({
+                    duration: groupClip.duration,
+                    groupId: nextGroupId,
+                    start: nextStart,
+                    stepSubdivision: groupClip.stepSubdivision,
+                    values: groupClip.values
+                  })
+                : createTrackClip({
+                    duration: groupClip.duration,
+                    ...createClipFormulaFields(groupClip),
+                    groupId: nextGroupId,
+                    start: nextStart
+                  })
+
+            targetLaneEntry.lane.clips.push(nextClip)
+            pastedClipIds.push(nextClip.id)
+            touchedLaneEntries.push(targetLaneEntry)
+
+            if (pastedAnchorTrackId === null) {
+              pastedAnchorTrackId = targetLaneEntry.laneType === 'track' ? targetLaneEntry.lane.id : null
+            }
+          }
+
+          if (!pastedClipIds.length) {
+            return []
+          }
+
+          for (const touchedLaneEntry of touchedLaneEntries) {
+            sortLaneClips(touchedLaneEntry)
+          }
+
+          this.groups.push({
+            id: nextGroupId,
+            name: generateGroupName(this.groups),
+            start: pasteAnchorStart,
+            trackIndex: baseTrackIndex,
+            duration: 1,
+            clips: pastedClipIds.map((clipId) => ({
+              clipId,
+              timeOffset: 0,
+              trackOffset: 0
+            }))
+          })
+          this.recalculateGroupBounds(nextGroupId)
+          this.setSelectedClips(pastedClipIds)
+          this.selectedTrackId = pastedAnchorTrackId
+          return pastedClipIds
+        }
 
         const sourceTrackLaneIds = getClipboardSourceLaneIdSet(clipboard, 'track')
         const sourceVariableLaneIds = getClipboardSourceLaneIdSet(clipboard, 'variable')

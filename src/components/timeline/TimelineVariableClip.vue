@@ -71,12 +71,36 @@ const isEditing = computed(() => editingClipId.value === props.clip.id)
 const isOutsideEditingGroup = computed(() =>
   Boolean(editingGroupId.value) && props.clip.groupId !== editingGroupId.value
 )
+const shouldSelectWholeGroup = computed(() =>
+  Boolean(props.clip.groupId) && !editingGroupId.value
+)
 const isSelected = computed(() => selectedClipIds.value.includes(props.clip.id))
 const isPartOfMultipleSelection = computed(() => isSelected.value && selectedClipIds.value.length > 1)
+
+function getClipGroupClipIds() {
+  if (!props.clip.groupId) {
+    return []
+  }
+
+  const clipGroup = dawStore.getGroupById(props.clip.groupId)
+  return Array.isArray(clipGroup?.clips)
+    ? clipGroup.clips.map((entry) => entry?.clipId).filter(Boolean)
+    : []
+}
 
 function handleSelect(payload = {}) {
   if (isOutsideEditingGroup.value) {
     return
+  }
+
+  if (shouldSelectWholeGroup.value) {
+    const clipGroupIds = getClipGroupClipIds()
+
+    if (clipGroupIds.length) {
+      dawStore.selectTrack(null)
+      dawStore.setSelectedClips(clipGroupIds)
+      return
+    }
   }
 
   if (ignoreNextClick.value) {
@@ -141,6 +165,23 @@ const {
 })
 
 function handleClipPointerDown(event) {
+  if (isOutsideEditingGroup.value) {
+    return
+  }
+
+  if (shouldSelectWholeGroup.value) {
+    const clipGroupIds = getClipGroupClipIds()
+
+    if (clipGroupIds.length) {
+      dawStore.selectTrack(null)
+      dawStore.setSelectedClips(clipGroupIds)
+    }
+
+    pendingShiftSelectionAction.value = null
+    handlePointerDown(event)
+    return
+  }
+
   pendingShiftSelectionAction.value =
     event.shiftKey === true ? (isSelected.value ? 'remove' : 'add') : null
   handlePointerDown(event)
@@ -167,7 +208,7 @@ function handleEditStart() {
 
 function handleContextMenu(event) {
   handleSelect({ preserveMultiSelection: true })
-  const clipGroup = props.clip.groupId ? dawStore.getGroupById(props.clip.groupId) : null
+  const clipGroup = !editingGroupId.value && props.clip.groupId ? dawStore.getGroupById(props.clip.groupId) : null
 
   if (clipGroup) {
     openContextMenu({

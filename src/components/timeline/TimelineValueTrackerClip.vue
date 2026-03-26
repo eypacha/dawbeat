@@ -102,6 +102,9 @@ const isEditing = computed(() => editingClipId.value === props.clip.id)
 const isOutsideEditingGroup = computed(() =>
   !props.preview && Boolean(editingGroupId.value) && props.clip.groupId !== editingGroupId.value
 )
+const shouldSelectWholeGroup = computed(() =>
+  !props.preview && Boolean(props.clip.groupId) && !editingGroupId.value
+)
 const isSelected = computed(() => selectedClipIds.value.includes(props.clip.id))
 const isPartOfMultipleSelection = computed(() => isSelected.value && selectedClipIds.value.length > 1)
 const stepCount = computed(() => Array.isArray(props.clip.values) ? props.clip.values.length : 0)
@@ -164,6 +167,17 @@ const previewBars = computed(() => {
   })
 })
 
+function getClipGroupClipIds() {
+  if (!props.clip.groupId) {
+    return []
+  }
+
+  const clipGroup = dawStore.getGroupById(props.clip.groupId)
+  return Array.isArray(clipGroup?.clips)
+    ? clipGroup.clips.map((entry) => entry?.clipId).filter(Boolean)
+    : []
+}
+
 function getPreviewBarHeightPercent(value, minValue, maxValue) {
   if (value === null || minValue === null || maxValue === null) {
     return 0
@@ -179,6 +193,15 @@ function getPreviewBarHeightPercent(value, minValue, maxValue) {
 function handleSelect(payload = {}) {
   if (isOutsideEditingGroup.value) {
     return
+  }
+
+  if (shouldSelectWholeGroup.value) {
+    const clipGroupIds = getClipGroupClipIds()
+
+    if (clipGroupIds.length) {
+      dawStore.setSelectedClips(clipGroupIds)
+      return
+    }
   }
 
   if (ignoreNextClick.value) {
@@ -252,6 +275,22 @@ function handleClipPointerDown(event) {
     return
   }
 
+  if (isOutsideEditingGroup.value) {
+    return
+  }
+
+  if (shouldSelectWholeGroup.value) {
+    const clipGroupIds = getClipGroupClipIds()
+
+    if (clipGroupIds.length) {
+      dawStore.setSelectedClips(clipGroupIds)
+    }
+
+    pendingShiftSelectionAction.value = null
+    handlePointerDown(event)
+    return
+  }
+
   pendingShiftSelectionAction.value =
     event.shiftKey === true ? (isSelected.value ? 'remove' : 'add') : null
   handlePointerDown(event)
@@ -304,7 +343,7 @@ function handleContextMenu(event) {
   }
 
   handleSelect({ preserveMultiSelection: true })
-  const clipGroup = props.clip.groupId ? dawStore.getGroupById(props.clip.groupId) : null
+  const clipGroup = !editingGroupId.value && props.clip.groupId ? dawStore.getGroupById(props.clip.groupId) : null
 
   if (clipGroup) {
     openContextMenu({
