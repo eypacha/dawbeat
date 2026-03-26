@@ -390,7 +390,10 @@ function handleLaneContextMenu(event) {
   if (canPasteClipsAtPlayhead.value) {
     items.push({
       action: 'paste-clips',
-      label: 'Paste'
+      label: 'Paste',
+      pasteTargetLaneId: props.track.id,
+      pasteTargetLaneType: 'track',
+      start
     })
   }
 

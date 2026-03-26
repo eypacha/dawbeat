@@ -634,7 +634,38 @@ function resolvePasteTargetValueTrackerTrack(store, sourceValueTrackerTrackId) {
   return store.valueTrackerTracks[0] ?? null
 }
 
-function resolvePasteTargetLane(store, clipboardClip) {
+function resolvePasteTargetLane(store, clipboardClip, overrideTarget) {
+  if (
+    overrideTarget?.laneType === 'variable' &&
+    clipboardClip?.sourceLaneType === 'variable'
+  ) {
+    return {
+      lane: resolvePasteTargetVariableTrack(store, overrideTarget.laneId),
+      laneType: 'variable'
+    }
+  }
+
+  if (
+    overrideTarget?.laneType === 'valueTracker' &&
+    clipboardClip?.sourceLaneType === 'valueTracker'
+  ) {
+    return {
+      lane: resolvePasteTargetValueTrackerTrack(store, overrideTarget.laneId),
+      laneType: 'valueTracker'
+    }
+  }
+
+  if (
+    overrideTarget?.laneType === 'track' &&
+    clipboardClip?.sourceLaneType !== 'variable' &&
+    clipboardClip?.sourceLaneType !== 'valueTracker'
+  ) {
+    return {
+      lane: resolvePasteTargetTrack(store, overrideTarget.laneId),
+      laneType: 'track'
+    }
+  }
+
   if (clipboardClip?.sourceLaneType === 'variable') {
     return {
       lane: resolvePasteTargetVariableTrack(store, clipboardClip.sourceLaneId),
@@ -2013,7 +2044,7 @@ export const useDawStore = defineStore('dawStore', {
       return true
     },
 
-    pasteClipboardAtPlayhead() {
+    pasteClipboardAtTick(anchorTick, target = null) {
       if (!this.canPasteClipsAtPlayhead) {
         return []
       }
@@ -2030,13 +2061,19 @@ export const useDawStore = defineStore('dawStore', {
 
         const pastedClipIds = []
         const touchedLaneEntries = []
-        const pasteAnchorStart = getPasteAnchorStart(this.time, clipboard)
+        const baseTick = Number.isFinite(anchorTick) ? anchorTick : this.time
+        const pasteAnchorStart = getPasteAnchorStart(baseTick, clipboard)
         let pastedAnchorTrackId = null
 
         this.editingClipId = null
 
+        const overrideTarget = {
+          laneId: target?.laneId ?? null,
+          laneType: target?.laneType ?? null
+        }
+
         for (const clipboardClip of clipboard.clips) {
-          const targetEntry = resolvePasteTargetLane(this, clipboardClip)
+          const targetEntry = resolvePasteTargetLane(this, clipboardClip, overrideTarget)
 
           if (!targetEntry.lane) {
             continue
@@ -2089,6 +2126,10 @@ export const useDawStore = defineStore('dawStore', {
         this.selectedTrackId = pastedAnchorTrackId
         return pastedClipIds
       })
+    },
+
+    pasteClipboardAtPlayhead(target = null) {
+      return this.pasteClipboardAtTick(this.time, target)
     },
 
     addEvalEffect(effect) {

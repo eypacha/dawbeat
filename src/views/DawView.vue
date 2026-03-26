@@ -530,7 +530,17 @@ function handleContextMenuSelect(action, item) {
   }
 
   if (action === 'paste-clips') {
-    dawStore.pasteClipboardAtPlayhead()
+    const pasteTarget = {
+      laneId: item?.pasteTargetLaneId ?? null,
+      laneType: item?.pasteTargetLaneType ?? null
+    }
+
+    if (Number.isFinite(item?.start)) {
+      dawStore.pasteClipboardAtTick(item.start, pasteTarget)
+      return
+    }
+
+    dawStore.pasteClipboardAtPlayhead(pasteTarget)
     return
   }
 
