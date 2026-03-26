@@ -46,6 +46,11 @@ import {
 } from '@/services/valueTrackerService'
 import { DEFAULT_FORMULA_DROP_DURATION } from '@/services/timelineService'
 import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
+import {
+  createProjectFilenameFromTitle,
+  DEFAULT_PROJECT_TITLE,
+  normalizeProjectTitle
+} from '@/utils/projectTitle'
 import { DEFAULT_TRACK_COLOR, getTrackColor } from '@/utils/colorUtils'
 import {
   BASE_TICK_SIZE,
@@ -67,6 +72,7 @@ const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 1
 export function serializeProject(state) {
   return normalizeProjectPayload({
     version: PROJECT_VERSION,
+    projectTitle: state.projectTitle,
     tracks: state.tracks,
     variableTracks: state.variableTracks,
     valueTrackerTracks: state.valueTrackerTracks,
@@ -154,7 +160,7 @@ export async function importProjectFile(file) {
   return project
 }
 
-export function downloadProjectFile(state, filename = createProjectFilename()) {
+export function downloadProjectFile(state, filename = createProjectFilename(state?.projectTitle)) {
   if (typeof document === 'undefined' || typeof URL === 'undefined') {
     throw new Error('La descarga de archivos no esta disponible en este entorno.')
   }
@@ -305,6 +311,7 @@ function normalizeProjectPayload(project) {
 
   return {
     version: PROJECT_VERSION,
+    projectTitle: normalizeProjectTitle(project.projectTitle, DEFAULT_PROJECT_TITLE),
     tracks,
     variableTracks,
     valueTrackerTracks,
@@ -563,9 +570,8 @@ function normalizePositiveNumber(value, fallback) {
   return Math.max(Number.EPSILON, normalizeNumber(value, fallback))
 }
 
-function createProjectFilename(now = new Date()) {
-  const normalizedDate = now.toISOString().replace(/[:.]/g, '-')
-  return `dawbeat-project-${normalizedDate}.json`
+export function createProjectFilename(projectTitle = DEFAULT_PROJECT_TITLE) {
+  return createProjectFilenameFromTitle(projectTitle, 'json')
 }
 
 function isRecord(value) {

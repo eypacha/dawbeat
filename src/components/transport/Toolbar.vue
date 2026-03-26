@@ -40,6 +40,20 @@
             title="Download the current project as JSON"
             @click="handleProjectDownload"
           />
+
+          <div class="flex items-center border border-zinc-800 bg-zinc-950 px-2 py-1">
+            <input
+              v-model="projectTitleDraft"
+              class="w-40 bg-transparent text-xs text-zinc-100 outline-none"
+              placeholder="Project title"
+              spellcheck="false"
+              title="Project title used for JSON and audio export filenames"
+              type="text"
+              @blur="commitProjectTitle"
+              @keydown.enter.prevent="commitProjectTitle"
+              @keydown.esc.prevent="resetProjectTitleDraft"
+            >
+          </div>
         </div>
 
         <Divider />
@@ -310,9 +324,10 @@ import SettingsModal from '@/components/ui/SettingsModal.vue'
 
 const dawStore = useDawStore()
 const { play, pause, stop, toggleRecord } = useTransportPlayback()
-const { automationRecordingArmed, bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, sampleRate, snapSubdivision, snapToGridEnabled, tickSize, time, timelineAutoscrollEnabled } = storeToRefs(dawStore)
+const { automationRecordingArmed, bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, projectTitle, sampleRate, snapSubdivision, snapToGridEnabled, tickSize, time, timelineAutoscrollEnabled } = storeToRefs(dawStore)
 const bpmDraft = ref(formatBpmValue(getBpmFromSampleRate(sampleRate.value, bpmMeasure.value)))
 const bpmMeasureDraft = ref(bpmMeasure.value)
+const projectTitleDraft = ref(projectTitle.value)
 const projectFileInput = ref(null)
 const sampleRateDraft = ref(String(sampleRate.value))
 const aboutVisible = ref(false)
@@ -489,6 +504,10 @@ watch([sampleRate, bpmMeasure, midiClockLocked, () => midiClockState.effectiveSa
   bpmMeasureDraft.value = bpmMeasure.value
 })
 
+watch(projectTitle, () => {
+  projectTitleDraft.value = projectTitle.value
+})
+
 function triggerProjectOpen() {
   projectFileInput.value?.click()
 }
@@ -560,6 +579,15 @@ function resetBpmDraft() {
 
 function resetBpmMeasureDraft() {
   bpmMeasureDraft.value = bpmMeasure.value
+}
+
+function commitProjectTitle() {
+  dawStore.setProjectTitle(projectTitleDraft.value)
+  projectTitleDraft.value = projectTitle.value
+}
+
+function resetProjectTitleDraft() {
+  projectTitleDraft.value = projectTitle.value
 }
 
 function cycleTransportDisplayMode() {

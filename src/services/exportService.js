@@ -32,6 +32,7 @@ import { applyEvalEffects } from '@/services/evalEffectService'
 import { hasRenderableFormulaInput } from '@/services/formulaService'
 import { getValueTrackerEventTicks } from '@/services/valueTrackerService'
 import { DEFAULT_SAMPLE_RATE } from '@/utils/audioSettings'
+import { createProjectFilenameFromTitle, DEFAULT_PROJECT_TITLE } from '@/utils/projectTitle'
 import { validateFormula } from '@/utils/formulaValidation'
 import { getClipEnd, samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 
@@ -46,13 +47,13 @@ const MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS = {
   reverb: ['decay', 'preDelay']
 }
 
-export async function downloadProjectWav(state, { loopCount = 1, filename = createWavFilename() } = {}) {
+export async function downloadProjectWav(state, { loopCount = 1, filename = createWavFilename(state?.projectTitle) } = {}) {
   const wavBuffer = await renderProjectToWav(state, { loopCount })
   const blob = new Blob([wavBuffer], { type: 'audio/wav' })
   triggerDownload(blob, filename)
 }
 
-export async function downloadProjectMp3(state, { loopCount = 1, filename = createMp3Filename() } = {}) {
+export async function downloadProjectMp3(state, { loopCount = 1, filename = createMp3Filename(state?.projectTitle) } = {}) {
   const wavBuffer = await renderProjectToWav(state, { loopCount })
   const mp3Buffer = await encodeWavToMp3(wavBuffer)
   const blob = new Blob([mp3Buffer], { type: 'audio/mpeg' })
@@ -1296,12 +1297,10 @@ function writeAscii(view, offset, value) {
   }
 }
 
-function createWavFilename(now = new Date()) {
-  const normalizedDate = now.toISOString().replace(/[:.]/g, '-')
-  return `dawbeat-export-${normalizedDate}.wav`
+function createWavFilename(projectTitle = DEFAULT_PROJECT_TITLE) {
+  return createProjectFilenameFromTitle(projectTitle, 'wav')
 }
 
-function createMp3Filename(now = new Date()) {
-  const normalizedDate = now.toISOString().replace(/[:.]/g, '-')
-  return `dawbeat-export-${normalizedDate}.mp3`
+function createMp3Filename(projectTitle = DEFAULT_PROJECT_TITLE) {
+  return createProjectFilenameFromTitle(projectTitle, 'mp3')
 }

@@ -107,6 +107,7 @@ import {
   snapTicks
 } from '@/utils/timeUtils'
 import { DEFAULT_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
+import { DEFAULT_PROJECT_TITLE, normalizeProjectTitle } from '@/utils/projectTitle'
 import { TRACK_COLOR_PALETTE, getTrackColor } from '@/utils/colorUtils'
 import {
   collectAutoVariableTrackNames,
@@ -140,6 +141,7 @@ function createDefaultProject() {
 
 function createEmptyProject() {
   return {
+    projectTitle: DEFAULT_PROJECT_TITLE,
     audioEffects: [],
     automationLanes: getDefaultAutomationLanes(),
     bpmMeasure: DEFAULT_BPM_MEASURE,
@@ -217,6 +219,7 @@ function createInitialState() {
     clipDragPreview: null,
     clipClipboard: null,
     evalEffects: project.evalEffects,
+    projectTitle: project.projectTitle,
     editingClipId: null,
     loopEnabled: project.loopEnabled,
     loopStart: project.loopStart,
@@ -398,6 +401,7 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   store.automationLanes = normalizedProject.automationLanes
   store.bpmMeasure = normalizedProject.bpmMeasure
   store.evalEffects = normalizedProject.evalEffects
+  store.projectTitle = normalizedProject.projectTitle
   store.loopEnabled = normalizedProject.loopEnabled
   store.loopStart = normalizedProject.loopStart
   store.loopEnd = normalizedProject.loopEnd
@@ -1402,6 +1406,12 @@ export const useDawStore = defineStore('dawStore', {
     setBpmMeasure(value) {
       return this.recordHistoryStep('set-bpm-measure', () => {
         this.bpmMeasure = normalizeBpmMeasureExpression(value, this.bpmMeasure)
+      })
+    },
+
+    setProjectTitle(value) {
+      return this.recordHistoryStep('set-project-title', () => {
+        this.projectTitle = normalizeProjectTitle(value, this.projectTitle)
       })
     },
 
