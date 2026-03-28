@@ -1,5 +1,41 @@
 <template>
-  <Panel class="flex min-h-[320px] flex-col">
+  <Panel
+    class="relative flex min-h-[320px] flex-col"
+    @dragenter="handleProjectFileDragEnter"
+    @dragover.prevent="handleProjectFileDragOver"
+    @dragleave="handleProjectFileDragLeave"
+    @drop.prevent="handleProjectFileDrop"
+  >
+    <div
+      v-if="projectFileDropVisible"
+      class="pointer-events-none absolute inset-0 z-50 flex items-center justify-center bg-zinc-950/72 p-6 backdrop-blur-[2px]"
+    >
+      <div
+        class="flex w-full max-w-md flex-col items-center gap-3 border-2 border-dashed border-cyan-400/50 bg-zinc-950/95 px-6 py-8 text-center shadow-2xl shadow-black/30"
+      >
+        <LoaderCircle
+          v-if="projectFileDropLoading"
+          class="h-8 w-8 animate-spin text-cyan-200"
+          :stroke-width="2.25"
+        />
+        <FolderOpen
+          v-else
+          class="h-8 w-8 text-cyan-200"
+          :stroke-width="2.25"
+        />
+        <p class="text-sm font-semibold uppercase tracking-[0.22em] text-cyan-100">
+          {{ projectFileDropLoading ? 'Opening Project' : 'Drop JSON To Open' }}
+        </p>
+        <p class="max-w-sm text-sm leading-6 text-zinc-300">
+          {{
+            projectFileDropLoading
+              ? 'Loading the dropped project into DawBeat.'
+              : 'Drop a DawBeat JSON project here to replace the current project.'
+          }}
+        </p>
+      </div>
+    </div>
+
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <div>
         <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">Timeline</p>
@@ -48,7 +84,7 @@
 
     <div
       ref="scrollContainer"
-      class="flex-1 overflow-auto border border-zinc-800 bg-zinc-950/80"
+      class="relative flex-1 overflow-auto border border-zinc-800 bg-zinc-950/80"
       data-timeline-scroll-container="true"
       @wheel="handleWheel"
     >
@@ -202,6 +238,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { FolderOpen, LoaderCircle } from 'lucide-vue-next'
 import { getPlaybackEndTick } from '@/engine/timelineEngine'
 import Panel from '@/components/ui/Panel.vue'
 import TimelineAutomationLane from '@/components/timeline/TimelineAutomationLane.vue'
@@ -215,6 +252,8 @@ import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineMarqueeSelection } from '@/composables/useTimelineMarqueeSelection'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { createGroupContextMenuItems } from '@/services/groupContextMenuService'
+import { enqueueSnackbar } from '@/services/notifications'
+import { getFirstDraggedFile, hasFileDragPayload, openProjectFile } from '@/services/projectOpenService'
 import { getTimelineTrackLabelWidth } from '@/services/timelineHeaderWidthService'
 import { getDraggedTick, resolvePointerEventSnap, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { useDawStore } from '@/stores/dawStore'
@@ -233,13 +272,16 @@ const FIXED_TIMELINE_TICKS = 256
 
 const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
-const { seekToTime } = useTransportPlayback()
+const { seekToTime, stop } = useTransportPlayback()
 const { automationLanes, editingClipId, editingGroup, groups, loopEnabled, loopEnd, loopStart, pixelsPerTick, playing, selectedClipIds, tickSize, time, timelineAutoscrollEnabled, timelineSectionLabels, tracks, valueTrackerTracks, variableTracks } =
   storeToRefs(dawStore)
 const scrollContainer = ref(null)
 const timelineSurfaceElement = ref(null)
 const draggingTrackId = ref(null)
 const trackDropTarget = ref(null)
+const projectFileDragDepth = ref(0)
+const projectFileDropActive = ref(false)
+const projectFileDropLoading = ref(false)
 let scrubPointerId = null
 const groupDragState = ref(null)
 const ignoreNextGroupHeaderClick = ref(false)
@@ -376,6 +418,9 @@ function getClipLaneColor(trackIndex) {
 }
 
 const selectedClipIdSet = computed(() => new Set(selectedClipIds.value))
+const projectFileDropVisible = computed(() =>
+  projectFileDropActive.value || projectFileDropLoading.value
+)
 const groupVisuals = computed(() => {
   const laneMetricsByIndex = new Map(clipLaneMetrics.value.map((metric) => [metric.index, metric]))
 
@@ -477,6 +522,80 @@ function handleWheel(event) {
 
   const nextPlayheadOffset = getPlayheadOffset(time.value)
   scrollOffsetIntoView(nextPlayheadOffset)
+}
+
+function resetProjectFileDropState() {
+  projectFileDragDepth.value = 0
+  projectFileDropActive.value = false
+}
+
+function handleProjectFileDragEnter(event) {
+  if (projectFileDropLoading.value || !hasFileDragPayload(event.dataTransfer)) {
+    return
+  }
+
+  projectFileDragDepth.value += 1
+  projectFileDropActive.value = true
+}
+
+function handleProjectFileDragOver(event) {
+  if (projectFileDropLoading.value || !hasFileDragPayload(event.dataTransfer)) {
+    return
+  }
+
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'copy'
+  }
+
+  projectFileDropActive.value = true
+}
+
+function handleProjectFileDragLeave(event) {
+  if (!hasFileDragPayload(event.dataTransfer)) {
+    return
+  }
+
+  projectFileDragDepth.value = Math.max(0, projectFileDragDepth.value - 1)
+
+  if (projectFileDragDepth.value === 0 && !projectFileDropLoading.value) {
+    projectFileDropActive.value = false
+  }
+}
+
+async function handleProjectFileDrop(event) {
+  if (!hasFileDragPayload(event.dataTransfer)) {
+    return
+  }
+
+  const file = getFirstDraggedFile(event.dataTransfer)
+  resetProjectFileDropState()
+
+  if (!file) {
+    return
+  }
+
+  projectFileDropLoading.value = true
+
+  try {
+    await openProjectFile({
+      dawStore,
+      file,
+      stopPlayback: stop
+    })
+  } catch (error) {
+    if (error?.code === 'invalid-project-file') {
+      enqueueSnackbar('Invalid project file', { variant: 'error' })
+      projectFileDropLoading.value = false
+      return
+    }
+
+    console.error('Could not open the dropped project', error)
+    enqueueSnackbar('Could not open the project.', { variant: 'error' })
+    projectFileDropLoading.value = false
+    return
+  }
+
+  projectFileDropLoading.value = false
 }
 
 function handleTimelineSurfacePointerDownCapture(event) {

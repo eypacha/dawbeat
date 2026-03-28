@@ -364,7 +364,8 @@ import { midiClockState } from '@/services/midiClockService'
 import { useDawStore } from '@/stores/dawStore'
 import { downloadProjectMp3, downloadProjectWav } from '@/services/exportService'
 import ExportModal from '@/components/ui/ExportModal.vue'
-import { downloadProjectFile, importProjectFile } from '@/services/projectPersistence'
+import { downloadProjectFile } from '@/services/projectPersistence'
+import { openProjectFile, replaceCurrentProject } from '@/services/projectOpenService'
 import { enqueueSnackbar } from '@/services/notifications'
 import { MAX_SAMPLE_RATE, MIN_SAMPLE_RATE, normalizeSampleRate } from '@/utils/audioSettings'
 import { SNAP_SUBDIVISION_OPTIONS } from '@/utils/timeUtils'
@@ -818,8 +819,11 @@ async function handleShareProject() {
 }
 
 async function applyIncomingProject(project) {
-  await stop()
-  dawStore.applyProject(project)
+  await replaceCurrentProject({
+    dawStore,
+    project,
+    stopPlayback: stop
+  })
 }
 
 async function handleNewProjectConfirm() {
@@ -901,17 +905,20 @@ async function handleProjectFileChange(event) {
   }
 
   try {
-    const project = await importProjectFile(file)
-
-    try {
-      await applyIncomingProject(project)
-      lastShuffledDemoProjectId.value = null
-    } catch (error) {
-      console.error('Could not open the project', error)
-      enqueueSnackbar('Could not open the project.', { variant: 'error' })
-    }
+    await openProjectFile({
+      dawStore,
+      file,
+      stopPlayback: stop
+    })
+    lastShuffledDemoProjectId.value = null
   } catch (error) {
-    enqueueSnackbar('Invalid project file', { variant: 'error' })
+    if (error?.code === 'invalid-project-file') {
+      enqueueSnackbar('Invalid project file', { variant: 'error' })
+      return
+    }
+
+    console.error('Could not open the project', error)
+    enqueueSnackbar('Could not open the project.', { variant: 'error' })
   }
 }
 </script>
