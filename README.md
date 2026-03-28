@@ -1,6 +1,6 @@
 # DawBeat
 
-Browser-based ByteBeat DAW focused on fast timeline composition, formula-driven sound design, automation, and live control.
+Browser-based ByteBeat DAW focused on timeline composition, formula-driven sound design, modulation, automation, and live control.
 
 ![DawBeat UI](docs/screenshots/dawbeat-ui.png)
 
@@ -8,31 +8,27 @@ Browser-based ByteBeat DAW focused on fast timeline composition, formula-driven 
 
 DawBeat combines a lightweight DAW workflow with a ByteBeat-first approach:
 
-- Formula clips (mono or stereo).
-- Variable tracks and value trackers to modulate formulas over time.
-- Parameter automation and an audio effects chain.
-- Playback, looping, automation recording, and offline export.
-- Mobile companion controls for automation lanes via QR link.
+- Formula clips with inline editing and library formulas.
+- Variable tracks, value tracker tracks, and automation lanes to modulate formulas over time.
+- Real browser playback with loop editing, scrubbing, transport control, and timeline composition.
+- Audio effects, automation recording, and offline WAV/MP3 export.
+- Shared project snapshots plus a QR-based mobile companion for automation lanes.
 
 The main app is desktop-oriented. On phones/tablets, the companion view is intended as a remote controller.
 
 ## Features
 
-- Multi-track timeline with clip editing and section labels.
-- Undo/redo history.
-- Formula evaluation with visual previews.
-- Variable tracks and value trackers with keyboard and MIDI input.
-- Automation lanes with curve controls and live automation input.
-- Audio effects (EQ, distortion, stereo widener, delay, compressor, reverb, limiter, and master gain).
-- WAV and MP3 export (full render or looped render passes).
-- Auto-save in localStorage plus JSON project import/export.
-- Immutable shared snapshots via Supabase (`/#/p/:id`).
-- Web MIDI support:
-- MIDI input for bindings and live value capture.
-- MIDI Clock receive for transport sync and effective BPM/sample-rate locking.
-- PeerJS-based remote companion:
-- Shareable lane control link/QR.
-- Phone/tablet control on the companion route.
+- Multi-lane timeline with formula tracks, variable tracks, value tracker tracks, automation lanes, and section labels.
+- Clip editing workflows including move, resize, duplicate, marquee selection, group editing, copy/paste, nudging, and undo/redo history.
+- Formula evaluation with waveform previews and an evaluated expression panel.
+- Variable tracks and value trackers with keyboard override, variable binding, MIDI CC, MIDI Note, MIDI learn, and live recording workflows.
+- Automation lanes for master gain and audio effect parameters, including curve controls and live remote input.
+- Audio effects: EQ, distortion, stereo widener, delay, compressor, reverb, limiter, and master gain.
+- Transport controls with editable BPM unit, sample rate, looping, and external MIDI Clock receive/lock state.
+- WAV and MP3 export with full renders or looped render passes.
+- Auto-save in `localStorage` plus JSON project import/export.
+- Immutable shared snapshots via Supabase (`/#/app/p/:id`).
+- PeerJS-based remote companion with shareable lane QR links (`/#/app/companion`).
 
 ## Stack
 
@@ -93,17 +89,19 @@ on projects for insert
 with check (true);
 ```
 
-Shared route format uses hash routing:
+Canonical shared route format uses hash routing:
 
 ```text
-/#/p/:id
+/#/app/p/:id
 ```
 
 Example:
 
 ```text
-https://dawbeat.com/#/p/6f1c8c2e
+https://dawbeat.com/#/app/p/6f1c8c2e
 ```
+
+Older `/#/p/:id` links still redirect to the current route.
 
 ## Development
 
@@ -129,14 +127,12 @@ yarn preview
 ## Quick Start
 
 1. Click START to initialize audio.
-2. Create or edit clips in the timeline.
-3. Adjust BPM/measure/sample rate from the transport toolbar.
-4. Enable loop to iterate on a section.
-5. Use Export to generate WAV or MP3.
-6. Save a project snapshot with Save JSON or load one with Open JSON.
+2. Create or edit clips in the timeline, or load a bundled demo with Shuffle Demo.
+3. Add modulation with variable tracks, value trackers, or automation lanes.
+4. Adjust BPM, measure, and sample rate from the transport toolbar.
+5. Enable loop to iterate on a section and use record for automation/value capture when needed.
+6. Use Export to generate WAV or MP3, or Save JSON for a local project file.
 7. Press Share to create an immutable Supabase snapshot and copy a shared URL.
-
-You can also load bundled demos using Shuffle Demo.
 
 ## Keyboard Shortcuts
 
@@ -155,9 +151,11 @@ You can also load bundled demos using Shuffle Demo.
 
 The app includes a dedicated remote-control route:
 
-- Route: #/companion
+- Route: `#/app/companion`
 - Connection: scan/open the shared QR link from an automation lane.
 - Behavior: the companion sends gestures and values for subscribed lanes.
+
+Older `#/companion` links still redirect to the current route.
 
 If you open the main app on mobile, you will see a desktop-only notice with guidance to use companion mode.
 
@@ -181,7 +179,7 @@ src/
   stores/          # Global state (Pinia)
   engine/          # Timeline/formula evaluation runtime
   composables/     # Reusable UI and transport interactions
-  views/           # DawView and CompanionView
+  views/           # LandingView, DawView, and CompanionView
 ```
 
 ## Architecture Notes
@@ -193,4 +191,3 @@ src/
 ## Current Status
 
 This repository is under active development and already includes a full functional base for composition, automation, MIDI workflows, and export.
-
