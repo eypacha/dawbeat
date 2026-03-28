@@ -17,7 +17,7 @@ Today it includes:
 
 - start screen to unlock audio before entering the app
 - real bytebeat playback in the browser with Web Audio + vendor `ByteBeat.js`
-- toolbar with `record`, `play`, `pause`, `stop`, `loop`, `new/open/save project`, `export WAV`, `sampleRate` editing, editable BPM, BPM derived from a unit like `t >> 4`, `MIDI Clock` badge/lock state, and settings
+- toolbar with `record`, `play`, `pause`, `stop`, `loop`, `new/open/save JSON`, bundled demo shuffle, project metadata, share snapshot, WAV/MP3 export, `sampleRate` editing, editable BPM, BPM derived from a unit like `t >> 4`, `MIDI Clock` badge/lock state, and settings
 - playhead scrubbing from the ruler and from the playhead
 - horizontal zoom with `Ctrl/Cmd + wheel`
 - timeline auto-scroll during playback
@@ -34,7 +34,7 @@ Today it includes:
 - duplication with `Alt/Option + drag`
 - temporary snap bypass with `Shift + drag`
 - marquee multi-selection with `Shift + drag` in the timeline
-- moving and duplicating groups of selected clips
+- moving, duplicating, renaming, copying, ungrouping, deleting, and focused editing of clip groups
 - copy/paste at the playhead
 - nudging with left/right arrows
 - undo/redo with store history
@@ -50,6 +50,7 @@ Today it includes:
 - optional waveform preview per clip
 - optional evaluated formula panel
 - copy of evaluated formulas from the footer for `Channel`, `Left Channel`, and `Right Channel`
+- formula inspector / analysis for clips and evaluated expressions
 - eval effects: `Stereo Offset`, `T Replacement`
 - formula effects layer inside the `Master Gain` visualizer, rendered with `ByteBeat.js#getSamplesForTimeRange(...)`
 - currently exposed audio effects: `EQ3`, `Distortion`, `Stereo Widener`, `Feedback Delay`, `Compressor`, `Limiter`, `Reverb`, and `Master Gain`
@@ -59,10 +60,13 @@ Today it includes:
 - phone automation companion via PeerJS, opened from each automation lane header with a QR modal
 - companion sessions persisted in `localStorage`, allowing the same phone to accumulate multiple automation lanes from the same host
 - automatic persistence in `localStorage`
+- separate formula library persistence in `localStorage`
 - JSON project import/export
-- offline WAV export with timeline render, eval effects, master gain, supported audio effects, and offline automation
+- immutable shared project snapshots via Supabase, with shared route loading
+- project metadata dialog with name, description, author, and license used by exports and shared snapshots
+- offline WAV and MP3 export with timeline render, loop renders, eval effects, master gain, supported audio effects, and offline automation
 - keyboard override for value trackers with `0-9` and `A-F`
-- full desktop layout with Library, Timeline, and Effects panels; a general mobile placeholder for the main DAW UI; and a dedicated mobile automation companion route
+- landing route, full desktop layout with Library, Timeline, and Effects panels, a general mobile placeholder for the main DAW UI, a shared project route, and a dedicated mobile automation companion route
 
 ## What Not To Assume
 
@@ -171,6 +175,7 @@ The system must continue allowing:
 - creating and editing formula clips
 - moving clips within a track and across tracks
 - duplicating clips and groups with modifiers
+- creating, renaming, copying, and deleting groups of selected clips
 - editing variable clip formulas
 - editing value tracker clips by steps
 - creating or initializing missing variables from the formula editor
@@ -183,6 +188,7 @@ The system must continue allowing:
 - recording value tracker takes from keyboard/MIDI without breaking playback or history
 - editing value tracker bindings and learning MIDI without breaking the composition flow
 - automating `masterGain` and audio effect parameters
+- editing project metadata and generating shared snapshot links
 - saving, opening, and exporting projects
 
 ## Development Principles
@@ -287,7 +293,7 @@ Web Audio / Tone Offline / File APIs / localStorage
 Practical rule:
 
 - the UI should not contain complex timeline, formula, variable, value tracker, automation, history, or effects logic if it can live in `services` or `composables`
-- the store centralizes state, actions, clipboard, selection, and history
+- `dawStore` centralizes DAW state, actions, clipboard, selection, and history, while `libraryStore` persists library formulas separately
 - `timelineEngine` decides the active expression and combines audible tracks
 - `variableTrackService` resolves formula variables and variables coming from value trackers
 - `valueTrackerService` resolves steps, holds, events, and live input
@@ -296,12 +302,14 @@ Practical rule:
 - `automationCompanionService` owns PeerJS host/client state, QR routes, multi-lane controller sessions, and remote automation messages
 - `formulaService` resolves inline and referenced formulas
 - `formulaWaveformService` renders waveform previews
+- `useFormulaInspector` + `services/formulaAnalysis/*` own expression inspection and analysis
 - `timelineLaneLayoutService` normalizes persistable lane heights
 - `timelineSectionLabelService` manages timeline section markers and their normalization
 - `bpmService` centralizes BPM/unit parsing and conversion helpers
 - `midiClockService` owns runtime MIDI Clock lock state and transport sync commands
 - `demoProjectService` resolves bundled demos from `src/data/*.json`
-- `formulaMutationService` encapsulates formula mutation used by store actions
+- `groupService` and `groupContextMenuService` own clip grouping and group actions
+- `sharedProjectService` creates, deduplicates, fetches, and formats immutable shared snapshots
 - visualizer services (`visualizerConfigService`, `visualizerFrameService`, `visualizerRenderer`) own visualizer configuration and frame rendering
 - `bytebeatService` handles live audio integration
 - `projectPersistence` normalizes, serializes, and restores projects
@@ -344,6 +352,7 @@ src/
       TimelineClipPreview.vue
       TimelineClipWaveform.vue
       TimelineLoopRegion.vue
+      TimelineSectionLabels.vue
       TimelineTrack.vue
       TimelineValueTrackerClip.vue
       TimelineValueTrackerTrack.vue
@@ -354,6 +363,7 @@ src/
     transport/
       Toolbar.vue
     ui/
+      AboutModal.vue
       AutomationCompanionModal.vue
       Button.vue
       CollapseTransition.vue
@@ -361,15 +371,21 @@ src/
       ContextMenu.vue
       Divider.vue
       Dropdown.vue
+      ExportModal.vue
+      FloatingWindow.vue
       FormulaInputDialog.vue
+      FormulaInspector.vue
       IconButton.vue
       Input.vue
       Modal.vue
       Panel.vue
+      ProjectInfoDialog.vue
       SettingsModal.vue
+      ShareProjectDialog.vue
       SnackbarContainer.vue
       SnackbarItem.vue
       SideDrawer.vue
+      Tabs.vue
       TextInputDialog.vue
       Toolbar.vue
       TrackPresentationDialog.vue
@@ -378,6 +394,7 @@ src/
 
   composables/
     useContextMenu.js
+    useFormulaInspector.js
     usePointerEdgeAutoScroll.js
     useTimelineClipInteraction.js
     useTimelineLaneResize.js
@@ -385,6 +402,7 @@ src/
     useTransportPlayback.js
 
   data/
+    defaultLibraryItems.js
     demo.json
     demo-boss-level.json
     demo-stereo-madness.json
@@ -408,14 +426,24 @@ src/
     evalEffectService.js
     exportService.js
     floatingWindowService.js
-    formulaMutationService.js
+    formulaAnalysis/
+      activityAnalyzer.js
+      analysisConfig.js
+      bitplaneAnalyzer.js
+      periodAnalyzer.js
+      pitchAnalyzer.js
+      pitchStabilityAnalyzer.js
+      rangeAnalyzer.js
     formulaService.js
     formulaWaveformService.js
+    groupContextMenuService.js
+    groupService.js
     keyboardShortcuts.js
     midiClockService.js
     midiInputService.js
     notifications.js
     projectPersistence.js
+    sharedProjectService.js
     snapService.js
     timelineHeaderWidthService.js
     timelineLaneLayoutService.js
@@ -432,6 +460,7 @@ src/
 
   stores/
     dawStore.js
+    libraryStore.js
 
   utils/
     audioSettings.js
@@ -439,10 +468,14 @@ src/
     formulaTokenizer.js
     formulaValidation.js
     macroNodes.js
+    projectTitle.js
     timeUtils.js
     visualizerPalettes.js
 
   views/
+    CompanionView.vue
+    DawView.vue
+    LandingView.vue
 ```
 
 The agent must respect this structure and extend it without mixing responsibilities.
@@ -456,6 +489,12 @@ Relevant fields today:
 ```js
 {
   audioReady: false,
+  projectTitle: "Untitled",
+  projectDescription: "",
+  projectAuthor: "",
+  projectLicense: "CC0",
+  shared: false,
+  sharedProjectMeta: null,
   playing: false,
   time: 0,
   zoom: 1,
@@ -468,6 +507,7 @@ Relevant fields today:
   tracks: [],
   variableTracks: [],
   valueTrackerTracks: [],
+  groups: [],
   audioEffects: [],
   evalEffects: [],
   automationLanes: [],
@@ -476,6 +516,9 @@ Relevant fields today:
   masterGain: 1,
   showEvaluatedPanel: true,
   showClipWaveforms: true,
+  timelineAutoscrollEnabled: true,
+  snapToGridEnabled: true,
+  snapSubdivision: TIMELINE_SNAP_SUBDIVISIONS,
   timelineSectionLabels: [],
   selectedClipIds: [],
   selectedClipId: null,
@@ -484,6 +527,7 @@ Relevant fields today:
   selectedValueTrackerTrackId: null,
   selectedAutomationPoint: null,
   editingClipId: null,
+  editingGroupId: null,
   clipDragPreview: null,
   clipClipboard: null,
   valueTrackerRecordingSession: null,
@@ -492,7 +536,8 @@ Relevant fields today:
   historyFuture: [],
   historyTransaction: null,
   historyApplying: false,
-  historyRecording: false
+  historyRecording: false,
+  formulaAnalysisCache: {}
 }
 ```
 
@@ -582,7 +627,11 @@ Each library formula should be modeled like this:
 {
   id: "formula-id",
   name: "Bass",
-  code: "t*(t>>5|t>>8)"
+  formula: "t*(t>>5|t>>8)",
+  leftFormula: "",
+  rightFormula: "",
+  formulaStereo: false,
+  duration: 4
 }
 ```
 
@@ -597,7 +646,7 @@ Each automation lane should be modeled like this:
   paramKey: "wet",               // only for audioEffectParam
   height: 52,
   points: [
-    { time: 0, value: 1 }
+    { time: 0, value: 1, curve: "easeInOut" }
   ]
 }
 ```
@@ -730,19 +779,22 @@ If a task touches effects or automation:
 Today there is:
 
 - automatic save in `localStorage`
+- separate `localStorage` persistence for library formulas through `libraryStore`
 - separate `localStorage` persistence for automation companion controller sessions
 - JSON project import
 - JSON project export
 - local storage reset
-- offline WAV export
-- project normalization with `version: 18`
-- persistence of `tracks`, `variableTracks`, `valueTrackerTracks`, `formulas`
-- persistence of `valueTrackerLibraryItems` and `timelineSectionLabels`
+- immutable shared project snapshots via Supabase and shared project loading from `/#/app/p/:id`
+- offline WAV and MP3 export, including loop-count renders
+- project normalization with `version: 25`
+- persistence of `projectTitle`, `projectDescription`, `projectAuthor`, `projectLicense`, and shared project metadata (`projectMeta`)
+- persistence of `tracks`, `variableTracks`, `valueTrackerTracks`, `groups`, and `timelineSectionLabels`
 - persistence of `audioEffects`, `evalEffects`, `automationLanes`, `masterGain`
-- persistence of `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate`, `bpmMeasure`, and `tickSize`
+- persistence of `zoom`, `loopStart`, `loopEnd`, `loopEnabled`, `sampleRate`, `bpmMeasure`, `tickSize`, `timelineAutoscrollEnabled`, `snapToGridEnabled`, and `snapSubdivision`
 - persistence of `height` inside formula tracks, variable tracks, value tracker tracks, and automation lanes
 - persistence of `showClipWaveforms` and `showEvaluatedPanel`
-- `automationLiveOverrides` and `automationRecordingArmed` are runtime-only and are not part of project serialization
+- formula library items are not embedded in project JSON; they are managed separately by `libraryStore`
+- `automationLiveOverrides`, `automationRecordingArmed`, selection state, drag previews, and live input state are runtime-only and are not part of project serialization
 
 If the project shape changes:
 
