@@ -34,7 +34,9 @@
           </div>
         </div>
 
-        <pre class="min-h-[6rem] overflow-auto px-4 py-3 text-xs leading-6 text-zinc-200 whitespace-pre-wrap break-words">{{ expression.code }}</pre>
+        <div class="min-h-[6rem] px-4 py-3">
+          <pre class="evaluated-expression-code text-xs leading-6 text-zinc-200 whitespace-pre-wrap break-words">{{ expression.code }}</pre>
+        </div>
       </section>
     </div>
   </Panel>
@@ -113,3 +115,14 @@ async function copyExpression(expression) {
   }
 }
 </script>
+
+<style scoped>
+.evaluated-expression-code {
+  margin: 0;
+  display: -webkit-box;
+  max-height: calc(1.5rem * 3);
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+</style>
