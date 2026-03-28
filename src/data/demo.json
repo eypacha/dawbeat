@@ -3,7 +3,7 @@
   "projectTitle": "Demo #1",
   "projectDescription": "",
   "projectAuthor": "Ey Pacha!",
-  "projectLicense": "",
+  "projectLicense": "CC0",
   "projectMeta": null,
   "tracks": [
     {
@@ -90,7 +90,7 @@
     },
     {
       "id": "55267b37-b44e-461d-a524-c41c2d1c1e32",
-      "color": "#3b82f6",
+      "color": "#06b6d4",
       "muted": false,
       "soloed": false,
       "unionOperator": "|",
@@ -181,7 +181,7 @@
     },
     {
       "id": "7326fef4-440c-4f85-9cb5-d76fa573f830",
-      "color": "#f97316",
+      "color": "#10b981",
       "muted": false,
       "soloed": false,
       "unionOperator": "|",
@@ -252,7 +252,7 @@
     },
     {
       "id": "d15f8520-a302-46b5-8702-408903642985",
-      "color": "#06b6d4",
+      "color": "#eab308",
       "muted": false,
       "soloed": false,
       "unionOperator": "|",
@@ -463,7 +463,7 @@
     },
     {
       "id": "7afdcd24-5148-48e3-aa25-fbdeb90e3b49",
-      "color": "#10b981",
+      "color": "#f97316",
       "muted": false,
       "soloed": false,
       "unionOperator": "|",
