@@ -76,7 +76,16 @@ const evaluatedExpressions = computed(() => {
     .filter((expression) => typeof expression === 'string' && expression.trim())
 })
 
-const displayExpressions = computed(() => getEvaluatedDisplayExpressions(evaluatedExpressions.value))
+function compactEvaluatedExpression(code) {
+  return typeof code === 'string' ? code.replace(/\s+/g, '') : ''
+}
+
+const displayExpressions = computed(() =>
+  getEvaluatedDisplayExpressions(evaluatedExpressions.value).map((expression) => ({
+    ...expression,
+    code: compactEvaluatedExpression(expression.code)
+  }))
+)
 
 function inspectExpression(expression) {
   const code = expression?.code ?? ''
