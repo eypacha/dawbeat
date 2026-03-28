@@ -79,9 +79,6 @@
             Save
           </button>
         </div>
-        <span class="mt-1 w-full block text-[11px] text-zinc-500 leading-tight text-right">
-          This metadata is used in exports and shared snapshots.
-        </span>
       </div>
     </div>
   </Modal>
