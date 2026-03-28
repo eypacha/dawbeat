@@ -1,7 +1,10 @@
 {
   "version": 25,
   "projectTitle": "Demo #1",
+  "projectDescription": "",
   "projectAuthor": "Ey Pacha!",
+  "projectLicense": "",
+  "projectMeta": null,
   "tracks": [
     {
       "id": "c7f7a6b1-a6c7-4dac-bd13-c34a8051f9e6",
@@ -10,17 +13,78 @@
       "soloed": false,
       "unionOperator": "|",
       "name": "Bass",
-      "height": 80,
+      "height": 44,
       "clips": [
         {
           "id": "feea4311-5fb0-427f-b387-68666eaa15bd",
-          "formula": "t * a & 64",
-          "formulaName": "Bass",
-          "start": 0,
-          "duration": 24,
           "formulaStereo": false,
+          "formula": "t * a & 64",
           "leftFormula": "t * a & 64",
-          "rightFormula": "t * a & 64"
+          "rightFormula": "t * a & 64",
+          "groupId": null,
+          "start": 0,
+          "duration": 48
+        }
+      ]
+    },
+    {
+      "id": "c38adab4-17d8-492d-a206-197acbb9f836",
+      "color": "#3b82f6",
+      "muted": false,
+      "soloed": false,
+      "unionOperator": "|",
+      "name": "Bass 2",
+      "height": 44,
+      "clips": [
+        {
+          "id": "1c4db463-3d0f-4eef-aa45-6fc063ecb5e4",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 16,
+          "duration": 0.5
+        },
+        {
+          "id": "62631d5c-6922-475c-b4c7-e24a25fe6bac",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 24,
+          "duration": 0.5
+        },
+        {
+          "id": "73bce189-d43a-4a88-b193-098390d00b8b",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 32,
+          "duration": 0.5
+        },
+        {
+          "id": "0f5a881a-ee5b-4bcd-b15f-2e434138fcd3",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 40,
+          "duration": 0.5
+        },
+        {
+          "id": "51895115-16d1-4345-9314-81badd09967e",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 44,
+          "duration": 0.25
         }
       ]
     },
@@ -31,47 +95,158 @@
       "soloed": false,
       "unionOperator": "|",
       "name": "Kick",
-      "height": 80,
+      "height": 44,
       "clips": [
         {
           "id": "1c0a4697-edb9-4156-873d-6203c768a2c9",
-          "formula": "t >> 4",
-          "formulaName": null,
-          "start": 0,
-          "duration": 3,
           "formulaStereo": false,
+          "formula": "t >> 4",
           "leftFormula": "t >> 4",
-          "rightFormula": "t >> 4"
+          "rightFormula": "t >> 4",
+          "groupId": null,
+          "start": 0,
+          "duration": 3
         },
         {
           "id": "9f62f776-a7af-4efa-b31b-f16ee7017bdd",
-          "formula": "t >> 4",
-          "formulaName": null,
-          "start": 4,
-          "duration": 3,
           "formulaStereo": false,
+          "formula": "t >> 4",
           "leftFormula": "t >> 4",
-          "rightFormula": "t >> 4"
+          "rightFormula": "t >> 4",
+          "groupId": null,
+          "start": 4,
+          "duration": 3
+        },
+        {
+          "id": "96f5ca50-43c1-4d1d-9069-871983cc907f",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": null,
+          "start": 8,
+          "duration": 3
+        },
+        {
+          "id": "7922e2da-c2bc-4faf-9e96-5a7f8f85f3b4",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": null,
+          "start": 12,
+          "duration": 3
         },
         {
           "id": "5600f65c-0854-449f-8cc7-8fc8f6b92676",
-          "formula": "t >> 4",
-          "formulaName": null,
-          "start": 8,
-          "duration": 15,
           "formulaStereo": false,
+          "formula": "t >> 4",
           "leftFormula": "t >> 4",
-          "rightFormula": "t >> 4"
+          "rightFormula": "t >> 4",
+          "groupId": "30de703e-dd0f-494a-8069-a0b04653d958",
+          "start": 16,
+          "duration": 15
         },
         {
           "id": "cad814fc-7248-4c3b-bc54-39e605da79c6",
-          "formula": "t >> 3",
-          "formulaName": "",
-          "start": 23,
-          "duration": 1,
           "formulaStereo": false,
+          "formula": "t >> 3",
           "leftFormula": "t >> 3",
-          "rightFormula": "t >> 3"
+          "rightFormula": "t >> 3",
+          "groupId": "30de703e-dd0f-494a-8069-a0b04653d958",
+          "start": 31,
+          "duration": 1
+        },
+        {
+          "id": "1186febf-1593-4532-866a-fc49c7f614bc",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": "328e977c-af7b-453f-bd5e-ee5325290c14",
+          "start": 32,
+          "duration": 15
+        },
+        {
+          "id": "f55f278d-b3d2-4f12-9e88-8b30dd46fe0a",
+          "formulaStereo": false,
+          "formula": "t >> 3",
+          "leftFormula": "t >> 3",
+          "rightFormula": "t >> 3",
+          "groupId": "328e977c-af7b-453f-bd5e-ee5325290c14",
+          "start": 47,
+          "duration": 1
+        }
+      ]
+    },
+    {
+      "id": "7326fef4-440c-4f85-9cb5-d76fa573f830",
+      "color": "#f97316",
+      "muted": false,
+      "soloed": false,
+      "unionOperator": "|",
+      "name": "Snare",
+      "height": 44,
+      "clips": [
+        {
+          "id": "a2f743be-41e2-4d04-91a8-112df0d469f4",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 18,
+          "duration": 0.25
+        },
+        {
+          "id": "14cb3d90-7158-46c1-9175-6865f3686361",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 22,
+          "duration": 0.25
+        },
+        {
+          "id": "e5c86856-0af1-4862-88c6-c7f18e305e36",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 26,
+          "duration": 0.25
+        },
+        {
+          "id": "a6bc2b2d-c4ed-4bc8-9037-1e23e35b3702",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 30,
+          "duration": 0.25
+        },
+        {
+          "id": "fdb98fd1-d140-4c71-b04a-fc1621871b47",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 34,
+          "duration": 0.25
+        },
+        {
+          "id": "635a723d-8636-4507-88fc-f9a6126a4f2d",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 38,
+          "duration": 0.25
         }
       ]
     },
@@ -81,147 +256,300 @@
       "muted": false,
       "soloed": false,
       "unionOperator": "|",
-      "height": 80,
+      "name": "Thing",
+      "height": 44,
       "clips": [
         {
           "id": "7369055f-635c-470f-8c22-16bd6e2b8768",
-          "formula": "t * t & 64",
-          "formulaName": null,
-          "start": 8,
-          "duration": 0.25,
           "formulaStereo": false,
+          "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
-          "rightFormula": "t * t & 64"
+          "rightFormula": "t * t & 64",
+          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
+          "start": 8,
+          "duration": 0.25
         },
         {
           "id": "b9d80400-049f-4914-b51a-7dfd5fd3857e",
-          "formula": "t * t & 64",
-          "formulaName": null,
-          "start": 9.5,
-          "duration": 0.25,
           "formulaStereo": false,
+          "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
-          "rightFormula": "t * t & 64"
+          "rightFormula": "t * t & 64",
+          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
+          "start": 17.5,
+          "duration": 0.25
         },
         {
           "id": "dcaf8dfc-2fef-4a2a-892e-ae6d09180a03",
-          "formula": "t * t & 64",
-          "formulaName": null,
-          "start": 11,
-          "duration": 0.25,
           "formulaStereo": false,
+          "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
-          "rightFormula": "t * t & 64"
+          "rightFormula": "t * t & 64",
+          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
+          "start": 19,
+          "duration": 0.25
         },
         {
           "id": "24178e55-b00c-412a-b3bf-5219f1ca7059",
-          "formula": "t * t & 64",
-          "formulaName": null,
-          "start": 13,
-          "duration": 0.25,
           "formulaStereo": false,
+          "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
-          "rightFormula": "t * t & 64"
+          "rightFormula": "t * t & 64",
+          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
+          "start": 21,
+          "duration": 0.25
         },
         {
           "id": "f5922629-68df-4ea7-bd18-ecfef23ebccd",
-          "formula": "t * t & 64",
-          "formulaName": null,
-          "start": 14,
-          "duration": 0.25,
           "formulaStereo": false,
+          "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
-          "rightFormula": "t * t & 64"
+          "rightFormula": "t * t & 64",
+          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
+          "start": 22,
+          "duration": 0.25
         },
         {
           "id": "d51cc6ed-16a4-40e1-ae87-a08503f38768",
-          "formula": "t * t & 64",
-          "formulaName": null,
-          "start": 16,
-          "duration": 0.25,
           "formulaStereo": false,
+          "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
-          "rightFormula": "t * t & 64"
+          "rightFormula": "t * t & 64",
+          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
+          "start": 24,
+          "duration": 0.25
         },
         {
           "id": "62840893-ef63-47bd-948c-d6c69f13687d",
-          "formula": "t * t & 64",
-          "formulaName": null,
-          "start": 17.5,
-          "duration": 0.25,
           "formulaStereo": false,
+          "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
-          "rightFormula": "t * t & 64"
+          "rightFormula": "t * t & 64",
+          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
+          "start": 25.5,
+          "duration": 0.25
         },
         {
           "id": "d348f587-3e2c-4671-8609-2f5358517216",
-          "formula": "t * t & 64",
-          "formulaName": null,
-          "start": 19,
-          "duration": 0.25,
           "formulaStereo": false,
+          "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
-          "rightFormula": "t * t & 64"
+          "rightFormula": "t * t & 64",
+          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
+          "start": 27,
+          "duration": 0.25
         },
         {
           "id": "23a4b634-d7d5-43e4-b206-3d245cdef1c3",
-          "formula": "t * t & 64",
-          "formulaName": null,
-          "start": 21,
-          "duration": 0.25,
           "formulaStereo": false,
+          "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
-          "rightFormula": "t * t & 64"
+          "rightFormula": "t * t & 64",
+          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
+          "start": 29,
+          "duration": 0.25
         },
         {
           "id": "7da4db0b-ef64-4936-aeb9-626e63aee824",
-          "formula": "t * t & 64",
-          "formulaName": null,
-          "start": 22,
-          "duration": 0.25,
           "formulaStereo": false,
+          "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
-          "rightFormula": "t * t & 64"
+          "rightFormula": "t * t & 64",
+          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
+          "start": 30,
+          "duration": 0.25
+        },
+        {
+          "id": "cceaaed5-03d0-4fac-9380-84bf3f1acbb8",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
+          "start": 32,
+          "duration": 0.25
+        },
+        {
+          "id": "c0490f50-f6d2-4e79-9163-24a62ba14ffb",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
+          "start": 33.5,
+          "duration": 0.25
+        },
+        {
+          "id": "232ce9e2-790f-47d4-9570-301a98363670",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
+          "start": 35,
+          "duration": 0.25
+        },
+        {
+          "id": "b9c1a9e8-1525-494a-937a-f0c7e6754a6b",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
+          "start": 37,
+          "duration": 0.25
+        },
+        {
+          "id": "77cebb19-e54e-45bc-8ed6-af3e33b9d8fa",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
+          "start": 38,
+          "duration": 0.25
+        },
+        {
+          "id": "35add748-1518-43dd-9052-b1338e91c08c",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
+          "start": 40,
+          "duration": 0.25
+        },
+        {
+          "id": "ff443981-37da-4e5b-a7b3-4b5e19cc7c7e",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
+          "start": 41.5,
+          "duration": 0.25
+        },
+        {
+          "id": "15e57038-0e3a-4723-96a5-20fed252a2f6",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
+          "start": 43,
+          "duration": 0.25
+        },
+        {
+          "id": "b9456f72-fe74-491f-a313-c448e089991c",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
+          "start": 45,
+          "duration": 0.25
+        },
+        {
+          "id": "3682b246-d569-4dbc-9b11-95144b4328ac",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
+          "start": 46,
+          "duration": 0.25
         }
       ]
     },
     {
       "id": "7afdcd24-5148-48e3-aa25-fbdeb90e3b49",
-      "color": "#6366f1",
+      "color": "#10b981",
       "muted": false,
       "soloed": false,
       "unionOperator": "|",
-      "height": 80,
+      "name": "High thing",
+      "height": 44,
       "clips": [
         {
           "id": "dafdf0ae-20a5-4fb0-8fa5-5d3afedaa8ff",
-          "formula": "t*t>>11&25",
-          "formulaName": null,
-          "start": 16,
-          "duration": 1.75,
           "formulaStereo": false,
+          "formula": "t*t>>11&25",
           "leftFormula": "t*t>>11&25",
-          "rightFormula": "t*t>>11&25"
+          "rightFormula": "t*t>>11&25",
+          "groupId": "04dd93ad-0c9b-4748-a100-c6c64bc648fb",
+          "start": 24,
+          "duration": 1.75
         },
         {
           "id": "6052cd4e-6608-4c01-abbb-12a365ce214a",
-          "formula": "t*t>>11&25",
-          "formulaName": null,
-          "start": 19,
-          "duration": 1.75,
           "formulaStereo": false,
+          "formula": "t*t>>11&25",
           "leftFormula": "t*t>>11&25",
-          "rightFormula": "t*t>>11&25"
+          "rightFormula": "t*t>>11&25",
+          "groupId": "04dd93ad-0c9b-4748-a100-c6c64bc648fb",
+          "start": 27,
+          "duration": 1.75
         },
         {
           "id": "50360a41-8855-4adb-ab25-db83982c53fa",
-          "formula": "t*t>>11&25",
-          "formulaName": null,
-          "start": 22,
-          "duration": 1.75,
           "formulaStereo": false,
+          "formula": "t*t>>11&25",
           "leftFormula": "t*t>>11&25",
-          "rightFormula": "t*t>>11&25"
+          "rightFormula": "t*t>>11&25",
+          "groupId": "04dd93ad-0c9b-4748-a100-c6c64bc648fb",
+          "start": 30,
+          "duration": 1.75
+        },
+        {
+          "id": "ea3a728b-b679-4978-b26b-8f72d0e55828",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "f3497921-d161-459f-967e-3b0640086eec",
+          "start": 40,
+          "duration": 1.75
+        },
+        {
+          "id": "5cc5b293-67c6-4f65-a284-c66ccbb156ff",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "f3497921-d161-459f-967e-3b0640086eec",
+          "start": 43,
+          "duration": 1.75
+        },
+        {
+          "id": "0b64df79-9fd6-4995-9105-ec6285faaf78",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "f3497921-d161-459f-967e-3b0640086eec",
+          "start": 46,
+          "duration": 1.75
+        }
+      ]
+    },
+    {
+      "id": "b360524a-6da1-4173-a000-6cedbc1ced47",
+      "color": "#ef4444",
+      "muted": false,
+      "soloed": false,
+      "unionOperator": "|",
+      "name": "Stereo Melody",
+      "height": 44,
+      "clips": [
+        {
+          "id": "e3463e7b-78cc-4cbe-96e9-1c4611f2c663",
+          "formulaStereo": true,
+          "formula": "(t+128)*(0xCA98CA98>>((t+128)>>9&30)&15)|(t+128)>>7",
+          "leftFormula": "(t+128)*(0xCA98CA98>>((t+128)>>9&30)&15)|(t+128)>>7",
+          "rightFormula": "t*(0xCA98CA98>>(t>>9&30)&15)|t>>8",
+          "groupId": null,
+          "start": 40,
+          "duration": 8
         }
       ]
     }
@@ -231,23 +559,56 @@
     {
       "id": "0c08ddb9-6f4c-447a-af02-a48101aa8ba8",
       "name": "Stereo Offset",
+      "variableName": "b",
       "binding": {
-        "type": "variable",
+        "type": null,
         "deviceId": null,
         "channel": null,
         "controller": null,
-        "note": null,
-        "variableName": "b"
+        "note": null
       },
       "height": 52,
       "clips": [
         {
           "id": "da9953f9-686b-4c42-a382-ce3d45bf6293",
           "start": 0,
-          "duration": 8,
+          "duration": 16,
           "stepSubdivision": 4,
+          "groupId": null,
           "values": [
             1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -283,9 +644,83 @@
         },
         {
           "id": "fe522460-7aba-4c01-b740-6ca6fb6d580f",
-          "start": 8,
+          "start": 16,
           "duration": 16,
           "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            512,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "f18ba9d3-4eca-470a-8d92-f3bb5398d45d",
+          "start": 32,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
           "values": [
             1,
             null,
@@ -358,23 +793,56 @@
     {
       "id": "beb3003f-cfc1-4f27-bd98-f34dbeee9425",
       "name": "Bass melody",
+      "variableName": "a",
       "binding": {
-        "type": "variable",
+        "type": null,
         "deviceId": null,
         "channel": null,
         "controller": null,
-        "note": null,
-        "variableName": "a"
+        "note": null
       },
       "height": 52,
       "clips": [
         {
           "id": "863e4b79-9b37-4b51-a2b5-5dafa8ae8b3b",
           "start": 0,
-          "duration": 8,
+          "duration": 16,
           "stepSubdivision": 4,
+          "groupId": null,
           "values": [
             1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -410,9 +878,83 @@
         },
         {
           "id": "de4eb092-51a0-4257-ba82-5a3e38c1fd3f",
-          "start": 8,
+          "start": 16,
           "duration": 16,
           "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            3,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            null,
+            5,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            5,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "eea8d9e2-80f8-4db9-a884-3caf89bf4e72",
+          "start": 32,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
           "values": [
             1,
             null,
@@ -483,9 +1025,215 @@
       ]
     }
   ],
-  "zoom": 1.147510581389071,
-  "loopStart": 8,
-  "loopEnd": 24,
+  "groups": [
+    {
+      "id": "6f706424-e9db-4a22-a257-82363281076d",
+      "name": "Group",
+      "start": 8,
+      "trackIndex": 6,
+      "duration": 22.25,
+      "clips": [
+        {
+          "clipId": "7369055f-635c-470f-8c22-16bd6e2b8768",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "b9d80400-049f-4914-b51a-7dfd5fd3857e",
+          "timeOffset": 9.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "dcaf8dfc-2fef-4a2a-892e-ae6d09180a03",
+          "timeOffset": 11,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "24178e55-b00c-412a-b3bf-5219f1ca7059",
+          "timeOffset": 13,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "f5922629-68df-4ea7-bd18-ecfef23ebccd",
+          "timeOffset": 14,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "d51cc6ed-16a4-40e1-ae87-a08503f38768",
+          "timeOffset": 16,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "62840893-ef63-47bd-948c-d6c69f13687d",
+          "timeOffset": 17.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "d348f587-3e2c-4671-8609-2f5358517216",
+          "timeOffset": 19,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "23a4b634-d7d5-43e4-b206-3d245cdef1c3",
+          "timeOffset": 21,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "7da4db0b-ef64-4936-aeb9-626e63aee824",
+          "timeOffset": 22,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "9f838033-8bb0-46a0-8029-0ce1a6203303",
+      "name": "Group",
+      "start": 32,
+      "trackIndex": 6,
+      "duration": 14.25,
+      "clips": [
+        {
+          "clipId": "cceaaed5-03d0-4fac-9380-84bf3f1acbb8",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "c0490f50-f6d2-4e79-9163-24a62ba14ffb",
+          "timeOffset": 1.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "232ce9e2-790f-47d4-9570-301a98363670",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "b9c1a9e8-1525-494a-937a-f0c7e6754a6b",
+          "timeOffset": 5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "77cebb19-e54e-45bc-8ed6-af3e33b9d8fa",
+          "timeOffset": 6,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "35add748-1518-43dd-9052-b1338e91c08c",
+          "timeOffset": 8,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "ff443981-37da-4e5b-a7b3-4b5e19cc7c7e",
+          "timeOffset": 9.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "15e57038-0e3a-4723-96a5-20fed252a2f6",
+          "timeOffset": 11,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "b9456f72-fe74-491f-a313-c448e089991c",
+          "timeOffset": 13,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "3682b246-d569-4dbc-9b11-95144b4328ac",
+          "timeOffset": 14,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "30de703e-dd0f-494a-8069-a0b04653d958",
+      "name": "Group",
+      "start": 16,
+      "trackIndex": 4,
+      "duration": 16,
+      "clips": [
+        {
+          "clipId": "5600f65c-0854-449f-8cc7-8fc8f6b92676",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "cad814fc-7248-4c3b-bc54-39e605da79c6",
+          "timeOffset": 15,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "328e977c-af7b-453f-bd5e-ee5325290c14",
+      "name": "Group",
+      "start": 32,
+      "trackIndex": 4,
+      "duration": 16,
+      "clips": [
+        {
+          "clipId": "1186febf-1593-4532-866a-fc49c7f614bc",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "f55f278d-b3d2-4f12-9e88-8b30dd46fe0a",
+          "timeOffset": 15,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "04dd93ad-0c9b-4748-a100-c6c64bc648fb",
+      "name": "Group",
+      "start": 24,
+      "trackIndex": 7,
+      "duration": 7.75,
+      "clips": [
+        {
+          "clipId": "dafdf0ae-20a5-4fb0-8fa5-5d3afedaa8ff",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "6052cd4e-6608-4c01-abbb-12a365ce214a",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "50360a41-8855-4adb-ab25-db83982c53fa",
+          "timeOffset": 6,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "f3497921-d161-459f-967e-3b0640086eec",
+      "name": "Group",
+      "start": 40,
+      "trackIndex": 7,
+      "duration": 7.75,
+      "clips": [
+        {
+          "clipId": "ea3a728b-b679-4978-b26b-8f72d0e55828",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "5cc5b293-67c6-4f65-a284-c66ccbb156ff",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "0b64df79-9fd6-4995-9105-ec6285faaf78",
+          "timeOffset": 6,
+          "trackOffset": 0
+        }
+      ]
+    }
+  ],
+  "zoom": 0.9330832258470292,
+  "loopStart": 16,
+  "loopEnd": 48,
   "loopEnabled": true,
   "audioEffects": [
     {
@@ -541,31 +1289,40 @@
         },
         {
           "curve": "easeInOut",
-          "time": 6,
-          "value": -21.796875
+          "time": 14.5,
+          "value": -23.076923076923073
         },
         {
           "curve": "easeInOut",
-          "time": 8.25,
-          "value": 14.390625
+          "time": 16,
+          "value": 17.53846153846154
         },
         {
           "curve": "easeInOut",
-          "time": 22.75,
-          "value": 12.021634615384613
+          "time": 25.75,
+          "value": 17.53846153846154
         },
         {
           "curve": "easeInOut",
-          "time": 24,
-          "value": -13.95793269230769
+          "time": 32,
+          "value": -14.76923076923077
+        },
+        {
+          "curve": "easeInOut",
+          "time": 38,
+          "value": -16.581298828125
         }
       ]
     }
   ],
   "bpmMeasure": "t >> 4",
   "masterGain": 1,
-  "sampleRate": 8000,
+  "sampleRate": 8192,
   "tickSize": 1024,
+  "timelineSectionLabels": [],
   "showClipWaveforms": true,
-  "showEvaluatedPanel": true
+  "showEvaluatedPanel": true,
+  "timelineAutoscrollEnabled": true,
+  "snapToGridEnabled": true,
+  "snapSubdivision": 4
 }
