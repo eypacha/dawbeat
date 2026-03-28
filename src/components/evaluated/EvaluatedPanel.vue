@@ -34,7 +34,7 @@
           </div>
         </div>
 
-        <pre class="min-h-[4.5rem] overflow-auto px-4 py-3 text-xs leading-6 text-zinc-200 whitespace-pre-wrap break-words">{{ expression.code }}</pre>
+        <pre class="min-h-[6rem] overflow-auto px-4 py-3 text-xs leading-6 text-zinc-200 whitespace-pre-wrap break-words">{{ expression.code }}</pre>
       </section>
     </div>
   </Panel>
