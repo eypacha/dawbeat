@@ -1,7 +1,7 @@
 <template>
   <div class="relative flex min-w-full w-max border-b border-zinc-800 bg-zinc-950/45">
     <div
-      class="sticky left-0 z-20 flex shrink-0 items-center justify-between gap-3 border-r border-zinc-800 px-4 py-2 transition-colors"
+      class="sticky left-0 z-20 flex shrink-0 items-center justify-between gap-3 border-r border-zinc-800 outline-1 outline-zinc-800 px-4 py-2 transition-colors"
       data-context-menu-enabled="true"
       :class="selectedHeaderClassName"
       :style="{ width: `${trackLabelWidth}px` }"

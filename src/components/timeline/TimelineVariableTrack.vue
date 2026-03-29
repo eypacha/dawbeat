@@ -6,7 +6,7 @@
     :data-variable-track-name="variableTrack.name"
   >
     <div
-      class="sticky left-0 z-20 flex shrink-0 items-center border-r border-zinc-800 bg-zinc-900 px-4 py-0 text-zinc-200"
+      class="sticky left-0 z-20 flex shrink-0 items-center border-r border-zinc-800 outline-1 outline-zinc-800 bg-zinc-900 px-4 py-0 text-zinc-200"
       data-context-menu-enabled="true"
       :style="headerStyle"
       @contextmenu="handleHeaderContextMenu"

@@ -15,7 +15,7 @@
     />
 
     <div
-      class="sticky left-0 z-20 flex shrink-0 border-r border-zinc-800"
+      class="sticky left-0 z-20 flex shrink-0 border-r border-zinc-800 outline-1 outline-zinc-800"
       data-context-menu-enabled="true"
       draggable="true"
       :class="[
