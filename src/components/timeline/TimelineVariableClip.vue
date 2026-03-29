@@ -1,7 +1,7 @@
 <template>
   <div
     class="timeline-variable-clip absolute inset-y-0 box-border overflow-hidden border px-1.5 py-0 text-left text-[10px] text-zinc-50 transition-colors"
-    :class="[buttonClassName, isOutsideEditingGroup ? 'opacity-35 pointer-events-none' : '']"
+    :class="[buttonClassName, isOutsideEditingGroup ? 'opacity-35 pointer-events-none' : '', shouldSelectWholeGroup ? 'pointer-events-none' : '']"
     :style="clipStyle"
     :title="clipTitle"
     :data-clip-id="clip.id"
@@ -13,13 +13,13 @@
     @pointerdown.stop="handleClipPointerDown"
   >
     <span
-      v-if="isSelected && !isEditing"
+      v-if="showResizeHandles"
       class="timeline-variable-clip-handle absolute inset-y-0 left-0 w-1.5 cursor-ew-resize border-r"
       data-timeline-resize-handle="true"
       @pointerdown.stop="handleResizeStartPointerDown"
     />
     <span
-      v-if="isSelected && !isEditing"
+      v-if="showResizeHandles"
       class="timeline-variable-clip-handle absolute inset-y-0 right-0 w-1.5 cursor-ew-resize border-l"
       data-timeline-resize-handle="true"
       @pointerdown.stop="handleResizeEndPointerDown"
@@ -35,6 +35,7 @@ import { storeToRefs } from 'pinia'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineClipInteraction } from '@/composables/useTimelineClipInteraction'
 import { createGroupContextMenuItems } from '@/services/groupContextMenuService'
+import { getRenderedTimelineClipWidth } from '@/services/timelineClipRenderService'
 import { useDawStore } from '@/stores/dawStore'
 import { ticksToPixels } from '@/utils/timeUtils'
 
@@ -53,14 +54,8 @@ const dawStore = useDawStore()
 const { openContextMenu } = useContextMenu()
 const { editingClipId, editingGroupId, pixelsPerTick, selectedClipIds, variableTracks } = storeToRefs(dawStore)
 const pendingShiftSelectionAction = ref(null)
-const MIN_CLIP_RENDER_TICKS = 0.5
 
-const clipWidth = computed(() =>
-  Math.max(
-    ticksToPixels(props.clip.duration, pixelsPerTick.value),
-    ticksToPixels(MIN_CLIP_RENDER_TICKS, pixelsPerTick.value)
-  )
-)
+const clipWidth = computed(() => getRenderedTimelineClipWidth(props.clip.duration, pixelsPerTick.value))
 
 const clipStyle = computed(() => ({
   left: `${ticksToPixels(props.clip.start, pixelsPerTick.value)}px`,
@@ -75,6 +70,7 @@ const shouldSelectWholeGroup = computed(() =>
   Boolean(props.clip.groupId) && !editingGroupId.value
 )
 const isSelected = computed(() => selectedClipIds.value.includes(props.clip.id))
+const showResizeHandles = computed(() => isSelected.value && !isEditing.value && !shouldSelectWholeGroup.value)
 const isPartOfMultipleSelection = computed(() => isSelected.value && selectedClipIds.value.length > 1)
 
 function getClipGroupClipIds() {
@@ -228,7 +224,7 @@ const clipTitle = computed(() => props.clip.formula ?? '0')
 
 function handleEditStart() {
   handleSelect()
-  dawStore.setEditingClip(props.clip.id)
+  dawStore.handleTimelineClipDoubleClick(props.clip.id)
 }
 
 function handleContextMenu(event) {

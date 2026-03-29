@@ -153,12 +153,14 @@
           :style="marqueeSelectionStyle"
         />
 
-        <div
+        <TimelineGroupClip
           v-for="groupVisual in groupVisuals"
-          :key="`${groupVisual.id}:background`"
-          class="pointer-events-none absolute z-0 border"
-          :class="groupVisual.isEditing ? 'border-sky-300/80' : ''"
-          :style="groupVisual.style"
+          :key="groupVisual.id"
+          :group-visual="groupVisual"
+          @contextmenu="handleGroupContextMenu($event, groupVisual.id)"
+          @edit="dawStore.enterGroupEdit(groupVisual.id)"
+          @pointerdown="handleGroupPointerDown($event, groupVisual.id)"
+          @select="handleGroupHeaderClick(groupVisual.id, { fromClick: true, shiftKey: $event.shiftKey })"
         />
 
         <TimelineVariableTrack
@@ -207,29 +209,6 @@
           :timeline-width="timelineWidthStyle"
         />
 
-        <div
-          v-for="groupVisual in groupVisuals"
-          :key="`${groupVisual.id}:label`"
-          class="pointer-events-none absolute z-10"
-          :style="{
-            left: groupVisual.style.left,
-            top: groupVisual.style.top,
-            width: groupVisual.style.width,
-            height: groupVisual.style.height
-          }"
-        >
-          <button
-            class="pointer-events-auto absolute left-1 top-1 inline-flex max-w-[calc(100%-8px)] items-center truncate rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]"
-            :class="groupVisual.isEditing ? 'border-sky-300/70 bg-zinc-900/90 text-sky-100' : 'border-zinc-400/45 bg-zinc-900/85 text-zinc-200 hover:border-zinc-300/60'"
-            data-context-menu-enabled="true"
-            type="button"
-            @click.stop="handleGroupHeaderClick(groupVisual.id, { fromClick: true, shiftKey: $event.shiftKey })"
-            @contextmenu.stop.prevent="handleGroupContextMenu($event, groupVisual.id)"
-            @pointerdown.stop="handleGroupPointerDown($event, groupVisual.id)"
-          >
-            {{ groupVisual.name }}
-          </button>
-        </div>
       </div>
     </div>
   </Panel>
@@ -242,6 +221,7 @@ import { FolderOpen, LoaderCircle } from 'lucide-vue-next'
 import { getPlaybackEndTick } from '@/engine/timelineEngine'
 import Panel from '@/components/ui/Panel.vue'
 import TimelineAutomationLane from '@/components/timeline/TimelineAutomationLane.vue'
+import TimelineGroupClip from '@/components/timeline/TimelineGroupClip.vue'
 import Playhead from '@/components/timeline/Playhead.vue'
 import TimelineLoopRegion from '@/components/timeline/TimelineLoopRegion.vue'
 import TimelineSectionLabels from '@/components/timeline/TimelineSectionLabels.vue'
@@ -250,14 +230,24 @@ import TimelineVariableTrack from '@/components/timeline/TimelineVariableTrack.v
 import TimelineValueTrackerTrack from '@/components/timeline/TimelineValueTrackerTrack.vue'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineMarqueeSelection } from '@/composables/useTimelineMarqueeSelection'
+import { findTimelineClip } from '@/services/dawStoreService'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { createGroupContextMenuItems } from '@/services/groupContextMenuService'
 import { enqueueSnackbar } from '@/services/notifications'
+import { resolveClipFormulaExpressions } from '@/services/formulaService'
 import { getFirstDraggedFile, hasFileDragPayload, openProjectFile } from '@/services/projectOpenService'
+import {
+  getRenderedTimelineClipEnd,
+  getRenderedTimelineClipWidth
+} from '@/services/timelineClipRenderService'
 import { getTimelineTrackLabelWidth } from '@/services/timelineHeaderWidthService'
 import { getDraggedTick, resolvePointerEventSnap, shouldSnapFromPointerEvent } from '@/services/snapService'
 import { useDawStore } from '@/stores/dawStore'
-import { getTrackColor } from '@/utils/colorUtils'
+import {
+  darkenHex,
+  getTrackColor,
+  lightenHex
+} from '@/utils/colorUtils'
 import {
   BASE_PIXELS_PER_TICK,
   getVisibleTimelineTickStep,
@@ -395,12 +385,6 @@ function scheduleClipLaneMetricSync() {
   })
 }
 
-function hexToRgba(hex, alpha = 1) {
-  const normalizedHex = getTrackColor(hex).replace('#', '')
-
-  return `rgba(${Number.parseInt(normalizedHex.slice(0, 2), 16)}, ${Number.parseInt(normalizedHex.slice(2, 4), 16)}, ${Number.parseInt(normalizedHex.slice(4, 6), 16)}, ${alpha})`
-}
-
 function getClipLaneColor(trackIndex) {
   if (trackIndex < variableTracks.value.length) {
     return '#e4e4e7'
@@ -434,24 +418,86 @@ const groupVisuals = computed(() => {
         return null
       }
 
+      const clipCount = (group.clips ?? []).length
+      const laneCount = maxTrackOffset + 1
+      const left = trackLabelWidth.value + ticksToPixels(group.start, pixelsPerTick.value)
       const top = firstMetric.top
-      const height = (lastMetric.top + lastMetric.height) - firstMetric.top
+      const height = Math.max(1, (lastMetric.top + lastMetric.height) - firstMetric.top)
+      const visualEnd = Math.max(
+        group.start + group.duration,
+        ...(group.clips ?? [])
+          .map((entry) => findTimelineClip(tracks.value, variableTracks.value, valueTrackerTracks.value, entry?.clipId)?.clip)
+          .filter(Boolean)
+          .map((clip) => getRenderedTimelineClipEnd(clip))
+      )
+      const width = Math.max(1, ticksToPixels(visualEnd - group.start, pixelsPerTick.value))
       const selectedClipCount = (group.clips ?? []).filter((entry) => selectedClipIdSet.value.has(entry.clipId)).length
       const laneColor = getClipLaneColor(group.trackIndex)
+      const clipPreviews = (group.clips ?? [])
+        .map((groupClip) => {
+          const timelineClip = findTimelineClip(
+            tracks.value,
+            variableTracks.value,
+            valueTrackerTracks.value,
+            groupClip?.clipId
+          )
+          const clip = timelineClip?.clip
+          const lane = timelineClip?.lane
+          const laneType = timelineClip?.laneType
+          const laneIndex = group.trackIndex + (Number(groupClip?.trackOffset) || 0)
+          const laneMetric = laneMetricsByIndex.get(laneIndex)
+
+          if (!clip || !lane || !laneMetric || laneType !== 'track') {
+            return null
+          }
+
+          const clipColor = getTrackColor(lane.color)
+
+          return {
+            duration: clip.duration,
+            expressions: resolveClipFormulaExpressions(clip),
+            height: laneMetric.height,
+            id: clip.id,
+            laneId: timelineClip.laneId,
+            left: ticksToPixels(clip.start - group.start, pixelsPerTick.value),
+            start: clip.start,
+            top: laneMetric.top - firstMetric.top,
+            trackColor: clipColor,
+            trackColorBorder: darkenHex(clipColor, 15),
+            trackColorLight: lightenHex(clipColor, 15),
+            style: {
+              '--track-color': clipColor,
+              '--track-color-border': darkenHex(clipColor, 15),
+              '--track-color-light': lightenHex(clipColor, 15),
+              height: `${laneMetric.height}px`,
+              left: `${ticksToPixels(clip.start - group.start, pixelsPerTick.value)}px`,
+              top: `${laneMetric.top - firstMetric.top}px`,
+              width: `${getRenderedTimelineClipWidth(clip.duration, pixelsPerTick.value)}px`
+            },
+            width: getRenderedTimelineClipWidth(clip.duration, pixelsPerTick.value)
+          }
+        })
+        .filter(Boolean)
 
       return {
+        clipCount,
+        clipPreviews,
+        height,
         id: group.id,
+        isDisabled: Boolean(editingGroup.value) && editingGroup.value.id !== group.id,
         isEditing: editingGroup.value?.id === group.id,
-        isSelected: selectedClipCount > 0 && selectedClipCount === (group.clips?.length ?? 0),
+        isSelected: selectedClipCount > 0 && selectedClipCount === clipCount,
+        laneCount,
         name: group.name,
+        summary: `${clipCount} ${clipCount === 1 ? 'clip' : 'clips'} · ${laneCount} ${laneCount === 1 ? 'lane' : 'lanes'}`,
         style: {
-          backgroundColor: hexToRgba(laneColor, editingGroup.value?.id === group.id ? 0.28 : 0.5),
-          borderColor: editingGroup.value?.id === group.id ? undefined : hexToRgba(laneColor, 0.42),
-          left: `${trackLabelWidth.value + ticksToPixels(group.start, pixelsPerTick.value)}px`,
+          '--group-clip-color': laneColor,
+          left: `${left}px`,
           top: `${top}px`,
-          width: `${Math.max(1, ticksToPixels(group.duration, pixelsPerTick.value))}px`,
-          height: `${Math.max(1, height)}px`
-        }
+          width: `${width}px`,
+          height: `${height}px`
+        },
+        width
       }
     })
     .filter(Boolean)

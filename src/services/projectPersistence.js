@@ -614,7 +614,7 @@ function normalizeGroups(groups, tracks, variableTracks, valueTrackerTracks) {
   const assignedClipIds = new Set()
   const normalizedGroups = []
 
-  for (const [groupIndex, group] of groups.entries()) {
+  for (const group of groups) {
     if (!isRecord(group)) {
       continue
     }
@@ -645,7 +645,7 @@ function normalizeGroups(groups, tracks, variableTracks, valueTrackerTracks) {
 
     normalizedGroups.push({
       id: typeof group.id === 'string' && group.id ? group.id : createGroupId(),
-      name: typeof group.name === 'string' && group.name.trim() ? group.name.trim() : `Group ${groupIndex + 1}`,
+      name: typeof group.name === 'string' && group.name.trim() ? group.name.trim() : 'Group',
       start: normalizeNonNegativeNumber(group.start, 0),
       trackIndex: Math.max(0, Math.floor(normalizeNumber(group.trackIndex, 0))),
       duration: normalizePositiveNumber(group.duration, 1),

@@ -1,7 +1,7 @@
 <template>
   <div
     class="timeline-value-tracker-clip absolute inset-y-0 box-border overflow-hidden border px-2 py-1 text-left text-xs text-zinc-50 transition-colors"
-    :class="[buttonClassName, props.preview ? 'pointer-events-none' : '', isOutsideEditingGroup ? 'opacity-35 pointer-events-none' : '']"
+    :class="[buttonClassName, props.preview ? 'pointer-events-none' : '', isOutsideEditingGroup ? 'opacity-35 pointer-events-none' : '', shouldSelectWholeGroup ? 'pointer-events-none' : '']"
     :style="clipStyle"
     :title="clipTitle"
     :data-clip-id="clip.id"
@@ -26,13 +26,13 @@
     </div>
 
     <span
-      v-if="isSelected && !isEditing"
+      v-if="showResizeHandles"
       class="timeline-value-tracker-clip-handle absolute inset-y-0 left-0 w-2 cursor-ew-resize border-r"
       data-timeline-resize-handle="true"
       @pointerdown.stop="handleResizeStartPointerDown"
     />
     <span
-      v-if="isSelected && !isEditing"
+      v-if="showResizeHandles"
       class="timeline-value-tracker-clip-handle absolute inset-y-0 right-0 w-2 cursor-ew-resize border-l"
       data-timeline-resize-handle="true"
       @pointerdown.stop="handleResizeEndPointerDown"
@@ -51,6 +51,7 @@ import { storeToRefs } from 'pinia'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineClipInteraction } from '@/composables/useTimelineClipInteraction'
 import { createGroupContextMenuItems } from '@/services/groupContextMenuService'
+import { getRenderedTimelineClipWidth } from '@/services/timelineClipRenderService'
 import {
   getValueTrackerEventCount,
   getValueTrackerResolvedValues,
@@ -60,7 +61,6 @@ import { useDawStore } from '@/stores/dawStore'
 import { ticksToPixels } from '@/utils/timeUtils'
 
 const MAX_PREVIEW_BARS = 32
-const MIN_CLIP_RENDER_TICKS = 0.5
 
 const props = defineProps({
   clip: {
@@ -86,12 +86,7 @@ let ignoreNextClick = ref(false)
 let isDragging = ref(false)
 let resizeMode = ref(null)
 
-const clipWidth = computed(() =>
-  Math.max(
-    ticksToPixels(props.clip.duration, pixelsPerTick.value),
-    ticksToPixels(MIN_CLIP_RENDER_TICKS, pixelsPerTick.value)
-  )
-)
+const clipWidth = computed(() => getRenderedTimelineClipWidth(props.clip.duration, pixelsPerTick.value))
 
 const clipStyle = computed(() => ({
   left: `${ticksToPixels(props.clip.start, pixelsPerTick.value)}px`,
@@ -106,6 +101,7 @@ const shouldSelectWholeGroup = computed(() =>
   !props.preview && Boolean(props.clip.groupId) && !editingGroupId.value
 )
 const isSelected = computed(() => selectedClipIds.value.includes(props.clip.id))
+const showResizeHandles = computed(() => isSelected.value && !isEditing.value && !shouldSelectWholeGroup.value)
 const isPartOfMultipleSelection = computed(() => isSelected.value && selectedClipIds.value.length > 1)
 const stepCount = computed(() => Array.isArray(props.clip.values) ? props.clip.values.length : 0)
 const eventCount = computed(() => getValueTrackerEventCount(props.clip.values))
@@ -359,7 +355,7 @@ function handleEditStart() {
   }
 
   handleSelect()
-  dawStore.setEditingClip(props.clip.id)
+  dawStore.handleTimelineClipDoubleClick(props.clip.id)
 }
 
 function handleContextMenu(event) {

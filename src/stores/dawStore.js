@@ -4559,6 +4559,25 @@ export const useDawStore = defineStore('dawStore', {
       this.editingClipId = clipId
     },
 
+    handleTimelineClipDoubleClick(clipId) {
+      if (!clipId) {
+        return false
+      }
+
+      const result = findTimelineClip(this.tracks, this.variableTracks, this.valueTrackerTracks, clipId)
+
+      if (!result?.clip) {
+        return false
+      }
+
+      if (result.clip.groupId) {
+        return this.enterGroupEdit(result.clip.groupId)
+      }
+
+      this.setEditingClip(clipId)
+      return true
+    },
+
     selectClip(clipId) {
       this.setSelectedClips(clipId ? [clipId] : [])
     },

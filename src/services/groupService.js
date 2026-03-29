@@ -1,11 +1,5 @@
-export function generateGroupName(groups = []) {
-  let nextIndex = 1
-
-  while ((Array.isArray(groups) ? groups : []).some((group) => group?.name === `Group ${nextIndex}`)) {
-    nextIndex += 1
-  }
-
-  return `Group ${nextIndex}`
+export function generateGroupName() {
+  return 'Group'
 }
 
 export function normalizeClipGroupId(groupId) {
