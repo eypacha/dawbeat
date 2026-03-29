@@ -1,7 +1,13 @@
 <template>
   <div
     class="timeline-value-tracker-clip absolute inset-y-0 box-border overflow-hidden border px-2 py-1 text-left text-xs text-zinc-50 transition-colors"
-    :class="[buttonClassName, props.preview ? 'pointer-events-none' : '', isOutsideEditingGroup ? 'opacity-35 pointer-events-none' : '', shouldSelectWholeGroup ? 'pointer-events-none' : '']"
+    :class="[
+      buttonClassName,
+      props.preview ? 'pointer-events-none' : '',
+      isHiddenByGroupShell ? 'opacity-0 pointer-events-none' : '',
+      !isHiddenByGroupShell && isOutsideEditingGroup ? 'opacity-35 pointer-events-none' : '',
+      shouldSelectWholeGroup ? 'pointer-events-none' : ''
+    ]"
     :style="clipStyle"
     :title="clipTitle"
     :data-clip-id="clip.id"
@@ -96,6 +102,9 @@ const clipStyle = computed(() => ({
 const isEditing = computed(() => editingClipId.value === props.clip.id)
 const isOutsideEditingGroup = computed(() =>
   !props.preview && Boolean(editingGroupId.value) && props.clip.groupId !== editingGroupId.value
+)
+const isHiddenByGroupShell = computed(() =>
+  !props.preview && Boolean(props.clip.groupId) && props.clip.groupId !== editingGroupId.value
 )
 const shouldSelectWholeGroup = computed(() =>
   !props.preview && Boolean(props.clip.groupId) && !editingGroupId.value
