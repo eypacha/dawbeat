@@ -112,6 +112,9 @@ const shouldSelectWholeGroup = computed(() =>
 const isSelected = computed(() => selectedClipIds.value.includes(props.clip.id))
 const showResizeHandles = computed(() => isSelected.value && !isEditing.value && !shouldSelectWholeGroup.value)
 const isPartOfMultipleSelection = computed(() => isSelected.value && selectedClipIds.value.length > 1)
+const canGroupSelection = computed(() =>
+  selectedClipIds.value.length > 1 && dawStore.canCreateGroup(selectedClipIds.value)
+)
 const stepCount = computed(() => Array.isArray(props.clip.values) ? props.clip.values.length : 0)
 const eventCount = computed(() => getValueTrackerEventCount(props.clip.values))
 const valueTrackerTrack = computed(() =>
@@ -388,7 +391,7 @@ function handleContextMenu(event) {
     x: event.clientX,
     y: event.clientY,
     items: [
-      ...(selectedClipIds.value.length > 1
+      ...(canGroupSelection.value
         ? [
             {
               action: 'create-group-from-selection',

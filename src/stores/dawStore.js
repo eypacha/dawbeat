@@ -1,15 +1,19 @@
 import { defineStore } from 'pinia'
 import {
   DEFAULT_FORMULA_DROP_DURATION,
+  clampDeltaToClipMoveIntervals,
   clampClipPlacementStart,
-  getClipGroupMoveBounds,
+  getClipGroupMoveIntervals,
+  getClipPlacement,
   clampClipResizeEnd,
   clampClipResizeStart,
   clampClipStart,
+  intersectClipMoveIntervals,
   getTrackCreateBounds
 } from '@/services/timelineService'
 import { getDraggedTick } from '@/services/snapService'
 import {
+  createClipId,
   createDuplicateClip,
   createTrack,
   createTrackId,
@@ -135,6 +139,7 @@ import {
   normalizeValueTrackerTrackName,
   resizeValueTrackerValues
 } from '@/services/valueTrackerService'
+import { enqueueSnackbar } from '@/services/notifications'
 
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
 const MIN_VALUE_TRACKER_RECORDING_DURATION = 1
@@ -917,6 +922,105 @@ function sortLaneClips(entry) {
   sortTrackClips(entry.lane)
 }
 
+function getLaneKey(laneType, laneId) {
+  return `${laneType}:${laneId}`
+}
+
+function getLaneLabel(laneEntry) {
+  if (!laneEntry) {
+    return 'the target track'
+  }
+
+  if (laneEntry.laneType === 'variable') {
+    return `variable "${laneEntry.lane?.name ?? laneEntry.laneId}"`
+  }
+
+  if (laneEntry.laneType === 'valueTracker') {
+    return laneEntry.lane?.name
+      ? `value tracker "${laneEntry.lane.name}"`
+      : 'the target value tracker'
+  }
+
+  return laneEntry.lane?.name
+    ? `track "${laneEntry.lane.name}"`
+    : 'the target track'
+}
+
+function getOrCreatePastePlacementLane(laneByKey, laneEntry) {
+  const laneKey = getLaneKey(laneEntry.laneType, laneEntry.laneId)
+  const existingLane = laneByKey.get(laneKey)
+
+  if (existingLane) {
+    return existingLane
+  }
+
+  const nextLane = {
+    lane: {
+      ...laneEntry.lane,
+      clips: Array.isArray(laneEntry.lane?.clips) ? [...laneEntry.lane.clips] : []
+    },
+    laneType: laneEntry.laneType
+  }
+
+  laneByKey.set(laneKey, nextLane)
+  return nextLane
+}
+
+function planPasteClipPlacement(laneByKey, laneEntry, desiredStart, duration) {
+  const targetLane = getOrCreatePastePlacementLane(laneByKey, laneEntry)
+  const placement = getClipPlacement(targetLane.lane, desiredStart, duration)
+
+  if (!placement.fitsAtStart) {
+    return {
+      ok: false,
+      laneLabel: getLaneLabel(laneEntry)
+    }
+  }
+
+  targetLane.lane.clips.push({
+    duration,
+    id: createClipId(),
+    start: placement.start
+  })
+  sortLaneClips(targetLane)
+
+  return {
+    ok: true,
+    start: placement.start
+  }
+}
+
+function notifyPasteBlocked(reason) {
+  const laneMessage = reason?.laneLabel ? ` in ${reason.laneLabel}` : ''
+
+  enqueueSnackbar(
+    `There is not enough space available${laneMessage}.`,
+    { variant: 'warning' }
+  )
+}
+
+function getClampedMoveDeltaForLaneSelections(laneSelections, desiredDelta) {
+  let allowedIntervals = [
+    {
+      min: Number.NEGATIVE_INFINITY,
+      max: Number.POSITIVE_INFINITY
+    }
+  ]
+
+  for (const laneSelection of laneSelections) {
+    allowedIntervals = intersectClipMoveIntervals(
+      allowedIntervals,
+      getClipGroupMoveIntervals(laneSelection.lane, laneSelection.clipIds)
+    )
+
+    if (!allowedIntervals.length) {
+      return 0
+    }
+  }
+
+  return clampDeltaToClipMoveIntervals(desiredDelta, allowedIntervals)
+}
+
 function hasPasteTargetForClipboard(clipboard, tracks, variableTracks, valueTrackerTracks) {
   if (!clipboard) {
     return false
@@ -1049,6 +1153,18 @@ function getSelectedClipEntriesWithTrackIndex(tracks, variableTracks, valueTrack
       trackIndex: laneIndexById.get(`${entry.laneType}:${entry.laneId}`)
     }))
     .filter((entry) => Number.isInteger(entry.trackIndex))
+}
+
+function areEntriesGroupedInSingleLane(entries) {
+  if (!Array.isArray(entries) || !entries.length) {
+    return false
+  }
+
+  const firstEntry = entries[0]
+
+  return entries.every((entry) =>
+    entry.laneId === firstEntry.laneId && entry.laneType === firstEntry.laneType
+  )
 }
 
 function getGroupById(groups, groupId) {
@@ -2501,6 +2617,17 @@ export const useDawStore = defineStore('dawStore', {
       }
     },
 
+    canCreateGroup(clipIds = this.selectedClipIds) {
+      const selectedEntries = getSelectedClipEntriesWithTrackIndex(
+        this.tracks,
+        this.variableTracks,
+        this.valueTrackerTracks,
+        clipIds
+      )
+
+      return selectedEntries.length >= 2 && areEntriesGroupedInSingleLane(selectedEntries)
+    },
+
     createGroup(clipIds = this.selectedClipIds) {
       return this.recordHistoryStep('create-group', () => {
         const selectedEntries = getSelectedClipEntriesWithTrackIndex(
@@ -2511,6 +2638,13 @@ export const useDawStore = defineStore('dawStore', {
         )
 
         if (selectedEntries.length < 2) {
+          return null
+        }
+
+        if (!areEntriesGroupedInSingleLane(selectedEntries)) {
+          enqueueSnackbar('Only clips from the same lane can be grouped.', {
+            variant: 'warning'
+          })
           return null
         }
 
@@ -2566,7 +2700,7 @@ export const useDawStore = defineStore('dawStore', {
       const lanesInOrder = getClipLanesInOrder(this.tracks, this.variableTracks, this.valueTrackerTracks)
       const laneByIndex = new Map(lanesInOrder.map((laneEntry) => [laneEntry.trackIndex, laneEntry]))
       const nextStart = getDraggedTick(newStart, shouldSnap, this.snapSubdivision)
-      const timeDelta = nextStart - group.start
+      const desiredTimeDelta = nextStart - group.start
       const nextTrackIndexValue = Math.max(0, Math.floor(Number(newTrackIndex) || 0))
       const trackDelta = nextTrackIndexValue - group.trackIndex
 
@@ -2580,37 +2714,100 @@ export const useDawStore = defineStore('dawStore', {
         }
       }
 
-      for (const entry of entries) {
-        entry.clip.start += timeDelta
-      }
-
-      if (trackDelta !== 0) {
-        const clipsBySourceLane = new Map()
+      if (trackDelta === 0) {
+        const clipsByLane = new Map()
 
         for (const entry of entries) {
-          const sourceKey = `${entry.laneType}:${entry.laneId}`
-
-          if (!clipsBySourceLane.has(sourceKey)) {
-            clipsBySourceLane.set(sourceKey, {
-              laneType: entry.laneType,
-              sourceLane: entry.lane,
-              clips: []
-            })
+          const laneKey = getLaneKey(entry.laneType, entry.laneId)
+          const laneSelection = clipsByLane.get(laneKey) ?? {
+            clipIds: [],
+            lane: entry.lane
           }
 
-          clipsBySourceLane.get(sourceKey).clips.push(entry.clip)
+          laneSelection.clipIds.push(entry.clipId)
+          clipsByLane.set(laneKey, laneSelection)
         }
 
-        for (const sourceLaneEntry of clipsBySourceLane.values()) {
-          sourceLaneEntry.sourceLane.clips = sourceLaneEntry.sourceLane.clips.filter(
-            (clip) => !sourceLaneEntry.clips.includes(clip)
-          )
-        }
+        const timeDelta = getClampedMoveDeltaForLaneSelections(
+          [...clipsByLane.values()],
+          desiredTimeDelta
+        )
 
         for (const entry of entries) {
-          const targetLane = laneByIndex.get(entry.trackIndex + trackDelta)
-          targetLane.lane.clips.push(entry.clip)
+          entry.clip.start += timeDelta
         }
+
+        for (const laneEntry of lanesInOrder) {
+          sortLaneClips(laneEntry)
+        }
+
+        this.recalculateGroupBounds(groupId)
+        this.setSelectedClips(getGroupClipIds(this.getGroupById(groupId)))
+        return true
+      }
+
+      const selectedClipIdSet = new Set(entries.map((entry) => entry.clipId))
+      const laneStateByKey = new Map(
+        lanesInOrder.map((laneEntry) => [
+          getLaneKey(laneEntry.laneType, laneEntry.laneId),
+          {
+            lane: {
+              ...laneEntry.lane,
+              clips: laneEntry.lane.clips.filter((clip) => !selectedClipIdSet.has(clip.id))
+            },
+            laneType: laneEntry.laneType
+          }
+        ])
+      )
+      const plannedMoves = []
+
+      for (const entry of entries) {
+        const targetLaneEntry = laneByIndex.get(entry.trackIndex + trackDelta)
+        const targetLaneState = laneStateByKey.get(getLaneKey(targetLaneEntry.laneType, targetLaneEntry.laneId))
+        const desiredClipStart = entry.clip.start + desiredTimeDelta
+        const placement = getClipPlacement(targetLaneState.lane, desiredClipStart, entry.clip.duration)
+
+        if (!placement.fitsAtStart) {
+          return false
+        }
+
+        targetLaneState.lane.clips.push({
+          duration: entry.clip.duration,
+          id: createClipId(),
+          start: placement.start
+        })
+        sortLaneClips(targetLaneState)
+        plannedMoves.push({
+          entry,
+          start: placement.start,
+          targetLaneEntry
+        })
+      }
+
+      const clipsBySourceLane = new Map()
+
+      for (const plan of plannedMoves) {
+        const sourceKey = getLaneKey(plan.entry.laneType, plan.entry.laneId)
+
+        if (!clipsBySourceLane.has(sourceKey)) {
+          clipsBySourceLane.set(sourceKey, {
+            clips: [],
+            sourceLane: plan.entry.lane
+          })
+        }
+
+        clipsBySourceLane.get(sourceKey).clips.push(plan.entry.clip)
+      }
+
+      for (const sourceLaneEntry of clipsBySourceLane.values()) {
+        sourceLaneEntry.sourceLane.clips = sourceLaneEntry.sourceLane.clips.filter(
+          (clip) => !sourceLaneEntry.clips.includes(clip)
+        )
+      }
+
+      for (const plan of plannedMoves) {
+        plan.entry.clip.start = plan.start
+        plan.targetLaneEntry.lane.clips.push(plan.entry.clip)
       }
 
       for (const laneEntry of lanesInOrder) {
@@ -2900,28 +3097,47 @@ export const useDawStore = defineStore('dawStore', {
             targetLaneEntries.push(targetLaneEntry)
           }
 
-          const nextGroupId = createGroupId()
+          const pastePlacementLaneByKey = new Map()
+          const plannedGroupClips = []
 
           for (const [index, groupClip] of groupClips.entries()) {
             const targetLaneEntry = targetLaneEntries[index]
             const desiredStart = pasteAnchorStart + (Number(groupClip.startOffset) || 0)
-            const nextStart = clampClipPlacementStart(
-              targetLaneEntry.lane,
+            const placementPlan = planPasteClipPlacement(
+              pastePlacementLaneByKey,
+              targetLaneEntry,
               desiredStart,
               groupClip.duration
             )
+
+            if (!placementPlan.ok) {
+              notifyPasteBlocked(placementPlan)
+              return []
+            }
+
+            plannedGroupClips.push({
+              groupClip,
+              start: placementPlan.start,
+              targetLaneEntry
+            })
+          }
+
+          const nextGroupId = createGroupId()
+
+          for (const plannedGroupClip of plannedGroupClips) {
+            const { groupClip, start, targetLaneEntry } = plannedGroupClip
             const nextClip = targetLaneEntry.laneType === 'variable'
               ? createVariableTrackClip({
                   duration: groupClip.duration,
                   formula: groupClip.formula ?? null,
                   groupId: nextGroupId,
-                  start: nextStart
+                  start
                 })
               : targetLaneEntry.laneType === 'valueTracker'
                 ? createValueTrackerClip({
                     duration: groupClip.duration,
                     groupId: nextGroupId,
-                    start: nextStart,
+                    start,
                     stepSubdivision: groupClip.stepSubdivision,
                     values: groupClip.values
                   })
@@ -2929,7 +3145,7 @@ export const useDawStore = defineStore('dawStore', {
                     duration: groupClip.duration,
                     ...createClipFormulaFields(groupClip),
                     groupId: nextGroupId,
-                    start: nextStart
+                    start
                   })
 
             targetLaneEntry.lane.clips.push(nextClip)
@@ -2979,6 +3195,8 @@ export const useDawStore = defineStore('dawStore', {
           const groupOverrideLaneIndex = canOverrideSingleGroup && target?.laneId && target?.laneType
             ? laneIndexByKey.get(`${target.laneType}:${target.laneId}`)
             : undefined
+          const pastePlacementLaneByKey = new Map()
+          const plannedGroups = []
 
           for (const groupDescriptor of groupDescriptors) {
             const groupClips = Array.isArray(groupDescriptor?.clips) ? groupDescriptor.clips : []
@@ -3004,66 +3222,39 @@ export const useDawStore = defineStore('dawStore', {
               targetLaneEntries.push(targetLaneEntry)
             }
 
-            const nextGroupId = createGroupId()
-            const groupPastedClipIds = []
+            const plannedGroupClips = []
 
             for (const [index, groupClip] of groupClips.entries()) {
               const targetLaneEntry = targetLaneEntries[index]
               const desiredStart = groupStart + (Number(groupClip.startOffset) || 0)
-              const nextStart = clampClipPlacementStart(
-                targetLaneEntry.lane,
+              const placementPlan = planPasteClipPlacement(
+                pastePlacementLaneByKey,
+                targetLaneEntry,
                 desiredStart,
                 groupClip.duration
               )
-              const nextClip = targetLaneEntry.laneType === 'variable'
-                ? createVariableTrackClip({
-                    duration: groupClip.duration,
-                    formula: groupClip.formula ?? null,
-                    groupId: nextGroupId,
-                    start: nextStart
-                  })
-                : targetLaneEntry.laneType === 'valueTracker'
-                  ? createValueTrackerClip({
-                      duration: groupClip.duration,
-                      groupId: nextGroupId,
-                      start: nextStart,
-                      stepSubdivision: groupClip.stepSubdivision,
-                      values: groupClip.values
-                    })
-                  : createTrackClip({
-                      duration: groupClip.duration,
-                      ...createClipFormulaFields(groupClip),
-                      groupId: nextGroupId,
-                      start: nextStart
-                    })
 
-              targetLaneEntry.lane.clips.push(nextClip)
-              pastedClipIds.push(nextClip.id)
-              groupPastedClipIds.push(nextClip.id)
-              touchedLaneEntries.push(targetLaneEntry)
-
-              if (pastedAnchorTrackId === null) {
-                pastedAnchorTrackId = targetLaneEntry.laneType === 'track' ? targetLaneEntry.lane.id : null
+              if (!placementPlan.ok) {
+                notifyPasteBlocked(placementPlan)
+                return []
               }
+
+              plannedGroupClips.push({
+                groupClip,
+                start: placementPlan.start,
+                targetLaneEntry
+              })
             }
 
-            if (!groupPastedClipIds.length) {
+            if (!plannedGroupClips.length) {
               continue
             }
 
-            this.groups.push({
-              id: nextGroupId,
-              name: generateGroupName(this.groups),
-              start: groupStart,
-              trackIndex: baseTrackIndex,
-              duration: 1,
-              clips: groupPastedClipIds.map((clipId) => ({
-                clipId,
-                timeOffset: 0,
-                trackOffset: 0
-              }))
+            plannedGroups.push({
+              baseTrackIndex,
+              groupStart,
+              plannedGroupClips
             })
-            this.recalculateGroupBounds(nextGroupId)
           }
 
           const sourceTrackLaneIds = getClipboardSourceLaneIdSet({ clips: looseClips }, 'track')
@@ -3080,6 +3271,7 @@ export const useDawStore = defineStore('dawStore', {
             laneId: target?.laneId ?? null,
             laneType: target?.laneType ?? null
           }
+          const plannedLooseClips = []
 
           for (const clipboardClip of looseClips) {
             const clipLaneType = clipboardClip?.sourceLaneType === 'variable'
@@ -3096,29 +3288,97 @@ export const useDawStore = defineStore('dawStore', {
             }
 
             const desiredStart = pasteAnchorStart + clipboardClip.startOffset
-            const nextStart = clampClipPlacementStart(
-              targetEntry.lane,
+            const placementPlan = planPasteClipPlacement(
+              pastePlacementLaneByKey,
+              targetEntry,
               desiredStart,
               clipboardClip.duration
             )
 
+            if (!placementPlan.ok) {
+              notifyPasteBlocked(placementPlan)
+              return []
+            }
+
+            plannedLooseClips.push({
+              clipboardClip,
+              start: placementPlan.start,
+              targetEntry
+            })
+          }
+
+          for (const plannedGroup of plannedGroups) {
+            const nextGroupId = createGroupId()
+            const groupPastedClipIds = []
+
+            for (const plannedGroupClip of plannedGroup.plannedGroupClips) {
+              const { groupClip, start, targetLaneEntry } = plannedGroupClip
+              const nextClip = targetLaneEntry.laneType === 'variable'
+                ? createVariableTrackClip({
+                    duration: groupClip.duration,
+                    formula: groupClip.formula ?? null,
+                    groupId: nextGroupId,
+                    start
+                  })
+                : targetLaneEntry.laneType === 'valueTracker'
+                  ? createValueTrackerClip({
+                      duration: groupClip.duration,
+                      groupId: nextGroupId,
+                      start,
+                      stepSubdivision: groupClip.stepSubdivision,
+                      values: groupClip.values
+                    })
+                  : createTrackClip({
+                      duration: groupClip.duration,
+                      ...createClipFormulaFields(groupClip),
+                      groupId: nextGroupId,
+                      start
+                    })
+
+              targetLaneEntry.lane.clips.push(nextClip)
+              pastedClipIds.push(nextClip.id)
+              groupPastedClipIds.push(nextClip.id)
+              touchedLaneEntries.push(targetLaneEntry)
+
+              if (pastedAnchorTrackId === null) {
+                pastedAnchorTrackId = targetLaneEntry.laneType === 'track' ? targetLaneEntry.lane.id : null
+              }
+            }
+
+            this.groups.push({
+              id: nextGroupId,
+              name: generateGroupName(this.groups),
+              start: plannedGroup.groupStart,
+              trackIndex: plannedGroup.baseTrackIndex,
+              duration: 1,
+              clips: groupPastedClipIds.map((clipId) => ({
+                clipId,
+                timeOffset: 0,
+                trackOffset: 0
+              }))
+            })
+            this.recalculateGroupBounds(nextGroupId)
+          }
+
+          for (const plannedLooseClip of plannedLooseClips) {
+            const { clipboardClip, start, targetEntry } = plannedLooseClip
             const nextClip = targetEntry.laneType === 'variable'
               ? createVariableTrackClip({
                   duration: clipboardClip.duration,
                   formula: clipboardClip.formula ?? null,
-                  start: nextStart
+                  start
                 })
               : targetEntry.laneType === 'valueTracker'
                 ? createValueTrackerClip({
                     duration: clipboardClip.duration,
-                    start: nextStart,
+                    start,
                     stepSubdivision: clipboardClip.stepSubdivision,
                     values: clipboardClip.values
                   })
                 : createTrackClip({
                     duration: clipboardClip.duration,
                     ...createClipFormulaFields(clipboardClip),
-                    start: nextStart
+                    start
                   })
 
             targetEntry.lane.clips.push(nextClip)
@@ -3157,6 +3417,8 @@ export const useDawStore = defineStore('dawStore', {
           laneId: target?.laneId ?? null,
           laneType: target?.laneType ?? null
         }
+        const pastePlacementLaneByKey = new Map()
+        const plannedClips = []
 
         for (const clipboardClip of clipboard.clips) {
           const clipLaneType = clipboardClip?.sourceLaneType === 'variable'
@@ -3173,30 +3435,45 @@ export const useDawStore = defineStore('dawStore', {
           }
 
           const desiredStart = pasteAnchorStart + clipboardClip.startOffset
-          const nextStart = clampClipPlacementStart(
-            targetEntry.lane,
+          const placementPlan = planPasteClipPlacement(
+            pastePlacementLaneByKey,
+            targetEntry,
             desiredStart,
             clipboardClip.duration
           )
 
+          if (!placementPlan.ok) {
+            notifyPasteBlocked(placementPlan)
+            return []
+          }
+
+          plannedClips.push({
+            clipboardClip,
+            start: placementPlan.start,
+            targetEntry
+          })
+        }
+
+        for (const plannedClip of plannedClips) {
+          const { clipboardClip, start, targetEntry } = plannedClip
           const nextClip = targetEntry.laneType === 'variable'
             ? createVariableTrackClip({
                 duration: clipboardClip.duration,
                 formula: clipboardClip.formula ?? null,
-                start: nextStart
+                start
               })
             : targetEntry.laneType === 'valueTracker'
               ? createValueTrackerClip({
                   duration: clipboardClip.duration,
-                  start: nextStart,
+                  start,
                   stepSubdivision: clipboardClip.stepSubdivision,
                   values: clipboardClip.values
                 })
-            : createTrackClip({
-                duration: clipboardClip.duration,
-                ...createClipFormulaFields(clipboardClip),
-                start: nextStart
-              })
+              : createTrackClip({
+                  duration: clipboardClip.duration,
+                  ...createClipFormulaFields(clipboardClip),
+                  start
+                })
 
           targetEntry.lane.clips.push(nextClip)
           pastedClipIds.push(nextClip.id)
@@ -3698,6 +3975,7 @@ export const useDawStore = defineStore('dawStore', {
         ...clip,
         formula: clip.formula ?? null
       })
+      nextClip.start = clampClipPlacementStart(track, nextClip.start, nextClip.duration)
 
       track.clips.push(nextClip)
       sortTrackClips(track)
@@ -3724,6 +4002,7 @@ export const useDawStore = defineStore('dawStore', {
         formulaId: libraryItem.id,
         formulaName: libraryItem.name
       })
+      nextClip.start = clampClipPlacementStart(track, nextClip.start, nextClip.duration)
 
       track.clips.push(nextClip)
       sortTrackClips(track)
@@ -3744,6 +4023,7 @@ export const useDawStore = defineStore('dawStore', {
         ...clip,
         formula: clip.formula ?? undefined
       })
+      nextClip.start = clampClipPlacementStart(variableTrack, nextClip.start, nextClip.duration)
 
       variableTrack.clips.push(nextClip)
       sortVariableTrackClips(variableTrack)
@@ -3763,6 +4043,7 @@ export const useDawStore = defineStore('dawStore', {
         ...clip,
         values: clip.values ?? createEmptyValueTrackerValues(clip.duration, clip.stepSubdivision)
       })
+      nextClip.start = clampClipPlacementStart(valueTrackerTrack, nextClip.start, nextClip.duration)
 
       valueTrackerTrack.clips.push(nextClip)
       sortValueTrackerTrackClips(valueTrackerTrack)
@@ -3995,7 +4276,7 @@ export const useDawStore = defineStore('dawStore', {
       const clipIdsByLaneKey = new Map()
 
       for (const entry of selectedClipEntries) {
-        const laneKey = `${entry.laneType}:${entry.laneId}`
+        const laneKey = getLaneKey(entry.laneType, entry.laneId)
         const existingClipIds = clipIdsByLaneKey.get(laneKey) ?? {
           clipIds: [],
           lane: entry.lane,
@@ -4005,22 +4286,16 @@ export const useDawStore = defineStore('dawStore', {
         clipIdsByLaneKey.set(laneKey, existingClipIds)
       }
 
-      let minDelta = Number.NEGATIVE_INFINITY
-      let maxDelta = Number.POSITIVE_INFINITY
-
-      for (const laneEntry of clipIdsByLaneKey.values()) {
-        const bounds = getClipGroupMoveBounds(laneEntry.lane, laneEntry.clipIds)
-        minDelta = Math.max(minDelta, bounds.minDelta)
-        maxDelta = Math.min(maxDelta, bounds.maxDelta)
-      }
-
-      const clampedDelta = Math.max(minDelta, Math.min(desiredDelta, maxDelta))
+      const clampedDelta = getClampedMoveDeltaForLaneSelections(
+        [...clipIdsByLaneKey.values()],
+        desiredDelta
+      )
       const touchedLaneEntries = new Map()
       const touchedGroupIds = new Set()
 
       for (const entry of selectedClipEntries) {
         entry.clip.start += clampedDelta
-        touchedLaneEntries.set(`${entry.laneType}:${entry.laneId}`, entry)
+        touchedLaneEntries.set(getLaneKey(entry.laneType, entry.laneId), entry)
 
         if (entry.clip.groupId) {
           touchedGroupIds.add(entry.clip.groupId)

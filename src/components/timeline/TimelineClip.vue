@@ -155,6 +155,9 @@ const shouldSelectWholeGroup = computed(() =>
 const isSelected = computed(() => selectedClipIds.value.includes(props.clip.id))
 const showResizeHandles = computed(() => isSelected.value && !isEditing.value && !shouldSelectWholeGroup.value)
 const isPartOfMultipleSelection = computed(() => isSelected.value && selectedClipIds.value.length > 1)
+const canGroupSelection = computed(() =>
+  selectedClipIds.value.length > 1 && dawStore.canCreateGroup(selectedClipIds.value)
+)
 
 function getClipGroupClipIds() {
   if (!props.clip.groupId) {
@@ -324,7 +327,7 @@ function handleContextMenu(event) {
   }
 
   const items = [
-    ...(selectedClipIds.value.length > 1
+    ...(canGroupSelection.value
       ? [
           {
             action: 'create-group-from-selection',
