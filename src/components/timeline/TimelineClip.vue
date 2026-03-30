@@ -48,14 +48,6 @@
 
         <span v-else class="block truncate font-medium">{{ resolvedFormula }}</span>
       </div>
-
-      <span
-        v-if="showLoopPeriodIndicator"
-        class="pointer-events-none rounded border border-zinc-300/35 bg-zinc-950/50 px-1 py-0.5 text-[9px] font-semibold leading-none text-zinc-100"
-        :title="`Detected period: ${loopPeriod} samples`"
-      >
-        L{{ loopPeriod }}
-      </span>
     </div>
   </div>
 </template>
@@ -64,10 +56,6 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import TimelineClipWaveform from '@/components/timeline/TimelineClipWaveform.vue'
-import {
-  buildRenderableFormulaExpressions,
-  createFormulaAnalysisCacheKey
-} from '@/composables/useFormulaInspector'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineClipInteraction } from '@/composables/useTimelineClipInteraction'
 import {
@@ -100,40 +88,16 @@ const { openContextMenu } = useContextMenu()
 const {
   editingGroupId,
   editingClipId,
-  evalEffects,
   pixelsPerTick,
   selectedClipIds,
   showClipWaveforms,
-  tracks,
-  valueTrackerTracks,
-  variableTracks
+  tracks
 } = storeToRefs(dawStore)
 const pendingShiftSelectionAction = ref(null)
 
 const resolvedFormula = computed(() => resolveClipFormula(props.clip))
 const resolvedFormulaExpressions = computed(() => resolveClipFormulaExpressions(props.clip))
 const resolvedFormulaName = computed(() => resolveClipFormulaName(props.clip))
-const renderableFormulaExpressions = computed(() =>
-  buildRenderableFormulaExpressions({
-    expressions: resolvedFormulaExpressions.value,
-    evalEffects: evalEffects.value,
-    referenceTick: props.clip.start,
-    valueTrackerTracks: valueTrackerTracks.value,
-    variableTracks: variableTracks.value
-  })
-)
-const formulaAnalysisCacheKey = computed(() =>
-  createFormulaAnalysisCacheKey(renderableFormulaExpressions.value)
-)
-const formulaAnalysis = computed(() => dawStore.getFormulaAnalysisByKey(formulaAnalysisCacheKey.value))
-const loopPeriod = computed(() =>
-  Number.isFinite(formulaAnalysis.value?.period) ? Number(formulaAnalysis.value.period) : null
-)
-const showLoopPeriodIndicator = computed(() =>
-  loopPeriod.value !== null &&
-  loopPeriod.value <= 4096 &&
-  Number(formulaAnalysis.value?.confidence) > 0.99
-)
 const showFormulaName = computed(() => Boolean(resolvedFormulaName.value))
 const clipWidth = computed(() => getRenderedTimelineClipWidth(props.clip.duration, pixelsPerTick.value))
 

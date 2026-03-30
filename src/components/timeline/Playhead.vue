@@ -1,6 +1,6 @@
 <template>
   <div
-    class="absolute inset-y-0 z-10 w-4 -translate-x-1/2 cursor-grab"
+    class="absolute inset-y-0 z-30 w-4 -translate-x-1/2 cursor-grab"
     :style="{ left: `${offset + ticksToPixels(time, pixelsPerTick)}px` }"
     @pointerdown.stop="emit('pointerdown', $event)"
   >
