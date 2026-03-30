@@ -1183,6 +1183,57 @@ function getGroupClipIds(group) {
     : []
 }
 
+function getGroupLaneEntry(store, groupId) {
+  if (!groupId) {
+    return null
+  }
+
+  const group = getGroupById(store.groups, groupId)
+  const anchorClipId = getGroupClipIds(group)[0]
+
+  if (!anchorClipId) {
+    return null
+  }
+
+  return findTimelineClip(store.tracks, store.variableTracks, store.valueTrackerTracks, anchorClipId)
+}
+
+function getNewClipGroupAssignment(store, laneType, laneId) {
+  if (!store.editingGroupId) {
+    return {
+      allowed: true,
+      groupId: null
+    }
+  }
+
+  const groupLaneEntry = getGroupLaneEntry(store, store.editingGroupId)
+
+  if (!groupLaneEntry) {
+    return {
+      allowed: true,
+      groupId: null
+    }
+  }
+
+  if (groupLaneEntry.laneType !== laneType || groupLaneEntry.laneId !== laneId) {
+    return {
+      allowed: false,
+      groupId: null
+    }
+  }
+
+  return {
+    allowed: true,
+    groupId: store.editingGroupId
+  }
+}
+
+function notifyNewClipGroupLaneMismatch() {
+  enqueueSnackbar('New clips can only be created on the lane of the group being edited.', {
+    variant: 'warning'
+  })
+}
+
 function filterClipIdsByEditingGroup(store, clipIds) {
   const normalizedClipIds = normalizeSelectedClipIds(clipIds)
 
@@ -3971,14 +4022,25 @@ export const useDawStore = defineStore('dawStore', {
         return null
       }
 
+      const groupAssignment = getNewClipGroupAssignment(this, 'track', trackId)
+
+      if (!groupAssignment.allowed) {
+        notifyNewClipGroupLaneMismatch()
+        return null
+      }
+
       const nextClip = createTrackClip({
         ...clip,
-        formula: clip.formula ?? null
+        formula: clip.formula ?? null,
+        groupId: groupAssignment.groupId
       })
       nextClip.start = clampClipPlacementStart(track, nextClip.start, nextClip.duration)
 
       track.clips.push(nextClip)
       sortTrackClips(track)
+      if (groupAssignment.groupId) {
+        this.recalculateGroupBounds(groupAssignment.groupId)
+      }
       this.setSelectedClips([nextClip.id])
       this.selectedTrackId = trackId
 
@@ -3992,6 +4054,13 @@ export const useDawStore = defineStore('dawStore', {
         return null
       }
 
+      const groupAssignment = getNewClipGroupAssignment(this, 'track', trackId)
+
+      if (!groupAssignment.allowed) {
+        notifyNewClipGroupLaneMismatch()
+        return null
+      }
+
       const nextClip = createTrackClip({
         start: startTick,
         duration: libraryItem.duration ?? DEFAULT_FORMULA_DROP_DURATION,
@@ -4000,12 +4069,16 @@ export const useDawStore = defineStore('dawStore', {
         leftFormula: libraryItem.leftFormula ?? null,
         rightFormula: libraryItem.rightFormula ?? null,
         formulaId: libraryItem.id,
-        formulaName: libraryItem.name
+        formulaName: libraryItem.name,
+        groupId: groupAssignment.groupId
       })
       nextClip.start = clampClipPlacementStart(track, nextClip.start, nextClip.duration)
 
       track.clips.push(nextClip)
       sortTrackClips(track)
+      if (groupAssignment.groupId) {
+        this.recalculateGroupBounds(groupAssignment.groupId)
+      }
       this.setSelectedClips([nextClip.id])
       this.selectedTrackId = trackId
 
@@ -4019,14 +4092,25 @@ export const useDawStore = defineStore('dawStore', {
         return null
       }
 
+      const groupAssignment = getNewClipGroupAssignment(this, 'variable', variableTrackName)
+
+      if (!groupAssignment.allowed) {
+        notifyNewClipGroupLaneMismatch()
+        return null
+      }
+
       const nextClip = createVariableTrackClip({
         ...clip,
-        formula: clip.formula ?? undefined
+        formula: clip.formula ?? undefined,
+        groupId: groupAssignment.groupId
       })
       nextClip.start = clampClipPlacementStart(variableTrack, nextClip.start, nextClip.duration)
 
       variableTrack.clips.push(nextClip)
       sortVariableTrackClips(variableTrack)
+      if (groupAssignment.groupId) {
+        this.recalculateGroupBounds(groupAssignment.groupId)
+      }
       this.setSelectedClips([nextClip.id])
       this.selectedTrackId = null
       return nextClip.id
@@ -4039,14 +4123,25 @@ export const useDawStore = defineStore('dawStore', {
         return null
       }
 
+      const groupAssignment = getNewClipGroupAssignment(this, 'valueTracker', valueTrackerTrackId)
+
+      if (!groupAssignment.allowed) {
+        notifyNewClipGroupLaneMismatch()
+        return null
+      }
+
       const nextClip = createValueTrackerClip({
         ...clip,
+        groupId: groupAssignment.groupId,
         values: clip.values ?? createEmptyValueTrackerValues(clip.duration, clip.stepSubdivision)
       })
       nextClip.start = clampClipPlacementStart(valueTrackerTrack, nextClip.start, nextClip.duration)
 
       valueTrackerTrack.clips.push(nextClip)
       sortValueTrackerTrackClips(valueTrackerTrack)
+      if (groupAssignment.groupId) {
+        this.recalculateGroupBounds(groupAssignment.groupId)
+      }
       this.setSelectedClips([nextClip.id])
       this.selectedTrackId = null
       return nextClip.id
@@ -4845,7 +4940,7 @@ export const useDawStore = defineStore('dawStore', {
         return false
       }
 
-      if (result.clip.groupId) {
+      if (result.clip.groupId && this.editingGroupId !== result.clip.groupId) {
         return this.enterGroupEdit(result.clip.groupId)
       }
 
