@@ -284,12 +284,13 @@ const { cleanupResize, handleResizePointerDown } = useTimelineLaneResize({
 function handleContextMenu(event) {
   event.preventDefault()
   dawStore.selectTrack(props.track.id)
+  const nextTrackId = tracks.value[props.trackIndex + 1]?.id ?? null
 
   openContextMenu({
     x: event.clientX,
     y: event.clientY,
     items: [
-      { label: 'Add Track', action: 'add-track', beforeTrackId: props.track.id },
+      { label: 'Add Track', action: 'add-track', beforeTrackId: nextTrackId },
       {
         label: 'Duplicate Track',
         action: 'duplicate-track',
