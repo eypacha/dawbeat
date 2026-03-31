@@ -269,6 +269,15 @@
           </button>
 
           <IconButton
+            v-if="fullscreenSupported"
+            :icon="appFullscreenActive ? Minimize2 : Maximize2"
+            :label="appFullscreenActive ? 'Exit Fullscreen' : 'Enter Fullscreen'"
+            size="sm"
+            :title="appFullscreenActive ? 'Exit app fullscreen' : 'Enter app fullscreen'"
+            @click="toggleAppFullscreen"
+          />
+
+          <IconButton
             :icon="Settings2"
             label="Settings"
             size="sm"
@@ -346,9 +355,9 @@
 </template>
 
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Circle, CircleHelp, Download, EllipsisVertical, FilePlus, FolderOpen, Info, LoaderCircle, Pause, Play, Redo2, Repeat, Settings2, Share2, Shuffle, Square, Undo2 } from 'lucide-vue-next'
+import { Circle, CircleHelp, Download, EllipsisVertical, FilePlus, FolderOpen, Info, LoaderCircle, Maximize2, Minimize2, Pause, Play, Redo2, Repeat, Settings2, Share2, Shuffle, Square, Undo2 } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { automationCompanionHostState } from '@/services/automationCompanionService'
 import { getRandomDemoProjectEntry } from '@/services/demoProjectService'
@@ -402,6 +411,8 @@ const lastShuffledDemoProjectId = ref(null)
 const transportDisplayMode = ref('sample')
 const projectInfoDialogVisible = ref(false)
 const shareProjectDialogVisible = ref(false)
+const fullscreenSupported = ref(false)
+const appFullscreenActive = ref(false)
 const toolbarLayoutClassName = 'grid grid-cols-[max-content_minmax(0,1fr)_max-content_minmax(0,1fr)_max-content] items-center gap-4 px-4 py-1'
 const leftGroupClassName = 'col-[1] flex min-w-0 items-center gap-4'
 const transportControlsGroupClassName = 'col-[3] flex shrink-0 items-center justify-center gap-2 text-xs text-zinc-400'
@@ -575,6 +586,16 @@ watch(projectTitle, () => {
   }
 
   projectTitleDraft.value = projectTitle.value
+})
+
+onMounted(() => {
+  fullscreenSupported.value = canToggleAppFullscreen()
+  syncAppFullscreenState()
+  document.addEventListener('fullscreenchange', syncAppFullscreenState)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('fullscreenchange', syncAppFullscreenState)
 })
 
 function triggerProjectOpen() {
@@ -856,6 +877,41 @@ async function handleRandomDemoProject() {
 async function handleRandomDemoProjectConfirm() {
   shuffleDemoConfirmVisible.value = false
   await handleRandomDemoProject()
+}
+
+function getAppFullscreenTarget() {
+  return document.getElementById('app')
+}
+
+function canToggleAppFullscreen() {
+  return Boolean(document.fullscreenEnabled && getAppFullscreenTarget()?.requestFullscreen)
+}
+
+function syncAppFullscreenState() {
+  appFullscreenActive.value = document.fullscreenElement === getAppFullscreenTarget()
+}
+
+async function toggleAppFullscreen() {
+  if (!canToggleAppFullscreen()) {
+    fullscreenSupported.value = false
+    return
+  }
+
+  const appElement = getAppFullscreenTarget()
+
+  if (!appElement) {
+    return
+  }
+
+  try {
+    if (document.fullscreenElement === appElement) {
+      await document.exitFullscreen()
+    } else {
+      await appElement.requestFullscreen()
+    }
+  } catch {
+    syncAppFullscreenState()
+  }
 }
 
 async function handleExport({ format, loopCount }) {
