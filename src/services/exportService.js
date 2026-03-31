@@ -29,6 +29,11 @@ import {
   normalizeWidth
 } from '@/services/audioEffectService'
 import { applyEvalEffects } from '@/services/evalEffectService'
+import {
+  normalizeMp3ExportOptions,
+  normalizeWavExportOptions,
+  resolveExportSampleRate
+} from '@/services/exportSettingsService'
 import { hasRenderableFormulaInput } from '@/services/formulaService'
 import { getValueTrackerEventTicks } from '@/services/valueTrackerService'
 import { DEFAULT_SAMPLE_RATE } from '@/utils/audioSettings'
@@ -37,7 +42,6 @@ import { validateFormula } from '@/utils/formulaValidation'
 import { getClipEnd, samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 
 const SILENT_EVALUATOR = () => 0
-const DEFAULT_EXPORT_WAV_SAMPLE_RATE = 44100
 const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter']
 const MIN_AUTOMATION_CURVE_SAMPLES = 16
 const MAX_AUTOMATION_CURVE_SAMPLES = 128
@@ -47,15 +51,33 @@ const MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS = {
   reverb: ['decay', 'preDelay']
 }
 
-export async function downloadProjectWav(state, { loopCount = 1, filename = createWavFilename(state?.projectTitle) } = {}) {
-  const wavBuffer = await renderProjectToWav(state, { loopCount })
+export async function downloadProjectWav(
+  state,
+  { loopCount = 1, filename = createWavFilename(state?.projectTitle), options = {} } = {}
+) {
+  const normalizedOptions = normalizeWavExportOptions(options)
+  const wavBuffer = await renderProjectToWav(state, {
+    bitDepth: normalizedOptions.bitDepth,
+    loopCount,
+    sampleRate: normalizedOptions.sampleRate
+  })
   const blob = new Blob([wavBuffer], { type: 'audio/wav' })
   triggerDownload(blob, filename)
 }
 
-export async function downloadProjectMp3(state, { loopCount = 1, filename = createMp3Filename(state?.projectTitle) } = {}) {
-  const wavBuffer = await renderProjectToWav(state, { loopCount })
-  const mp3Buffer = await encodeWavToMp3(wavBuffer)
+export async function downloadProjectMp3(
+  state,
+  { loopCount = 1, filename = createMp3Filename(state?.projectTitle), options = {} } = {}
+) {
+  const normalizedOptions = normalizeMp3ExportOptions(options)
+  const wavBuffer = await renderProjectToWav(state, {
+    bitDepth: 16,
+    loopCount,
+    sampleRate: normalizedOptions.sampleRate
+  })
+  const mp3Buffer = await encodeWavToMp3(wavBuffer, {
+    bitrate: normalizedOptions.bitrate
+  })
   const blob = new Blob([mp3Buffer], { type: 'audio/mpeg' })
   triggerDownload(blob, filename)
 }
@@ -75,7 +97,10 @@ function triggerDownload(blob, filename) {
   }, 0)
 }
 
-async function renderProjectToWav(state, { loopCount = 1 } = {}) {
+async function renderProjectToWav(
+  state,
+  { bitDepth = 16, loopCount = 1, sampleRate: outputSampleRateOption } = {}
+) {
   const singleLoopTicks = getProjectDurationTicks(state.tracks)
 
   if (singleLoopTicks <= 0) {
@@ -85,7 +110,7 @@ async function renderProjectToWav(state, { loopCount = 1 } = {}) {
   const loops = Math.max(1, Math.round(loopCount))
   const totalTicks = singleLoopTicks * loops
   const sourceSampleRate = getSourceSampleRate(state.sampleRate)
-  const outputSampleRate = getOutputSampleRate(sourceSampleRate)
+  const outputSampleRate = resolveExportSampleRate(sourceSampleRate, outputSampleRateOption)
   const totalSourceSamples = Math.max(1, Math.ceil(ticksToSamples(totalTicks, state.tickSize)))
   const totalOutputSamples = Math.max(
     1,
@@ -105,20 +130,25 @@ async function renderProjectToWav(state, { loopCount = 1 } = {}) {
   )
 
   return encodeWavFile({
+    bitDepth,
     channelData: [processedLeftChannel, processedRightChannel],
     sampleRate: outputSampleRate
   })
 }
 
-async function encodeWavToMp3(wavBuffer) {
+async function encodeWavToMp3(wavBuffer, { bitrate = 128 } = {}) {
   ensureLamejsGlobals()
   const view = new DataView(wavBuffer)
-  // WAV PCM data starts at byte 44 for standard 16-bit stereo
+  const bitsPerSample = view.getUint16(34, true)
+
+  if (bitsPerSample !== 16) {
+    throw new Error('MP3 export expects a 16-bit WAV render')
+  }
+
   const numChannels = view.getUint16(22, true)
   const sampleRate = view.getUint32(24, true)
   const numFrames = (wavBuffer.byteLength - 44) / (numChannels * 2)
-  const kbps = 128
-  const encoder = new MP3_ENCODER(numChannels, sampleRate, kbps)
+  const encoder = new MP3_ENCODER(numChannels, sampleRate, bitrate)
   const CHUNK = 1152
   const leftPcm = new Int16Array(numFrames)
   const rightPcm = numChannels > 1 ? new Int16Array(numFrames) : null
@@ -1157,10 +1187,6 @@ function getSourceSampleRate(sampleRate) {
   return Math.max(1, Math.floor(numericValue))
 }
 
-function getOutputSampleRate(sourceSampleRate) {
-  return Math.max(DEFAULT_EXPORT_WAV_SAMPLE_RATE, sourceSampleRate)
-}
-
 function convertSourceBoundaryToOutputSample(
   sourceSample,
   sourceSampleRate,
@@ -1253,27 +1279,29 @@ function safeDispose(node) {
   }
 }
 
-function encodeWavFile({ channelData, sampleRate }) {
+function encodeWavFile({ bitDepth = 16, channelData, sampleRate }) {
+  const normalizedBitDepth = normalizeWavExportOptions({ bitDepth }).bitDepth
   const numChannels = channelData.length
   const numFrames = channelData[0]?.length ?? 0
-  const bytesPerSample = 2
+  const bytesPerSample = getWavBytesPerSample(normalizedBitDepth)
   const blockAlign = numChannels * bytesPerSample
   const byteRate = sampleRate * blockAlign
   const dataSize = numFrames * blockAlign
   const buffer = new ArrayBuffer(44 + dataSize)
   const view = new DataView(buffer)
+  const wavFormatCode = normalizedBitDepth === 32 ? 3 : 1
 
   writeAscii(view, 0, 'RIFF')
   view.setUint32(4, 36 + dataSize, true)
   writeAscii(view, 8, 'WAVE')
   writeAscii(view, 12, 'fmt ')
   view.setUint32(16, 16, true)
-  view.setUint16(20, 1, true)
+  view.setUint16(20, wavFormatCode, true)
   view.setUint16(22, numChannels, true)
   view.setUint32(24, sampleRate, true)
   view.setUint32(28, byteRate, true)
   view.setUint16(32, blockAlign, true)
-  view.setUint16(34, 16, true)
+  view.setUint16(34, normalizedBitDepth, true)
   writeAscii(view, 36, 'data')
   view.setUint32(40, dataSize, true)
 
@@ -1281,14 +1309,67 @@ function encodeWavFile({ channelData, sampleRate }) {
 
   for (let frame = 0; frame < numFrames; frame += 1) {
     for (let channel = 0; channel < numChannels; channel += 1) {
-      const sample = clampAudioSample(channelData[channel][frame] ?? 0)
-      const pcmValue = sample < 0 ? sample * 0x8000 : sample * 0x7fff
-      view.setInt16(offset, Math.round(pcmValue), true)
+      writeWavSample(
+        view,
+        offset,
+        channelData[channel][frame] ?? 0,
+        normalizedBitDepth
+      )
       offset += bytesPerSample
     }
   }
 
   return buffer
+}
+
+function getWavBytesPerSample(bitDepth) {
+  if (bitDepth === 24) {
+    return 3
+  }
+
+  if (bitDepth === 32) {
+    return 4
+  }
+
+  return 2
+}
+
+function writeWavSample(view, offset, sample, bitDepth) {
+  if (bitDepth === 24) {
+    writePcm24Sample(view, offset, sample)
+    return
+  }
+
+  if (bitDepth === 32) {
+    writeFloat32Sample(view, offset, sample)
+    return
+  }
+
+  writePcm16Sample(view, offset, sample)
+}
+
+function writePcm16Sample(view, offset, sample) {
+  const clampedSample = clampAudioSample(sample)
+  const pcmValue = clampedSample < 0 ? clampedSample * 0x8000 : clampedSample * 0x7fff
+  view.setInt16(offset, Math.round(pcmValue), true)
+}
+
+function writePcm24Sample(view, offset, sample) {
+  const clampedSample = clampAudioSample(sample)
+  let pcmValue = Math.round(clampedSample < 0 ? clampedSample * 0x800000 : clampedSample * 0x7fffff)
+
+  if (pcmValue < 0) {
+    pcmValue += 0x1000000
+  }
+
+  view.setUint8(offset, pcmValue & 0xff)
+  view.setUint8(offset + 1, (pcmValue >> 8) & 0xff)
+  view.setUint8(offset + 2, (pcmValue >> 16) & 0xff)
+}
+
+function writeFloat32Sample(view, offset, sample) {
+  const numericSample = Number(sample)
+  view.setFloat32(offset, Number.isFinite(numericSample) ? numericSample : 0, true)
 }
 
 function writeAscii(view, offset, value) {

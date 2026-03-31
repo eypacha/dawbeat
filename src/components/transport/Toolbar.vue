@@ -914,7 +914,7 @@ async function toggleAppFullscreen() {
   }
 }
 
-async function handleExport({ format, loopCount }) {
+async function handleExport({ format, loopCount, options }) {
   if (exportingWav.value) {
     return
   }
@@ -927,10 +927,10 @@ async function handleExport({ format, loopCount }) {
 
   try {
     if (format === 'mp3') {
-      await downloadProjectMp3(dawStore.$state, { loopCount })
+      await downloadProjectMp3(dawStore.$state, { loopCount, options })
       enqueueSnackbar('MP3 exported', { variant: 'success' })
     } else {
-      await downloadProjectWav(dawStore.$state, { loopCount })
+      await downloadProjectWav(dawStore.$state, { loopCount, options })
       enqueueSnackbar('WAV exported', { variant: 'success' })
     }
     exportModalVisible.value = false

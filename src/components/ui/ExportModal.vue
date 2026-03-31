@@ -1,5 +1,5 @@
 <template>
-  <Modal :open="visible" size="sm" title="Export" @close="emit('close')">
+  <Modal :open="visible" size="md" title="Export" @close="emit('close')">
     <div class="space-y-5">
       <!-- Format -->
       <div class="space-y-2">
@@ -62,6 +62,83 @@
           </span>
         </div>
       </div>
+
+      <div class="space-y-2">
+        <p class="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Format settings</p>
+
+        <div v-if="format === 'wav'" class="grid gap-3 sm:grid-cols-2">
+          <label class="block">
+            <span class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Sample rate</span>
+            <select
+              v-model="wavSampleRate"
+              class="mt-2 w-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition hover:border-zinc-700 focus:border-zinc-600"
+            >
+              <option
+                v-for="option in wavSampleRateOptions"
+                :key="String(option.value)"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </label>
+
+          <label class="block">
+            <span class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Bit depth</span>
+            <select
+              v-model="wavBitDepth"
+              class="mt-2 w-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition hover:border-zinc-700 focus:border-zinc-600"
+            >
+              <option
+                v-for="option in WAV_EXPORT_BIT_DEPTH_OPTIONS"
+                :key="String(option.value)"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </label>
+        </div>
+
+        <div v-else class="grid gap-3 sm:grid-cols-2">
+          <label class="block">
+            <span class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Sample rate</span>
+            <select
+              v-model="mp3SampleRate"
+              class="mt-2 w-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition hover:border-zinc-700 focus:border-zinc-600"
+            >
+              <option
+                v-for="option in mp3SampleRateOptions"
+                :key="String(option.value)"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </label>
+
+          <label class="block">
+            <span class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Bitrate</span>
+            <select
+              v-model="mp3Bitrate"
+              class="mt-2 w-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition hover:border-zinc-700 focus:border-zinc-600"
+            >
+              <option
+                v-for="option in MP3_EXPORT_BITRATE_OPTIONS"
+                :key="String(option.value)"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </label>
+        </div>
+
+        <p class="text-xs text-zinc-500">
+          <span v-if="format === 'wav'">WAV exports can be written as PCM or 32-bit float.</span>
+          <span v-else>MP3 exports use constant bitrate encoding.</span>
+        </p>
+      </div>
     </div>
 
     <template #footer>
@@ -93,6 +170,16 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import { LoaderCircle } from 'lucide-vue-next'
+import {
+  DEFAULT_MP3_EXPORT_OPTIONS,
+  DEFAULT_WAV_EXPORT_OPTIONS,
+  MP3_EXPORT_BITRATE_OPTIONS,
+  MP3_EXPORT_SAMPLE_RATE_OPTIONS,
+  normalizeMp3ExportOptions,
+  normalizeWavExportOptions,
+  WAV_EXPORT_BIT_DEPTH_OPTIONS,
+  WAV_EXPORT_SAMPLE_RATE_OPTIONS
+} from '@/services/exportSettingsService'
 import Modal from '@/components/ui/Modal.vue'
 
 const FORMATS = [
@@ -121,8 +208,14 @@ const emit = defineEmits(['close', 'export'])
 const format = ref('wav')
 const renderMode = ref('full')
 const loopCount = ref(2)
+const wavSampleRate = ref(DEFAULT_WAV_EXPORT_OPTIONS.sampleRate)
+const wavBitDepth = ref(DEFAULT_WAV_EXPORT_OPTIONS.bitDepth)
+const mp3SampleRate = ref(DEFAULT_MP3_EXPORT_OPTIONS.sampleRate)
+const mp3Bitrate = ref(DEFAULT_MP3_EXPORT_OPTIONS.bitrate)
 const localExporting = ref(false)
 const isExporting = computed(() => props.exporting || localExporting.value)
+const wavSampleRateOptions = computed(() => WAV_EXPORT_SAMPLE_RATE_OPTIONS)
+const mp3SampleRateOptions = computed(() => MP3_EXPORT_SAMPLE_RATE_OPTIONS)
 
 watch(
   () => props.exporting,
@@ -145,7 +238,22 @@ async function handleExport() {
 
   emit('export', {
     format: format.value,
-    loopCount: renderMode.value === 'loop' ? Math.max(1, loopCount.value) : 1
+    loopCount: renderMode.value === 'loop' ? Math.max(1, loopCount.value) : 1,
+    options: resolveExportOptions()
+  })
+}
+
+function resolveExportOptions() {
+  if (format.value === 'mp3') {
+    return normalizeMp3ExportOptions({
+      bitrate: mp3Bitrate.value,
+      sampleRate: mp3SampleRate.value
+    })
+  }
+
+  return normalizeWavExportOptions({
+    bitDepth: wavBitDepth.value,
+    sampleRate: wavSampleRate.value
   })
 }
 
