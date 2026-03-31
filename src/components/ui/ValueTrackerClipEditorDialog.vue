@@ -171,6 +171,7 @@ const rows = computed(() =>
       },
       decLabel: pendingDecimalLabel ?? formatDecimal(displayValue),
       className: {
+        'value-tracker-editor__row--block-start': stepIndex > 0 && stepIndex % ROWS_PER_JUMP === 0,
         'value-tracker-editor__row--playhead': props.playheadStepIndex === stepIndex,
         'value-tracker-editor__row--selected': rowSelected,
         'value-tracker-editor__row--set': explicitValue !== null,
@@ -620,6 +621,10 @@ function scrollStepIntoView(stepIndex) {
 
 .value-tracker-editor__row:nth-child(even) {
   background: rgba(14, 14, 18, 0.94);
+}
+
+.value-tracker-editor__row--block-start {
+  border-top: 1px dashed rgba(161, 161, 170, 0.42);
 }
 
 .value-tracker-editor__row--held {
