@@ -45,6 +45,29 @@ export const MP3_EXPORT_SAMPLE_RATE_OPTIONS = [
   }
 ]
 
+export const OGG_OPUS_EXPORT_SAMPLE_RATE_OPTIONS = [
+  {
+    label: '8 kHz',
+    value: 8000
+  },
+  {
+    label: '12 kHz',
+    value: 12000
+  },
+  {
+    label: '16 kHz',
+    value: 16000
+  },
+  {
+    label: '24 kHz',
+    value: 24000
+  },
+  {
+    label: '48 kHz',
+    value: 48000
+  }
+]
+
 export const WAV_EXPORT_BIT_DEPTH_OPTIONS = [
   {
     label: '16-bit PCM',
@@ -79,6 +102,25 @@ export const MP3_EXPORT_BITRATE_OPTIONS = [
   }
 ]
 
+export const OGG_OPUS_EXPORT_BITRATE_OPTIONS = [
+  {
+    label: '96 kbps',
+    value: 96
+  },
+  {
+    label: '128 kbps',
+    value: 128
+  },
+  {
+    label: '160 kbps',
+    value: 160
+  },
+  {
+    label: '192 kbps',
+    value: 192
+  }
+]
+
 export const DEFAULT_WAV_EXPORT_OPTIONS = {
   bitDepth: 16,
   sampleRate: EXPORT_SAMPLE_RATE_AUTO
@@ -87,6 +129,11 @@ export const DEFAULT_WAV_EXPORT_OPTIONS = {
 export const DEFAULT_MP3_EXPORT_OPTIONS = {
   bitrate: 128,
   sampleRate: EXPORT_SAMPLE_RATE_AUTO
+}
+
+export const DEFAULT_OGG_OPUS_EXPORT_OPTIONS = {
+  bitrate: 128,
+  sampleRate: 48000
 }
 
 export function normalizeWavExportOptions(options = {}) {
@@ -119,6 +166,21 @@ export function normalizeMp3ExportOptions(options = {}) {
   }
 }
 
+export function normalizeOggOpusExportOptions(options = {}) {
+  return {
+    bitrate: normalizeOptionValue(
+      options.bitrate,
+      OGG_OPUS_EXPORT_BITRATE_OPTIONS,
+      DEFAULT_OGG_OPUS_EXPORT_OPTIONS.bitrate
+    ),
+    sampleRate: normalizeOptionValue(
+      options.sampleRate,
+      OGG_OPUS_EXPORT_SAMPLE_RATE_OPTIONS,
+      DEFAULT_OGG_OPUS_EXPORT_OPTIONS.sampleRate
+    )
+  }
+}
+
 export function resolveExportSampleRate(
   sourceSampleRate,
   sampleRateOption,
@@ -132,6 +194,14 @@ export function resolveExportSampleRate(
   }
 
   return Math.max(autoMinimumSampleRate, normalizedSourceSampleRate)
+}
+
+export function resolveOggOpusExportSampleRate(sampleRateOption) {
+  const normalizedOptions = normalizeOggOpusExportOptions({
+    sampleRate: sampleRateOption
+  })
+
+  return Number(normalizedOptions.sampleRate)
 }
 
 function normalizeOptionValue(value, options, fallback) {

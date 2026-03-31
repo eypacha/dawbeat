@@ -371,7 +371,7 @@ import {
 } from '@/services/bpmService'
 import { midiClockState } from '@/services/midiClockService'
 import { useDawStore } from '@/stores/dawStore'
-import { downloadProjectMp3, downloadProjectWav } from '@/services/exportService'
+import { downloadProjectMp3, downloadProjectOggOpus, downloadProjectWav } from '@/services/exportService'
 import ExportModal from '@/components/ui/ExportModal.vue'
 import { downloadProjectFile } from '@/services/projectPersistence'
 import { openProjectFile, replaceCurrentProject } from '@/services/projectOpenService'
@@ -929,6 +929,9 @@ async function handleExport({ format, loopCount, options }) {
     if (format === 'mp3') {
       await downloadProjectMp3(dawStore.$state, { loopCount, options })
       enqueueSnackbar('MP3 exported', { variant: 'success' })
+    } else if (format === 'oggOpus') {
+      await downloadProjectOggOpus(dawStore.$state, { loopCount, options })
+      enqueueSnackbar('OGG Opus exported', { variant: 'success' })
     } else {
       await downloadProjectWav(dawStore.$state, { loopCount, options })
       enqueueSnackbar('WAV exported', { variant: 'success' })

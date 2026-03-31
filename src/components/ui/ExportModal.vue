@@ -100,7 +100,7 @@
           </label>
         </div>
 
-        <div v-else class="grid gap-3 sm:grid-cols-2">
+        <div v-else-if="format === 'mp3'" class="grid gap-3 sm:grid-cols-2">
           <label class="block">
             <span class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Sample rate</span>
             <select
@@ -134,9 +134,46 @@
           </label>
         </div>
 
+        <div v-else class="space-y-3">
+          <div class="grid gap-3 sm:grid-cols-2">
+            <label class="block">
+              <span class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Sample rate</span>
+              <select
+                v-model="oggOpusSampleRate"
+                class="mt-2 w-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition hover:border-zinc-700 focus:border-zinc-600"
+              >
+                <option
+                  v-for="option in oggOpusSampleRateOptions"
+                  :key="String(option.value)"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
+            </label>
+
+            <label class="block">
+              <span class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Bitrate</span>
+              <select
+                v-model="oggOpusBitrate"
+                class="mt-2 w-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition hover:border-zinc-700 focus:border-zinc-600"
+              >
+                <option
+                  v-for="option in OGG_OPUS_EXPORT_BITRATE_OPTIONS"
+                  :key="String(option.value)"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
+            </label>
+          </div>
+        </div>
+
         <p class="text-xs text-zinc-500">
           <span v-if="format === 'wav'">WAV exports can be written as PCM or 32-bit float.</span>
-          <span v-else>MP3 exports use constant bitrate encoding.</span>
+          <span v-else-if="format === 'mp3'">MP3 exports use constant bitrate encoding.</span>
+          <span v-else>OGG Opus exports use constant bitrate encoding.</span>
         </p>
       </div>
     </div>
@@ -171,8 +208,12 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { LoaderCircle } from 'lucide-vue-next'
 import {
+  DEFAULT_OGG_OPUS_EXPORT_OPTIONS,
   DEFAULT_MP3_EXPORT_OPTIONS,
   DEFAULT_WAV_EXPORT_OPTIONS,
+  normalizeOggOpusExportOptions,
+  OGG_OPUS_EXPORT_BITRATE_OPTIONS,
+  OGG_OPUS_EXPORT_SAMPLE_RATE_OPTIONS,
   MP3_EXPORT_BITRATE_OPTIONS,
   MP3_EXPORT_SAMPLE_RATE_OPTIONS,
   normalizeMp3ExportOptions,
@@ -184,7 +225,8 @@ import Modal from '@/components/ui/Modal.vue'
 
 const FORMATS = [
   { label: 'WAV', value: 'wav' },
-  { label: 'MP3', value: 'mp3' }
+  { label: 'MP3', value: 'mp3' },
+  { label: 'OGG Opus', value: 'oggOpus' }
 ]
 
 const MODES = [
@@ -212,10 +254,13 @@ const wavSampleRate = ref(DEFAULT_WAV_EXPORT_OPTIONS.sampleRate)
 const wavBitDepth = ref(DEFAULT_WAV_EXPORT_OPTIONS.bitDepth)
 const mp3SampleRate = ref(DEFAULT_MP3_EXPORT_OPTIONS.sampleRate)
 const mp3Bitrate = ref(DEFAULT_MP3_EXPORT_OPTIONS.bitrate)
+const oggOpusSampleRate = ref(DEFAULT_OGG_OPUS_EXPORT_OPTIONS.sampleRate)
+const oggOpusBitrate = ref(DEFAULT_OGG_OPUS_EXPORT_OPTIONS.bitrate)
 const localExporting = ref(false)
 const isExporting = computed(() => props.exporting || localExporting.value)
 const wavSampleRateOptions = computed(() => WAV_EXPORT_SAMPLE_RATE_OPTIONS)
 const mp3SampleRateOptions = computed(() => MP3_EXPORT_SAMPLE_RATE_OPTIONS)
+const oggOpusSampleRateOptions = computed(() => OGG_OPUS_EXPORT_SAMPLE_RATE_OPTIONS)
 
 watch(
   () => props.exporting,
@@ -248,6 +293,13 @@ function resolveExportOptions() {
     return normalizeMp3ExportOptions({
       bitrate: mp3Bitrate.value,
       sampleRate: mp3SampleRate.value
+    })
+  }
+
+  if (format.value === 'oggOpus') {
+    return normalizeOggOpusExportOptions({
+      bitrate: oggOpusBitrate.value,
+      sampleRate: oggOpusSampleRate.value
     })
   }
 

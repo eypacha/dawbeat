@@ -30,9 +30,11 @@ import {
 } from '@/services/audioEffectService'
 import { applyEvalEffects } from '@/services/evalEffectService'
 import {
+  normalizeOggOpusExportOptions,
   normalizeMp3ExportOptions,
   normalizeWavExportOptions,
-  resolveExportSampleRate
+  resolveExportSampleRate,
+  resolveOggOpusExportSampleRate
 } from '@/services/exportSettingsService'
 import { hasRenderableFormulaInput } from '@/services/formulaService'
 import { getValueTrackerEventTicks } from '@/services/valueTrackerService'
@@ -56,10 +58,14 @@ export async function downloadProjectWav(
   { loopCount = 1, filename = createWavFilename(state?.projectTitle), options = {} } = {}
 ) {
   const normalizedOptions = normalizeWavExportOptions(options)
-  const wavBuffer = await renderProjectToWav(state, {
-    bitDepth: normalizedOptions.bitDepth,
+  const renderedAudio = await renderProjectAudio(state, {
     loopCount,
     sampleRate: normalizedOptions.sampleRate
+  })
+  const wavBuffer = encodeWavFile({
+    bitDepth: normalizedOptions.bitDepth,
+    channelData: renderedAudio.channelData,
+    sampleRate: renderedAudio.sampleRate
   })
   const blob = new Blob([wavBuffer], { type: 'audio/wav' })
   triggerDownload(blob, filename)
@@ -70,16 +76,45 @@ export async function downloadProjectMp3(
   { loopCount = 1, filename = createMp3Filename(state?.projectTitle), options = {} } = {}
 ) {
   const normalizedOptions = normalizeMp3ExportOptions(options)
-  const wavBuffer = await renderProjectToWav(state, {
-    bitDepth: 16,
+  const renderedAudio = await renderProjectAudio(state, {
     loopCount,
     sampleRate: normalizedOptions.sampleRate
+  })
+  const wavBuffer = encodeWavFile({
+    bitDepth: 16,
+    channelData: renderedAudio.channelData,
+    sampleRate: renderedAudio.sampleRate
   })
   const mp3Buffer = await encodeWavToMp3(wavBuffer, {
     bitrate: normalizedOptions.bitrate
   })
   const blob = new Blob([mp3Buffer], { type: 'audio/mpeg' })
   triggerDownload(blob, filename)
+}
+
+export async function downloadProjectOggOpus(
+  state,
+  { loopCount = 1, filename = createOggOpusFilename(state?.projectTitle), options = {} } = {}
+) {
+  const normalizedOptions = normalizeOggOpusExportOptions(options)
+  const renderedAudio = await renderProjectAudio(state, {
+    loopCount,
+    sampleRate: resolveOggOpusExportSampleRate(normalizedOptions.sampleRate)
+  })
+
+  try {
+    const { encodePcmToOggOpus } = await import('@/services/oggOpusExportService')
+    const oggBuffer = await encodePcmToOggOpus(renderedAudio.channelData, {
+      bitrate: normalizedOptions.bitrate,
+      sampleRate: renderedAudio.sampleRate
+    })
+    const blob = new Blob([oggBuffer], { type: 'audio/ogg; codecs=opus' })
+
+    triggerDownload(blob, filename)
+  } catch (error) {
+    console.error('OGG Opus export failed', error)
+    throw new Error('OGG Opus export is unavailable in this browser/build.')
+  }
 }
 
 function triggerDownload(blob, filename) {
@@ -97,9 +132,9 @@ function triggerDownload(blob, filename) {
   }, 0)
 }
 
-async function renderProjectToWav(
+async function renderProjectAudio(
   state,
-  { bitDepth = 16, loopCount = 1, sampleRate: outputSampleRateOption } = {}
+  { loopCount = 1, sampleRate: outputSampleRateOption } = {}
 ) {
   const singleLoopTicks = getProjectDurationTicks(state.tracks)
 
@@ -129,11 +164,10 @@ async function renderProjectToWav(
     outputSampleRate
   )
 
-  return encodeWavFile({
-    bitDepth,
+  return {
     channelData: [processedLeftChannel, processedRightChannel],
     sampleRate: outputSampleRate
-  })
+  }
 }
 
 async function encodeWavToMp3(wavBuffer, { bitrate = 128 } = {}) {
@@ -1384,4 +1418,8 @@ function createWavFilename(projectTitle = DEFAULT_PROJECT_TITLE) {
 
 function createMp3Filename(projectTitle = DEFAULT_PROJECT_TITLE) {
   return createProjectFilenameFromTitle(projectTitle, 'mp3')
+}
+
+function createOggOpusFilename(projectTitle = DEFAULT_PROJECT_TITLE) {
+  return createProjectFilenameFromTitle(projectTitle, 'ogg')
 }
