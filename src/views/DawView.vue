@@ -732,6 +732,16 @@ function handleContextMenuSelect(action, item) {
     return
   }
 
+  if (action === 'split-all') {
+    dawStore.splitAllAtTime(item.time ?? 0)
+    return
+  }
+
+  if (action === 'add-bar') {
+    dawStore.addBarAtTime(item.time ?? 0)
+    return
+  }
+
   if (action === 'edit-timeline-section-label') {
     timelineSectionLabelDialog.labelId = item.labelId ?? null
     timelineSectionLabelDialog.labelName = item.labelName ?? ''

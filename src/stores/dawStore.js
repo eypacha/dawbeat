@@ -942,10 +942,14 @@ function createClipForLaneType(laneType, clip) {
   return createTrackClip(clip)
 }
 
-function applyClipSplitResult(store, laneEntry, splitResult) {
+function applyClipSplitResult(store, laneEntry, splitResult, options = {}) {
   if (!laneEntry?.clip || !laneEntry?.lane || !splitResult?.rightClip) {
     return null
   }
+
+  const selectClips = options.selectClips !== false
+  const shiftRightClipStart = Number(options.shiftRightClipStart) || 0
+  const shouldRecalculateGroupBounds = options.recalculateGroupBounds !== false
 
   laneEntry.clip.duration = splitResult.leftDuration
 
@@ -953,18 +957,125 @@ function applyClipSplitResult(store, laneEntry, splitResult) {
     laneEntry.clip.values = splitResult.leftValues
   }
 
-  const nextClip = createClipForLaneType(laneEntry.laneType, splitResult.rightClip)
+  const nextClip = createClipForLaneType(laneEntry.laneType, {
+    ...splitResult.rightClip,
+    start: splitResult.rightClip.start + shiftRightClipStart
+  })
 
   laneEntry.lane.clips.push(nextClip)
   sortLaneClips(laneEntry)
 
-  if (laneEntry.clip.groupId) {
+  if (shouldRecalculateGroupBounds && laneEntry.clip.groupId) {
     store.recalculateGroupBounds(laneEntry.clip.groupId)
   }
 
-  store.selectedTrackId = laneEntry.laneType === 'track' ? laneEntry.laneId : null
-  store.setSelectedClips([laneEntry.clip.id, nextClip.id])
+  if (selectClips) {
+    store.selectedTrackId = laneEntry.laneType === 'track' ? laneEntry.laneId : null
+    store.setSelectedClips([laneEntry.clip.id, nextClip.id])
+  }
+
   return nextClip.id
+}
+
+function shiftAutomationLanePointsAfterTime(automationLane, time, deltaTicks) {
+  if (!Array.isArray(automationLane?.points) || !automationLane.points.length) {
+    return false
+  }
+
+  let changed = false
+
+  for (const point of automationLane.points) {
+    if ((Number(point?.time) || 0) <= time) {
+      continue
+    }
+
+    point.time = (Number(point.time) || 0) + deltaTicks
+    changed = true
+  }
+
+  if (changed) {
+    automationLane.points.sort((leftPoint, rightPoint) => leftPoint.time - rightPoint.time)
+  }
+
+  return changed
+}
+
+function shiftTimelineSectionLabelsAfterTime(timelineSectionLabels, time, deltaTicks) {
+  if (!Array.isArray(timelineSectionLabels) || !timelineSectionLabels.length) {
+    return false
+  }
+
+  let changed = false
+
+  for (const timelineSectionLabel of timelineSectionLabels) {
+    if ((Number(timelineSectionLabel?.time) || 0) <= time) {
+      continue
+    }
+
+    timelineSectionLabel.time = (Number(timelineSectionLabel.time) || 0) + deltaTicks
+    changed = true
+  }
+
+  if (changed) {
+    sortTimelineSectionLabels(timelineSectionLabels)
+  }
+
+  return changed
+}
+
+function splitLaneClipsAtTime(store, laneEntry, time, deltaTicks, touchedGroupIds) {
+  if (!Array.isArray(laneEntry?.lane?.clips) || !laneEntry.lane.clips.length) {
+    return false
+  }
+
+  const laneClips = [...laneEntry.lane.clips]
+  let changed = false
+
+  for (const clip of laneClips) {
+    const clipStart = Number(clip?.start) || 0
+    const clipEnd = getClipEnd(clip)
+
+    if (deltaTicks > 0 && clipStart >= time) {
+      clip.start = clipStart + deltaTicks
+      changed = true
+
+      if (clip.groupId) {
+        touchedGroupIds.add(clip.groupId)
+      }
+
+      continue
+    }
+
+    if (clipStart < time && clipEnd > time) {
+      const splitResult = laneEntry.laneType === 'valueTracker'
+        ? splitValueTrackerClip(clip, time)
+        : splitTimelineClip(clip, time)
+
+      if (!splitResult) {
+        continue
+      }
+
+      applyClipSplitResult(store, {
+        ...laneEntry,
+        clip
+      }, splitResult, {
+        recalculateGroupBounds: false,
+        selectClips: false,
+        shiftRightClipStart: deltaTicks
+      })
+      changed = true
+
+      if (clip.groupId) {
+        touchedGroupIds.add(clip.groupId)
+      }
+    }
+  }
+
+  if (changed) {
+    sortLaneClips(laneEntry)
+  }
+
+  return changed
 }
 
 function getLaneLabel(laneEntry) {
@@ -1194,6 +1305,25 @@ function getSelectedClipEntriesWithTrackIndex(tracks, variableTracks, valueTrack
       trackIndex: laneIndexById.get(`${entry.laneType}:${entry.laneId}`)
     }))
     .filter((entry) => Number.isInteger(entry.trackIndex))
+}
+
+function getGroupClipEntriesWithTrackIndex(tracks, variableTracks, valueTrackerTracks, groupId) {
+  if (typeof groupId !== 'string' || !groupId) {
+    return []
+  }
+
+  return getClipLanesInOrder(tracks, variableTracks, valueTrackerTracks).flatMap((laneEntry) =>
+    (Array.isArray(laneEntry.lane?.clips) ? laneEntry.lane.clips : [])
+      .filter((clip) => clip?.groupId === groupId)
+      .map((clip) => ({
+        clip,
+        clipId: clip.id,
+        lane: laneEntry.lane,
+        laneId: laneEntry.laneId,
+        laneType: laneEntry.laneType,
+        trackIndex: laneEntry.trackIndex
+      }))
+  )
 }
 
 function areEntriesGroupedInSingleLane(entries) {
@@ -1728,6 +1858,92 @@ export const useDawStore = defineStore('dawStore', {
         }
 
         return true
+      })
+    },
+
+    splitAllAtTime(time) {
+      return this.recordHistoryStep('split-all', () => {
+        const normalizedTime = Math.max(0, Number(time) || 0)
+        let changed = false
+        const touchedGroupIds = new Set()
+
+        for (const laneEntry of getClipLanesInOrder(
+          this.tracks,
+          this.variableTracks,
+          this.valueTrackerTracks
+        )) {
+          changed = splitLaneClipsAtTime(
+            this,
+            laneEntry,
+            normalizedTime,
+            0,
+            touchedGroupIds
+          ) || changed
+        }
+
+        for (const groupId of touchedGroupIds) {
+          this.recalculateGroupBounds(groupId)
+        }
+
+        return changed
+      })
+    },
+
+    addBarAtTime(time, duration = 1) {
+      return this.recordHistoryStep('add-bar', () => {
+        const normalizedTime = Math.max(0, Number(time) || 0)
+        const normalizedDuration = Number(duration)
+
+        if (!Number.isFinite(normalizedDuration) || normalizedDuration <= 0) {
+          return false
+        }
+
+        let changed = false
+        const touchedGroupIds = new Set()
+
+        for (const laneEntry of getClipLanesInOrder(
+          this.tracks,
+          this.variableTracks,
+          this.valueTrackerTracks
+        )) {
+          changed = splitLaneClipsAtTime(
+            this,
+            laneEntry,
+            normalizedTime,
+            normalizedDuration,
+            touchedGroupIds
+          ) || changed
+        }
+
+        for (const automationLane of this.automationLanes) {
+          changed = shiftAutomationLanePointsAfterTime(
+            automationLane,
+            normalizedTime,
+            normalizedDuration
+          ) || changed
+        }
+
+        changed = shiftTimelineSectionLabelsAfterTime(
+          this.timelineSectionLabels,
+          normalizedTime,
+          normalizedDuration
+        ) || changed
+
+        if (this.loopStart > normalizedTime) {
+          this.loopStart += normalizedDuration
+          changed = true
+        }
+
+        if (this.loopEnd > normalizedTime) {
+          this.loopEnd += normalizedDuration
+          changed = true
+        }
+
+        for (const groupId of touchedGroupIds) {
+          this.recalculateGroupBounds(groupId)
+        }
+
+        return changed
       })
     },
 
@@ -2673,11 +2889,11 @@ export const useDawStore = defineStore('dawStore', {
         return false
       }
 
-      const entries = getSelectedClipEntriesWithTrackIndex(
+      const entries = getGroupClipEntriesWithTrackIndex(
         this.tracks,
         this.variableTracks,
         this.valueTrackerTracks,
-        getGroupClipIds(group)
+        groupId
       )
 
       if (!entries.length) {

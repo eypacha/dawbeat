@@ -37,6 +37,7 @@
 import { onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useContextMenu } from '@/composables/useContextMenu'
+import { createTimelineContextMenuItems } from '@/services/timelineContextMenuService'
 import { getDraggedTick, resolvePointerEventSnap } from '@/services/snapService'
 import { useDawStore } from '@/stores/dawStore'
 import { pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
@@ -84,16 +85,12 @@ function handleStripContextMenu(event) {
   openContextMenu({
     x: event.clientX,
     y: event.clientY,
-    items: [
-      {
-        action: 'create-timeline-section-label',
-        label: 'Add Section Label',
-        time: getTimeFromClientX(
-          event.clientX,
-          resolvePointerEventSnap(event, dawStore.snapToGridEnabled)
-        )
-      }
-    ]
+    items: createTimelineContextMenuItems(
+      getTimeFromClientX(
+        event.clientX,
+        resolvePointerEventSnap(event, dawStore.snapToGridEnabled)
+      )
+    )
   })
 }
 

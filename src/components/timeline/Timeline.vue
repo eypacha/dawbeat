@@ -235,6 +235,7 @@ import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { createGroupContextMenuItems } from '@/services/groupContextMenuService'
 import { enqueueSnackbar } from '@/services/notifications'
 import { resolveClipFormulaExpressions } from '@/services/formulaService'
+import { createTimelineContextMenuItems } from '@/services/timelineContextMenuService'
 import { getFirstDraggedFile, hasFileDragPayload, openProjectFile } from '@/services/projectOpenService'
 import {
   getRenderedTimelineClipEnd,
@@ -700,16 +701,12 @@ function handleRulerContextMenu(event) {
   openContextMenu({
     x: event.clientX,
     y: event.clientY,
-    items: [
-      {
-        action: 'create-timeline-section-label',
-        label: 'Add Section Label',
-        time: getTimelineTickFromClientX(
-          event.clientX,
-          resolvePointerEventSnap(event, dawStore.snapToGridEnabled)
-        )
-      }
-    ]
+    items: createTimelineContextMenuItems(
+      getTimelineTickFromClientX(
+        event.clientX,
+        resolvePointerEventSnap(event, dawStore.snapToGridEnabled)
+      )
+    )
   })
 }
 
