@@ -420,7 +420,6 @@ const groupVisuals = computed(() => {
       }
 
       const clipCount = (group.clips ?? []).length
-      const laneCount = maxTrackOffset + 1
       const left = trackLabelWidth.value + ticksToPixels(group.start, pixelsPerTick.value)
       const top = firstMetric.top
       const height = Math.max(1, (lastMetric.top + lastMetric.height) - firstMetric.top)
@@ -488,9 +487,8 @@ const groupVisuals = computed(() => {
         isDisabled: Boolean(editingGroup.value) && editingGroup.value.id !== group.id,
         isEditing: editingGroup.value?.id === group.id,
         isSelected: selectedClipCount > 0 && selectedClipCount === clipCount,
-        laneCount,
         name: group.name,
-        summary: `${clipCount} ${clipCount === 1 ? 'clip' : 'clips'} · ${laneCount} ${laneCount === 1 ? 'lane' : 'lanes'}`,
+        summary: `${clipCount} ${clipCount === 1 ? 'clip' : 'clips'}`,
         style: {
           '--group-clip-color': laneColor,
           left: `${left}px`,

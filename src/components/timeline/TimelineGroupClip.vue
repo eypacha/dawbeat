@@ -60,7 +60,6 @@
             class="flex items-end justify-between gap-2 text-[10px] uppercase tracking-[0.12em] text-zinc-100/60"
           >
             <span>Group Clip</span>
-            <span>{{ laneLabel }}</span>
           </div>
         </div>
       </template>
@@ -97,9 +96,6 @@ const shellClassName = computed(() => {
 
 const showSummary = computed(() => props.groupVisual.width >= 88 && props.groupVisual.height >= 36)
 const showFooter = computed(() => props.groupVisual.width >= 168 && props.groupVisual.height >= 58)
-const laneLabel = computed(() =>
-  `${props.groupVisual.laneCount} ${props.groupVisual.laneCount === 1 ? 'lane' : 'lanes'}`
-)
 </script>
 
 <style scoped>
