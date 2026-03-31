@@ -1,4 +1,8 @@
-export function createTimelineContextMenuItems(time) {
+export function createTimelineContextMenuItems(time, barDuration = 1) {
+  const normalizedBarDuration = Number.isFinite(Number(barDuration)) && Number(barDuration) > 1
+    ? Math.round(Number(barDuration))
+    : 1
+
   return [
     {
       action: 'create-timeline-section-label',
@@ -12,7 +16,8 @@ export function createTimelineContextMenuItems(time) {
     },
     {
       action: 'add-bar',
-      label: 'Add Bar',
+      duration: normalizedBarDuration,
+      label: normalizedBarDuration > 1 ? 'Add Bars' : 'Add Bar',
       time
     }
   ]

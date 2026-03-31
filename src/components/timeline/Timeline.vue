@@ -705,7 +705,8 @@ function handleRulerContextMenu(event) {
       getTimelineTickFromClientX(
         event.clientX,
         resolvePointerEventSnap(event, dawStore.snapToGridEnabled)
-      )
+      ),
+      visibleTickStep.value
     )
   })
 }

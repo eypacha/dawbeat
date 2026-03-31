@@ -40,7 +40,7 @@ import { useContextMenu } from '@/composables/useContextMenu'
 import { createTimelineContextMenuItems } from '@/services/timelineContextMenuService'
 import { getDraggedTick, resolvePointerEventSnap } from '@/services/snapService'
 import { useDawStore } from '@/stores/dawStore'
-import { pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
+import { getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
 
 defineProps({
   timelineWidth: {
@@ -89,7 +89,8 @@ function handleStripContextMenu(event) {
       getTimeFromClientX(
         event.clientX,
         resolvePointerEventSnap(event, dawStore.snapToGridEnabled)
-      )
+      ),
+      getVisibleTimelineTickStep(pixelsPerTick.value)
     )
   })
 }

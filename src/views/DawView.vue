@@ -738,7 +738,7 @@ function handleContextMenuSelect(action, item) {
   }
 
   if (action === 'add-bar') {
-    dawStore.addBarAtTime(item.time ?? 0)
+    dawStore.addBarAtTime(item.time ?? 0, item.duration ?? 1)
     return
   }
 
