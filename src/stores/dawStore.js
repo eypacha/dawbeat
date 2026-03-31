@@ -3653,9 +3653,19 @@ export const useDawStore = defineStore('dawStore', {
       }
     },
 
-    addTrack(beforeTrackId = null) {
+    addTrack(beforeTrackId = null, afterTrackId = null) {
       return this.recordHistoryStep('add-track', () => {
         const nextTrack = createTrack()
+
+        if (afterTrackId) {
+          const afterIndex = findTrackIndex(this.tracks, afterTrackId)
+
+          if (afterIndex !== -1) {
+            this.tracks.splice(afterIndex + 1, 0, nextTrack)
+            this.recalculateAllGroupBounds()
+            return nextTrack.id
+          }
+        }
 
         if (!beforeTrackId) {
           this.tracks.push(nextTrack)

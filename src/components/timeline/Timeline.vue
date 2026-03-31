@@ -45,7 +45,7 @@
         <button
           class="rounded-md border border-zinc-800 bg-zinc-950/80 px-3 py-2 text-xs text-zinc-200 transition hover:border-zinc-700 hover:text-zinc-50"
           type="button"
-          @click="dawStore.addTrack()"
+          @click="dawStore.addTrack(null, dawStore.selectedTrackId)"
         >
           + Track
         </button>

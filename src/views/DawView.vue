@@ -593,7 +593,7 @@ function handleContextMenuSelect(action, item) {
   }
 
   if (action === 'add-track') {
-    dawStore.addTrack(item.beforeTrackId ?? null)
+    dawStore.addTrack(item.beforeTrackId ?? null, item.afterTrackId ?? null)
     return
   }
 
