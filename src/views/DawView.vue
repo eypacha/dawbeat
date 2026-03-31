@@ -633,6 +633,11 @@ function handleContextMenuSelect(action, item) {
     return
   }
 
+  if (action === 'split-clip') {
+    dawStore.splitClip(item.clipId, item.splitTime)
+    return
+  }
+
   if (action === 'create-group-from-selection') {
     dawStore.createGroup(item?.clipIds ?? dawStore.selectedClipIds)
     return

@@ -64,6 +64,10 @@ import {
   resolveClipFormulaName
 } from '@/services/formulaService'
 import { createGroupContextMenuItems } from '@/services/groupContextMenuService'
+import {
+  getClipTickFromClientX,
+  getTimelineClipSplitTime
+} from '@/services/timelineClipSplitService'
 import { getRenderedTimelineClipWidth } from '@/services/timelineClipRenderService'
 import { useDawStore } from '@/stores/dawStore'
 import { ticksToPixels } from '@/utils/timeUtils'
@@ -290,6 +294,10 @@ function handleContextMenu(event) {
     return
   }
 
+  const splitTime = getTimelineClipSplitTime(
+    props.clip,
+    getClipTickFromClientX(event.clientX, event.currentTarget, props.clip.start, pixelsPerTick.value)
+  )
   const items = [
     ...(canGroupSelection.value
       ? [
@@ -309,6 +317,16 @@ function handleContextMenu(event) {
       clipId: props.clip.id,
       label: 'Edit Clip'
     },
+    ...(splitTime === null
+      ? []
+      : [
+          {
+            action: 'split-clip',
+            clipId: props.clip.id,
+            label: 'Split Clip',
+            splitTime
+          }
+        ]),
     {
       action: 'open-formula-inspector',
       clipId: props.clip.id,

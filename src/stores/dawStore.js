@@ -140,6 +140,10 @@ import {
   resizeValueTrackerValues
 } from '@/services/valueTrackerService'
 import { enqueueSnackbar } from '@/services/notifications'
+import {
+  splitTimelineClip,
+  splitValueTrackerClip
+} from '@/services/timelineClipSplitService'
 
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
 const MIN_VALUE_TRACKER_RECORDING_DURATION = 1
@@ -924,6 +928,43 @@ function sortLaneClips(entry) {
 
 function getLaneKey(laneType, laneId) {
   return `${laneType}:${laneId}`
+}
+
+function createClipForLaneType(laneType, clip) {
+  if (laneType === 'variable') {
+    return createVariableTrackClip(clip)
+  }
+
+  if (laneType === 'valueTracker') {
+    return createValueTrackerClip(clip)
+  }
+
+  return createTrackClip(clip)
+}
+
+function applyClipSplitResult(store, laneEntry, splitResult) {
+  if (!laneEntry?.clip || !laneEntry?.lane || !splitResult?.rightClip) {
+    return null
+  }
+
+  laneEntry.clip.duration = splitResult.leftDuration
+
+  if (Object.hasOwn(splitResult, 'leftValues')) {
+    laneEntry.clip.values = splitResult.leftValues
+  }
+
+  const nextClip = createClipForLaneType(laneEntry.laneType, splitResult.rightClip)
+
+  laneEntry.lane.clips.push(nextClip)
+  sortLaneClips(laneEntry)
+
+  if (laneEntry.clip.groupId) {
+    store.recalculateGroupBounds(laneEntry.clip.groupId)
+  }
+
+  store.selectedTrackId = laneEntry.laneType === 'track' ? laneEntry.laneId : null
+  store.setSelectedClips([laneEntry.clip.id, nextClip.id])
+  return nextClip.id
 }
 
 function getLaneLabel(laneEntry) {
@@ -4855,6 +4896,31 @@ export const useDawStore = defineStore('dawStore', {
       }
 
       return duplicatedClipIds
+    },
+
+    splitClip(clipId, splitTime) {
+      return this.recordHistoryStep('split-clip', () => {
+        const laneEntry = findTimelineClip(
+          this.tracks,
+          this.variableTracks,
+          this.valueTrackerTracks,
+          clipId
+        )
+
+        if (!laneEntry?.clip || !laneEntry?.lane) {
+          return null
+        }
+
+        const splitResult = laneEntry.laneType === 'valueTracker'
+          ? splitValueTrackerClip(laneEntry.clip, splitTime)
+          : splitTimelineClip(laneEntry.clip, splitTime)
+
+        if (!splitResult) {
+          return null
+        }
+
+        return applyClipSplitResult(this, laneEntry, splitResult)
+      })
     },
 
     removeClip(clipId) {

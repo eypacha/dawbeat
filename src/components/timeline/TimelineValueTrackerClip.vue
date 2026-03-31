@@ -57,6 +57,10 @@ import { storeToRefs } from 'pinia'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineClipInteraction } from '@/composables/useTimelineClipInteraction'
 import { createGroupContextMenuItems } from '@/services/groupContextMenuService'
+import {
+  getClipTickFromClientX,
+  getValueTrackerClipSplitTime
+} from '@/services/timelineClipSplitService'
 import { getRenderedTimelineClipWidth } from '@/services/timelineClipRenderService'
 import {
   getValueTrackerEventCount,
@@ -387,6 +391,11 @@ function handleContextMenu(event) {
     return
   }
 
+  const splitTime = getValueTrackerClipSplitTime(
+    props.clip,
+    getClipTickFromClientX(event.clientX, event.currentTarget, props.clip.start, pixelsPerTick.value)
+  )
+
   openContextMenu({
     x: event.clientX,
     y: event.clientY,
@@ -409,6 +418,16 @@ function handleContextMenu(event) {
         clipId: props.clip.id,
         label: 'Copy'
       },
+      ...(splitTime === null
+        ? []
+        : [
+            {
+              action: 'split-clip',
+              clipId: props.clip.id,
+              label: 'Split Clip',
+              splitTime
+            }
+          ]),
       {
         action: 'delete-clip',
         clipId: props.clip.id,

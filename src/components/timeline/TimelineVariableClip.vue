@@ -40,6 +40,10 @@ import { storeToRefs } from 'pinia'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineClipInteraction } from '@/composables/useTimelineClipInteraction'
 import { createGroupContextMenuItems } from '@/services/groupContextMenuService'
+import {
+  getClipTickFromClientX,
+  getTimelineClipSplitTime
+} from '@/services/timelineClipSplitService'
 import { getRenderedTimelineClipWidth } from '@/services/timelineClipRenderService'
 import { useDawStore } from '@/stores/dawStore'
 import { ticksToPixels } from '@/utils/timeUtils'
@@ -251,6 +255,11 @@ function handleContextMenu(event) {
     return
   }
 
+  const splitTime = getTimelineClipSplitTime(
+    props.clip,
+    getClipTickFromClientX(event.clientX, event.currentTarget, props.clip.start, pixelsPerTick.value)
+  )
+
   openContextMenu({
     x: event.clientX,
     y: event.clientY,
@@ -273,6 +282,16 @@ function handleContextMenu(event) {
         clipId: props.clip.id,
         label: 'Edit Variable Clip'
       },
+      ...(splitTime === null
+        ? []
+        : [
+            {
+              action: 'split-clip',
+              clipId: props.clip.id,
+              label: 'Split Clip',
+              splitTime
+            }
+          ]),
       {
         action: 'delete-clip',
         clipId: props.clip.id,
