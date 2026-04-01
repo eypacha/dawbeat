@@ -258,13 +258,12 @@
           <button
             class="border border-zinc-800 bg-zinc-950 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-zinc-300 transition hover:border-zinc-700 hover:text-zinc-100 disabled:cursor-default disabled:opacity-40"
             :disabled="exportingWav"
-            :title="exportingWav ? 'Rendering the project…' : 'Export the current project'"
+            :title="exportingWav ? `Exporting the project… ${displayedExportProgressPercent}%` : 'Export the current project'"
             type="button"
             @click="exportModalVisible = true"
           >
-            <span v-if="!exportingWav">Export</span>
-            <span v-else class="flex items-center justify-center">
-              <LoaderCircle class="h-3.5 w-3.5 animate-spin" :stroke-width="2.25" />
+            <span class="font-mono tabular-nums">
+              {{ exportingWav ? `${displayedExportProgressPercent}%` : 'Export' }}
             </span>
           </button>
 
@@ -328,6 +327,7 @@
 
     <ExportModal
       :exporting="exportingWav"
+      :export-progress="displayedExportProgressPercent"
       :visible="exportModalVisible"
       @close="exportModalVisible = false"
       @export="handleExport"
@@ -357,7 +357,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Circle, CircleHelp, Download, EllipsisVertical, FilePlus, FolderOpen, Info, LoaderCircle, Maximize2, Minimize2, Pause, Play, Redo2, Repeat, Settings2, Share2, Shuffle, Square, Undo2 } from 'lucide-vue-next'
+import { Circle, CircleHelp, Download, EllipsisVertical, FilePlus, FolderOpen, Info, Maximize2, Minimize2, Pause, Play, Redo2, Repeat, Settings2, Share2, Shuffle, Square, Undo2 } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { automationCompanionHostState } from '@/services/automationCompanionService'
 import { getRandomDemoProjectEntry } from '@/services/demoProjectService'
@@ -403,6 +403,7 @@ const sampleRateDraft = ref(String(sampleRate.value))
 const aboutVisible = ref(false)
 const settingsVisible = ref(false)
 const exportingWav = ref(false)
+const exportProgressPercent = ref(0)
 const exportModalVisible = ref(false)
 const newProjectConfirmVisible = ref(false)
 const shuffleDemoConfirmVisible = ref(false)
@@ -417,6 +418,11 @@ const toolbarLayoutClassName = 'grid grid-cols-[max-content_minmax(0,1fr)_max-co
 const leftGroupClassName = 'col-[1] flex min-w-0 items-center gap-4'
 const transportControlsGroupClassName = 'col-[3] flex shrink-0 items-center justify-center gap-2 text-xs text-zinc-400'
 const rightGroupClassName = 'col-[5] flex min-w-0 items-center justify-end gap-4'
+const displayedExportProgressPercent = computed(() =>
+  exportingWav.value
+    ? Math.max(0, Math.min(99, exportProgressPercent.value))
+    : 0
+)
 
 const transportSampleTime = computed(() => {
   const sampleTime = ticksToSamples(time.value, tickSize.value)
@@ -920,6 +926,7 @@ async function handleExport({ format, loopCount, options }) {
   }
 
   exportingWav.value = true
+  exportProgressPercent.value = 0
 
   // Let Vue flush state and the browser paint the progress bar before heavy export work.
   await nextTick()
@@ -927,13 +934,25 @@ async function handleExport({ format, loopCount, options }) {
 
   try {
     if (format === 'mp3') {
-      await downloadProjectMp3(dawStore.$state, { loopCount, options })
+      await downloadProjectMp3(dawStore.$state, {
+        loopCount,
+        onProgress: updateExportProgress,
+        options
+      })
       enqueueSnackbar('MP3 exported', { variant: 'success' })
     } else if (format === 'oggOpus') {
-      await downloadProjectOggOpus(dawStore.$state, { loopCount, options })
+      await downloadProjectOggOpus(dawStore.$state, {
+        loopCount,
+        onProgress: updateExportProgress,
+        options
+      })
       enqueueSnackbar('OGG Opus exported', { variant: 'success' })
     } else {
-      await downloadProjectWav(dawStore.$state, { loopCount, options })
+      await downloadProjectWav(dawStore.$state, {
+        loopCount,
+        onProgress: updateExportProgress,
+        options
+      })
       enqueueSnackbar('WAV exported', { variant: 'success' })
     }
     exportModalVisible.value = false
@@ -944,6 +963,7 @@ async function handleExport({ format, loopCount, options }) {
     )
   } finally {
     exportingWav.value = false
+    exportProgressPercent.value = 0
   }
 }
 
@@ -953,6 +973,21 @@ function waitForAnimationFrame() {
       resolve()
     })
   })
+}
+
+function updateExportProgress(progress) {
+  const numericProgress = Number(progress)
+
+  if (!Number.isFinite(numericProgress) || numericProgress <= 0) {
+    exportProgressPercent.value = 0
+    return
+  }
+
+  const nextPercent = Math.max(0, Math.min(99, Math.round(numericProgress * 100)))
+
+  if (nextPercent !== exportProgressPercent.value) {
+    exportProgressPercent.value = nextPercent
+  }
 }
 
 async function handleProjectFileChange(event) {

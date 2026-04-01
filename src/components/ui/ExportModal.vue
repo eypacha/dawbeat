@@ -189,15 +189,12 @@
           Cancel
         </button>
         <button
-          class="border w-[100px] h-[29px] border-indigo-500/50 bg-indigo-500/10 px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-indigo-200 transition hover:border-indigo-400/70 hover:bg-indigo-500/20 disabled:cursor-default disabled:opacity-40"
+          class="border h-[29px] w-[100px] border-indigo-500/50 bg-indigo-500/10 px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-indigo-200 transition hover:border-indigo-400/70 hover:bg-indigo-500/20 disabled:cursor-default disabled:opacity-40"
           :disabled="isExporting"
           type="button"
           @click="handleExport"
         >
-          <span v-if="!isExporting">Export</span>
-          <span v-else class="flex items-center justify-center">
-            <LoaderCircle class="h-3.5 w-3.5 animate-spin" :stroke-width="2.25" />
-          </span>
+          <span class="flex items-center justify-center font-mono tabular-nums">{{ exportButtonLabel }}</span>
         </button>
       </div>
     </template>
@@ -206,7 +203,6 @@
 
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
-import { LoaderCircle } from 'lucide-vue-next'
 import {
   DEFAULT_OGG_OPUS_EXPORT_OPTIONS,
   DEFAULT_MP3_EXPORT_OPTIONS,
@@ -235,6 +231,10 @@ const MODES = [
 ]
 
 const props = defineProps({
+  exportProgress: {
+    type: Number,
+    default: 0
+  },
   exporting: {
     type: Boolean,
     default: false
@@ -261,6 +261,11 @@ const isExporting = computed(() => props.exporting || localExporting.value)
 const wavSampleRateOptions = computed(() => WAV_EXPORT_SAMPLE_RATE_OPTIONS)
 const mp3SampleRateOptions = computed(() => MP3_EXPORT_SAMPLE_RATE_OPTIONS)
 const oggOpusSampleRateOptions = computed(() => OGG_OPUS_EXPORT_SAMPLE_RATE_OPTIONS)
+const exportButtonLabel = computed(() =>
+  isExporting.value
+    ? `${formatExportProgressPercent(props.exportProgress)}%`
+    : 'Export'
+)
 
 watch(
   () => props.exporting,
@@ -317,5 +322,15 @@ function waitForUiPaint() {
       })
     }, 0)
   })
+}
+
+function formatExportProgressPercent(progress) {
+  const numericProgress = Number(progress)
+
+  if (!Number.isFinite(numericProgress) || numericProgress <= 0) {
+    return 0
+  }
+
+  return Math.max(0, Math.min(99, Math.round(numericProgress)))
 }
 </script>

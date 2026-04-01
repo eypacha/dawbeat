@@ -12,10 +12,11 @@ const DEFAULT_OGG_OPUS_EXPORT_CONFIG = {
 const OGG_OPUS_UNAVAILABLE_MESSAGE = 'OGG Opus export is unavailable in this browser/build.'
 const WORKER_READY_TIMEOUT_MS = 5000
 const WORKER_DONE_TIMEOUT_MS = 120000
+const OGG_OPUS_ENCODE_CHUNK_SIZE = 4096
 
 export async function encodePcmToOggOpus(
   channelData,
-  { bitrate = 128, sampleRate = 48000 } = {}
+  { bitrate = 128, onProgress = null, sampleRate = 48000 } = {}
 ) {
   const normalizedChannelData = normalizeChannelData(channelData)
   const normalizedSampleRate = normalizeSampleRate(sampleRate)
@@ -67,20 +68,33 @@ export async function encodePcmToOggOpus(
 
     await withTimeout(readyState.promise, WORKER_READY_TIMEOUT_MS)
 
-    const transferables = normalizedChannelData.map((channel) => channel.buffer)
+    reportProgress(onProgress, 0)
 
     worker.postMessage({
       command: 'getHeaderPages'
     })
-    worker.postMessage({
-      buffers: normalizedChannelData,
-      command: 'encode'
-    }, transferables)
+
+    const totalFrames = normalizedChannelData[0].length
+
+    for (let frameOffset = 0; frameOffset < totalFrames; frameOffset += OGG_OPUS_ENCODE_CHUNK_SIZE) {
+      const chunkEnd = Math.min(totalFrames, frameOffset + OGG_OPUS_ENCODE_CHUNK_SIZE)
+      const chunk = normalizedChannelData.map((channel) => channel.slice(frameOffset, chunkEnd))
+
+      worker.postMessage({
+        buffers: chunk,
+        command: 'encode'
+      }, chunk.map((channel) => channel.buffer))
+
+      reportProgress(onProgress, chunkEnd / totalFrames)
+      await waitForWorkerTick()
+    }
+
     worker.postMessage({
       command: 'done'
     })
 
     await withTimeout(doneState.promise, WORKER_DONE_TIMEOUT_MS)
+    reportProgress(onProgress, 1)
 
     return concatenatePages(pages, totalLength)
   } catch (error) {
@@ -207,5 +221,20 @@ function withTimeout(promise, timeoutMs) {
         window.clearTimeout(timeoutId)
         reject(error)
       })
+  })
+}
+
+function reportProgress(onProgress, progress) {
+  if (typeof onProgress !== 'function') {
+    return
+  }
+
+  const numericProgress = Number(progress)
+  onProgress(Math.max(0, Math.min(1, Number.isFinite(numericProgress) ? numericProgress : 0)))
+}
+
+function waitForWorkerTick() {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, 0)
   })
 }

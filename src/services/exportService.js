@@ -57,50 +57,58 @@ const MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS = {
 
 export async function downloadProjectWav(
   state,
-  { loopCount = 1, filename = createWavFilename(state?.projectTitle), options = {} } = {}
+  { loopCount = 1, filename = createWavFilename(state?.projectTitle), onProgress = null, options = {} } = {}
 ) {
   const normalizedOptions = normalizeWavExportOptions(options)
   const renderedAudio = await renderProjectAudio(state, {
     loopCount,
+    onProgress: createScaledProgressReporter(onProgress, 0, 0.82),
     sampleRate: normalizedOptions.sampleRate
   })
   const wavBuffer = await encodeWavFile({
     bitDepth: normalizedOptions.bitDepth,
     channelData: renderedAudio.channelData,
+    onProgress: createScaledProgressReporter(onProgress, 0.82, 1),
     sampleRate: renderedAudio.sampleRate
   })
+  reportExportProgress(onProgress, 1)
   const blob = new Blob([wavBuffer], { type: 'audio/wav' })
   triggerDownload(blob, filename)
 }
 
 export async function downloadProjectMp3(
   state,
-  { loopCount = 1, filename = createMp3Filename(state?.projectTitle), options = {} } = {}
+  { loopCount = 1, filename = createMp3Filename(state?.projectTitle), onProgress = null, options = {} } = {}
 ) {
   const normalizedOptions = normalizeMp3ExportOptions(options)
   const renderedAudio = await renderProjectAudio(state, {
     loopCount,
+    onProgress: createScaledProgressReporter(onProgress, 0, 0.72),
     sampleRate: normalizedOptions.sampleRate
   })
   const wavBuffer = await encodeWavFile({
     bitDepth: 16,
     channelData: renderedAudio.channelData,
+    onProgress: createScaledProgressReporter(onProgress, 0.72, 0.84),
     sampleRate: renderedAudio.sampleRate
   })
   const mp3Buffer = await encodeWavToMp3(wavBuffer, {
-    bitrate: normalizedOptions.bitrate
+    bitrate: normalizedOptions.bitrate,
+    onProgress: createScaledProgressReporter(onProgress, 0.84, 1)
   })
+  reportExportProgress(onProgress, 1)
   const blob = new Blob([mp3Buffer], { type: 'audio/mpeg' })
   triggerDownload(blob, filename)
 }
 
 export async function downloadProjectOggOpus(
   state,
-  { loopCount = 1, filename = createOggOpusFilename(state?.projectTitle), options = {} } = {}
+  { loopCount = 1, filename = createOggOpusFilename(state?.projectTitle), onProgress = null, options = {} } = {}
 ) {
   const normalizedOptions = normalizeOggOpusExportOptions(options)
   const renderedAudio = await renderProjectAudio(state, {
     loopCount,
+    onProgress: createScaledProgressReporter(onProgress, 0, 0.78),
     sampleRate: resolveOggOpusExportSampleRate(normalizedOptions.sampleRate)
   })
 
@@ -108,8 +116,10 @@ export async function downloadProjectOggOpus(
     const { encodePcmToOggOpus } = await import('@/services/oggOpusExportService')
     const oggBuffer = await encodePcmToOggOpus(renderedAudio.channelData, {
       bitrate: normalizedOptions.bitrate,
+      onProgress: createScaledProgressReporter(onProgress, 0.78, 1),
       sampleRate: renderedAudio.sampleRate
     })
+    reportExportProgress(onProgress, 1)
     const blob = new Blob([oggBuffer], { type: 'audio/ogg; codecs=opus' })
 
     triggerDownload(blob, filename)
@@ -136,7 +146,7 @@ function triggerDownload(blob, filename) {
 
 async function renderProjectAudio(
   state,
-  { loopCount = 1, sampleRate: outputSampleRateOption } = {}
+  { loopCount = 1, onProgress = null, sampleRate: outputSampleRateOption } = {}
 ) {
   const singleLoopTicks = getProjectDurationTicks(state.tracks)
 
@@ -154,17 +164,21 @@ async function renderProjectAudio(
     Math.ceil((totalSourceSamples * outputSampleRate) / sourceSampleRate)
   )
   const [leftChannel, rightChannel] = await renderTimelineChannels(state, {
+    onProgress: createScaledProgressReporter(onProgress, 0, 0.86),
     outputSampleRate,
     sourceSampleRate,
     totalOutputSamples,
     totalSourceSamples,
     loops
   })
+  reportExportProgress(onProgress, 0.86)
   const [processedLeftChannel, processedRightChannel] = await renderAudioEffectsOffline(
     state,
     [leftChannel, rightChannel],
+    createScaledProgressReporter(onProgress, 0.86, 1),
     outputSampleRate
   )
+  reportExportProgress(onProgress, 1)
 
   return {
     channelData: [processedLeftChannel, processedRightChannel],
@@ -172,7 +186,7 @@ async function renderProjectAudio(
   }
 }
 
-async function encodeWavToMp3(wavBuffer, { bitrate = 128 } = {}) {
+async function encodeWavToMp3(wavBuffer, { bitrate = 128, onProgress = null } = {}) {
   ensureLamejsGlobals()
   const uiYieldController = createExportUiYieldController()
   const view = new DataView(wavBuffer)
@@ -198,6 +212,7 @@ async function encodeWavToMp3(wavBuffer, { bitrate = 128 } = {}) {
     }
 
     if ((i % EXPORT_SAMPLE_YIELD_CHUNK_SIZE) === 0) {
+      reportExportProgress(onProgress, i / Math.max(1, numFrames))
       await maybeYieldToExportUi(uiYieldController)
     }
   }
@@ -212,6 +227,7 @@ async function encodeWavToMp3(wavBuffer, { bitrate = 128 } = {}) {
       mp3Parts.push(new Uint8Array(encoded))
     }
 
+    reportExportProgress(onProgress, offset / Math.max(1, numFrames))
     await maybeYieldToExportUi(uiYieldController)
   }
 
@@ -228,6 +244,7 @@ async function encodeWavToMp3(wavBuffer, { bitrate = 128 } = {}) {
     writeOffset += part.length
   }
 
+  reportExportProgress(onProgress, 1)
   return output.buffer
 }
 
@@ -275,7 +292,7 @@ function ensureLamejsGlobals() {
 
 async function renderTimelineChannels(
   state,
-  { outputSampleRate, sourceSampleRate, totalOutputSamples, totalSourceSamples, loops = 1 }
+  { onProgress = null, outputSampleRate, sourceSampleRate, totalOutputSamples, totalSourceSamples, loops = 1 }
 ) {
   const uiYieldController = createExportUiYieldController()
   const leftChannel = new Float32Array(totalOutputSamples)
@@ -289,6 +306,7 @@ async function renderTimelineChannels(
     singleLoopSourceSamples
   )
   const evaluatorCache = new Map()
+  let processedSamples = 0
 
   for (let loop = 0; loop < loops; loop += 1) {
     const loopSourceOffset = loop * singleLoopSourceSamples
@@ -343,18 +361,21 @@ async function renderTimelineChannels(
 
         leftChannel[outputSample] = evaluateBytebeatSample(leftEvaluator, sourceSample)
         rightChannel[outputSample] = evaluateBytebeatSample(rightEvaluator, sourceSample)
+        processedSamples += 1
 
         if ((outputSample % EXPORT_SAMPLE_YIELD_CHUNK_SIZE) === 0) {
+          reportExportProgress(onProgress, processedSamples / Math.max(1, totalOutputSamples))
           await maybeYieldToExportUi(uiYieldController)
         }
       }
     }
   }
 
+  reportExportProgress(onProgress, 1)
   return [leftChannel, rightChannel]
 }
 
-async function renderAudioEffectsOffline(state, channelData, sampleRate) {
+async function renderAudioEffectsOffline(state, channelData, onProgress, sampleRate) {
   const enabledAudioEffects = (state.audioEffects ?? []).filter(
     (effect) => effect?.enabled && OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES.includes(effect.type)
   )
@@ -367,17 +388,18 @@ async function renderAudioEffectsOffline(state, channelData, sampleRate) {
   const initialMasterGain = resolveMasterGainAtTime(0, state.automationLanes, state.masterGain)
 
   if (!enabledAudioEffects.length && hasStaticMasterGain && initialMasterGain === 1) {
+    reportExportProgress(onProgress, 1)
     return channelData
   }
 
   if (!enabledAudioEffects.length) {
-    return await applyMasterGainToChannelData(channelData, state, sampleRate)
+    return await applyMasterGainToChannelData(channelData, state, sampleRate, onProgress)
   }
 
   const OfflineAudioContextCtor = window.OfflineAudioContext || window.webkitOfflineAudioContext
 
   if (!OfflineAudioContextCtor) {
-    return await applyMasterGainToChannelData(channelData, state, sampleRate)
+    return await applyMasterGainToChannelData(channelData, state, sampleRate, onProgress)
   }
 
   const frameCount = channelData[0]?.length ?? 0
@@ -402,6 +424,7 @@ async function renderAudioEffectsOffline(state, channelData, sampleRate) {
       node: await createOfflineAudioEffectNode(effect, toneContext)
     }))
   )
+  reportExportProgress(onProgress, 0.12)
   const nodeEntries = toneNodes.filter((entry) => entry.node)
   const nodes = nodeEntries.map((entry) => entry.node)
   const manualAutomationTask = await prepareOfflineAudioEffectAutomation(nodeEntries, {
@@ -424,12 +447,14 @@ async function renderAudioEffectsOffline(state, channelData, sampleRate) {
   source.start(0)
 
   const renderPromise = offlineContext.startRendering()
+  reportExportProgress(onProgress, 0.32)
 
   if (manualAutomationTask) {
     await manualAutomationTask
   }
 
   const renderedBuffer = await renderPromise
+  reportExportProgress(onProgress, 0.82)
 
   for (const node of nodes) {
     safeDispose(node)
@@ -442,7 +467,8 @@ async function renderAudioEffectsOffline(state, channelData, sampleRate) {
         renderedBuffer.getChannelData(1).slice()
       ],
       state,
-      sampleRate
+      sampleRate,
+      createScaledProgressReporter(onProgress, 0.82, 1)
     )
   ]
 }
@@ -1152,7 +1178,7 @@ function ticksToSeconds(ticks, tickSize, sourceSampleRate) {
   return ticksToSamples(ticks, tickSize) / sourceSampleRate
 }
 
-async function applyMasterGainToChannelData(channelData, state, sampleRate) {
+async function applyMasterGainToChannelData(channelData, state, sampleRate, onProgress = null) {
   const uiYieldController = createExportUiYieldController()
   const automationPoints = getSortedAutomationPoints(
     getAutomationLaneById(state.automationLanes, MASTER_GAIN_AUTOMATION_LANE_ID)?.points ?? []
@@ -1173,6 +1199,7 @@ async function applyMasterGainToChannelData(channelData, state, sampleRate) {
         nextChannel[index] = channel[index] * constantGain
 
         if ((index % EXPORT_SAMPLE_YIELD_CHUNK_SIZE) === 0) {
+          reportExportProgress(onProgress, index / Math.max(1, channel.length))
           await maybeYieldToExportUi(uiYieldController)
         }
       }
@@ -1180,6 +1207,7 @@ async function applyMasterGainToChannelData(channelData, state, sampleRate) {
       nextChannelData.push(nextChannel)
     }
 
+    reportExportProgress(onProgress, 1)
     return nextChannelData
   }
 
@@ -1196,6 +1224,7 @@ async function applyMasterGainToChannelData(channelData, state, sampleRate) {
       nextChannel[index] = channel[index] * gain
 
       if ((index % EXPORT_SAMPLE_YIELD_CHUNK_SIZE) === 0) {
+        reportExportProgress(onProgress, index / Math.max(1, channel.length))
         await maybeYieldToExportUi(uiYieldController)
       }
     }
@@ -1203,6 +1232,7 @@ async function applyMasterGainToChannelData(channelData, state, sampleRate) {
     nextChannelData.push(nextChannel)
   }
 
+  reportExportProgress(onProgress, 1)
   return nextChannelData
 }
 
@@ -1343,7 +1373,7 @@ function safeDispose(node) {
   }
 }
 
-async function encodeWavFile({ bitDepth = 16, channelData, sampleRate }) {
+async function encodeWavFile({ bitDepth = 16, channelData, onProgress = null, sampleRate }) {
   const uiYieldController = createExportUiYieldController()
   const normalizedBitDepth = normalizeWavExportOptions({ bitDepth }).bitDepth
   const numChannels = channelData.length
@@ -1384,10 +1414,12 @@ async function encodeWavFile({ bitDepth = 16, channelData, sampleRate }) {
     }
 
     if ((frame % EXPORT_SAMPLE_YIELD_CHUNK_SIZE) === 0) {
+      reportExportProgress(onProgress, frame / Math.max(1, numFrames))
       await maybeYieldToExportUi(uiYieldController)
     }
   }
 
+  reportExportProgress(onProgress, 1)
   return buffer
 }
 
@@ -1481,6 +1513,39 @@ function waitForExportUiFrame() {
 
     window.setTimeout(resolve, 0)
   })
+}
+
+function createScaledProgressReporter(onProgress, start, end) {
+  if (typeof onProgress !== 'function') {
+    return null
+  }
+
+  const normalizedStart = Number(start)
+  const normalizedEnd = Number(end)
+
+  return (progress) => {
+    const clampedProgress = clampExportProgress(progress)
+    const scaledProgress = normalizedStart + (normalizedEnd - normalizedStart) * clampedProgress
+    onProgress(clampExportProgress(scaledProgress))
+  }
+}
+
+function reportExportProgress(onProgress, progress) {
+  if (typeof onProgress !== 'function') {
+    return
+  }
+
+  onProgress(clampExportProgress(progress))
+}
+
+function clampExportProgress(progress) {
+  const numericProgress = Number(progress)
+
+  if (!Number.isFinite(numericProgress)) {
+    return 0
+  }
+
+  return Math.max(0, Math.min(1, numericProgress))
 }
 
 function createWavFilename(projectTitle = DEFAULT_PROJECT_TITLE) {
