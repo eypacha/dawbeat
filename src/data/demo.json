@@ -23,7 +23,7 @@
           "rightFormula": "t * a & 64",
           "groupId": null,
           "start": 0,
-          "duration": 48
+          "duration": 240.25
         }
       ]
     },
@@ -36,26 +36,6 @@
       "name": "Bass 2",
       "height": 44,
       "clips": [
-        {
-          "id": "1c4db463-3d0f-4eef-aa45-6fc063ecb5e4",
-          "formulaStereo": false,
-          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
-          "leftFormula": "",
-          "rightFormula": "",
-          "groupId": null,
-          "start": 16,
-          "duration": 0.5
-        },
-        {
-          "id": "62631d5c-6922-475c-b4c7-e24a25fe6bac",
-          "formulaStereo": false,
-          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
-          "leftFormula": "",
-          "rightFormula": "",
-          "groupId": null,
-          "start": 24,
-          "duration": 0.5
-        },
         {
           "id": "73bce189-d43a-4a88-b193-098390d00b8b",
           "formulaStereo": false,
@@ -84,6 +64,386 @@
           "rightFormula": "",
           "groupId": null,
           "start": 44,
+          "duration": 0.25
+        },
+        {
+          "id": "bbc20366-dc37-4126-bb77-20f7d635b9b8",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 48,
+          "duration": 0.5
+        },
+        {
+          "id": "a7d50e68-fd7d-4692-b53e-7379abc35f89",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 56,
+          "duration": 0.5
+        },
+        {
+          "id": "2420cdf8-c8fd-4354-a4cd-96c2895c34dd",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 64,
+          "duration": 0.5
+        },
+        {
+          "id": "5e00271d-84f2-4baf-8cdb-f5d7ddf41f6f",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 72,
+          "duration": 0.5
+        },
+        {
+          "id": "5549ac49-2ade-4bd1-94ab-1e8297deb6e2",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 76,
+          "duration": 0.25
+        },
+        {
+          "id": "3202edc3-9d7e-453b-9528-a74d29d1c05f",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 80,
+          "duration": 0.25
+        },
+        {
+          "id": "fb833359-0a7e-403e-a4a8-c9b1397a4178",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 84,
+          "duration": 0.25
+        },
+        {
+          "id": "e4c54dc8-13d3-4348-abb4-a4a72195040b",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 88,
+          "duration": 0.25
+        },
+        {
+          "id": "09e81369-4b8b-4c6e-aed1-d07547dc8f56",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 92,
+          "duration": 0.25
+        },
+        {
+          "id": "6e812b4a-2acd-458e-873a-6831062649a1",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 96,
+          "duration": 0.25
+        },
+        {
+          "id": "2b4ea23b-b5f5-4f58-9edf-2ab133d6731e",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 99.97981770833333,
+          "duration": 0.25
+        },
+        {
+          "id": "287edbd5-ec02-4b88-8e86-1f3bfb9e0136",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 104,
+          "duration": 0.25
+        },
+        {
+          "id": "4aaab7f8-9384-4692-b4f0-fe9397fd4957",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 108,
+          "duration": 0.25
+        },
+        {
+          "id": "97eac00f-3de9-4ea9-bc7b-931887305543",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 112,
+          "duration": 0.5
+        },
+        {
+          "id": "742b6ed9-ec86-4bfe-b7e9-52900cef0050",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 120,
+          "duration": 0.5
+        },
+        {
+          "id": "bfd9c4a3-17a5-4054-be45-157c2088bb23",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 128,
+          "duration": 0.5
+        },
+        {
+          "id": "78155597-5912-4fb3-b343-17dfbaf210cb",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 136,
+          "duration": 0.5
+        },
+        {
+          "id": "85d64dd6-9d41-4cc7-99b4-c9f990a38987",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 144,
+          "duration": 0.5
+        },
+        {
+          "id": "7448b562-5e8a-4e35-8ff9-1fe1dae6322a",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 152,
+          "duration": 0.5
+        },
+        {
+          "id": "1bb65c82-bf9d-4619-8bdf-44e1731188b3",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 160,
+          "duration": 0.5
+        },
+        {
+          "id": "41939154-8739-4cca-b0a3-16de3f6e1597",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 168,
+          "duration": 0.5
+        },
+        {
+          "id": "922001be-0db6-4a78-b886-850183a33811",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 172,
+          "duration": 0.25
+        },
+        {
+          "id": "8990acda-233b-4e32-b79c-9bb03217688a",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 176,
+          "duration": 0.25
+        },
+        {
+          "id": "37e73c06-4720-444a-b99c-17fc5c1a88dd",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 180,
+          "duration": 0.25
+        },
+        {
+          "id": "dfbed6ab-274b-4696-8444-dc5e9eae4949",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 184,
+          "duration": 0.25
+        },
+        {
+          "id": "71032611-f7e6-4caa-942e-65af741f70a3",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 188,
+          "duration": 0.25
+        },
+        {
+          "id": "76911846-5c0a-4ab2-9e33-df5db5bd73bb",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 192,
+          "duration": 0.25
+        },
+        {
+          "id": "fd4b4323-15b3-4383-b25a-8fd469cabb6e",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 195.97981770833331,
+          "duration": 0.25
+        },
+        {
+          "id": "6dd7cf56-84e5-4b9b-8628-5dc5439d2eee",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 200,
+          "duration": 0.25
+        },
+        {
+          "id": "2f696f8c-b2a2-4adf-9eb2-494c0c1304ba",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 204,
+          "duration": 0.25
+        },
+        {
+          "id": "ee06ad5d-6e35-4245-9f02-2c5cc3a8bdfb",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 208,
+          "duration": 0.25
+        },
+        {
+          "id": "19eb0552-c28f-4b14-92e2-97c5974fdd9f",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 212,
+          "duration": 0.25
+        },
+        {
+          "id": "3307dae3-564d-4171-b9b0-b37e5344e593",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 216,
+          "duration": 0.25
+        },
+        {
+          "id": "32f20484-cb1e-4c82-a405-80091d60cab8",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 220,
+          "duration": 0.25
+        },
+        {
+          "id": "3738715f-5d38-4051-a73c-f05c01336d5d",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 224,
+          "duration": 0.25
+        },
+        {
+          "id": "3f30ea3b-5f36-443e-9236-349f2c0325d6",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 228,
+          "duration": 0.25
+        },
+        {
+          "id": "2ad844a6-01b3-46e4-8ca1-0f8cd09ae155",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 232,
+          "duration": 0.25
+        },
+        {
+          "id": "7ec36895-faa3-4f79-ab3a-079381b3ee64",
+          "formulaStereo": false,
+          "formula": "t+(t&t^t>>6)-t*(t>>9&(t%16?2:6)&t>>9)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 236,
           "duration": 0.25
         }
       ]
@@ -176,6 +536,286 @@
           "groupId": "328e977c-af7b-453f-bd5e-ee5325290c14",
           "start": 47,
           "duration": 1
+        },
+        {
+          "id": "b46bcc02-4654-4c61-8e80-0deaf1cd5d86",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": "deca6b3d-6697-4f5d-bdb0-12eb294dfc12",
+          "start": 48,
+          "duration": 15
+        },
+        {
+          "id": "0757ada6-2e1d-48a3-8b71-13673ac1363c",
+          "formulaStereo": false,
+          "formula": "t >> 3",
+          "leftFormula": "t >> 3",
+          "rightFormula": "t >> 3",
+          "groupId": "deca6b3d-6697-4f5d-bdb0-12eb294dfc12",
+          "start": 63,
+          "duration": 1
+        },
+        {
+          "id": "f502090e-a340-44a4-a183-f211524cfc30",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": "04be9536-f6ac-4d98-a210-33a788f33a71",
+          "start": 64,
+          "duration": 15
+        },
+        {
+          "id": "914701fb-5473-40ca-821a-cd8d11e68e0b",
+          "formulaStereo": false,
+          "formula": "t >> 3",
+          "leftFormula": "t >> 3",
+          "rightFormula": "t >> 3",
+          "groupId": "04be9536-f6ac-4d98-a210-33a788f33a71",
+          "start": 79,
+          "duration": 1
+        },
+        {
+          "id": "37cf1228-30d3-4edc-8f5e-c3ff8653650c",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": "c0c8081a-501c-4028-b375-ab2b6c600cd0",
+          "start": 80,
+          "duration": 15
+        },
+        {
+          "id": "2e2a0bdc-1f1e-47fa-b131-ab72e8797c94",
+          "formulaStereo": false,
+          "formula": "t >> 3",
+          "leftFormula": "t >> 3",
+          "rightFormula": "t >> 3",
+          "groupId": "c0c8081a-501c-4028-b375-ab2b6c600cd0",
+          "start": 95,
+          "duration": 1
+        },
+        {
+          "id": "8a299a86-08a7-4755-af5c-34e5125373f3",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": "e64cc14c-c382-49a5-aa20-1ab46aa6b182",
+          "start": 96,
+          "duration": 15
+        },
+        {
+          "id": "b7a2c87b-64f5-4406-879b-0867369c2b60",
+          "formulaStereo": false,
+          "formula": "t >> 3",
+          "leftFormula": "t >> 3",
+          "rightFormula": "t >> 3",
+          "groupId": "e64cc14c-c382-49a5-aa20-1ab46aa6b182",
+          "start": 111,
+          "duration": 1
+        },
+        {
+          "id": "e4258f61-7473-4f45-81b8-d1f38923320a",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": "313a6458-57d3-4f10-9fd1-dc58c3766a25",
+          "start": 112,
+          "duration": 15
+        },
+        {
+          "id": "0a28bde7-c410-4930-9cde-6daf8c01db16",
+          "formulaStereo": false,
+          "formula": "t >> 3",
+          "leftFormula": "t >> 3",
+          "rightFormula": "t >> 3",
+          "groupId": "313a6458-57d3-4f10-9fd1-dc58c3766a25",
+          "start": 127,
+          "duration": 1
+        },
+        {
+          "id": "5848360a-67e5-4d1c-bfc6-d0e51e7b4ace",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": "d6f5fd94-b88d-42e4-8561-3e3654195446",
+          "start": 128,
+          "duration": 15
+        },
+        {
+          "id": "5861d916-4e78-4ab7-9f6c-3193a6ef8e66",
+          "formulaStereo": false,
+          "formula": "t >> 3",
+          "leftFormula": "t >> 3",
+          "rightFormula": "t >> 3",
+          "groupId": "d6f5fd94-b88d-42e4-8561-3e3654195446",
+          "start": 143,
+          "duration": 1
+        },
+        {
+          "id": "3fc0d8d1-2f4d-472a-8008-c1e089215b11",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": "0ac27d17-c8ee-4665-96e7-a7cb30df60a4",
+          "start": 144,
+          "duration": 15
+        },
+        {
+          "id": "0ad25830-ac92-4314-8380-81d346e25876",
+          "formulaStereo": false,
+          "formula": "t >> 3",
+          "leftFormula": "t >> 3",
+          "rightFormula": "t >> 3",
+          "groupId": "0ac27d17-c8ee-4665-96e7-a7cb30df60a4",
+          "start": 159,
+          "duration": 1
+        },
+        {
+          "id": "9e7f20a8-27c0-45b1-bea2-3914373dfe98",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": "d6939172-20b9-4cd8-a26a-949d173c85f8",
+          "start": 160,
+          "duration": 15
+        },
+        {
+          "id": "24684ac4-9be4-4acf-9acf-cdc65d0f448f",
+          "formulaStereo": false,
+          "formula": "t >> 3",
+          "leftFormula": "t >> 3",
+          "rightFormula": "t >> 3",
+          "groupId": "d6939172-20b9-4cd8-a26a-949d173c85f8",
+          "start": 175,
+          "duration": 1
+        },
+        {
+          "id": "8f3285c4-aaf9-417f-9dc8-63193e09119a",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": "e92bd8ca-4a08-4076-a95e-57d578f58082",
+          "start": 176,
+          "duration": 15
+        },
+        {
+          "id": "cf2f312e-4bb2-406a-9406-2eadab7537b7",
+          "formulaStereo": false,
+          "formula": "t >> 3",
+          "leftFormula": "t >> 3",
+          "rightFormula": "t >> 3",
+          "groupId": "e92bd8ca-4a08-4076-a95e-57d578f58082",
+          "start": 191,
+          "duration": 1
+        },
+        {
+          "id": "e686153b-f6b8-4d81-ba39-a300f7ddbde6",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": "7866f86d-c64e-490d-bdf2-ba5fbb87a778",
+          "start": 192,
+          "duration": 15
+        },
+        {
+          "id": "7def7bb6-b060-45b6-a05c-55df673ca98c",
+          "formulaStereo": false,
+          "formula": "t >> 3",
+          "leftFormula": "t >> 3",
+          "rightFormula": "t >> 3",
+          "groupId": "7866f86d-c64e-490d-bdf2-ba5fbb87a778",
+          "start": 207,
+          "duration": 1
+        },
+        {
+          "id": "4f9bd690-4168-42f0-89dd-2c0c649628a0",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": null,
+          "start": 208,
+          "duration": 3
+        },
+        {
+          "id": "220961b6-980a-40bd-bc09-c289f746ada5",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": null,
+          "start": 212,
+          "duration": 3
+        },
+        {
+          "id": "66439acf-d33d-4130-b00d-86e4605ca30a",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": null,
+          "start": 216,
+          "duration": 3
+        },
+        {
+          "id": "915142f9-1b0d-4ca9-9202-79e51cd7ec70",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": null,
+          "start": 220,
+          "duration": 3
+        },
+        {
+          "id": "bcc706ee-c6e7-49f0-bb70-0b60ee1af4c4",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": null,
+          "start": 224,
+          "duration": 3
+        },
+        {
+          "id": "4f176e59-f5e3-4cf7-b93a-b66d276959cd",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": null,
+          "start": 228,
+          "duration": 3
+        },
+        {
+          "id": "02902d2d-c2db-4189-852c-1edcdaac5d1f",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": null,
+          "start": 232,
+          "duration": 3
+        },
+        {
+          "id": "be406706-d8f0-4611-8adb-30d2c41b629e",
+          "formulaStereo": false,
+          "formula": "t >> 4",
+          "leftFormula": "t >> 4",
+          "rightFormula": "t >> 4",
+          "groupId": null,
+          "start": 236,
+          "duration": 3
         }
       ]
     },
@@ -189,63 +829,303 @@
       "height": 44,
       "clips": [
         {
-          "id": "a2f743be-41e2-4d04-91a8-112df0d469f4",
+          "id": "6e9a853e-17cb-454e-9203-78b820261de8",
           "formulaStereo": false,
           "formula": "random()*t&127",
           "leftFormula": "random()*t",
           "rightFormula": "0",
           "groupId": null,
-          "start": 18,
+          "start": 50,
           "duration": 0.25
         },
         {
-          "id": "14cb3d90-7158-46c1-9175-6865f3686361",
+          "id": "2a4de891-0be2-46c9-a1aa-33c5e31dc8b3",
           "formulaStereo": false,
           "formula": "random()*t&127",
           "leftFormula": "random()*t",
           "rightFormula": "0",
           "groupId": null,
-          "start": 22,
+          "start": 54,
           "duration": 0.25
         },
         {
-          "id": "e5c86856-0af1-4862-88c6-c7f18e305e36",
+          "id": "29c6ab98-19d0-4ac6-9ce2-751422bb7649",
           "formulaStereo": false,
           "formula": "random()*t&127",
           "leftFormula": "random()*t",
           "rightFormula": "0",
           "groupId": null,
-          "start": 26,
+          "start": 58,
           "duration": 0.25
         },
         {
-          "id": "a6bc2b2d-c4ed-4bc8-9037-1e23e35b3702",
+          "id": "e9f55908-4ac3-4b36-8015-98834a01ff38",
           "formulaStereo": false,
           "formula": "random()*t&127",
           "leftFormula": "random()*t",
           "rightFormula": "0",
           "groupId": null,
-          "start": 30,
+          "start": 62,
           "duration": 0.25
         },
         {
-          "id": "fdb98fd1-d140-4c71-b04a-fc1621871b47",
+          "id": "bddc0f3b-d8d4-47b3-9f9a-f5a606a28ae6",
           "formulaStereo": false,
           "formula": "random()*t&127",
           "leftFormula": "random()*t",
           "rightFormula": "0",
           "groupId": null,
-          "start": 34,
+          "start": 66,
           "duration": 0.25
         },
         {
-          "id": "635a723d-8636-4507-88fc-f9a6126a4f2d",
+          "id": "e2a741e7-fbc0-49de-b4b8-7808ebae72eb",
           "formulaStereo": false,
           "formula": "random()*t&127",
           "leftFormula": "random()*t",
           "rightFormula": "0",
           "groupId": null,
-          "start": 38,
+          "start": 70,
+          "duration": 0.25
+        },
+        {
+          "id": "167aa193-5c10-45d0-875a-65f653f1ee2b",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 82,
+          "duration": 0.25
+        },
+        {
+          "id": "92df0ac5-a447-4719-8344-fe967525bd89",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 86,
+          "duration": 0.25
+        },
+        {
+          "id": "5f708d3b-6566-48f5-8907-f08d3ed0eb8e",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 90,
+          "duration": 0.25
+        },
+        {
+          "id": "af41ec4e-1797-42fe-bb7f-9c166902d80a",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 94,
+          "duration": 0.25
+        },
+        {
+          "id": "e833830d-a7a5-483e-b96d-3b254803885a",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 98,
+          "duration": 0.25
+        },
+        {
+          "id": "bbd059e2-b0ba-4224-8bd7-3409a1bcea08",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 102,
+          "duration": 0.25
+        },
+        {
+          "id": "f8740a26-76ca-4073-8519-a4f7e6de4000",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 114,
+          "duration": 0.25
+        },
+        {
+          "id": "564c1698-09bf-43b6-9af3-af5d3f32637e",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 118,
+          "duration": 0.25
+        },
+        {
+          "id": "a13e0905-c98b-46cc-9260-b07d07591a14",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 122,
+          "duration": 0.25
+        },
+        {
+          "id": "0231a1db-c9bd-4341-b45a-30e3e87dba91",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 126,
+          "duration": 0.25
+        },
+        {
+          "id": "60530bf7-3ba5-4cd4-ade6-d815710b1748",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 130,
+          "duration": 0.25
+        },
+        {
+          "id": "531dd286-2d7a-499b-9350-86697fbb9564",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 134,
+          "duration": 0.25
+        },
+        {
+          "id": "d01a1606-6c41-43f8-ae4d-c2eb173aa62b",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 146,
+          "duration": 0.25
+        },
+        {
+          "id": "47944d6c-efec-4656-8849-467eb9374fa2",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 150,
+          "duration": 0.25
+        },
+        {
+          "id": "3dd14c24-3afe-429b-a5f8-1eca25efcb00",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 154,
+          "duration": 0.25
+        },
+        {
+          "id": "f1810d3f-f8b4-4533-93c5-b29781fa41f7",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 158,
+          "duration": 0.25
+        },
+        {
+          "id": "d6b95418-7d8f-4245-94ea-a734c7175016",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 162,
+          "duration": 0.25
+        },
+        {
+          "id": "831eed8a-ec9d-4585-ab32-8ed1b21dc258",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 166,
+          "duration": 0.25
+        },
+        {
+          "id": "4437ac78-6016-4c66-92ae-c892445cfc12",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 178,
+          "duration": 0.25
+        },
+        {
+          "id": "40a0fed1-8f38-4f43-a28e-732e6d4aef29",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 182,
+          "duration": 0.25
+        },
+        {
+          "id": "6e8ea239-7604-4fd5-a75c-9340e5762a4b",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 186,
+          "duration": 0.25
+        },
+        {
+          "id": "ef8c694b-ccd5-4227-a5a7-7eb1318598a9",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 190,
+          "duration": 0.25
+        },
+        {
+          "id": "5050f758-c401-4138-87cb-0afe01651ef3",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 194,
+          "duration": 0.25
+        },
+        {
+          "id": "50070fd1-7eb1-458d-96e6-7c7b25faaac3",
+          "formulaStereo": false,
+          "formula": "random()*t&127",
+          "leftFormula": "random()*t",
+          "rightFormula": "0",
+          "groupId": null,
+          "start": 198,
           "duration": 0.25
         }
       ]
@@ -265,198 +1145,1008 @@
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
+          "groupId": null,
           "start": 8,
           "duration": 0.25
         },
         {
-          "id": "b9d80400-049f-4914-b51a-7dfd5fd3857e",
+          "id": "ab8cb651-2476-4ec4-8a6a-a58a87ade94e",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
-          "start": 17.5,
+          "groupId": "9fdd7a74-2918-4abd-942d-b6128c83b1a8",
+          "start": 48,
           "duration": 0.25
         },
         {
-          "id": "dcaf8dfc-2fef-4a2a-892e-ae6d09180a03",
+          "id": "34d766bd-5e1d-42fd-93c0-6901852da379",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
-          "start": 19,
+          "groupId": "9fdd7a74-2918-4abd-942d-b6128c83b1a8",
+          "start": 49.5,
           "duration": 0.25
         },
         {
-          "id": "24178e55-b00c-412a-b3bf-5219f1ca7059",
+          "id": "5b65ce05-897e-4a42-8197-d8311009bde1",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
-          "start": 21,
+          "groupId": "9fdd7a74-2918-4abd-942d-b6128c83b1a8",
+          "start": 51,
           "duration": 0.25
         },
         {
-          "id": "f5922629-68df-4ea7-bd18-ecfef23ebccd",
+          "id": "efee1131-b59d-46d1-97a5-8b0d1d743ba2",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
-          "start": 22,
+          "groupId": "9fdd7a74-2918-4abd-942d-b6128c83b1a8",
+          "start": 53,
           "duration": 0.25
         },
         {
-          "id": "d51cc6ed-16a4-40e1-ae87-a08503f38768",
+          "id": "183566f6-9a76-4730-8894-e4d291f80974",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
-          "start": 24,
+          "groupId": "9fdd7a74-2918-4abd-942d-b6128c83b1a8",
+          "start": 54,
           "duration": 0.25
         },
         {
-          "id": "62840893-ef63-47bd-948c-d6c69f13687d",
+          "id": "8bf588d1-a2bb-4f4f-a572-44c6c8b13b8b",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
-          "start": 25.5,
+          "groupId": "9fdd7a74-2918-4abd-942d-b6128c83b1a8",
+          "start": 56,
           "duration": 0.25
         },
         {
-          "id": "d348f587-3e2c-4671-8609-2f5358517216",
+          "id": "80accf4c-8363-46d2-8f74-af5a17a83b35",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
-          "start": 27,
+          "groupId": "9fdd7a74-2918-4abd-942d-b6128c83b1a8",
+          "start": 57.5,
           "duration": 0.25
         },
         {
-          "id": "23a4b634-d7d5-43e4-b206-3d245cdef1c3",
+          "id": "947b6724-d574-472d-bb26-1b06a3f3eaf3",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
-          "start": 29,
+          "groupId": "9fdd7a74-2918-4abd-942d-b6128c83b1a8",
+          "start": 59,
           "duration": 0.25
         },
         {
-          "id": "7da4db0b-ef64-4936-aeb9-626e63aee824",
+          "id": "be5e4a18-20dd-4ba3-a89c-1627be0c9227",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "6f706424-e9db-4a22-a257-82363281076d",
-          "start": 30,
+          "groupId": "9fdd7a74-2918-4abd-942d-b6128c83b1a8",
+          "start": 61,
           "duration": 0.25
         },
         {
-          "id": "cceaaed5-03d0-4fac-9380-84bf3f1acbb8",
+          "id": "aaf16212-1ee7-42c3-bfbc-efce21b31e61",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
-          "start": 32,
+          "groupId": "9fdd7a74-2918-4abd-942d-b6128c83b1a8",
+          "start": 62,
           "duration": 0.25
         },
         {
-          "id": "c0490f50-f6d2-4e79-9163-24a62ba14ffb",
+          "id": "70e8356a-ce36-42ea-8def-ad1d6c256826",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
-          "start": 33.5,
+          "groupId": "ccb123df-4c46-4e69-aea3-25674c1a4f95",
+          "start": 64,
           "duration": 0.25
         },
         {
-          "id": "232ce9e2-790f-47d4-9570-301a98363670",
+          "id": "d7fabb0e-dc57-47b1-b7c4-25ecee4f5649",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
-          "start": 35,
+          "groupId": "ccb123df-4c46-4e69-aea3-25674c1a4f95",
+          "start": 65.5,
           "duration": 0.25
         },
         {
-          "id": "b9c1a9e8-1525-494a-937a-f0c7e6754a6b",
+          "id": "9a9ff82f-5af4-4dd2-a676-b8cab199f91d",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
-          "start": 37,
+          "groupId": "ccb123df-4c46-4e69-aea3-25674c1a4f95",
+          "start": 67,
           "duration": 0.25
         },
         {
-          "id": "77cebb19-e54e-45bc-8ed6-af3e33b9d8fa",
+          "id": "73cab183-dc7d-4a69-8062-cb2c9449d024",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
-          "start": 38,
+          "groupId": "ccb123df-4c46-4e69-aea3-25674c1a4f95",
+          "start": 69,
           "duration": 0.25
         },
         {
-          "id": "35add748-1518-43dd-9052-b1338e91c08c",
+          "id": "e55dd545-8cb7-4155-9404-cfb94cb4c6c5",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
-          "start": 40,
+          "groupId": "ccb123df-4c46-4e69-aea3-25674c1a4f95",
+          "start": 70,
           "duration": 0.25
         },
         {
-          "id": "ff443981-37da-4e5b-a7b3-4b5e19cc7c7e",
+          "id": "5d5b1a34-1b48-4a99-bad4-52370fee0521",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
-          "start": 41.5,
+          "groupId": "ccb123df-4c46-4e69-aea3-25674c1a4f95",
+          "start": 72,
           "duration": 0.25
         },
         {
-          "id": "15e57038-0e3a-4723-96a5-20fed252a2f6",
+          "id": "a69a06c0-ac77-4aa3-aa55-4b031eb0de89",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
-          "start": 43,
+          "groupId": "ccb123df-4c46-4e69-aea3-25674c1a4f95",
+          "start": 73.5,
           "duration": 0.25
         },
         {
-          "id": "b9456f72-fe74-491f-a313-c448e089991c",
+          "id": "0cb3dac0-b7e7-4e16-8996-cca484f32841",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
-          "start": 45,
+          "groupId": "ccb123df-4c46-4e69-aea3-25674c1a4f95",
+          "start": 75,
           "duration": 0.25
         },
         {
-          "id": "3682b246-d569-4dbc-9b11-95144b4328ac",
+          "id": "3807d3b8-025b-4ad8-85b3-14288eb7ff48",
           "formulaStereo": false,
           "formula": "t * t & 64",
           "leftFormula": "t * t & 64",
           "rightFormula": "t * t & 64",
-          "groupId": "9f838033-8bb0-46a0-8029-0ce1a6203303",
-          "start": 46,
+          "groupId": "ccb123df-4c46-4e69-aea3-25674c1a4f95",
+          "start": 77,
+          "duration": 0.25
+        },
+        {
+          "id": "a0b8a7fe-9900-47ad-b6e2-1f9ec1dc7f60",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "ccb123df-4c46-4e69-aea3-25674c1a4f95",
+          "start": 78,
+          "duration": 0.25
+        },
+        {
+          "id": "42ffa3be-8116-4199-8464-c7a987e8be40",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "da1d08ce-5e6f-4c61-8598-2179521978f9",
+          "start": 80,
+          "duration": 0.25
+        },
+        {
+          "id": "d33f4dd0-9143-4811-bbcf-32d01d58b3d5",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "da1d08ce-5e6f-4c61-8598-2179521978f9",
+          "start": 81.5,
+          "duration": 0.25
+        },
+        {
+          "id": "ccdc2777-851b-431d-863c-edc46e52fe29",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "da1d08ce-5e6f-4c61-8598-2179521978f9",
+          "start": 83,
+          "duration": 0.25
+        },
+        {
+          "id": "3f7e787b-1840-4a59-8471-d95a568ad9f5",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "da1d08ce-5e6f-4c61-8598-2179521978f9",
+          "start": 85,
+          "duration": 0.25
+        },
+        {
+          "id": "496ac9ae-0531-4efc-8fcc-07311a27d35e",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "da1d08ce-5e6f-4c61-8598-2179521978f9",
+          "start": 86,
+          "duration": 0.25
+        },
+        {
+          "id": "6325a156-ac5f-4a50-a312-c7129e327183",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "da1d08ce-5e6f-4c61-8598-2179521978f9",
+          "start": 88,
+          "duration": 0.25
+        },
+        {
+          "id": "d5b452fa-9908-426a-84a0-050fd8a1b69b",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "da1d08ce-5e6f-4c61-8598-2179521978f9",
+          "start": 89.5,
+          "duration": 0.25
+        },
+        {
+          "id": "23dcae2e-dfc3-45be-b9e4-6b2d2a33163b",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "da1d08ce-5e6f-4c61-8598-2179521978f9",
+          "start": 91,
+          "duration": 0.25
+        },
+        {
+          "id": "9b6b0252-626c-41a4-8705-62ff54d36317",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "da1d08ce-5e6f-4c61-8598-2179521978f9",
+          "start": 93,
+          "duration": 0.25
+        },
+        {
+          "id": "234fe77a-4093-44ca-9230-7421988f1d91",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "da1d08ce-5e6f-4c61-8598-2179521978f9",
+          "start": 94,
+          "duration": 0.25
+        },
+        {
+          "id": "82b7a5f0-6ab4-4bbc-b64d-d61e74943d6d",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "4e4e4da5-f9eb-470f-92b1-1320f1fa6806",
+          "start": 96,
+          "duration": 0.25
+        },
+        {
+          "id": "0715cc1f-a032-4cc5-8db8-ab21511dd59b",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "4e4e4da5-f9eb-470f-92b1-1320f1fa6806",
+          "start": 97.5,
+          "duration": 0.25
+        },
+        {
+          "id": "52d3e1a0-30c8-4630-9a6b-872f5e2d0b3b",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "4e4e4da5-f9eb-470f-92b1-1320f1fa6806",
+          "start": 99,
+          "duration": 0.25
+        },
+        {
+          "id": "4d6de2af-aa23-45c3-9ffa-4f894a138330",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "4e4e4da5-f9eb-470f-92b1-1320f1fa6806",
+          "start": 101,
+          "duration": 0.25
+        },
+        {
+          "id": "9798ce17-2e79-4b82-8e23-19d0010957e3",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "4e4e4da5-f9eb-470f-92b1-1320f1fa6806",
+          "start": 102,
+          "duration": 0.25
+        },
+        {
+          "id": "fd302894-65f9-4e77-b8b6-7c09a8d7c2e4",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "4e4e4da5-f9eb-470f-92b1-1320f1fa6806",
+          "start": 104,
+          "duration": 0.25
+        },
+        {
+          "id": "ca25707b-f9ae-4d19-9644-1cb5c01e706a",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "4e4e4da5-f9eb-470f-92b1-1320f1fa6806",
+          "start": 105.5,
+          "duration": 0.25
+        },
+        {
+          "id": "f08fb2ee-2052-4ba4-923c-26bdce5c8f42",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "4e4e4da5-f9eb-470f-92b1-1320f1fa6806",
+          "start": 107,
+          "duration": 0.25
+        },
+        {
+          "id": "75e75582-9798-479f-9405-840a0d48f9bc",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "4e4e4da5-f9eb-470f-92b1-1320f1fa6806",
+          "start": 109,
+          "duration": 0.25
+        },
+        {
+          "id": "53f3221d-2a3d-4597-8466-4387015f3ae7",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "4e4e4da5-f9eb-470f-92b1-1320f1fa6806",
+          "start": 110,
+          "duration": 0.25
+        },
+        {
+          "id": "69e583bc-266d-4e21-8d63-b1f6d50b5315",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "eae0f13e-085b-463c-b92f-1283d7787075",
+          "start": 112,
+          "duration": 0.25
+        },
+        {
+          "id": "4d5aeb63-4748-4d1c-b40a-87c24107d9b7",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "eae0f13e-085b-463c-b92f-1283d7787075",
+          "start": 113.5,
+          "duration": 0.25
+        },
+        {
+          "id": "9a6148ea-04fe-4a6b-a2b8-5ddaae98970e",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "eae0f13e-085b-463c-b92f-1283d7787075",
+          "start": 115,
+          "duration": 0.25
+        },
+        {
+          "id": "9ed8ef5f-7d93-4d5e-ab15-5e3c9b51a355",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "eae0f13e-085b-463c-b92f-1283d7787075",
+          "start": 117,
+          "duration": 0.25
+        },
+        {
+          "id": "0aaca0d0-c078-42ff-9f45-39a3c1905099",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "eae0f13e-085b-463c-b92f-1283d7787075",
+          "start": 118,
+          "duration": 0.25
+        },
+        {
+          "id": "e4b0aa84-b923-4ba5-92ee-5aa18c246391",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "eae0f13e-085b-463c-b92f-1283d7787075",
+          "start": 120,
+          "duration": 0.25
+        },
+        {
+          "id": "26f1ff1d-8993-4e68-9db8-a722b09bdc3c",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "eae0f13e-085b-463c-b92f-1283d7787075",
+          "start": 121.5,
+          "duration": 0.25
+        },
+        {
+          "id": "e050ba02-fad1-4586-9c6c-d8e12532817a",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "eae0f13e-085b-463c-b92f-1283d7787075",
+          "start": 123,
+          "duration": 0.25
+        },
+        {
+          "id": "483d1368-6a89-49a8-b6a4-04b463cfa120",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "eae0f13e-085b-463c-b92f-1283d7787075",
+          "start": 125,
+          "duration": 0.25
+        },
+        {
+          "id": "cdd1e4e6-32c6-443d-8c6c-13ae6decbcf5",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "eae0f13e-085b-463c-b92f-1283d7787075",
+          "start": 126,
+          "duration": 0.25
+        },
+        {
+          "id": "8ed51761-a41c-4420-a24f-aefc6bac5630",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "28642c55-1112-440b-9b0b-d335a7fdda75",
+          "start": 128,
+          "duration": 0.25
+        },
+        {
+          "id": "b0ba0ee2-d0c7-414e-9aa2-15e4232b7499",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "28642c55-1112-440b-9b0b-d335a7fdda75",
+          "start": 129.5,
+          "duration": 0.25
+        },
+        {
+          "id": "945dc8b6-9f15-4826-b0bd-24e637d47968",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "28642c55-1112-440b-9b0b-d335a7fdda75",
+          "start": 131,
+          "duration": 0.25
+        },
+        {
+          "id": "b5c7b4d5-2398-4503-91a3-59bd37c0ad81",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "28642c55-1112-440b-9b0b-d335a7fdda75",
+          "start": 133,
+          "duration": 0.25
+        },
+        {
+          "id": "cf7fd11e-975b-477c-9549-39099692faf7",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "28642c55-1112-440b-9b0b-d335a7fdda75",
+          "start": 134,
+          "duration": 0.25
+        },
+        {
+          "id": "552849de-3cb4-4689-80ae-794849eb72af",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "28642c55-1112-440b-9b0b-d335a7fdda75",
+          "start": 136,
+          "duration": 0.25
+        },
+        {
+          "id": "f4f496b7-c8a5-4301-ae02-1e84ff92c11d",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "28642c55-1112-440b-9b0b-d335a7fdda75",
+          "start": 137.5,
+          "duration": 0.25
+        },
+        {
+          "id": "d0e6775d-a25b-4878-9919-a8ba0c401d8a",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "28642c55-1112-440b-9b0b-d335a7fdda75",
+          "start": 139,
+          "duration": 0.25
+        },
+        {
+          "id": "ca37f695-b589-4194-ad3e-72c701f8c696",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "28642c55-1112-440b-9b0b-d335a7fdda75",
+          "start": 141,
+          "duration": 0.25
+        },
+        {
+          "id": "069eec96-da82-4d99-b7a2-53c4dab72716",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "28642c55-1112-440b-9b0b-d335a7fdda75",
+          "start": 142,
+          "duration": 0.25
+        },
+        {
+          "id": "d53edff3-7762-4902-ba2c-3d20d2dfc3dd",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "71880f02-571a-42c7-87c9-7522ab6072a6",
+          "start": 144,
+          "duration": 0.25
+        },
+        {
+          "id": "3af24dd4-4a19-4a73-9216-11d9d2ba05ef",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "71880f02-571a-42c7-87c9-7522ab6072a6",
+          "start": 145.5,
+          "duration": 0.25
+        },
+        {
+          "id": "7aa4d457-19df-490a-aa44-8898af5355cb",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "71880f02-571a-42c7-87c9-7522ab6072a6",
+          "start": 147,
+          "duration": 0.25
+        },
+        {
+          "id": "1dbcb9bf-7ff9-41a4-b0a5-b85d01f0ec7b",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "71880f02-571a-42c7-87c9-7522ab6072a6",
+          "start": 149,
+          "duration": 0.25
+        },
+        {
+          "id": "fba4955a-970d-46df-bde8-1fdc261ec4f2",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "71880f02-571a-42c7-87c9-7522ab6072a6",
+          "start": 150,
+          "duration": 0.25
+        },
+        {
+          "id": "9733dd41-40eb-4332-8683-5181bb50af69",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "71880f02-571a-42c7-87c9-7522ab6072a6",
+          "start": 152,
+          "duration": 0.25
+        },
+        {
+          "id": "cec97e83-8583-47b2-b716-2db787e4445d",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "71880f02-571a-42c7-87c9-7522ab6072a6",
+          "start": 153.5,
+          "duration": 0.25
+        },
+        {
+          "id": "06e29095-d285-4934-bdcd-72c0ec28b391",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "71880f02-571a-42c7-87c9-7522ab6072a6",
+          "start": 155,
+          "duration": 0.25
+        },
+        {
+          "id": "6ec4482e-6ac9-4df8-8d07-586b7d782921",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "71880f02-571a-42c7-87c9-7522ab6072a6",
+          "start": 157,
+          "duration": 0.25
+        },
+        {
+          "id": "b2a343d1-2f59-4e83-b09c-00aebb5c3411",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "71880f02-571a-42c7-87c9-7522ab6072a6",
+          "start": 158,
+          "duration": 0.25
+        },
+        {
+          "id": "44cab723-ffce-4b80-bcc8-54914433134b",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "dd02e2b4-96fd-4c81-93b9-3074de94675c",
+          "start": 160,
+          "duration": 0.25
+        },
+        {
+          "id": "6f217506-5e4a-4768-a3a2-ec804183df29",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "dd02e2b4-96fd-4c81-93b9-3074de94675c",
+          "start": 161.5,
+          "duration": 0.25
+        },
+        {
+          "id": "815b2542-8abc-4142-b910-f9912bedc2ea",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "dd02e2b4-96fd-4c81-93b9-3074de94675c",
+          "start": 163,
+          "duration": 0.25
+        },
+        {
+          "id": "9256557a-aa99-44f0-9e21-3d1a1546f274",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "dd02e2b4-96fd-4c81-93b9-3074de94675c",
+          "start": 165,
+          "duration": 0.25
+        },
+        {
+          "id": "a4e863e1-75fe-4ac5-9d5a-eec9c7b79d8f",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "dd02e2b4-96fd-4c81-93b9-3074de94675c",
+          "start": 166,
+          "duration": 0.25
+        },
+        {
+          "id": "cd28eb80-f2f6-426c-8981-9df7ef0a34e8",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "dd02e2b4-96fd-4c81-93b9-3074de94675c",
+          "start": 168,
+          "duration": 0.25
+        },
+        {
+          "id": "0fc5d703-ca85-4283-8c74-20fd2b3c8bb2",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "dd02e2b4-96fd-4c81-93b9-3074de94675c",
+          "start": 169.5,
+          "duration": 0.25
+        },
+        {
+          "id": "7b3fc77a-290d-4ab1-8fb9-26d395227ba1",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "dd02e2b4-96fd-4c81-93b9-3074de94675c",
+          "start": 171,
+          "duration": 0.25
+        },
+        {
+          "id": "128afcb0-d6d4-4331-b827-fd488c860f40",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "dd02e2b4-96fd-4c81-93b9-3074de94675c",
+          "start": 173,
+          "duration": 0.25
+        },
+        {
+          "id": "93e67259-abab-4d49-9e1d-fc3849252106",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "dd02e2b4-96fd-4c81-93b9-3074de94675c",
+          "start": 174,
+          "duration": 0.25
+        },
+        {
+          "id": "a6a01bbc-7368-4f82-8026-ca58960cfbf5",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "bb745cbb-1e37-4bbd-9fe6-07032e3d5072",
+          "start": 176,
+          "duration": 0.25
+        },
+        {
+          "id": "ddd7e58f-3e4b-48a9-b299-847d3f272bb1",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "bb745cbb-1e37-4bbd-9fe6-07032e3d5072",
+          "start": 177.5,
+          "duration": 0.25
+        },
+        {
+          "id": "6336f2fc-a0a4-4874-b173-2f84fdda65b0",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "bb745cbb-1e37-4bbd-9fe6-07032e3d5072",
+          "start": 179,
+          "duration": 0.25
+        },
+        {
+          "id": "558584ac-9c53-493b-a1b2-21a456ead04e",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "bb745cbb-1e37-4bbd-9fe6-07032e3d5072",
+          "start": 181,
+          "duration": 0.25
+        },
+        {
+          "id": "50637ca8-1454-449a-b766-783c2233cdee",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "bb745cbb-1e37-4bbd-9fe6-07032e3d5072",
+          "start": 182,
+          "duration": 0.25
+        },
+        {
+          "id": "b85b1a72-6ee0-4f09-aa9c-96bb8fb77a12",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "bb745cbb-1e37-4bbd-9fe6-07032e3d5072",
+          "start": 184,
+          "duration": 0.25
+        },
+        {
+          "id": "eada5f42-bc97-4096-8782-5dd426a58e1c",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "bb745cbb-1e37-4bbd-9fe6-07032e3d5072",
+          "start": 185.5,
+          "duration": 0.25
+        },
+        {
+          "id": "b86e47ac-124b-4fb9-b214-b3b122284fac",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "bb745cbb-1e37-4bbd-9fe6-07032e3d5072",
+          "start": 187,
+          "duration": 0.25
+        },
+        {
+          "id": "b7eb9b3f-b0c3-4314-a970-47f29ad661bf",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "bb745cbb-1e37-4bbd-9fe6-07032e3d5072",
+          "start": 189,
+          "duration": 0.25
+        },
+        {
+          "id": "21aa6489-06d0-4bad-a8e6-1c9ed6861755",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "bb745cbb-1e37-4bbd-9fe6-07032e3d5072",
+          "start": 190,
+          "duration": 0.25
+        },
+        {
+          "id": "5fe99733-60eb-41a4-8844-35ddb571d695",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "e4c853a3-0aea-4f72-b655-de8cddf67c30",
+          "start": 192,
+          "duration": 0.25
+        },
+        {
+          "id": "9067dfdd-5963-4c2c-a61a-bcd73add660b",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "e4c853a3-0aea-4f72-b655-de8cddf67c30",
+          "start": 193.5,
+          "duration": 0.25
+        },
+        {
+          "id": "21c8906c-d133-4ecc-8f9a-8ea3bf39dc74",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "e4c853a3-0aea-4f72-b655-de8cddf67c30",
+          "start": 195,
+          "duration": 0.25
+        },
+        {
+          "id": "66367049-c307-497c-8576-7adb2aacb5a8",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "e4c853a3-0aea-4f72-b655-de8cddf67c30",
+          "start": 197,
+          "duration": 0.25
+        },
+        {
+          "id": "d51da25c-072b-47a7-9ea5-5ee5fecd5a35",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "e4c853a3-0aea-4f72-b655-de8cddf67c30",
+          "start": 198,
+          "duration": 0.25
+        },
+        {
+          "id": "746aa540-d749-48d9-9218-62972ab150d1",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "e4c853a3-0aea-4f72-b655-de8cddf67c30",
+          "start": 200,
+          "duration": 0.25
+        },
+        {
+          "id": "08cac98c-b1d8-455a-948a-a275bb5c3a0d",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "e4c853a3-0aea-4f72-b655-de8cddf67c30",
+          "start": 201.5,
+          "duration": 0.25
+        },
+        {
+          "id": "dd10248e-c096-49b7-8682-014f7d35b57e",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "e4c853a3-0aea-4f72-b655-de8cddf67c30",
+          "start": 203,
+          "duration": 0.25
+        },
+        {
+          "id": "5ad61fb6-cdc8-4995-9039-199ac221c852",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "e4c853a3-0aea-4f72-b655-de8cddf67c30",
+          "start": 205,
+          "duration": 0.25
+        },
+        {
+          "id": "1b9ed8de-d373-4c68-b378-567aac2500cf",
+          "formulaStereo": false,
+          "formula": "t * t & 64",
+          "leftFormula": "t * t & 64",
+          "rightFormula": "t * t & 64",
+          "groupId": "e4c853a3-0aea-4f72-b655-de8cddf67c30",
+          "start": 206,
           "duration": 0.25
         }
       ]
@@ -471,63 +2161,253 @@
       "height": 44,
       "clips": [
         {
-          "id": "dafdf0ae-20a5-4fb0-8fa5-5d3afedaa8ff",
+          "id": "e4fadf79-d715-4f5b-a7ff-380bc4131e37",
           "formulaStereo": false,
           "formula": "t*t>>11&25",
           "leftFormula": "t*t>>11&25",
           "rightFormula": "t*t>>11&25",
-          "groupId": "04dd93ad-0c9b-4748-a100-c6c64bc648fb",
-          "start": 24,
+          "groupId": "3d869d99-e79b-40db-a930-870fd87b5a6e",
+          "start": 56,
           "duration": 1.75
         },
         {
-          "id": "6052cd4e-6608-4c01-abbb-12a365ce214a",
+          "id": "07458584-b384-47c0-8bab-1281e0e9ce69",
           "formulaStereo": false,
           "formula": "t*t>>11&25",
           "leftFormula": "t*t>>11&25",
           "rightFormula": "t*t>>11&25",
-          "groupId": "04dd93ad-0c9b-4748-a100-c6c64bc648fb",
-          "start": 27,
+          "groupId": "3d869d99-e79b-40db-a930-870fd87b5a6e",
+          "start": 59,
           "duration": 1.75
         },
         {
-          "id": "50360a41-8855-4adb-ab25-db83982c53fa",
+          "id": "9cd110c2-1de7-4e6d-9e1b-88527c485472",
           "formulaStereo": false,
           "formula": "t*t>>11&25",
           "leftFormula": "t*t>>11&25",
           "rightFormula": "t*t>>11&25",
-          "groupId": "04dd93ad-0c9b-4748-a100-c6c64bc648fb",
-          "start": 30,
+          "groupId": "3d869d99-e79b-40db-a930-870fd87b5a6e",
+          "start": 62,
           "duration": 1.75
         },
         {
-          "id": "ea3a728b-b679-4978-b26b-8f72d0e55828",
+          "id": "13926092-5922-4d0d-9378-85e3a7ae98c9",
           "formulaStereo": false,
           "formula": "t*t>>11&25",
           "leftFormula": "t*t>>11&25",
           "rightFormula": "t*t>>11&25",
-          "groupId": "f3497921-d161-459f-967e-3b0640086eec",
-          "start": 40,
+          "groupId": "d6d390ed-71b7-49e1-8a57-3b13f4244512",
+          "start": 72,
           "duration": 1.75
         },
         {
-          "id": "5cc5b293-67c6-4f65-a284-c66ccbb156ff",
+          "id": "27c60e08-3513-4216-b1f3-80fad8213639",
           "formulaStereo": false,
           "formula": "t*t>>11&25",
           "leftFormula": "t*t>>11&25",
           "rightFormula": "t*t>>11&25",
-          "groupId": "f3497921-d161-459f-967e-3b0640086eec",
-          "start": 43,
+          "groupId": "d6d390ed-71b7-49e1-8a57-3b13f4244512",
+          "start": 75,
           "duration": 1.75
         },
         {
-          "id": "0b64df79-9fd6-4995-9105-ec6285faaf78",
+          "id": "93c374e5-1a70-43fc-b13f-f03a9364e715",
           "formulaStereo": false,
           "formula": "t*t>>11&25",
           "leftFormula": "t*t>>11&25",
           "rightFormula": "t*t>>11&25",
-          "groupId": "f3497921-d161-459f-967e-3b0640086eec",
-          "start": 46,
+          "groupId": "d6d390ed-71b7-49e1-8a57-3b13f4244512",
+          "start": 78,
+          "duration": 1.75
+        },
+        {
+          "id": "c8d46e3b-24a0-42c0-bc8a-322d9763998b",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "832c2eb7-8e4f-4250-8165-303bd50616f4",
+          "start": 88,
+          "duration": 1.75
+        },
+        {
+          "id": "2b74ff8d-0ed2-427c-9c47-ceb46e7ba30f",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "832c2eb7-8e4f-4250-8165-303bd50616f4",
+          "start": 91,
+          "duration": 1.75
+        },
+        {
+          "id": "a6d12a81-8ac5-4e78-b238-e6ffddec651a",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "832c2eb7-8e4f-4250-8165-303bd50616f4",
+          "start": 94,
+          "duration": 1.75
+        },
+        {
+          "id": "ddb2bb40-2675-4507-b57e-dfd855babbc4",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "a0eb1283-af7b-446f-abc8-8d6b8f2154ca",
+          "start": 104,
+          "duration": 1.75
+        },
+        {
+          "id": "8869ce8f-df4b-4fce-9b18-a8f194a8c147",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "a0eb1283-af7b-446f-abc8-8d6b8f2154ca",
+          "start": 107,
+          "duration": 1.75
+        },
+        {
+          "id": "79ca57d9-dc5b-4815-8634-bdd2f67a6afc",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "a0eb1283-af7b-446f-abc8-8d6b8f2154ca",
+          "start": 110,
+          "duration": 1.75
+        },
+        {
+          "id": "04daef47-a4c4-4393-9f7c-6778628b2c33",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "28e098b3-580c-482a-b997-14a92224bdd9",
+          "start": 152,
+          "duration": 1.75
+        },
+        {
+          "id": "86c039cc-77af-4dd6-b038-a19bbf8be901",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "28e098b3-580c-482a-b997-14a92224bdd9",
+          "start": 155,
+          "duration": 1.75
+        },
+        {
+          "id": "1c3db6ef-777d-432d-a174-11f5d0dda1e1",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "28e098b3-580c-482a-b997-14a92224bdd9",
+          "start": 158,
+          "duration": 1.75
+        },
+        {
+          "id": "040fa769-37f5-4be0-875e-644b784ca453",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "950dc524-5640-4c9b-99db-592f9c94c439",
+          "start": 168,
+          "duration": 1.75
+        },
+        {
+          "id": "a36ba20a-1501-4693-b277-9de3bbf44707",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "950dc524-5640-4c9b-99db-592f9c94c439",
+          "start": 171,
+          "duration": 1.75
+        },
+        {
+          "id": "96cf4232-f997-458a-bf53-983cd47fa734",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "950dc524-5640-4c9b-99db-592f9c94c439",
+          "start": 174,
+          "duration": 1.75
+        },
+        {
+          "id": "6e330585-5863-4037-b261-a55ac90bfbc7",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "bcf03945-cb38-402c-ad5d-ee0ee2affafe",
+          "start": 184,
+          "duration": 1.75
+        },
+        {
+          "id": "746ff69d-ac24-4725-b2e7-51437d15df6a",
+          "formulaStereo": true,
+          "formula": "(t+128)*(0xCA98CA98>>((t+128)>>9&30)&15)|(t+128)>>7",
+          "leftFormula": "(t+128)*(0xCA98CA98>>((t+128)>>9&30)&15)|(t+128)>>7",
+          "rightFormula": "t*(0xCA98CA98>>(t>>9&30)&15)|t>>8",
+          "groupId": null,
+          "start": 184,
+          "duration": 8
+        },
+        {
+          "id": "deff2e82-bd1e-4d6b-ba9a-5e1244cdef16",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "bcf03945-cb38-402c-ad5d-ee0ee2affafe",
+          "start": 187,
+          "duration": 1.75
+        },
+        {
+          "id": "c95104f8-5779-4ce6-9bf9-20c51f91c174",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "bcf03945-cb38-402c-ad5d-ee0ee2affafe",
+          "start": 190,
+          "duration": 1.75
+        },
+        {
+          "id": "057b62c1-1917-4f70-b963-29948d297429",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "e4bf917f-20c8-44ee-b8f7-1bff20201b42",
+          "start": 200,
+          "duration": 1.75
+        },
+        {
+          "id": "296cbc25-dd75-4050-befd-3b059bf25b54",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "e4bf917f-20c8-44ee-b8f7-1bff20201b42",
+          "start": 203,
+          "duration": 1.75
+        },
+        {
+          "id": "7a92cf7b-4d59-4b67-bfbc-b85ef6f68f56",
+          "formulaStereo": false,
+          "formula": "t*t>>11&25",
+          "leftFormula": "t*t>>11&25",
+          "rightFormula": "t*t>>11&25",
+          "groupId": "e4bf917f-20c8-44ee-b8f7-1bff20201b42",
+          "start": 206,
           "duration": 1.75
         }
       ]
@@ -550,6 +2430,67 @@
           "groupId": null,
           "start": 40,
           "duration": 8
+        },
+        {
+          "id": "401e2ff9-6681-4fe4-b9c4-2166e35fa3b3",
+          "formulaStereo": true,
+          "formula": "(t+128)*(0xCA98CA98>>((t+128)>>9&30)&15)|(t+128)>>7",
+          "leftFormula": "(t+128)*(0xCA98CA98>>((t+128)>>9&30)&15)|(t+128)>>7",
+          "rightFormula": "t*(0xCA98CA98>>(t>>9&30)&15)|t>>8",
+          "groupId": null,
+          "start": 72,
+          "duration": 8
+        },
+        {
+          "id": "702e6793-2df9-4dfb-b625-4cc942b4d39d",
+          "formulaStereo": true,
+          "formula": "(t+128)*(0xCA98CA98>>((t+128)>>9&30)&15)|(t+128)>>7",
+          "leftFormula": "(t+128)*(0xCA98CA98>>((t+128)>>9&30)&15)|(t+128)>>7",
+          "rightFormula": "t*(0xCA98CA98>>(t>>9&30)&15)|t>>8",
+          "groupId": null,
+          "start": 136,
+          "duration": 8
+        }
+      ]
+    },
+    {
+      "id": "93e23a93-33ff-4ad5-97e1-f32c013406bc",
+      "color": "#ec4899",
+      "muted": false,
+      "soloed": false,
+      "unionOperator": "|",
+      "name": "A jaunty tune",
+      "height": 44,
+      "clips": [
+        {
+          "id": "3797f37a-9e6b-4b4a-ad3f-e3ee0434dfe2",
+          "formulaStereo": false,
+          "formula": "t*(t>>12)*64+(t>>1)*(t>>10)*(t>>11)*48>>((t>>16|t>>17)&1)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 108,
+          "duration": 4
+        },
+        {
+          "id": "7e0795e0-45d8-4f32-9f8c-9ef590dd895a",
+          "formulaStereo": false,
+          "formula": "t*(t>>12)*64+(t>>1)*(t>>10)*(t>>11)*48>>((t>>16|t>>17)&1)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 172,
+          "duration": 4
+        },
+        {
+          "id": "89566932-78ac-4198-bfc5-b5818374913f",
+          "formulaStereo": false,
+          "formula": "t*(t>>12)*64+(t>>1)*(t>>10)*(t>>11)*48>>((t>>16|t>>17)&1)",
+          "leftFormula": "",
+          "rightFormula": "",
+          "groupId": null,
+          "start": 203.75,
+          "duration": 36
         }
       ]
     }
@@ -717,7 +2658,7 @@
         },
         {
           "id": "f18ba9d3-4eca-470a-8d92-f3bb5398d45d",
-          "start": 32,
+          "start": 32.020833333333336,
           "duration": 16,
           "stepSubdivision": 4,
           "groupId": null,
@@ -781,6 +2722,882 @@
             null,
             null,
             512,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "b27c5a19-1202-4828-af5c-7dce16987063",
+          "start": 48.03057155427712,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            512,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "ddb17794-8b94-40ff-b464-54296c6265bb",
+          "start": 64.03057155427712,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            512,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "0d46b2ef-8f57-4207-b75d-1dd1e9bcf7c2",
+          "start": 80.03057155427712,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            512,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "e05cd4c2-b13b-4e96-b25f-8e53042fae3a",
+          "start": 96.03057155427712,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            512,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "d74739ea-1596-49f4-921e-3a6f3f94de4a",
+          "start": 112.03057155427712,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            512,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "afea6d65-719f-465d-b491-203053d56a5c",
+          "start": 128.05140488761046,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            512,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "064e22a1-e130-4dbb-b90e-34dc0e83abbb",
+          "start": 144.06114310855423,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            512,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "83e23a88-570f-41c0-94d1-3f445b51f703",
+          "start": 160.06114310855423,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            512,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "d49433ee-68d0-4306-a9cf-cef710fcfb4d",
+          "start": 176.06114310855423,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            512,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "8a12fc32-27b1-4709-ba0a-5836f6e40df3",
+          "start": 192.06114310855423,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            512,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "26a43950-1a47-4f7d-8068-e655d2be7ec1",
+          "start": 208.06114310855423,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "ee12008b-c815-42fc-a710-fad3ccc550e3",
+          "start": 224.06114310855423,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,
@@ -951,7 +3768,7 @@
         },
         {
           "id": "eea8d9e2-80f8-4db9-a884-3caf89bf4e72",
-          "start": 32,
+          "start": 32.01480809660298,
           "duration": 16,
           "stepSubdivision": 4,
           "groupId": null,
@@ -1021,134 +3838,915 @@
             null,
             null
           ]
+        },
+        {
+          "id": "e8d281f8-7260-4dfb-8473-d77d88f53454",
+          "start": 48.02961619320595,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            3,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            null,
+            5,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            5,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "11d663ba-b8a5-44f4-84a4-b4ba591e492f",
+          "start": 64.03057155427712,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            3,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            null,
+            5,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            5,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "febe5a9f-3125-4b5b-9115-7d27c9af1fc7",
+          "start": 80.03057155427712,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            8,
+            null,
+            null,
+            null,
+            7,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            8,
+            null,
+            null,
+            null,
+            7,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            8,
+            null,
+            null,
+            7,
+            null,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "f6be7619-bcfa-4da2-b07b-e97ac881f38b",
+          "start": 96.03057155427712,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            8,
+            null,
+            null,
+            null,
+            7,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            8,
+            null,
+            null,
+            null,
+            7,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            8,
+            null,
+            null,
+            7,
+            null,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "789f8b35-5e3b-49bc-8578-440d39ba775f",
+          "start": 112.03057155427712,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            3,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            null,
+            5,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            5,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "a8eb95d5-48ae-498c-b391-539c3e0432d5",
+          "start": 128.03057155427712,
+          "duration": 7.969428445722883,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            0,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            5,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "d6c9f42a-f3d7-4a1e-a866-a62cb2f73d79",
+          "start": 136,
+          "duration": 7.969428445722883,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            0,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            5,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "bde1d13e-e3f1-4c5c-9dad-1e1cc7a7bca7",
+          "start": 143.96942844572288,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            3,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            null,
+            5,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            5,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "ccf3483e-e0fd-4984-afa1-30722831a2ce",
+          "start": 159.96942844572288,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            3,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            null,
+            5,
+            null,
+            null,
+            null,
+            4,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            1,
+            null,
+            null,
+            2,
+            null,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            5,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "e4a8f261-1fa7-4cd0-bb61-5ccba5a38d0f",
+          "start": 175.96942844572288,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            8,
+            null,
+            null,
+            null,
+            7,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            8,
+            null,
+            null,
+            null,
+            7,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            8,
+            null,
+            null,
+            7,
+            null,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "535df0e9-585d-4345-a3aa-6607365b3b88",
+          "start": 191.96942844572288,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            8,
+            null,
+            null,
+            null,
+            7,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            8,
+            null,
+            null,
+            null,
+            7,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            8,
+            null,
+            null,
+            7,
+            null,
+            null,
+            null,
+            null,
+            6,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "1e21392c-feab-4ffb-b072-c61d155476f9",
+          "start": 208,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
+        },
+        {
+          "id": "158be5c5-dea2-4e67-9b29-6168ac37efba",
+          "start": 224,
+          "duration": 16,
+          "stepSubdivision": 4,
+          "groupId": null,
+          "values": [
+            1,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ]
         }
       ]
+    },
+    {
+      "id": "9d227fe2-05c4-4f7a-9dad-b007f76b9d8a",
+      "name": "c tracker",
+      "variableName": "c",
+      "binding": {
+        "type": null,
+        "deviceId": null,
+        "channel": null,
+        "controller": null,
+        "note": null
+      },
+      "height": 64,
+      "clips": []
     }
   ],
   "groups": [
     {
-      "id": "6f706424-e9db-4a22-a257-82363281076d",
-      "name": "Group",
-      "start": 8,
-      "trackIndex": 6,
-      "duration": 22.25,
-      "clips": [
-        {
-          "clipId": "7369055f-635c-470f-8c22-16bd6e2b8768",
-          "timeOffset": 0,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "b9d80400-049f-4914-b51a-7dfd5fd3857e",
-          "timeOffset": 9.5,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "dcaf8dfc-2fef-4a2a-892e-ae6d09180a03",
-          "timeOffset": 11,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "24178e55-b00c-412a-b3bf-5219f1ca7059",
-          "timeOffset": 13,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "f5922629-68df-4ea7-bd18-ecfef23ebccd",
-          "timeOffset": 14,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "d51cc6ed-16a4-40e1-ae87-a08503f38768",
-          "timeOffset": 16,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "62840893-ef63-47bd-948c-d6c69f13687d",
-          "timeOffset": 17.5,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "d348f587-3e2c-4671-8609-2f5358517216",
-          "timeOffset": 19,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "23a4b634-d7d5-43e4-b206-3d245cdef1c3",
-          "timeOffset": 21,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "7da4db0b-ef64-4936-aeb9-626e63aee824",
-          "timeOffset": 22,
-          "trackOffset": 0
-        }
-      ]
-    },
-    {
-      "id": "9f838033-8bb0-46a0-8029-0ce1a6203303",
-      "name": "Group",
-      "start": 32,
-      "trackIndex": 6,
-      "duration": 14.25,
-      "clips": [
-        {
-          "clipId": "cceaaed5-03d0-4fac-9380-84bf3f1acbb8",
-          "timeOffset": 0,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "c0490f50-f6d2-4e79-9163-24a62ba14ffb",
-          "timeOffset": 1.5,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "232ce9e2-790f-47d4-9570-301a98363670",
-          "timeOffset": 3,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "b9c1a9e8-1525-494a-937a-f0c7e6754a6b",
-          "timeOffset": 5,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "77cebb19-e54e-45bc-8ed6-af3e33b9d8fa",
-          "timeOffset": 6,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "35add748-1518-43dd-9052-b1338e91c08c",
-          "timeOffset": 8,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "ff443981-37da-4e5b-a7b3-4b5e19cc7c7e",
-          "timeOffset": 9.5,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "15e57038-0e3a-4723-96a5-20fed252a2f6",
-          "timeOffset": 11,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "b9456f72-fe74-491f-a313-c448e089991c",
-          "timeOffset": 13,
-          "trackOffset": 0
-        },
-        {
-          "clipId": "3682b246-d569-4dbc-9b11-95144b4328ac",
-          "timeOffset": 14,
-          "trackOffset": 0
-        }
-      ]
-    },
-    {
       "id": "30de703e-dd0f-494a-8069-a0b04653d958",
       "name": "Group",
       "start": 16,
-      "trackIndex": 4,
+      "trackIndex": 5,
       "duration": 16,
       "clips": [
         {
@@ -1167,7 +4765,7 @@
       "id": "328e977c-af7b-453f-bd5e-ee5325290c14",
       "name": "Group",
       "start": 32,
-      "trackIndex": 4,
+      "trackIndex": 5,
       "duration": 16,
       "clips": [
         {
@@ -1183,64 +4781,988 @@
       ]
     },
     {
-      "id": "04dd93ad-0c9b-4748-a100-c6c64bc648fb",
+      "id": "deca6b3d-6697-4f5d-bdb0-12eb294dfc12",
       "name": "Group",
-      "start": 24,
-      "trackIndex": 7,
-      "duration": 7.75,
+      "start": 48,
+      "trackIndex": 5,
+      "duration": 16,
       "clips": [
         {
-          "clipId": "dafdf0ae-20a5-4fb0-8fa5-5d3afedaa8ff",
+          "clipId": "b46bcc02-4654-4c61-8e80-0deaf1cd5d86",
           "timeOffset": 0,
           "trackOffset": 0
         },
         {
-          "clipId": "6052cd4e-6608-4c01-abbb-12a365ce214a",
+          "clipId": "0757ada6-2e1d-48a3-8b71-13673ac1363c",
+          "timeOffset": 15,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "9fdd7a74-2918-4abd-942d-b6128c83b1a8",
+      "name": "Group",
+      "start": 48,
+      "trackIndex": 7,
+      "duration": 14.25,
+      "clips": [
+        {
+          "clipId": "ab8cb651-2476-4ec4-8a6a-a58a87ade94e",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "34d766bd-5e1d-42fd-93c0-6901852da379",
+          "timeOffset": 1.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "5b65ce05-897e-4a42-8197-d8311009bde1",
           "timeOffset": 3,
           "trackOffset": 0
         },
         {
-          "clipId": "50360a41-8855-4adb-ab25-db83982c53fa",
+          "clipId": "efee1131-b59d-46d1-97a5-8b0d1d743ba2",
+          "timeOffset": 5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "183566f6-9a76-4730-8894-e4d291f80974",
+          "timeOffset": 6,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "8bf588d1-a2bb-4f4f-a572-44c6c8b13b8b",
+          "timeOffset": 8,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "80accf4c-8363-46d2-8f74-af5a17a83b35",
+          "timeOffset": 9.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "947b6724-d574-472d-bb26-1b06a3f3eaf3",
+          "timeOffset": 11,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "be5e4a18-20dd-4ba3-a89c-1627be0c9227",
+          "timeOffset": 13,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "aaf16212-1ee7-42c3-bfbc-efce21b31e61",
+          "timeOffset": 14,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "04be9536-f6ac-4d98-a210-33a788f33a71",
+      "name": "Group",
+      "start": 64,
+      "trackIndex": 5,
+      "duration": 16,
+      "clips": [
+        {
+          "clipId": "f502090e-a340-44a4-a183-f211524cfc30",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "914701fb-5473-40ca-821a-cd8d11e68e0b",
+          "timeOffset": 15,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "ccb123df-4c46-4e69-aea3-25674c1a4f95",
+      "name": "Group",
+      "start": 64,
+      "trackIndex": 7,
+      "duration": 14.25,
+      "clips": [
+        {
+          "clipId": "70e8356a-ce36-42ea-8def-ad1d6c256826",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "d7fabb0e-dc57-47b1-b7c4-25ecee4f5649",
+          "timeOffset": 1.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "9a9ff82f-5af4-4dd2-a676-b8cab199f91d",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "73cab183-dc7d-4a69-8062-cb2c9449d024",
+          "timeOffset": 5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "e55dd545-8cb7-4155-9404-cfb94cb4c6c5",
+          "timeOffset": 6,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "5d5b1a34-1b48-4a99-bad4-52370fee0521",
+          "timeOffset": 8,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "a69a06c0-ac77-4aa3-aa55-4b031eb0de89",
+          "timeOffset": 9.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "0cb3dac0-b7e7-4e16-8996-cca484f32841",
+          "timeOffset": 11,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "3807d3b8-025b-4ad8-85b3-14288eb7ff48",
+          "timeOffset": 13,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "a0b8a7fe-9900-47ad-b6e2-1f9ec1dc7f60",
+          "timeOffset": 14,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "3d869d99-e79b-40db-a930-870fd87b5a6e",
+      "name": "Group",
+      "start": 56,
+      "trackIndex": 8,
+      "duration": 7.75,
+      "clips": [
+        {
+          "clipId": "e4fadf79-d715-4f5b-a7ff-380bc4131e37",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "07458584-b384-47c0-8bab-1281e0e9ce69",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "9cd110c2-1de7-4e6d-9e1b-88527c485472",
           "timeOffset": 6,
           "trackOffset": 0
         }
       ]
     },
     {
-      "id": "f3497921-d161-459f-967e-3b0640086eec",
+      "id": "d6d390ed-71b7-49e1-8a57-3b13f4244512",
       "name": "Group",
-      "start": 40,
-      "trackIndex": 7,
+      "start": 72,
+      "trackIndex": 8,
       "duration": 7.75,
       "clips": [
         {
-          "clipId": "ea3a728b-b679-4978-b26b-8f72d0e55828",
+          "clipId": "13926092-5922-4d0d-9378-85e3a7ae98c9",
           "timeOffset": 0,
           "trackOffset": 0
         },
         {
-          "clipId": "5cc5b293-67c6-4f65-a284-c66ccbb156ff",
+          "clipId": "27c60e08-3513-4216-b1f3-80fad8213639",
           "timeOffset": 3,
           "trackOffset": 0
         },
         {
-          "clipId": "0b64df79-9fd6-4995-9105-ec6285faaf78",
+          "clipId": "93c374e5-1a70-43fc-b13f-f03a9364e715",
+          "timeOffset": 6,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "c0c8081a-501c-4028-b375-ab2b6c600cd0",
+      "name": "Group",
+      "start": 80,
+      "trackIndex": 5,
+      "duration": 16,
+      "clips": [
+        {
+          "clipId": "37cf1228-30d3-4edc-8f5e-c3ff8653650c",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "2e2a0bdc-1f1e-47fa-b131-ab72e8797c94",
+          "timeOffset": 15,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "e64cc14c-c382-49a5-aa20-1ab46aa6b182",
+      "name": "Group",
+      "start": 96,
+      "trackIndex": 5,
+      "duration": 16,
+      "clips": [
+        {
+          "clipId": "8a299a86-08a7-4755-af5c-34e5125373f3",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "b7a2c87b-64f5-4406-879b-0867369c2b60",
+          "timeOffset": 15,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "313a6458-57d3-4f10-9fd1-dc58c3766a25",
+      "name": "Group",
+      "start": 112,
+      "trackIndex": 5,
+      "duration": 16,
+      "clips": [
+        {
+          "clipId": "e4258f61-7473-4f45-81b8-d1f38923320a",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "0a28bde7-c410-4930-9cde-6daf8c01db16",
+          "timeOffset": 15,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "d6f5fd94-b88d-42e4-8561-3e3654195446",
+      "name": "Group",
+      "start": 128,
+      "trackIndex": 5,
+      "duration": 16,
+      "clips": [
+        {
+          "clipId": "5848360a-67e5-4d1c-bfc6-d0e51e7b4ace",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "5861d916-4e78-4ab7-9f6c-3193a6ef8e66",
+          "timeOffset": 15,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "0ac27d17-c8ee-4665-96e7-a7cb30df60a4",
+      "name": "Group",
+      "start": 144,
+      "trackIndex": 5,
+      "duration": 16,
+      "clips": [
+        {
+          "clipId": "3fc0d8d1-2f4d-472a-8008-c1e089215b11",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "0ad25830-ac92-4314-8380-81d346e25876",
+          "timeOffset": 15,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "d6939172-20b9-4cd8-a26a-949d173c85f8",
+      "name": "Group",
+      "start": 160,
+      "trackIndex": 5,
+      "duration": 16,
+      "clips": [
+        {
+          "clipId": "9e7f20a8-27c0-45b1-bea2-3914373dfe98",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "24684ac4-9be4-4acf-9acf-cdc65d0f448f",
+          "timeOffset": 15,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "e92bd8ca-4a08-4076-a95e-57d578f58082",
+      "name": "Group",
+      "start": 176,
+      "trackIndex": 5,
+      "duration": 16,
+      "clips": [
+        {
+          "clipId": "8f3285c4-aaf9-417f-9dc8-63193e09119a",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "cf2f312e-4bb2-406a-9406-2eadab7537b7",
+          "timeOffset": 15,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "7866f86d-c64e-490d-bdf2-ba5fbb87a778",
+      "name": "Group",
+      "start": 192,
+      "trackIndex": 5,
+      "duration": 16,
+      "clips": [
+        {
+          "clipId": "e686153b-f6b8-4d81-ba39-a300f7ddbde6",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "7def7bb6-b060-45b6-a05c-55df673ca98c",
+          "timeOffset": 15,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "da1d08ce-5e6f-4c61-8598-2179521978f9",
+      "name": "Group",
+      "start": 80,
+      "trackIndex": 7,
+      "duration": 14.25,
+      "clips": [
+        {
+          "clipId": "42ffa3be-8116-4199-8464-c7a987e8be40",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "d33f4dd0-9143-4811-bbcf-32d01d58b3d5",
+          "timeOffset": 1.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "ccdc2777-851b-431d-863c-edc46e52fe29",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "3f7e787b-1840-4a59-8471-d95a568ad9f5",
+          "timeOffset": 5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "496ac9ae-0531-4efc-8fcc-07311a27d35e",
+          "timeOffset": 6,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "6325a156-ac5f-4a50-a312-c7129e327183",
+          "timeOffset": 8,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "d5b452fa-9908-426a-84a0-050fd8a1b69b",
+          "timeOffset": 9.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "23dcae2e-dfc3-45be-b9e4-6b2d2a33163b",
+          "timeOffset": 11,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "9b6b0252-626c-41a4-8705-62ff54d36317",
+          "timeOffset": 13,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "234fe77a-4093-44ca-9230-7421988f1d91",
+          "timeOffset": 14,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "28642c55-1112-440b-9b0b-d335a7fdda75",
+      "name": "Group",
+      "start": 128,
+      "trackIndex": 7,
+      "duration": 14.25,
+      "clips": [
+        {
+          "clipId": "8ed51761-a41c-4420-a24f-aefc6bac5630",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "b0ba0ee2-d0c7-414e-9aa2-15e4232b7499",
+          "timeOffset": 1.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "945dc8b6-9f15-4826-b0bd-24e637d47968",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "b5c7b4d5-2398-4503-91a3-59bd37c0ad81",
+          "timeOffset": 5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "cf7fd11e-975b-477c-9549-39099692faf7",
+          "timeOffset": 6,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "552849de-3cb4-4689-80ae-794849eb72af",
+          "timeOffset": 8,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "f4f496b7-c8a5-4301-ae02-1e84ff92c11d",
+          "timeOffset": 9.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "d0e6775d-a25b-4878-9919-a8ba0c401d8a",
+          "timeOffset": 11,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "ca37f695-b589-4194-ad3e-72c701f8c696",
+          "timeOffset": 13,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "069eec96-da82-4d99-b7a2-53c4dab72716",
+          "timeOffset": 14,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "4e4e4da5-f9eb-470f-92b1-1320f1fa6806",
+      "name": "Group",
+      "start": 96,
+      "trackIndex": 7,
+      "duration": 14.25,
+      "clips": [
+        {
+          "clipId": "82b7a5f0-6ab4-4bbc-b64d-d61e74943d6d",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "0715cc1f-a032-4cc5-8db8-ab21511dd59b",
+          "timeOffset": 1.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "52d3e1a0-30c8-4630-9a6b-872f5e2d0b3b",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "4d6de2af-aa23-45c3-9ffa-4f894a138330",
+          "timeOffset": 5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "9798ce17-2e79-4b82-8e23-19d0010957e3",
+          "timeOffset": 6,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "fd302894-65f9-4e77-b8b6-7c09a8d7c2e4",
+          "timeOffset": 8,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "ca25707b-f9ae-4d19-9644-1cb5c01e706a",
+          "timeOffset": 9.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "f08fb2ee-2052-4ba4-923c-26bdce5c8f42",
+          "timeOffset": 11,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "75e75582-9798-479f-9405-840a0d48f9bc",
+          "timeOffset": 13,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "53f3221d-2a3d-4597-8466-4387015f3ae7",
+          "timeOffset": 14,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "71880f02-571a-42c7-87c9-7522ab6072a6",
+      "name": "Group",
+      "start": 144,
+      "trackIndex": 7,
+      "duration": 14.25,
+      "clips": [
+        {
+          "clipId": "d53edff3-7762-4902-ba2c-3d20d2dfc3dd",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "3af24dd4-4a19-4a73-9216-11d9d2ba05ef",
+          "timeOffset": 1.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "7aa4d457-19df-490a-aa44-8898af5355cb",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "1dbcb9bf-7ff9-41a4-b0a5-b85d01f0ec7b",
+          "timeOffset": 5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "fba4955a-970d-46df-bde8-1fdc261ec4f2",
+          "timeOffset": 6,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "9733dd41-40eb-4332-8683-5181bb50af69",
+          "timeOffset": 8,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "cec97e83-8583-47b2-b716-2db787e4445d",
+          "timeOffset": 9.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "06e29095-d285-4934-bdcd-72c0ec28b391",
+          "timeOffset": 11,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "6ec4482e-6ac9-4df8-8d07-586b7d782921",
+          "timeOffset": 13,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "b2a343d1-2f59-4e83-b09c-00aebb5c3411",
+          "timeOffset": 14,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "eae0f13e-085b-463c-b92f-1283d7787075",
+      "name": "Group",
+      "start": 112,
+      "trackIndex": 7,
+      "duration": 14.25,
+      "clips": [
+        {
+          "clipId": "69e583bc-266d-4e21-8d63-b1f6d50b5315",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "4d5aeb63-4748-4d1c-b40a-87c24107d9b7",
+          "timeOffset": 1.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "9a6148ea-04fe-4a6b-a2b8-5ddaae98970e",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "9ed8ef5f-7d93-4d5e-ab15-5e3c9b51a355",
+          "timeOffset": 5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "0aaca0d0-c078-42ff-9f45-39a3c1905099",
+          "timeOffset": 6,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "e4b0aa84-b923-4ba5-92ee-5aa18c246391",
+          "timeOffset": 8,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "26f1ff1d-8993-4e68-9db8-a722b09bdc3c",
+          "timeOffset": 9.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "e050ba02-fad1-4586-9c6c-d8e12532817a",
+          "timeOffset": 11,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "483d1368-6a89-49a8-b6a4-04b463cfa120",
+          "timeOffset": 13,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "cdd1e4e6-32c6-443d-8c6c-13ae6decbcf5",
+          "timeOffset": 14,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "dd02e2b4-96fd-4c81-93b9-3074de94675c",
+      "name": "Group",
+      "start": 160,
+      "trackIndex": 7,
+      "duration": 14.25,
+      "clips": [
+        {
+          "clipId": "44cab723-ffce-4b80-bcc8-54914433134b",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "6f217506-5e4a-4768-a3a2-ec804183df29",
+          "timeOffset": 1.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "815b2542-8abc-4142-b910-f9912bedc2ea",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "9256557a-aa99-44f0-9e21-3d1a1546f274",
+          "timeOffset": 5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "a4e863e1-75fe-4ac5-9d5a-eec9c7b79d8f",
+          "timeOffset": 6,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "cd28eb80-f2f6-426c-8981-9df7ef0a34e8",
+          "timeOffset": 8,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "0fc5d703-ca85-4283-8c74-20fd2b3c8bb2",
+          "timeOffset": 9.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "7b3fc77a-290d-4ab1-8fb9-26d395227ba1",
+          "timeOffset": 11,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "128afcb0-d6d4-4331-b827-fd488c860f40",
+          "timeOffset": 13,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "93e67259-abab-4d49-9e1d-fc3849252106",
+          "timeOffset": 14,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "bb745cbb-1e37-4bbd-9fe6-07032e3d5072",
+      "name": "Group",
+      "start": 176,
+      "trackIndex": 7,
+      "duration": 14.25,
+      "clips": [
+        {
+          "clipId": "a6a01bbc-7368-4f82-8026-ca58960cfbf5",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "ddd7e58f-3e4b-48a9-b299-847d3f272bb1",
+          "timeOffset": 1.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "6336f2fc-a0a4-4874-b173-2f84fdda65b0",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "558584ac-9c53-493b-a1b2-21a456ead04e",
+          "timeOffset": 5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "50637ca8-1454-449a-b766-783c2233cdee",
+          "timeOffset": 6,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "b85b1a72-6ee0-4f09-aa9c-96bb8fb77a12",
+          "timeOffset": 8,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "eada5f42-bc97-4096-8782-5dd426a58e1c",
+          "timeOffset": 9.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "b86e47ac-124b-4fb9-b214-b3b122284fac",
+          "timeOffset": 11,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "b7eb9b3f-b0c3-4314-a970-47f29ad661bf",
+          "timeOffset": 13,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "21aa6489-06d0-4bad-a8e6-1c9ed6861755",
+          "timeOffset": 14,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "e4c853a3-0aea-4f72-b655-de8cddf67c30",
+      "name": "Group",
+      "start": 192,
+      "trackIndex": 7,
+      "duration": 14.25,
+      "clips": [
+        {
+          "clipId": "5fe99733-60eb-41a4-8844-35ddb571d695",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "9067dfdd-5963-4c2c-a61a-bcd73add660b",
+          "timeOffset": 1.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "21c8906c-d133-4ecc-8f9a-8ea3bf39dc74",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "66367049-c307-497c-8576-7adb2aacb5a8",
+          "timeOffset": 5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "d51da25c-072b-47a7-9ea5-5ee5fecd5a35",
+          "timeOffset": 6,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "746aa540-d749-48d9-9218-62972ab150d1",
+          "timeOffset": 8,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "08cac98c-b1d8-455a-948a-a275bb5c3a0d",
+          "timeOffset": 9.5,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "dd10248e-c096-49b7-8682-014f7d35b57e",
+          "timeOffset": 11,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "5ad61fb6-cdc8-4995-9039-199ac221c852",
+          "timeOffset": 13,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "1b9ed8de-d373-4c68-b378-567aac2500cf",
+          "timeOffset": 14,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "832c2eb7-8e4f-4250-8165-303bd50616f4",
+      "name": "Group",
+      "start": 88,
+      "trackIndex": 8,
+      "duration": 7.75,
+      "clips": [
+        {
+          "clipId": "c8d46e3b-24a0-42c0-bc8a-322d9763998b",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "2b74ff8d-0ed2-427c-9c47-ceb46e7ba30f",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "a6d12a81-8ac5-4e78-b238-e6ffddec651a",
+          "timeOffset": 6,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "28e098b3-580c-482a-b997-14a92224bdd9",
+      "name": "Group",
+      "start": 152,
+      "trackIndex": 8,
+      "duration": 7.75,
+      "clips": [
+        {
+          "clipId": "04daef47-a4c4-4393-9f7c-6778628b2c33",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "86c039cc-77af-4dd6-b038-a19bbf8be901",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "1c3db6ef-777d-432d-a174-11f5d0dda1e1",
+          "timeOffset": 6,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "950dc524-5640-4c9b-99db-592f9c94c439",
+      "name": "Group",
+      "start": 168,
+      "trackIndex": 8,
+      "duration": 7.75,
+      "clips": [
+        {
+          "clipId": "040fa769-37f5-4be0-875e-644b784ca453",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "a36ba20a-1501-4693-b277-9de3bbf44707",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "96cf4232-f997-458a-bf53-983cd47fa734",
+          "timeOffset": 6,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "bcf03945-cb38-402c-ad5d-ee0ee2affafe",
+      "name": "Group",
+      "start": 184,
+      "trackIndex": 8,
+      "duration": 7.75,
+      "clips": [
+        {
+          "clipId": "6e330585-5863-4037-b261-a55ac90bfbc7",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "deff2e82-bd1e-4d6b-ba9a-5e1244cdef16",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "c95104f8-5779-4ce6-9bf9-20c51f91c174",
+          "timeOffset": 6,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "e4bf917f-20c8-44ee-b8f7-1bff20201b42",
+      "name": "Group",
+      "start": 200,
+      "trackIndex": 8,
+      "duration": 7.75,
+      "clips": [
+        {
+          "clipId": "057b62c1-1917-4f70-b963-29948d297429",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "296cbc25-dd75-4050-befd-3b059bf25b54",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "7a92cf7b-4d59-4b67-bfbc-b85ef6f68f56",
+          "timeOffset": 6,
+          "trackOffset": 0
+        }
+      ]
+    },
+    {
+      "id": "a0eb1283-af7b-446f-abc8-8d6b8f2154ca",
+      "name": "Group",
+      "start": 104,
+      "trackIndex": 8,
+      "duration": 7.75,
+      "clips": [
+        {
+          "clipId": "ddb2bb40-2675-4507-b57e-dfd855babbc4",
+          "timeOffset": 0,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "8869ce8f-df4b-4fce-9b18-a8f194a8c147",
+          "timeOffset": 3,
+          "trackOffset": 0
+        },
+        {
+          "clipId": "79ca57d9-dc5b-4815-8634-bdd2f67a6afc",
           "timeOffset": 6,
           "trackOffset": 0
         }
       ]
     }
   ],
-  "zoom": 0.9330832258470292,
-  "loopStart": 16,
-  "loopEnd": 48,
-  "loopEnabled": true,
+  "zoom": 0.20899913355708125,
+  "loopStart": 111.75,
+  "loopEnd": 149.75,
+  "loopEnabled": false,
   "audioEffects": [
     {
       "id": "75f86f92-f8e9-46e4-8980-cef4dbefe964",
       "type": "eq",
       "enabled": true,
-      "expanded": true,
+      "expanded": false,
       "params": {
         "low": 4,
         "mid": 9,
@@ -1276,7 +5798,7 @@
   "automationLanes": [
     {
       "id": "audioEffect:75f86f92-f8e9-46e4-8980-cef4dbefe964:high",
-      "height": 52,
+      "height": 44,
       "type": "audioEffectParam",
       "effectId": "75f86f92-f8e9-46e4-8980-cef4dbefe964",
       "effectType": "eq",
@@ -1311,6 +5833,43 @@
           "curve": "easeInOut",
           "time": 38,
           "value": -16.581298828125
+        },
+        {
+          "curve": "easeInOut",
+          "time": 129.25,
+          "value": 14.830528846153847
+        }
+      ]
+    },
+    {
+      "id": "masterGain",
+      "height": 44,
+      "type": "masterGain",
+      "points": [
+        {
+          "curve": "easeInOut",
+          "time": 0,
+          "value": 0.2760667067307693
+        },
+        {
+          "curve": "easeInOut",
+          "time": 16,
+          "value": 0.8252704326923077
+        },
+        {
+          "curve": "easeInOut",
+          "time": 208.25,
+          "value": 0.7648737980769231
+        },
+        {
+          "curve": "easeInOut",
+          "time": 223,
+          "value": 0.7444411057692308
+        },
+        {
+          "curve": "easeInOut",
+          "time": 246.25,
+          "value": 0.15677584134615385
         }
       ]
     }
@@ -1319,10 +5878,41 @@
   "masterGain": 1,
   "sampleRate": 8192,
   "tickSize": 1024,
-  "timelineSectionLabels": [],
+  "timelineSectionLabels": [
+    {
+      "id": "5a42cb80-5b53-475f-81d0-688d533c4cf9",
+      "name": "Intro",
+      "time": 0
+    },
+    {
+      "id": "0fd5b36b-b8e6-4168-badf-1fd838542fa0",
+      "name": "Section A",
+      "time": 16
+    },
+    {
+      "id": "84da8ae6-e2e6-4638-906e-6c57d944139c",
+      "name": "Section B",
+      "time": 80
+    },
+    {
+      "id": "79e7d711-858e-4142-9f76-dcca74907ed9",
+      "name": "Section A",
+      "time": 112
+    },
+    {
+      "id": "42f64c5d-a581-48c4-acaf-c77d16f43871",
+      "name": "Section B",
+      "time": 176
+    },
+    {
+      "id": "6e0227ce-dda4-4700-8014-4898690bf351",
+      "name": "Outro",
+      "time": 208
+    }
+  ],
   "showClipWaveforms": true,
   "showEvaluatedPanel": true,
-  "timelineAutoscrollEnabled": true,
+  "timelineAutoscrollEnabled": false,
   "snapToGridEnabled": true,
   "snapSubdivision": 4
 }
