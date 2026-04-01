@@ -47,6 +47,8 @@ const SILENT_EVALUATOR = () => 0
 const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter']
 const MIN_AUTOMATION_CURVE_SAMPLES = 16
 const MAX_AUTOMATION_CURVE_SAMPLES = 128
+const EXPORT_UI_YIELD_INTERVAL_MS = 12
+const EXPORT_SAMPLE_YIELD_CHUNK_SIZE = 2048
 const MP3_ENCODER = resolveMp3Encoder()
 const MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS = {
   distortion: ['drive'],
@@ -62,7 +64,7 @@ export async function downloadProjectWav(
     loopCount,
     sampleRate: normalizedOptions.sampleRate
   })
-  const wavBuffer = encodeWavFile({
+  const wavBuffer = await encodeWavFile({
     bitDepth: normalizedOptions.bitDepth,
     channelData: renderedAudio.channelData,
     sampleRate: renderedAudio.sampleRate
@@ -80,7 +82,7 @@ export async function downloadProjectMp3(
     loopCount,
     sampleRate: normalizedOptions.sampleRate
   })
-  const wavBuffer = encodeWavFile({
+  const wavBuffer = await encodeWavFile({
     bitDepth: 16,
     channelData: renderedAudio.channelData,
     sampleRate: renderedAudio.sampleRate
@@ -151,7 +153,7 @@ async function renderProjectAudio(
     1,
     Math.ceil((totalSourceSamples * outputSampleRate) / sourceSampleRate)
   )
-  const [leftChannel, rightChannel] = renderTimelineChannels(state, {
+  const [leftChannel, rightChannel] = await renderTimelineChannels(state, {
     outputSampleRate,
     sourceSampleRate,
     totalOutputSamples,
@@ -172,6 +174,7 @@ async function renderProjectAudio(
 
 async function encodeWavToMp3(wavBuffer, { bitrate = 128 } = {}) {
   ensureLamejsGlobals()
+  const uiYieldController = createExportUiYieldController()
   const view = new DataView(wavBuffer)
   const bitsPerSample = view.getUint16(34, true)
 
@@ -193,6 +196,10 @@ async function encodeWavToMp3(wavBuffer, { bitrate = 128 } = {}) {
     if (rightPcm) {
       rightPcm[i] = view.getInt16(offset + 2, true)
     }
+
+    if ((i % EXPORT_SAMPLE_YIELD_CHUNK_SIZE) === 0) {
+      await maybeYieldToExportUi(uiYieldController)
+    }
   }
 
   const mp3Parts = []
@@ -204,6 +211,8 @@ async function encodeWavToMp3(wavBuffer, { bitrate = 128 } = {}) {
     if (encoded.length > 0) {
       mp3Parts.push(new Uint8Array(encoded))
     }
+
+    await maybeYieldToExportUi(uiYieldController)
   }
 
   const flushed = encoder.flush()
@@ -264,10 +273,11 @@ function ensureLamejsGlobals() {
   }
 }
 
-function renderTimelineChannels(
+async function renderTimelineChannels(
   state,
   { outputSampleRate, sourceSampleRate, totalOutputSamples, totalSourceSamples, loops = 1 }
 ) {
+  const uiYieldController = createExportUiYieldController()
   const leftChannel = new Float32Array(totalOutputSamples)
   const rightChannel = new Float32Array(totalOutputSamples)
   const singleLoopSourceSamples = Math.ceil(totalSourceSamples / Math.max(1, loops))
@@ -333,6 +343,10 @@ function renderTimelineChannels(
 
         leftChannel[outputSample] = evaluateBytebeatSample(leftEvaluator, sourceSample)
         rightChannel[outputSample] = evaluateBytebeatSample(rightEvaluator, sourceSample)
+
+        if ((outputSample % EXPORT_SAMPLE_YIELD_CHUNK_SIZE) === 0) {
+          await maybeYieldToExportUi(uiYieldController)
+        }
       }
     }
   }
@@ -357,13 +371,13 @@ async function renderAudioEffectsOffline(state, channelData, sampleRate) {
   }
 
   if (!enabledAudioEffects.length) {
-    return applyMasterGainToChannelData(channelData, state, sampleRate)
+    return await applyMasterGainToChannelData(channelData, state, sampleRate)
   }
 
   const OfflineAudioContextCtor = window.OfflineAudioContext || window.webkitOfflineAudioContext
 
   if (!OfflineAudioContextCtor) {
-    return applyMasterGainToChannelData(channelData, state, sampleRate)
+    return await applyMasterGainToChannelData(channelData, state, sampleRate)
   }
 
   const frameCount = channelData[0]?.length ?? 0
@@ -422,7 +436,7 @@ async function renderAudioEffectsOffline(state, channelData, sampleRate) {
   }
 
   return [
-    ...applyMasterGainToChannelData(
+    ...await applyMasterGainToChannelData(
       [
         renderedBuffer.getChannelData(0).slice(),
         renderedBuffer.getChannelData(1).slice()
@@ -1138,7 +1152,8 @@ function ticksToSeconds(ticks, tickSize, sourceSampleRate) {
   return ticksToSamples(ticks, tickSize) / sourceSampleRate
 }
 
-function applyMasterGainToChannelData(channelData, state, sampleRate) {
+async function applyMasterGainToChannelData(channelData, state, sampleRate) {
+  const uiYieldController = createExportUiYieldController()
   const automationPoints = getSortedAutomationPoints(
     getAutomationLaneById(state.automationLanes, MASTER_GAIN_AUTOMATION_LANE_ID)?.points ?? []
   )
@@ -1149,20 +1164,29 @@ function applyMasterGainToChannelData(channelData, state, sampleRate) {
   }
 
   if (automationPoints.length <= 1) {
-    return channelData.map((channel) => {
+    const nextChannelData = []
+
+    for (const channel of channelData) {
       const nextChannel = new Float32Array(channel.length)
 
       for (let index = 0; index < channel.length; index += 1) {
         nextChannel[index] = channel[index] * constantGain
+
+        if ((index % EXPORT_SAMPLE_YIELD_CHUNK_SIZE) === 0) {
+          await maybeYieldToExportUi(uiYieldController)
+        }
       }
 
-      return nextChannel
-    })
+      nextChannelData.push(nextChannel)
+    }
+
+    return nextChannelData
   }
 
   const sourceSampleRate = getSourceSampleRate(state.sampleRate)
+  const nextChannelData = []
 
-  return channelData.map((channel) => {
+  for (const channel of channelData) {
     const nextChannel = new Float32Array(channel.length)
 
     for (let index = 0; index < channel.length; index += 1) {
@@ -1170,10 +1194,16 @@ function applyMasterGainToChannelData(channelData, state, sampleRate) {
       const timeTicks = samplesToTicks(sourceSample, state.tickSize)
       const gain = resolveMasterGainAtTime(timeTicks, state.automationLanes, state.masterGain)
       nextChannel[index] = channel[index] * gain
+
+      if ((index % EXPORT_SAMPLE_YIELD_CHUNK_SIZE) === 0) {
+        await maybeYieldToExportUi(uiYieldController)
+      }
     }
 
-    return nextChannel
-  })
+    nextChannelData.push(nextChannel)
+  }
+
+  return nextChannelData
 }
 
 function collectTimelineBoundaries(tracks, variableTracks, valueTrackerTracks, tickSize, totalSamples) {
@@ -1313,7 +1343,8 @@ function safeDispose(node) {
   }
 }
 
-function encodeWavFile({ bitDepth = 16, channelData, sampleRate }) {
+async function encodeWavFile({ bitDepth = 16, channelData, sampleRate }) {
+  const uiYieldController = createExportUiYieldController()
   const normalizedBitDepth = normalizeWavExportOptions({ bitDepth }).bitDepth
   const numChannels = channelData.length
   const numFrames = channelData[0]?.length ?? 0
@@ -1350,6 +1381,10 @@ function encodeWavFile({ bitDepth = 16, channelData, sampleRate }) {
         normalizedBitDepth
       )
       offset += bytesPerSample
+    }
+
+    if ((frame % EXPORT_SAMPLE_YIELD_CHUNK_SIZE) === 0) {
+      await maybeYieldToExportUi(uiYieldController)
     }
   }
 
@@ -1410,6 +1445,42 @@ function writeAscii(view, offset, value) {
   for (let index = 0; index < value.length; index += 1) {
     view.setUint8(offset + index, value.charCodeAt(index))
   }
+}
+
+function createExportUiYieldController() {
+  return {
+    nextYieldAt: getExportUiNow() + EXPORT_UI_YIELD_INTERVAL_MS
+  }
+}
+
+async function maybeYieldToExportUi(controller) {
+  if (getExportUiNow() < controller.nextYieldAt) {
+    return
+  }
+
+  controller.nextYieldAt = getExportUiNow() + EXPORT_UI_YIELD_INTERVAL_MS
+  await waitForExportUiFrame()
+}
+
+function getExportUiNow() {
+  if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+    return performance.now()
+  }
+
+  return Date.now()
+}
+
+function waitForExportUiFrame() {
+  return new Promise((resolve) => {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => {
+        window.setTimeout(resolve, 0)
+      })
+      return
+    }
+
+    window.setTimeout(resolve, 0)
+  })
 }
 
 function createWavFilename(projectTitle = DEFAULT_PROJECT_TITLE) {
