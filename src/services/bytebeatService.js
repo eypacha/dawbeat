@@ -40,7 +40,7 @@ let outputRightAnalyserNode = null
 const audioEffectNodes = new Map()
 
 /** Short fade on the dedicated transport gain to avoid clicks on play/pause/stop. */
-const TRANSPORT_FADE_SEC = 0.012
+const TRANSPORT_FADE_SEC = 0.1
 
 function bumpTransportFadeGeneration() {
   transportFadeGeneration += 1
