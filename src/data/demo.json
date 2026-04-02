@@ -4725,20 +4725,6 @@
           ]
         }
       ]
-    },
-    {
-      "id": "9d227fe2-05c4-4f7a-9dad-b007f76b9d8a",
-      "name": "c tracker",
-      "variableName": "c",
-      "binding": {
-        "type": null,
-        "deviceId": null,
-        "channel": null,
-        "controller": null,
-        "note": null
-      },
-      "height": 64,
-      "clips": []
     }
   ],
   "groups": [
