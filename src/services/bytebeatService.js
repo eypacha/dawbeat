@@ -14,6 +14,7 @@ import {
   normalizeWidth
 } from '@/services/audioEffectService'
 import { loadByteBeatNodeClass } from '@/services/bytebeatNodeLoader'
+import { DEFAULT_BYTEBEAT_TYPE, normalizeBytebeatType } from '@/services/bytebeatTypeService'
 import { validateFormula } from '@/utils/formulaValidation'
 
 const SILENT_FORMULA = '0'
@@ -25,6 +26,7 @@ let initPromise = null
 let formulaUpdatePromise = Promise.resolve()
 let currentExpressionsKey = null
 let desiredSampleRate = 8000
+let desiredBytebeatType = DEFAULT_BYTEBEAT_TYPE
 let sampleOffset = 0
 let heldSample = null
 let currentAudioEffects = []
@@ -462,7 +464,7 @@ async function createNode(providedAudioContext) {
 
   byteBeatNode = new ByteBeatNode(audioContext)
   byteBeatNode.setExpressionType(ByteBeatNode.ExpressionType.infix)
-  byteBeatNode.setType(ByteBeatNode.Type.byteBeat)
+  byteBeatNode.setType(desiredBytebeatType)
   byteBeatNode.setDesiredSampleRate(desiredSampleRate)
   await byteBeatNode.setExpressions([SILENT_FORMULA], true)
   ensureMasterGainNode()
@@ -645,6 +647,14 @@ const bytebeatService = {
 
     if (byteBeatNode) {
       byteBeatNode.setDesiredSampleRate(sampleRate)
+    }
+  },
+
+  setType(type) {
+    desiredBytebeatType = normalizeBytebeatType(type, desiredBytebeatType)
+
+    if (byteBeatNode) {
+      byteBeatNode.setType(desiredBytebeatType)
     }
   },
 

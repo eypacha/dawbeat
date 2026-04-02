@@ -231,7 +231,7 @@
           </div>
           <div
             class="flex items-center gap-2 border border-zinc-800 bg-zinc-950 px-2 py-1"
-            title="Set the playback sample rate"
+            title="Set the playback sample rate and ByteBeat output type"
           >
             <input
               v-model="sampleRateDraft"
@@ -249,6 +249,22 @@
               @keydown.esc.prevent="resetSampleRateDraft"
             >
             <span class="text-zinc-500">hz</span>
+            <span class="h-4 w-px bg-zinc-800" />
+            <select
+              class="max-w-32 bg-transparent text-xs text-zinc-100 outline-none"
+              :value="bytebeatType"
+              title="Set the ByteBeat output type"
+              @change="commitBytebeatType"
+            >
+              <option
+                v-for="option in BYTEBEAT_TYPE_OPTIONS"
+                :key="option.value"
+                class="bg-zinc-950 text-zinc-100"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
           </div>
         </div>
 
@@ -360,6 +376,7 @@ import { storeToRefs } from 'pinia'
 import { Circle, CircleHelp, Download, EllipsisVertical, FilePlus, FolderOpen, Info, Maximize2, Minimize2, Pause, Play, Redo2, Repeat, Settings2, Share2, Shuffle, Square, Undo2 } from 'lucide-vue-next'
 import { useTransportPlayback } from '@/composables/useTransportPlayback'
 import { automationCompanionHostState } from '@/services/automationCompanionService'
+import { BYTEBEAT_TYPE_OPTIONS } from '@/services/bytebeatTypeService'
 import { getRandomDemoProjectEntry } from '@/services/demoProjectService'
 import {
   formatBpmValue,
@@ -392,7 +409,7 @@ import ShareProjectDialog from '@/components/ui/ShareProjectDialog.vue'
 const shareUrl = ref('')
 const dawStore = useDawStore()
 const { play, pause, stop, toggleRecord } = useTransportPlayback()
-const { automationRecordingArmed, bpmMeasure, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, projectTitle, projectDescription, projectAuthor, sampleRate, sharedProjectMeta, snapSubdivision, snapToGridEnabled, tickSize, time, timelineAutoscrollEnabled } = storeToRefs(dawStore)
+const { automationRecordingArmed, bpmMeasure, bytebeatType, canRedo, canUndo, isValueTrackerRecording, loopEnabled, playing, projectTitle, projectDescription, projectAuthor, sampleRate, sharedProjectMeta, snapSubdivision, snapToGridEnabled, tickSize, time, timelineAutoscrollEnabled } = storeToRefs(dawStore)
 const bpmDraft = ref(formatBpmValue(getBpmFromSampleRate(sampleRate.value, bpmMeasure.value)))
 const bpmMeasureDraft = ref(bpmMeasure.value)
 const projectTitleDraft = ref(projectTitle.value)
@@ -616,6 +633,10 @@ function commitSampleRate() {
 
   dawStore.setSampleRate(sampleRateDraft.value)
   sampleRateDraft.value = formatSampleRateValue(sampleRate.value)
+}
+
+function commitBytebeatType(event) {
+  dawStore.setBytebeatType(event?.target?.value)
 }
 
 function commitBpm() {

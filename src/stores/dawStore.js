@@ -97,6 +97,7 @@ import {
 } from '@/services/timelineLaneLayoutService'
 import { normalizeTrackUnionOperator } from '@/services/trackUnionOperatorService'
 import { getDefaultDemoProjectEntry } from '@/services/demoProjectService'
+import { DEFAULT_BYTEBEAT_TYPE, normalizeBytebeatType } from '@/services/bytebeatTypeService'
 import { loadProject, normalizeProject, serializeProject } from '@/services/projectPersistence'
 import {
   createTimelineSectionLabel,
@@ -165,6 +166,7 @@ function createEmptyProject() {
     audioEffects: [],
     automationLanes: getDefaultAutomationLanes(),
     bpmMeasure: DEFAULT_BPM_MEASURE,
+    bytebeatType: DEFAULT_BYTEBEAT_TYPE,
     evalEffects: [],
     loopEnabled: false,
     loopStart: 0,
@@ -237,6 +239,7 @@ function createInitialState() {
     automationLanes: project.automationLanes,
     automationRecordingArmed: false,
     bpmMeasure: project.bpmMeasure,
+    bytebeatType: project.bytebeatType,
     clipDragPreview: null,
     clipClipboard: null,
     sharedProjectMeta: project.projectMeta,
@@ -448,6 +451,7 @@ function applyProjectState(store, project, { preservePlaybackState = false } = {
   store.audioEffects = normalizedProject.audioEffects
   store.automationLanes = normalizedProject.automationLanes
   store.bpmMeasure = normalizedProject.bpmMeasure
+  store.bytebeatType = normalizedProject.bytebeatType
   store.evalEffects = normalizedProject.evalEffects
   store.projectTitle = normalizedProject.projectTitle
   store.projectDescription = normalizedProject.projectDescription
@@ -2255,6 +2259,12 @@ export const useDawStore = defineStore('dawStore', {
     setBpmMeasure(value) {
       return this.recordHistoryStep('set-bpm-measure', () => {
         this.bpmMeasure = normalizeBpmMeasureExpression(value, this.bpmMeasure)
+      })
+    },
+
+    setBytebeatType(value) {
+      return this.recordHistoryStep('set-bytebeat-type', () => {
+        this.bytebeatType = normalizeBytebeatType(value, this.bytebeatType)
       })
     },
 

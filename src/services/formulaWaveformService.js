@@ -1,5 +1,6 @@
 import { applyEvalEffects } from '@/services/evalEffectService'
 import { loadByteBeatNodeClass } from '@/services/bytebeatNodeLoader'
+import { DEFAULT_BYTEBEAT_TYPE, normalizeBytebeatType } from '@/services/bytebeatTypeService'
 import { normalizeExpressionList } from '@/services/formulaService'
 import { validateFormula } from '@/utils/formulaValidation'
 
@@ -109,7 +110,7 @@ async function createPreviewNode() {
 
   previewNode = new ByteBeatNode(previewAudioContext)
   previewNode.setExpressionType(ByteBeatNode.ExpressionType.infix)
-  previewNode.setType(ByteBeatNode.Type.byteBeat)
+  previewNode.setType(DEFAULT_BYTEBEAT_TYPE)
   previewNode.setDesiredSampleRate(DEFAULT_SAMPLE_RATE)
   await previewNode.setExpressions([SILENT_FORMULA], true)
 
@@ -168,7 +169,8 @@ export async function renderFormulaWaveform({
   startSample = 0,
   endSample = 1,
   sampleCount = 64,
-  sampleRate = DEFAULT_SAMPLE_RATE
+  sampleRate = DEFAULT_SAMPLE_RATE,
+  bytebeatType = DEFAULT_BYTEBEAT_TYPE
 }) {
   const normalizedStartSample = normalizeTimeSample(startSample)
   const normalizedEndSample = Math.max(
@@ -177,8 +179,10 @@ export async function renderFormulaWaveform({
   )
   const normalizedSampleCount = normalizeSampleCount(sampleCount)
   const normalizedSampleRate = Math.max(1, normalizeTimeSample(sampleRate, DEFAULT_SAMPLE_RATE))
+  const normalizedBytebeatType = normalizeBytebeatType(bytebeatType)
   const expressions = sanitizeRenderableExpressions(formula, evalEffects)
   const cacheKey = JSON.stringify({
+    bytebeatType: normalizedBytebeatType,
     endSample: normalizedEndSample,
     expressions,
     sampleCount: normalizedSampleCount,
@@ -194,6 +198,7 @@ export async function renderFormulaWaveform({
   renderQueue = renderQueue.catch(() => {}).then(async () => {
     const node = await initPreviewNode()
 
+    node.setType(normalizedBytebeatType)
     node.setDesiredSampleRate(normalizedSampleRate)
     await node.setExpressions(expressions, true)
 
@@ -230,7 +235,8 @@ export async function renderFormulaWaveformChannels({
   startSample = 0,
   endSample = 1,
   sampleCount = 64,
-  sampleRate = DEFAULT_SAMPLE_RATE
+  sampleRate = DEFAULT_SAMPLE_RATE,
+  bytebeatType = DEFAULT_BYTEBEAT_TYPE
 }) {
   const normalizedStartSample = normalizeTimeSample(startSample)
   const normalizedEndSample = Math.max(
@@ -239,8 +245,10 @@ export async function renderFormulaWaveformChannels({
   )
   const normalizedSampleCount = normalizeSampleCount(sampleCount)
   const normalizedSampleRate = Math.max(1, normalizeTimeSample(sampleRate, DEFAULT_SAMPLE_RATE))
+  const normalizedBytebeatType = normalizeBytebeatType(bytebeatType)
   const sanitizedExpressions = sanitizeRenderableExpressionList(expressions)
   const cacheKey = JSON.stringify({
+    bytebeatType: normalizedBytebeatType,
     endSample: normalizedEndSample,
     expressions: sanitizedExpressions,
     mode: 'channels',
@@ -257,6 +265,7 @@ export async function renderFormulaWaveformChannels({
   renderQueue = renderQueue.catch(() => {}).then(async () => {
     const node = await initPreviewNode()
 
+    node.setType(normalizedBytebeatType)
     node.setDesiredSampleRate(normalizedSampleRate)
     await node.setExpressions(sanitizedExpressions, true)
 
@@ -296,7 +305,8 @@ export async function renderFormulaWaveformSegments({
   segments = [],
   evalEffects = [],
   sampleCount = 64,
-  sampleRate = DEFAULT_SAMPLE_RATE
+  sampleRate = DEFAULT_SAMPLE_RATE,
+  bytebeatType = DEFAULT_BYTEBEAT_TYPE
 }) {
   const normalizedSegments = normalizeWaveformSegments(segments)
   const normalizedSampleCount = normalizeSampleCount(sampleCount)
@@ -309,6 +319,7 @@ export async function renderFormulaWaveformSegments({
     const [segment] = normalizedSegments
 
     return renderFormulaWaveform({
+      bytebeatType,
       endSample: segment.endSample,
       evalEffects,
       formula: segment.expressions,
@@ -324,6 +335,7 @@ export async function renderFormulaWaveformSegments({
   for (let index = 0; index < normalizedSegments.length; index += 1) {
     const segment = normalizedSegments[index]
     const waveform = await renderFormulaWaveform({
+      bytebeatType,
       endSample: segment.endSample,
       evalEffects,
       formula: segment.expressions,

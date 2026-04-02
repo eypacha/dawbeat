@@ -118,6 +118,7 @@ let waterfallFormulaHistory = []
 
 const dawStore = useDawStore()
 const {
+  bytebeatType,
   evalEffects,
   sampleRate,
   tickSize,
@@ -221,17 +222,19 @@ onBeforeUnmount(() => {
 
 watch(
   () => ({
+    bytebeatType: bytebeatType.value,
     endSample: formulaPreviewEndSample.value,
     expressionsKey: JSON.stringify(renderExpressions.value),
     sampleRate: sampleRate.value,
     startSample: formulaPreviewStartSample.value
   }),
-  async ({ endSample, sampleRate: nextSampleRate, startSample }) => {
+  async ({ bytebeatType: nextBytebeatType, endSample, sampleRate: nextSampleRate, startSample }) => {
     const nextRequestVersion = formulaPreviewRequestVersion + 1
     formulaPreviewRequestVersion = nextRequestVersion
 
     try {
       const waveforms = await renderFormulaWaveformChannels({
+        bytebeatType: nextBytebeatType,
         endSample,
         expressions: renderExpressions.value,
         sampleCount: FORMULA_PREVIEW_SAMPLE_COUNT,

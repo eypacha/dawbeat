@@ -24,6 +24,7 @@ import {
   getClipFormulaExpressions
 } from '@/services/formulaService'
 import { DEFAULT_BPM_MEASURE, normalizeBpmMeasureExpression } from '@/services/bpmService'
+import { DEFAULT_BYTEBEAT_TYPE, normalizeBytebeatType } from '@/services/bytebeatTypeService'
 import {
   normalizeTrackLaneHeight,
   normalizeValueTrackerTrackHeight,
@@ -63,12 +64,12 @@ import {
 } from '@/utils/timeUtils'
 
 const PROJECT_STORAGE_KEY = 'dawbeat-project'
-const PROJECT_VERSION = 25
+const PROJECT_VERSION = 26
 const SAVE_DEBOUNCE_MS = 400
 const DEFAULT_LOOP_START = 0
 const DEFAULT_LOOP_END = 16
 const MIN_LOOP_DURATION = 1 / TIMELINE_SNAP_SUBDIVISIONS
-const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, PROJECT_VERSION])
+const SUPPORTED_PROJECT_VERSIONS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25, PROJECT_VERSION])
 
 export function serializeProject(state) {
   return normalizeProjectPayload({
@@ -89,6 +90,7 @@ export function serializeProject(state) {
     evalEffects: state.evalEffects,
     automationLanes: state.automationLanes,
     bpmMeasure: state.bpmMeasure,
+    bytebeatType: state.bytebeatType,
     masterGain: state.masterGain,
     sampleRate: state.sampleRate,
     tickSize: state.tickSize,
@@ -371,6 +373,9 @@ function normalizeProjectPayload(project) {
     evalEffects,
     automationLanes: normalizeProjectAutomationLanes(project),
     bpmMeasure: normalizeBpmMeasureExpression(project.bpmMeasure, DEFAULT_BPM_MEASURE),
+    bytebeatType: hasOwn(project, 'bytebeatType')
+      ? normalizeBytebeatType(project.bytebeatType, DEFAULT_BYTEBEAT_TYPE)
+      : DEFAULT_BYTEBEAT_TYPE,
     masterGain: normalizeMasterGain(project.masterGain),
     sampleRate: normalizeSampleRate(project.sampleRate, DEFAULT_SAMPLE_RATE),
     tickSize: normalizePositiveNumber(project.tickSize, BASE_TICK_SIZE),

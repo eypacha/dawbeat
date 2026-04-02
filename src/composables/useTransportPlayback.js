@@ -18,7 +18,7 @@ export function useTransportPlayback() {
   }
 
   const dawStore = useDawStore()
-  const { audioEffects, audioReady, automationLanes, automationLiveOverrides, bpmMeasure, evalEffects, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, valueTrackerLiveInputs, valueTrackerRecordingSession, valueTrackerTracks, variableTracks } =
+  const { audioEffects, audioReady, automationLanes, automationLiveOverrides, bpmMeasure, bytebeatType, evalEffects, loopEnabled, loopEnd, loopStart, masterGain, playing, sampleRate, tickSize, tracks, valueTrackerLiveInputs, valueTrackerRecordingSession, valueTrackerTracks, variableTracks } =
     storeToRefs(dawStore)
 
   let frameId = 0
@@ -185,6 +185,7 @@ export function useTransportPlayback() {
       return
     }
 
+    bytebeatService.setType(bytebeatType.value)
     await bytebeatService.init()
     await bytebeatService.unlock()
     bytebeatService.setDesiredSampleRate(effectiveSampleRate.value)
@@ -453,6 +454,10 @@ export function useTransportPlayback() {
 
   watch(effectiveSampleRate, (nextSampleRate) => {
     bytebeatService.setDesiredSampleRate(nextSampleRate)
+  })
+
+  watch(bytebeatType, (nextBytebeatType) => {
+    bytebeatService.setType(nextBytebeatType)
   })
 
   return transportPlayback

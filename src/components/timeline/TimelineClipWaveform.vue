@@ -53,7 +53,7 @@ const props = defineProps({
 })
 
 const dawStore = useDawStore()
-const { evalEffects, sampleRate, tickSize, valueTrackerTracks, variableTracks } = storeToRefs(dawStore)
+const { bytebeatType, evalEffects, sampleRate, tickSize, valueTrackerTracks, variableTracks } = storeToRefs(dawStore)
 const waveformSamples = ref(null)
 
 let requestVersion = 0
@@ -100,12 +100,13 @@ const waveformPath = computed(() => {
 watch(
   () => ({
     duration: props.duration,
+    bytebeatType: bytebeatType.value,
     evalEffectsKey: JSON.stringify(evalEffects.value),
     segmentsKey: JSON.stringify(waveformSegments.value),
     sampleRate: sampleRate.value,
     width: props.width
   }),
-  async ({ duration, sampleRate: nextSampleRate, width }) => {
+  async ({ bytebeatType: nextBytebeatType, duration, sampleRate: nextSampleRate, width }) => {
     const nextRequestVersion = requestVersion + 1
     requestVersion = nextRequestVersion
 
@@ -116,6 +117,7 @@ watch(
 
     try {
       const waveform = await renderFormulaWaveformSegments({
+        bytebeatType: nextBytebeatType,
         evalEffects: evalEffects.value,
         sampleCount: previewPointCount.value,
         sampleRate: nextSampleRate,

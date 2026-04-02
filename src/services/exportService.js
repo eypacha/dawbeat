@@ -29,6 +29,7 @@ import {
   normalizeWidth
 } from '@/services/audioEffectService'
 import { applyEvalEffects } from '@/services/evalEffectService'
+import { coerceBytebeatSampleValue, normalizeBytebeatType } from '@/services/bytebeatTypeService'
 import {
   normalizeOggOpusExportOptions,
   normalizeMp3ExportOptions,
@@ -297,6 +298,7 @@ async function renderTimelineChannels(
   const uiYieldController = createExportUiYieldController()
   const leftChannel = new Float32Array(totalOutputSamples)
   const rightChannel = new Float32Array(totalOutputSamples)
+  const bytebeatType = normalizeBytebeatType(state.bytebeatType)
   const singleLoopSourceSamples = Math.ceil(totalSourceSamples / Math.max(1, loops))
   const singleLoopBoundaries = collectTimelineBoundaries(
     state.tracks,
@@ -359,8 +361,8 @@ async function renderTimelineChannels(
           outputSampleRate
         )
 
-        leftChannel[outputSample] = evaluateBytebeatSample(leftEvaluator, sourceSample)
-        rightChannel[outputSample] = evaluateBytebeatSample(rightEvaluator, sourceSample)
+        leftChannel[outputSample] = evaluateBytebeatSample(leftEvaluator, sourceSample, bytebeatType)
+        rightChannel[outputSample] = evaluateBytebeatSample(rightEvaluator, sourceSample, bytebeatType)
         processedSamples += 1
 
         if ((outputSample % EXPORT_SAMPLE_YIELD_CHUNK_SIZE) === 0) {
@@ -1342,16 +1344,9 @@ function getExpressionEvaluator(expression, cache) {
   return evaluator
 }
 
-function evaluateBytebeatSample(evaluator, time) {
+function evaluateBytebeatSample(evaluator, time, bytebeatType) {
   try {
-    const value = evaluator(time)
-    const numericValue = Array.isArray(value) ? value[0] : value
-
-    if (!Number.isFinite(numericValue)) {
-      return 0
-    }
-
-    return ((numericValue & 255) / 127) - 1
+    return coerceBytebeatSampleValue(evaluator(time), bytebeatType)
   } catch {
     return 0
   }

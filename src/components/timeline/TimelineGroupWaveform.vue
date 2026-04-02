@@ -49,7 +49,7 @@ const props = defineProps({
 })
 
 const dawStore = useDawStore()
-const { evalEffects, sampleRate, tickSize, valueTrackerTracks, variableTracks } = storeToRefs(dawStore)
+const { bytebeatType, evalEffects, sampleRate, tickSize, valueTrackerTracks, variableTracks } = storeToRefs(dawStore)
 const renderedWaveformRuns = ref([])
 
 let requestVersion = 0
@@ -116,11 +116,12 @@ const waveformRuns = computed(() => {
 
 watch(
   () => ({
+    bytebeatType: bytebeatType.value,
     evalEffectsKey: JSON.stringify(evalEffects.value),
     runsKey: JSON.stringify(waveformRuns.value),
     sampleRate: sampleRate.value
   }),
-  async () => {
+  async ({ bytebeatType: nextBytebeatType }) => {
     const nextRequestVersion = requestVersion + 1
     requestVersion = nextRequestVersion
 
@@ -134,6 +135,7 @@ watch(
     for (const waveformRun of waveformRuns.value) {
       const renderedRun = await renderWaveformRun(
         waveformRun,
+        nextBytebeatType,
         evalEffects.value,
         sampleRate.value
       )
@@ -156,7 +158,7 @@ onBeforeUnmount(() => {
   requestVersion += 1
 })
 
-async function renderWaveformRun(waveformRun, evalEffectsValue, sampleRateValue) {
+async function renderWaveformRun(waveformRun, bytebeatTypeValue, evalEffectsValue, sampleRateValue) {
   const svgWidth = Math.max(1, Math.round(waveformRun.width))
   const svgHeight = Math.max(
     MIN_WAVEFORM_HEIGHT,
@@ -178,6 +180,7 @@ async function renderWaveformRun(waveformRun, evalEffectsValue, sampleRateValue)
 
     if (clipPreview.segments.length && clipWidth >= MIN_VISIBLE_WIDTH) {
       const waveform = await renderFormulaWaveformSegments({
+        bytebeatType: bytebeatTypeValue,
         evalEffects: evalEffectsValue,
         sampleCount: Math.max(
           MIN_PREVIEW_POINTS,
