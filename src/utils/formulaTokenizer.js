@@ -1,24 +1,11 @@
+import { MATH_FUNCTION_NAMES, MATH_VALUE_NAMES } from '@/utils/mathScope'
+
 const DOUBLE_OPERATORS = ['>>', '<<']
 const SINGLE_OPERATORS = new Set(['+', '-', '*', '/', '%', '&', '|', '^', '~', '!', '=', '<', '>', '?', ':',','])
 const PARENTHESES = new Set(['(', ')'])
-const FUNCTION_NAMES = new Set([
-  'sin',
-  'cos',
-  'tan',
-  'asin',
-  'acos',
-  'atan',
-  'sqrt',
-  'abs',
-  'floor',
-  'ceil',
-  'round',
-  'log',
-  'exp',
-  'min',
-  'max',
-  'pow'
-])
+const BRACKETS = new Set(['[', ']'])
+const MATH_FUNCTION_NAME_SET = new Set(MATH_FUNCTION_NAMES)
+const MATH_VALUE_NAME_SET = new Set(MATH_VALUE_NAMES)
 
 export function tokenizeFormula(expression = '') {
   return tokenizeFormulaWithOptions(expression)
@@ -82,9 +69,19 @@ export function tokenizeFormulaWithOptions(expression = '', options = {}) {
         lookaheadIndex += 1
       }
 
-      if (FUNCTION_NAMES.has(identifier) && source[lookaheadIndex] === '(') {
+      if (identifier === 'Math') {
+        tokens.push({
+          type: 'identifier',
+          value: identifier
+        })
+      } else if (MATH_FUNCTION_NAME_SET.has(identifier) && source[lookaheadIndex] === '(') {
         tokens.push({
           type: 'function',
+          value: identifier
+        })
+      } else if (MATH_VALUE_NAME_SET.has(identifier)) {
+        tokens.push({
+          type: 'identifier',
           value: identifier
         })
       } else if (allowedIdentifiers.has(identifier)) {
@@ -109,8 +106,20 @@ export function tokenizeFormulaWithOptions(expression = '', options = {}) {
       continue
     }
 
+    if (currentChar === '.') {
+      tokens.push({ type: 'member', value: currentChar })
+      index += 1
+      continue
+    }
+
     if (PARENTHESES.has(currentChar)) {
       tokens.push({ type: 'paren', value: currentChar })
+      index += 1
+      continue
+    }
+
+    if (BRACKETS.has(currentChar)) {
+      tokens.push({ type: 'bracket', value: currentChar })
       index += 1
       continue
     }

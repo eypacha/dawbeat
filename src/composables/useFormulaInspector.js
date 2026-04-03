@@ -12,11 +12,7 @@ import { analyzeRange } from '@/services/formulaAnalysis/rangeAnalyzer'
 import { normalizeExpressionList } from '@/services/formulaService'
 import { getActiveVariableDefinitions, prependVariableDefinitions } from '@/services/variableTrackService'
 import { DEFAULT_SAMPLE_RATE } from '@/utils/audioSettings'
-
-const MATH_SCOPE_DECLARATION = Object.getOwnPropertyNames(Math)
-  .filter((name) => typeof Math[name] !== 'undefined')
-  .map((name) => `${name} = Math.${name}`)
-  .join(', ')
+import { MATH_SCOPE_DECLARATION } from '@/utils/mathScope'
 
 const DEFAULT_PERIOD_ANALYSIS_OPTIONS = Object.freeze({
   matchThreshold: 0.99,

@@ -278,6 +278,11 @@ const features = [
     color: #60a5fa;
 }
 
+:deep(.landing-formula .token-bracket),
+:deep(.landing-formula .token-member) {
+    color: #a1a1aa;
+}
+
 :deep(.landing-formula .token-function) {
     color: #38bdf8;
 }

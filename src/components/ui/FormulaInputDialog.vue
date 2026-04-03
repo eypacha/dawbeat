@@ -809,6 +809,11 @@ function trimTrailingZeros(value) {
   color: #60a5fa;
 }
 
+:deep(.token-bracket),
+:deep(.token-member) {
+  color: #a1a1aa;
+}
+
 :deep(.token-function) {
   color: #38bdf8;
 }

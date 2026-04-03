@@ -1,7 +1,4 @@
-const MATH_SCOPE_DECLARATION = Object.getOwnPropertyNames(Math)
-  .filter((name) => typeof Math[name] !== 'undefined')
-  .map((name) => `${name} = Math.${name}`)
-  .join(', ')
+import { MATH_SCOPE_DECLARATION } from '@/utils/mathScope'
 
 export function validateFormula(code) {
   return validateFormulaWithOptions(code)
