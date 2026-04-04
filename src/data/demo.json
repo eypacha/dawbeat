@@ -1,5 +1,5 @@
 {
-  "version": 25,
+  "version": 26,
   "projectTitle": "Demo #1",
   "projectDescription": "",
   "projectAuthor": "Ey Pacha!",
@@ -4732,7 +4732,7 @@
       "id": "30de703e-dd0f-494a-8069-a0b04653d958",
       "name": "Group",
       "start": 16,
-      "trackIndex": 5,
+      "trackIndex": 4,
       "duration": 16,
       "clips": [
         {
@@ -4751,7 +4751,7 @@
       "id": "328e977c-af7b-453f-bd5e-ee5325290c14",
       "name": "Group",
       "start": 32,
-      "trackIndex": 5,
+      "trackIndex": 4,
       "duration": 16,
       "clips": [
         {
@@ -4770,7 +4770,7 @@
       "id": "deca6b3d-6697-4f5d-bdb0-12eb294dfc12",
       "name": "Group",
       "start": 48,
-      "trackIndex": 5,
+      "trackIndex": 4,
       "duration": 16,
       "clips": [
         {
@@ -4789,7 +4789,7 @@
       "id": "9fdd7a74-2918-4abd-942d-b6128c83b1a8",
       "name": "Group",
       "start": 48,
-      "trackIndex": 7,
+      "trackIndex": 6,
       "duration": 14.25,
       "clips": [
         {
@@ -4848,7 +4848,7 @@
       "id": "04be9536-f6ac-4d98-a210-33a788f33a71",
       "name": "Group",
       "start": 64,
-      "trackIndex": 5,
+      "trackIndex": 4,
       "duration": 16,
       "clips": [
         {
@@ -4867,7 +4867,7 @@
       "id": "ccb123df-4c46-4e69-aea3-25674c1a4f95",
       "name": "Group",
       "start": 64,
-      "trackIndex": 7,
+      "trackIndex": 6,
       "duration": 14.25,
       "clips": [
         {
@@ -4926,7 +4926,7 @@
       "id": "3d869d99-e79b-40db-a930-870fd87b5a6e",
       "name": "Group",
       "start": 56,
-      "trackIndex": 8,
+      "trackIndex": 7,
       "duration": 7.75,
       "clips": [
         {
@@ -4950,7 +4950,7 @@
       "id": "d6d390ed-71b7-49e1-8a57-3b13f4244512",
       "name": "Group",
       "start": 72,
-      "trackIndex": 8,
+      "trackIndex": 7,
       "duration": 7.75,
       "clips": [
         {
@@ -4974,7 +4974,7 @@
       "id": "c0c8081a-501c-4028-b375-ab2b6c600cd0",
       "name": "Group",
       "start": 80,
-      "trackIndex": 5,
+      "trackIndex": 4,
       "duration": 16,
       "clips": [
         {
@@ -4993,7 +4993,7 @@
       "id": "e64cc14c-c382-49a5-aa20-1ab46aa6b182",
       "name": "Group",
       "start": 96,
-      "trackIndex": 5,
+      "trackIndex": 4,
       "duration": 16,
       "clips": [
         {
@@ -5012,7 +5012,7 @@
       "id": "313a6458-57d3-4f10-9fd1-dc58c3766a25",
       "name": "Group",
       "start": 112,
-      "trackIndex": 5,
+      "trackIndex": 4,
       "duration": 16,
       "clips": [
         {
@@ -5031,7 +5031,7 @@
       "id": "d6f5fd94-b88d-42e4-8561-3e3654195446",
       "name": "Group",
       "start": 128,
-      "trackIndex": 5,
+      "trackIndex": 4,
       "duration": 16,
       "clips": [
         {
@@ -5050,7 +5050,7 @@
       "id": "0ac27d17-c8ee-4665-96e7-a7cb30df60a4",
       "name": "Group",
       "start": 144,
-      "trackIndex": 5,
+      "trackIndex": 4,
       "duration": 16,
       "clips": [
         {
@@ -5069,7 +5069,7 @@
       "id": "d6939172-20b9-4cd8-a26a-949d173c85f8",
       "name": "Group",
       "start": 160,
-      "trackIndex": 5,
+      "trackIndex": 4,
       "duration": 16,
       "clips": [
         {
@@ -5088,7 +5088,7 @@
       "id": "e92bd8ca-4a08-4076-a95e-57d578f58082",
       "name": "Group",
       "start": 176,
-      "trackIndex": 5,
+      "trackIndex": 4,
       "duration": 16,
       "clips": [
         {
@@ -5107,7 +5107,7 @@
       "id": "7866f86d-c64e-490d-bdf2-ba5fbb87a778",
       "name": "Group",
       "start": 192,
-      "trackIndex": 5,
+      "trackIndex": 4,
       "duration": 16,
       "clips": [
         {
@@ -5126,7 +5126,7 @@
       "id": "da1d08ce-5e6f-4c61-8598-2179521978f9",
       "name": "Group",
       "start": 80,
-      "trackIndex": 7,
+      "trackIndex": 6,
       "duration": 14.25,
       "clips": [
         {
@@ -5185,7 +5185,7 @@
       "id": "28642c55-1112-440b-9b0b-d335a7fdda75",
       "name": "Group",
       "start": 128,
-      "trackIndex": 7,
+      "trackIndex": 6,
       "duration": 14.25,
       "clips": [
         {
@@ -5244,7 +5244,7 @@
       "id": "4e4e4da5-f9eb-470f-92b1-1320f1fa6806",
       "name": "Group",
       "start": 96,
-      "trackIndex": 7,
+      "trackIndex": 6,
       "duration": 14.25,
       "clips": [
         {
@@ -5303,7 +5303,7 @@
       "id": "71880f02-571a-42c7-87c9-7522ab6072a6",
       "name": "Group",
       "start": 144,
-      "trackIndex": 7,
+      "trackIndex": 6,
       "duration": 14.25,
       "clips": [
         {
@@ -5362,7 +5362,7 @@
       "id": "eae0f13e-085b-463c-b92f-1283d7787075",
       "name": "Group",
       "start": 112,
-      "trackIndex": 7,
+      "trackIndex": 6,
       "duration": 14.25,
       "clips": [
         {
@@ -5421,7 +5421,7 @@
       "id": "dd02e2b4-96fd-4c81-93b9-3074de94675c",
       "name": "Group",
       "start": 160,
-      "trackIndex": 7,
+      "trackIndex": 6,
       "duration": 14.25,
       "clips": [
         {
@@ -5480,7 +5480,7 @@
       "id": "bb745cbb-1e37-4bbd-9fe6-07032e3d5072",
       "name": "Group",
       "start": 176,
-      "trackIndex": 7,
+      "trackIndex": 6,
       "duration": 14.25,
       "clips": [
         {
@@ -5539,7 +5539,7 @@
       "id": "e4c853a3-0aea-4f72-b655-de8cddf67c30",
       "name": "Group",
       "start": 192,
-      "trackIndex": 7,
+      "trackIndex": 6,
       "duration": 14.25,
       "clips": [
         {
@@ -5598,7 +5598,7 @@
       "id": "832c2eb7-8e4f-4250-8165-303bd50616f4",
       "name": "Group",
       "start": 88,
-      "trackIndex": 8,
+      "trackIndex": 7,
       "duration": 7.75,
       "clips": [
         {
@@ -5622,7 +5622,7 @@
       "id": "28e098b3-580c-482a-b997-14a92224bdd9",
       "name": "Group",
       "start": 152,
-      "trackIndex": 8,
+      "trackIndex": 7,
       "duration": 7.75,
       "clips": [
         {
@@ -5646,7 +5646,7 @@
       "id": "950dc524-5640-4c9b-99db-592f9c94c439",
       "name": "Group",
       "start": 168,
-      "trackIndex": 8,
+      "trackIndex": 7,
       "duration": 7.75,
       "clips": [
         {
@@ -5670,7 +5670,7 @@
       "id": "bcf03945-cb38-402c-ad5d-ee0ee2affafe",
       "name": "Group",
       "start": 184,
-      "trackIndex": 8,
+      "trackIndex": 7,
       "duration": 7.75,
       "clips": [
         {
@@ -5694,7 +5694,7 @@
       "id": "e4bf917f-20c8-44ee-b8f7-1bff20201b42",
       "name": "Group",
       "start": 200,
-      "trackIndex": 8,
+      "trackIndex": 7,
       "duration": 7.75,
       "clips": [
         {
@@ -5718,7 +5718,7 @@
       "id": "a0eb1283-af7b-446f-abc8-8d6b8f2154ca",
       "name": "Group",
       "start": 104,
-      "trackIndex": 8,
+      "trackIndex": 7,
       "duration": 7.75,
       "clips": [
         {
@@ -5861,6 +5861,7 @@
     }
   ],
   "bpmMeasure": "t >> 4",
+  "bytebeatType": 0,
   "masterGain": 1,
   "sampleRate": 8192,
   "tickSize": 1024,
