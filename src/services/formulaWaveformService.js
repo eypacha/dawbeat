@@ -6,7 +6,7 @@ import { validateFormula } from '@/utils/formulaValidation'
 
 const DEFAULT_SAMPLE_RATE = 8000
 const MAX_CACHE_ENTRIES = 200
-const MAX_SAMPLE_COUNT = 256
+const MAX_SAMPLE_COUNT = 2048
 const MIN_SAMPLE_COUNT = 16
 const SILENT_FORMULA = '0'
 

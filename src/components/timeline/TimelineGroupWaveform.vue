@@ -35,7 +35,7 @@ import { renderFormulaWaveformSegments } from '@/services/formulaWaveformService
 import { getRenderableWaveformSegments } from '@/services/timelineWaveformSegmentService'
 import { useDawStore } from '@/stores/dawStore'
 
-const MAX_PREVIEW_POINTS = 192
+const MAX_POINTS_PER_TICK = 48
 const MIN_PREVIEW_POINTS = 24
 const MIN_VISIBLE_WIDTH = 12
 const MIN_WAVEFORM_HEIGHT = 16
@@ -184,7 +184,7 @@ async function renderWaveformRun(waveformRun, bytebeatTypeValue, evalEffectsValu
         evalEffects: evalEffectsValue,
         sampleCount: Math.max(
           MIN_PREVIEW_POINTS,
-          Math.min(MAX_PREVIEW_POINTS, Math.round(clipWidth * 1.5))
+          Math.min(MAX_POINTS_PER_TICK * Math.max(1, clipPreview.duration || 1), Math.round(clipWidth * 1.5))
         ),
         sampleRate: sampleRateValue,
         segments: clipPreview.segments

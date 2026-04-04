@@ -23,7 +23,7 @@ import { renderFormulaWaveformSegments } from '@/services/formulaWaveformService
 import { getRenderableWaveformSegments } from '@/services/timelineWaveformSegmentService'
 import { useDawStore } from '@/stores/dawStore'
 
-const MAX_PREVIEW_POINTS = 192
+const MAX_POINTS_PER_TICK = 48
 const MIN_PREVIEW_POINTS = 24
 const MIN_VISIBLE_WIDTH = 12
 const MIN_WAVEFORM_HEIGHT = 16
@@ -66,9 +66,11 @@ const svgHeight = computed(() =>
   )
 )
 const waveformAmplitude = computed(() => Math.max(4, svgHeight.value * 0.38))
-const previewPointCount = computed(() =>
-  Math.max(MIN_PREVIEW_POINTS, Math.min(MAX_PREVIEW_POINTS, Math.round(props.width * 1.5)))
-)
+const previewPointCount = computed(() => {
+  const maxForDuration = MAX_POINTS_PER_TICK * Math.max(1, props.duration)
+
+  return Math.max(MIN_PREVIEW_POINTS, Math.min(maxForDuration, Math.round(props.width * 1.5)))
+})
 const waveformSegments = computed(() =>
   getRenderableWaveformSegments({
     duration: props.duration,
