@@ -1,5 +1,6 @@
-import { Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, connect as toneConnect } from 'tone'
+import { BitCrusher, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, connect as toneConnect } from 'tone'
 import {
+  normalizeBits,
   normalizeDecay,
   normalizeDecibels,
   normalizeDrive,
@@ -267,6 +268,14 @@ async function createAudioEffectNode(effect) {
     return node
   }
 
+  if (effect.type === 'bitCrusher') {
+    return new BitCrusher({
+      context: toneContext,
+      bits: 4,
+      wet: 0.5
+    })
+  }
+
   return null
 }
 
@@ -344,6 +353,12 @@ async function syncAudioEffectNode(effect) {
     node.decay = normalizeDecay(effect.params?.decay)
     node.preDelay = normalizeTime(effect.params?.preDelay)
     await node.ready
+    return node
+  }
+
+  if (effect.type === 'bitCrusher') {
+    node.bits.value = normalizeBits(effect.params?.bits)
+    node.wet.value = normalizeWet(effect.params?.wet)
     return node
   }
 

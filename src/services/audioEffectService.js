@@ -29,8 +29,24 @@ export function createAudioEffect(effect = {}) {
     case 'eq':
       return createEqAudioEffect(effect)
 
+    case 'bitCrusher':
+      return createBitCrusherAudioEffect(effect)
+
     default:
       return null
+  }
+}
+
+export function createBitCrusherAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'bitCrusher',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      bits: normalizeBits(effect.params?.bits ?? 4),
+      wet: normalizeWet(effect.params?.wet ?? 0.5)
+    }
   }
 }
 
@@ -254,6 +270,16 @@ export function normalizeDrive(value) {
   }
 
   return Math.min(1, Math.max(0, numericValue))
+}
+
+export function normalizeBits(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 4
+  }
+
+  return Math.min(16, Math.max(1, Math.round(numericValue)))
 }
 
 function normalizeEqFrequencies(lowFrequency, highFrequency) {

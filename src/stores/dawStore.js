@@ -39,12 +39,14 @@ import {
 import { createGroupId, generateGroupName } from '@/services/groupService'
 import {
   createAudioEffect,
+  createBitCrusherAudioEffect,
   createDistortionAudioEffect,
   createDelayAudioEffect,
   createEqAudioEffect,
   createLimiterAudioEffect,
   createReverbAudioEffect,
   createStereoWidenerAudioEffect,
+  normalizeBits,
   normalizeDecay,
   normalizeDecibels,
   normalizeDrive,
@@ -2425,6 +2427,13 @@ export const useDawStore = defineStore('dawStore', {
           const defaults = createLimiterAudioEffect({ id: effect.id })
           effect.enabled = defaults.enabled
           effect.params = defaults.params
+          return
+        }
+
+        if (effect.type === 'bitCrusher') {
+          const defaults = createBitCrusherAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
         }
       })
     },
@@ -2544,6 +2553,16 @@ export const useDawStore = defineStore('dawStore', {
       if (effect.type === 'limiter') {
         if (typeof params.threshold !== 'undefined') {
           effect.params.threshold = normalizeThreshold(params.threshold)
+        }
+      }
+
+      if (effect.type === 'bitCrusher') {
+        if (typeof params.bits !== 'undefined') {
+          effect.params.bits = normalizeBits(params.bits)
+        }
+
+        if (typeof params.wet !== 'undefined') {
+          effect.params.wet = normalizeWet(params.wet)
         }
       }
     },

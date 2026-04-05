@@ -1,6 +1,7 @@
 import {
   normalizeDecibels,
   normalizeDecay,
+  normalizeBits,
   normalizeDrive,
   normalizeFeedback,
   normalizeFrequency,
@@ -54,6 +55,7 @@ const AUTOMATION_CURVE_LABELS = Object.freeze(
 )
 
 const AUDIO_EFFECT_TYPE_LABELS = {
+  bitCrusher: 'BitCrusher',
   compressor: 'Compressor',
   delay: 'Delay',
   distortion: 'Distortion',
@@ -64,6 +66,10 @@ const AUDIO_EFFECT_TYPE_LABELS = {
 }
 
 const AUDIO_EFFECT_PARAM_CONFIGS = {
+  bitCrusher: {
+    bits: { label: 'Bits', min: 1, max: 16, normalize: normalizeBits },
+    wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }
+  },
   compressor: {
     attack: { label: 'Attack', min: 0, max: 1, normalize: normalizeTime },
     knee: { label: 'Knee', min: 0, max: 40, normalize: normalizeKnee },

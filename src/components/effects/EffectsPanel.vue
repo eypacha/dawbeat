@@ -182,6 +182,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-vue-next'
+import AudioBitCrusherItem from '@/components/effects/AudioBitCrusherItem.vue'
 import AudioCompressorItem from '@/components/effects/AudioCompressorItem.vue'
 import AudioDelayItem from '@/components/effects/AudioDelayItem.vue'
 import AudioDistortionItem from '@/components/effects/AudioDistortionItem.vue'
@@ -237,6 +238,10 @@ const availableAudioEffects = [
   {
     name: 'EQ3',
     type: 'eq'
+  },
+  {
+    name: 'BitCrusher',
+    type: 'bitCrusher'
   },
   {
     name: 'Distortion',
@@ -313,6 +318,10 @@ function getEffectsBySection(section) {
 }
 
 function getAudioEffectComponent(effectType) {
+  if (effectType === 'bitCrusher') {
+    return AudioBitCrusherItem
+  }
+
   if (effectType === 'distortion') {
     return AudioDistortionItem
   }

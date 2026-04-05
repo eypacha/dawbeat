@@ -1,4 +1,4 @@
-import { Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, connect as toneConnect } from 'tone'
+import { BitCrusher, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, connect as toneConnect } from 'tone'
 import * as lamejsModule from 'lamejs'
 import bitStreamModule from 'lamejs/src/js/BitStream.js'
 import lameCoreModule from 'lamejs/src/js/Lame.js'
@@ -18,6 +18,7 @@ import {
 import {
   normalizeDecay,
   normalizeDecibels,
+  normalizeBits,
   normalizeDrive,
   normalizeFeedback,
   normalizeFrequency,
@@ -582,6 +583,19 @@ async function createOfflineAudioEffectNode(effect, toneContext) {
     return node
   }
 
+  if (effect.type === 'bitCrusher') {
+    const node = new BitCrusher({
+      context: toneContext,
+      bits: 4,
+      wet: 0.5
+    })
+
+    node.bits.value = normalizeBits(effect.params?.bits)
+    node.wet.value = normalizeWet(effect.params?.wet)
+
+    return node
+  }
+
   return null
 }
 
@@ -1094,6 +1108,17 @@ async function applyOfflineAudioEffectParamValue(node, effectType, paramKey, val
     if (paramKey === 'preDelay') {
       node.preDelay = normalizeTime(value)
       await node.ready
+    }
+  }
+
+  if (effectType === 'bitCrusher') {
+    if (paramKey === 'bits') {
+      node.bits.value = normalizeBits(value)
+      return
+    }
+
+    if (paramKey === 'wet') {
+      node.wet.value = normalizeWet(value)
     }
   }
 }

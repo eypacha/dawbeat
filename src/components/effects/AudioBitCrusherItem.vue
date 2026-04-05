@@ -52,19 +52,58 @@
           <div class="grid gap-3 pt-4">
               <label class="grid gap-2">
                 <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
-                  <span>Bits</span>
+                  <div class="flex items-center gap-2">
+                    <EffectParamAutomationButton
+                      :effect-id="effect.id"
+                      label="BitCrusher Bits"
+                      param-key="bits"
+                      @create="emit('create-automation', effect.id, 'bits')"
+                    />
+                    <span>Bits</span>
+                  </div>
                   <span>{{ bitsLabel }}</span>
                 </div>
 
                 <input
                   class="accent-amber-300"
                   :value="effect.params.bits"
+                  max="16"
+                  min="1"
+                  step="1"
+                  type="range"
+                  @blur="emit('interaction-end')"
+                  @input="handleBitsInput"
+                  @keydown="handleInteractionKeydown"
+                  @keyup="emit('interaction-end')"
+                  @pointercancel="emit('interaction-end')"
+                  @pointerdown="emit('interaction-start')"
+                  @pointerup="emit('interaction-end')"
+                />
+              </label>
+
+              <label class="grid gap-2">
+                <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+                  <div class="flex items-center gap-2">
+                    <EffectParamAutomationButton
+                      :effect-id="effect.id"
+                      label="BitCrusher Wet"
+                      param-key="wet"
+                      @create="emit('create-automation', effect.id, 'wet')"
+                    />
+                    <span>Wet</span>
+                  </div>
+                  <span>{{ wetLabel }}</span>
+                </div>
+
+                <input
+                  class="accent-amber-300"
+                  :value="effect.params.wet"
                   max="1"
                   min="0"
                   step="0.01"
                   type="range"
                   @blur="emit('interaction-end')"
-                  @input="handleBitsInput"
+                  @input="handleWetInput"
                   @keydown="handleInteractionKeydown"
                   @keyup="emit('interaction-end')"
                   @pointercancel="emit('interaction-end')"
@@ -101,6 +140,7 @@
 import { computed } from 'vue'
 import { GripVertical, Power, SlidersHorizontal } from 'lucide-vue-next'
 import CollapseTransition from '../ui/CollapseTransition.vue'
+import EffectParamAutomationButton from '@/components/effects/EffectParamAutomationButton.vue'
 
 const props = defineProps({
   dragging: {
@@ -116,6 +156,7 @@ const props = defineProps({
 const emit = defineEmits([
   'drag-end',
   'drag-start',
+  'create-automation',
   'interaction-end',
   'interaction-start',
   'remove',
@@ -125,10 +166,15 @@ const emit = defineEmits([
   'update-param'
 ])
 
-const bitsLabel = computed(() => Number(props.effect.params.bits ?? 0).toFixed(2))
+const bitsLabel = computed(() => `${Math.round(props.effect.params.bits ?? 4)} bit`)
+const wetLabel = computed(() => `${Math.round((props.effect.params.wet ?? 0.5) * 100)}%`)
 
 function handleBitsInput(event) {
   emit('update-param', props.effect.id, 'bits', Number(event.target.value))
+}
+
+function handleWetInput(event) {
+  emit('update-param', props.effect.id, 'wet', Number(event.target.value))
 }
 
 function handleInteractionKeydown(event) {
