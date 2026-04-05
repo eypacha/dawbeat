@@ -50,6 +50,7 @@ import {
   createChebyshevAudioEffect,
   createAutoWahAudioEffect,
   createPingPongDelayAudioEffect,
+  createPitchShiftAudioEffect,
   createTremoloAudioEffect,
   createVibratoAudioEffect,
   normalizeBits,
@@ -77,6 +78,8 @@ import {
   normalizeTremoloFrequency,
   normalizeTremoloSpread,
   normalizeTremoloType,
+  normalizePitchShiftPitch,
+  normalizePitchShiftWindowSize,
   normalizeWet,
   normalizeWidth
 } from '@/services/audioEffectService'
@@ -2493,6 +2496,12 @@ export const useDawStore = defineStore('dawStore', {
           effect.enabled = defaults.enabled
           effect.params = defaults.params
         }
+
+        if (effect.type === 'pitchShift') {
+          const defaults = createPitchShiftAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+        }
       })
     },
 
@@ -2725,6 +2734,24 @@ export const useDawStore = defineStore('dawStore', {
       if (effect.type === 'pingPongDelay') {
         if (typeof params.delayTime !== 'undefined') {
           effect.params.delayTime = normalizeTime(params.delayTime)
+        }
+
+        if (typeof params.feedback !== 'undefined') {
+          effect.params.feedback = normalizeFeedback(params.feedback)
+        }
+
+        if (typeof params.wet !== 'undefined') {
+          effect.params.wet = normalizeWet(params.wet)
+        }
+      }
+
+      if (effect.type === 'pitchShift') {
+        if (typeof params.pitch !== 'undefined') {
+          effect.params.pitch = normalizePitchShiftPitch(params.pitch)
+        }
+
+        if (typeof params.windowSize !== 'undefined') {
+          effect.params.windowSize = normalizePitchShiftWindowSize(params.windowSize)
         }
 
         if (typeof params.feedback !== 'undefined') {

@@ -1,4 +1,4 @@
-import { AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, PingPongDelay, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
+import { AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
 import * as lamejsModule from 'lamejs'
 import bitStreamModule from 'lamejs/src/js/BitStream.js'
 import lameCoreModule from 'lamejs/src/js/Lame.js'
@@ -39,6 +39,8 @@ import {
   normalizeTremoloFrequency,
   normalizeTremoloSpread,
   normalizeTremoloType,
+  normalizePitchShiftPitch,
+  normalizePitchShiftWindowSize,
   normalizeVibratoFrequency,
   normalizeWet,
   normalizeWidth
@@ -60,7 +62,7 @@ import { validateFormula } from '@/utils/formulaValidation'
 import { getClipEnd, samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 
 const SILENT_EVALUATOR = () => 0
-const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev', 'autoWah', 'tremolo', 'pingPongDelay']
+const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev', 'autoWah', 'tremolo', 'pingPongDelay', 'pitchShift']
 const MIN_AUTOMATION_CURVE_SAMPLES = 16
 const MAX_AUTOMATION_CURVE_SAMPLES = 128
 const EXPORT_UI_YIELD_INTERVAL_MS = 12
@@ -72,7 +74,8 @@ const MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS = {
   chorus: ['depth', 'delayTime'],
   distortion: ['drive'],
   reverb: ['decay', 'preDelay'],
-  tremolo: ['spread', 'type']
+  tremolo: ['spread', 'type'],
+  pitchShift: ['pitch', 'windowSize']
 }
 
 export async function downloadProjectWav(
@@ -712,6 +715,23 @@ async function createOfflineAudioEffectNode(effect, toneContext) {
     })
 
     node.delayTime.value = normalizeTime(effect.params?.delayTime)
+    node.feedback.value = normalizeFeedback(effect.params?.feedback)
+    node.wet.value = normalizeWet(effect.params?.wet)
+
+    return node
+  }
+
+  if (effect.type === 'pitchShift') {
+    const node = new PitchShift({
+      context: toneContext,
+      pitch: 0,
+      windowSize: 0.1,
+      feedback: 0,
+      wet: 1
+    })
+
+    node.pitch = normalizePitchShiftPitch(effect.params?.pitch)
+    node.windowSize = normalizePitchShiftWindowSize(effect.params?.windowSize)
     node.feedback.value = normalizeFeedback(effect.params?.feedback)
     node.wet.value = normalizeWet(effect.params?.wet)
 
@@ -1374,6 +1394,27 @@ async function applyOfflineAudioEffectParamValue(node, effectType, paramKey, val
       node.wet.value = normalizeWet(value)
     }
   }
+
+  if (effectType === 'pitchShift') {
+    if (paramKey === 'pitch') {
+      node.pitch = normalizePitchShiftPitch(value)
+      return
+    }
+
+    if (paramKey === 'windowSize') {
+      node.windowSize = normalizePitchShiftWindowSize(value)
+      return
+    }
+
+    if (paramKey === 'feedback') {
+      node.feedback.value = normalizeFeedback(value)
+      return
+    }
+
+    if (paramKey === 'wet') {
+      node.wet.value = normalizeWet(value)
+    }
+  }
 }
 
 function normalizeAudioEffectParamValue(effectType, paramKey, value) {
@@ -1484,6 +1525,13 @@ function normalizeAudioEffectParamValue(effectType, paramKey, value) {
 
   if (effectType === 'pingPongDelay') {
     if (paramKey === 'delayTime') return normalizeTime(value)
+    if (paramKey === 'feedback') return normalizeFeedback(value)
+    if (paramKey === 'wet') return normalizeWet(value)
+  }
+
+  if (effectType === 'pitchShift') {
+    if (paramKey === 'pitch') return normalizePitchShiftPitch(value)
+    if (paramKey === 'windowSize') return normalizePitchShiftWindowSize(value)
     if (paramKey === 'feedback') return normalizeFeedback(value)
     if (paramKey === 'wet') return normalizeWet(value)
   }

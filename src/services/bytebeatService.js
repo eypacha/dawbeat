@@ -1,4 +1,4 @@
-import { AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, PingPongDelay, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
+import { AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
 import {
   normalizeBits,
   normalizeChorusDelayTime,
@@ -24,6 +24,8 @@ import {
   normalizeTremoloFrequency,
   normalizeTremoloSpread,
   normalizeTremoloType,
+  normalizePitchShiftPitch,
+  normalizePitchShiftWindowSize,
   normalizeVibratoFrequency,
   normalizeWet,
   normalizeWidth
@@ -351,6 +353,16 @@ async function createAudioEffectNode(effect) {
     })
   }
 
+  if (effect.type === 'pitchShift') {
+    return new PitchShift({
+      context: toneContext,
+      pitch: 0,
+      windowSize: 0.1,
+      feedback: 0,
+      wet: 1
+    })
+  }
+
   return null
 }
 
@@ -481,6 +493,14 @@ async function syncAudioEffectNode(effect) {
 
   if (effect.type === 'pingPongDelay') {
     node.delayTime.value = normalizeTime(effect.params?.delayTime)
+    node.feedback.value = normalizeFeedback(effect.params?.feedback)
+    node.wet.value = normalizeWet(effect.params?.wet)
+    return node
+  }
+
+  if (effect.type === 'pitchShift') {
+    node.pitch = normalizePitchShiftPitch(effect.params?.pitch)
+    node.windowSize = normalizePitchShiftWindowSize(effect.params?.windowSize)
     node.feedback.value = normalizeFeedback(effect.params?.feedback)
     node.wet.value = normalizeWet(effect.params?.wet)
     return node

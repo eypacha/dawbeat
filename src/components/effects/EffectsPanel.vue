@@ -182,6 +182,7 @@ import AudioChebyshevItem from '@/components/effects/AudioChebyshevItem.vue'
 import AudioVibratoItem from '@/components/effects/AudioVibratoItem.vue'
 import AudioTremoloItem from '@/components/effects/AudioTremoloItem.vue'
 import AudioPingPongDelayItem from '@/components/effects/AudioPingPongDelayItem.vue'
+import AudioPitchShiftItem from '@/components/effects/AudioPitchShiftItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
 import IconButton from '@/components/ui/IconButton.vue'
@@ -264,6 +265,10 @@ const availableAudioEffects = [
   {
     name: 'Ping Pong Delay',
     type: 'pingPongDelay'
+  },
+  {
+    name: 'Pitch Shift',
+    type: 'pitchShift'
   },
   {
     name: 'Reverb',
@@ -374,6 +379,10 @@ function getAudioEffectComponent(effectType) {
 
   if (effectType === 'pingPongDelay') {
     return AudioPingPongDelayItem
+  }
+
+  if (effectType === 'pitchShift') {
+    return AudioPitchShiftItem
   }
 
   if (effectType === 'chorus') {

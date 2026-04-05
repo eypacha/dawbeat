@@ -23,6 +23,8 @@ import {
   normalizeOrder,
   normalizeTremoloFrequency,
   normalizeTremoloSpread,
+  normalizePitchShiftPitch,
+  normalizePitchShiftWindowSize,
   normalizeWet,
   normalizeWidth
 } from '@/services/audioEffectService'
@@ -78,6 +80,7 @@ const AUDIO_EFFECT_TYPE_LABELS = {
   eq: 'EQ3',
   limiter: 'Limiter',
   pingPongDelay: 'Ping Pong Delay',
+  pitchShift: 'Pitch Shift',
   reverb: 'Reverb',
   stereoWidener: 'Stereo Widener',
   tremolo: 'Tremolo',
@@ -158,6 +161,12 @@ const AUDIO_EFFECT_PARAM_CONFIGS = {
     delayTime: { label: 'Delay Time', min: 0, max: 1, normalize: normalizeTime },
     feedback: { label: 'Feedback', min: 0, max: 1, normalize: normalizeFeedback },
     wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }
+  },
+  pitchShift: {
+    feedback: { label: 'Feedback', min: 0, max: 1, normalize: normalizeFeedback },
+    pitch: { label: 'Pitch', min: -24, max: 24, normalize: normalizePitchShiftPitch },
+    wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet },
+    windowSize: { label: 'Window', min: 0.03, max: 0.1, normalize: normalizePitchShiftWindowSize }
   }
 }
 

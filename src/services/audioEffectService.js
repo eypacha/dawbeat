@@ -50,8 +50,26 @@ export function createAudioEffect(effect = {}) {
     case 'pingPongDelay':
       return createPingPongDelayAudioEffect(effect)
 
+    case 'pitchShift':
+      return createPitchShiftAudioEffect(effect)
+
     default:
       return null
+  }
+}
+
+export function createPitchShiftAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'pitchShift',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      pitch: normalizePitchShiftPitch(effect.params?.pitch ?? 0),
+      windowSize: normalizePitchShiftWindowSize(effect.params?.windowSize ?? 0.1),
+      feedback: normalizeFeedback(effect.params?.feedback ?? 0),
+      wet: normalizeWet(effect.params?.wet ?? 1)
+    }
   }
 }
 
@@ -525,6 +543,26 @@ export function normalizeTremoloSpread(value) {
   }
 
   return Math.min(180, Math.max(0, numericValue))
+}
+
+export function normalizePitchShiftPitch(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 0
+  }
+
+  return Math.round(Math.min(24, Math.max(-24, numericValue)))
+}
+
+export function normalizePitchShiftWindowSize(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 0.1
+  }
+
+  return Math.min(0.1, Math.max(0.03, numericValue))
 }
 
 function normalizeEqFrequencies(lowFrequency, highFrequency) {
