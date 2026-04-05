@@ -50,7 +50,7 @@
       <CollapseTransition>
         <div v-if="effect.expanded">
           <div class="grid gap-3 pt-4">
-              <label class="grid gap-2">
+              <div class="grid gap-2">
                 <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
                   <div class="flex items-center gap-2">
                     <EffectParamAutomationButton
@@ -78,9 +78,9 @@
                   @pointerdown="emit('interaction-start')"
                   @pointerup="emit('interaction-end')"
                 />
-              </label>
+              </div>
 
-              <label class="grid gap-2">
+              <div class="grid gap-2">
                 <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
                   <div class="flex items-center gap-2">
                     <EffectParamAutomationButton
@@ -108,9 +108,9 @@
                   @pointerdown="emit('interaction-start')"
                   @pointerup="emit('interaction-end')"
                 />
-              </label>
+              </div>
 
-              <label class="grid gap-2">
+              <div class="grid gap-2">
                 <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
                   <div class="flex items-center gap-2">
                     <EffectParamAutomationButton
@@ -138,9 +138,9 @@
                   @pointerdown="emit('interaction-start')"
                   @pointerup="emit('interaction-end')"
                 />
-              </label>
+              </div>
 
-              <label class="grid gap-2">
+              <div class="grid gap-2">
                 <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
                   <div class="flex items-center gap-2">
                     <EffectParamAutomationButton
@@ -168,9 +168,9 @@
                   @pointerdown="emit('interaction-start')"
                   @pointerup="emit('interaction-end')"
                 />
-              </label>
+              </div>
 
-              <label class="grid gap-2">
+              <div class="grid gap-2">
                 <div class="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.24em] text-zinc-500">
                   <div class="flex items-center gap-2">
                     <EffectParamAutomationButton
@@ -198,7 +198,7 @@
                   @pointerdown="emit('interaction-start')"
                   @pointerup="emit('interaction-end')"
                 />
-              </label>
+              </div>
 
               <div class="flex items-center gap-2">
                 <button

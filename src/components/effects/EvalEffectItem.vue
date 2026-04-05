@@ -48,7 +48,7 @@
         <div v-if="effect.expanded">
           <div class="grid gap-3 pt-4">
               <template v-if="effect.type === 'stereoOffset'">
-                <label class="grid gap-2">
+                <div class="grid gap-2">
                   <div class="flex items-center justify-between gap-3">
                     <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Offset</span>
                     <span class="text-[10px] text-zinc-500">Number or variable</span>
@@ -62,7 +62,7 @@
                     @keydown.enter.prevent="commitOffsetDraft"
                     @keydown.esc.prevent="resetOffsetDraft"
                   />
-                </label>
+                </div>
               </template>
 
               <template v-else-if="effect.type === 'tReplacement'">
@@ -94,7 +94,7 @@
                 </div>
 
                 <template v-if="effect.params.stereo">
-                  <label class="grid gap-2">
+                  <div class="grid gap-2">
                     <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Left</span>
                     <input
                       class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
@@ -104,9 +104,9 @@
                       @keydown.enter.prevent="commitExpressionDraft('leftExpression')"
                       @keydown.esc.prevent="resetExpressionDraft('leftExpression')"
                     />
-                  </label>
+                  </div>
 
-                  <label class="grid gap-2">
+                  <div class="grid gap-2">
                     <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Right</span>
                     <input
                       class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
@@ -116,10 +116,10 @@
                       @keydown.enter.prevent="commitExpressionDraft('rightExpression')"
                       @keydown.esc.prevent="resetExpressionDraft('rightExpression')"
                     />
-                  </label>
+                  </div>
                 </template>
 
-                <label v-else class="grid gap-2">
+                <div v-else class="grid gap-2">
                   <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-500">Replacement</span>
                   <input
                     class="w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
@@ -129,7 +129,7 @@
                     @keydown.enter.prevent="commitExpressionDraft('expression')"
                     @keydown.esc.prevent="resetExpressionDraft('expression')"
                   />
-                </label>
+                </div>
               </template>
 
               <div class="flex items-center gap-2">
