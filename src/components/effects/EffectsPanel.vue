@@ -70,35 +70,30 @@
       <section class="mt-3 flex min-h-0 flex-1 flex-col border border-zinc-800 bg-zinc-950/50">
 
         <div class="flex min-h-0 flex-1 flex-col p-4 pt-4">
-          <div class="relative shrink-0" :data-effects-add-menu="activeSection">
+          <div class="shrink-0">
             <Button
               block
               variant="ghost"
               @click="toggleAddMenu(activeSection)"
             >
-              + Add
+              {{ activeAddMenu === activeSection ? '← Back' : '+ Add' }}
             </Button>
-
-            <div
-              v-if="activeAddMenu === activeSection"
-              class="absolute left-0 right-0 top-full z-30 mt-2 rounded border border-zinc-700 bg-zinc-900 p-3 shadow-lg shadow-black/40"
-            >
-              <div class="grid gap-2">
-                <button
-                  v-for="effect in activeSection === 'formula' ? availableFormulaEffects : availableAudioEffects"
-                  :key="effect.name"
-                  class="flex w-full items-center justify-between rounded border border-zinc-800 bg-zinc-950 px-3 py-2 text-left text-sm text-zinc-200 transition hover:border-zinc-700 hover:bg-zinc-800"
-                  type="button"
-                  @click="handleAddEffect(activeSection, effect)"
-                >
-                  <span>{{ effect.name }}</span>
-                </button>
-              </div>
-            </div>
           </div>
 
           <div class="mt-4 min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-1">
-            <div class="grid gap-3">
+            <div v-if="activeAddMenu === activeSection" class="grid gap-2">
+              <button
+                v-for="effect in activeSection === 'formula' ? availableFormulaEffects : availableAudioEffects"
+                :key="effect.name"
+                class="flex w-full items-center justify-between rounded border border-zinc-800 bg-zinc-950 px-3 py-2 text-left text-sm text-zinc-200 transition hover:border-zinc-700 hover:bg-zinc-800"
+                type="button"
+                @click="handleAddEffect(activeSection, effect)"
+              >
+                <span>{{ effect.name }}</span>
+              </button>
+            </div>
+
+            <div v-else class="grid gap-3">
 	              <template v-if="activeSection === 'audio'">
                 <AudioMasterGainItem
                   :gain="displayMasterGain"
@@ -169,7 +164,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-vue-next'
 import AudioBitCrusherItem from '@/components/effects/AudioBitCrusherItem.vue'
@@ -547,24 +542,7 @@ function cleanupContinuousInteraction() {
   window.removeEventListener('pointercancel', handleContinuousInteractionWindowEnd)
 }
 
-function handleWindowPointerDown(event) {
-  if (!(event.target instanceof Node)) {
-    return
-  }
-
-  if (event.target.closest('[data-effects-add-menu]')) {
-    return
-  }
-
-  activeAddMenu.value = null
-}
-
-onMounted(() => {
-  window.addEventListener('pointerdown', handleWindowPointerDown)
-})
-
 onBeforeUnmount(() => {
-  window.removeEventListener('pointerdown', handleWindowPointerDown)
   cleanupContinuousInteraction()
   handleDragEnd()
 })
