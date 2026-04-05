@@ -15,7 +15,7 @@
             lane-id="masterGain"
             @create="emit('create-automation')"
           />
-          <span>Output</span>
+          <span>Master gain</span>
         </div>
         <span>{{ gainLabel }}</span>
       </div>
