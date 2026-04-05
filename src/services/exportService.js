@@ -1,4 +1,4 @@
-import { BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Vibrato, connect as toneConnect } from 'tone'
+import { AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Vibrato, connect as toneConnect } from 'tone'
 import * as lamejsModule from 'lamejs'
 import bitStreamModule from 'lamejs/src/js/BitStream.js'
 import lameCoreModule from 'lamejs/src/js/Lame.js'
@@ -19,6 +19,12 @@ import {
   normalizeDecay,
   normalizeDecibels,
   normalizeBits,
+  normalizeAutoWahBaseFrequency,
+  normalizeAutoWahFollower,
+  normalizeAutoWahGain,
+  normalizeAutoWahOctaves,
+  normalizeAutoWahQ,
+  normalizeAutoWahSensitivity,
   normalizeChorusDelayTime,
   normalizeChorusFrequency,
   normalizeDepth,
@@ -51,13 +57,14 @@ import { validateFormula } from '@/utils/formulaValidation'
 import { getClipEnd, samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 
 const SILENT_EVALUATOR = () => 0
-const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev']
+const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev', 'autoWah']
 const MIN_AUTOMATION_CURVE_SAMPLES = 16
 const MAX_AUTOMATION_CURVE_SAMPLES = 128
 const EXPORT_UI_YIELD_INTERVAL_MS = 12
 const EXPORT_SAMPLE_YIELD_CHUNK_SIZE = 2048
 const MP3_ENCODER = resolveMp3Encoder()
 const MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS = {
+  autoWah: ['baseFrequency', 'octaves', 'sensitivity', 'follower'],
   chebyshev: ['order'],
   chorus: ['depth', 'delayTime'],
   distortion: ['drive'],
@@ -650,6 +657,29 @@ async function createOfflineAudioEffectNode(effect, toneContext) {
     return node
   }
 
+  if (effect.type === 'autoWah') {
+    const node = new AutoWah({
+      context: toneContext,
+      baseFrequency: 100,
+      octaves: 6,
+      sensitivity: 0,
+      follower: 0.2,
+      Q: 2,
+      gain: 2,
+      wet: 1
+    })
+
+    node.baseFrequency = normalizeAutoWahBaseFrequency(effect.params?.baseFrequency)
+    node.octaves = normalizeAutoWahOctaves(effect.params?.octaves)
+    node.sensitivity = normalizeAutoWahSensitivity(effect.params?.sensitivity)
+    node.follower = normalizeAutoWahFollower(effect.params?.follower)
+    node.Q.value = normalizeAutoWahQ(effect.params?.q)
+    node.gain.value = normalizeAutoWahGain(effect.params?.gain)
+    node.wet.value = normalizeWet(effect.params?.wet)
+
+    return node
+  }
+
   return null
 }
 
@@ -1228,6 +1258,42 @@ async function applyOfflineAudioEffectParamValue(node, effectType, paramKey, val
       node.wet.value = normalizeWet(value)
     }
   }
+
+  if (effectType === 'autoWah') {
+    if (paramKey === 'baseFrequency') {
+      node.baseFrequency = normalizeAutoWahBaseFrequency(value)
+      return
+    }
+
+    if (paramKey === 'octaves') {
+      node.octaves = normalizeAutoWahOctaves(value)
+      return
+    }
+
+    if (paramKey === 'sensitivity') {
+      node.sensitivity = normalizeAutoWahSensitivity(value)
+      return
+    }
+
+    if (paramKey === 'follower') {
+      node.follower = normalizeAutoWahFollower(value)
+      return
+    }
+
+    if (paramKey === 'q') {
+      node.Q.value = normalizeAutoWahQ(value)
+      return
+    }
+
+    if (paramKey === 'gain') {
+      node.gain.value = normalizeAutoWahGain(value)
+      return
+    }
+
+    if (paramKey === 'wet') {
+      node.wet.value = normalizeWet(value)
+    }
+  }
 }
 
 function normalizeAudioEffectParamValue(effectType, paramKey, value) {
@@ -1315,6 +1381,16 @@ function normalizeAudioEffectParamValue(effectType, paramKey, value) {
 
   if (effectType === 'chebyshev') {
     if (paramKey === 'order') return normalizeOrder(value)
+    if (paramKey === 'wet') return normalizeWet(value)
+  }
+
+  if (effectType === 'autoWah') {
+    if (paramKey === 'baseFrequency') return normalizeAutoWahBaseFrequency(value)
+    if (paramKey === 'octaves') return normalizeAutoWahOctaves(value)
+    if (paramKey === 'sensitivity') return normalizeAutoWahSensitivity(value)
+    if (paramKey === 'follower') return normalizeAutoWahFollower(value)
+    if (paramKey === 'q') return normalizeAutoWahQ(value)
+    if (paramKey === 'gain') return normalizeAutoWahGain(value)
     if (paramKey === 'wet') return normalizeWet(value)
   }
 

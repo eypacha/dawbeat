@@ -48,6 +48,7 @@ import {
   createStereoWidenerAudioEffect,
   createChorusAudioEffect,
   createChebyshevAudioEffect,
+  createAutoWahAudioEffect,
   createVibratoAudioEffect,
   normalizeBits,
   normalizeDecay,
@@ -64,6 +65,12 @@ import {
   normalizeChorusDelayTime,
   normalizeChorusFrequency,
   normalizeVibratoFrequency,
+  normalizeAutoWahBaseFrequency,
+  normalizeAutoWahFollower,
+  normalizeAutoWahGain,
+  normalizeAutoWahOctaves,
+  normalizeAutoWahQ,
+  normalizeAutoWahSensitivity,
   normalizeOrder,
   normalizeWet,
   normalizeWidth
@@ -2463,6 +2470,12 @@ export const useDawStore = defineStore('dawStore', {
           effect.enabled = defaults.enabled
           effect.params = defaults.params
         }
+
+        if (effect.type === 'autoWah') {
+          const defaults = createAutoWahAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+        }
       })
     },
 
@@ -2633,6 +2646,36 @@ export const useDawStore = defineStore('dawStore', {
       if (effect.type === 'chebyshev') {
         if (typeof params.order !== 'undefined') {
           effect.params.order = normalizeOrder(params.order)
+        }
+
+        if (typeof params.wet !== 'undefined') {
+          effect.params.wet = normalizeWet(params.wet)
+        }
+      }
+
+      if (effect.type === 'autoWah') {
+        if (typeof params.baseFrequency !== 'undefined') {
+          effect.params.baseFrequency = normalizeAutoWahBaseFrequency(params.baseFrequency)
+        }
+
+        if (typeof params.octaves !== 'undefined') {
+          effect.params.octaves = normalizeAutoWahOctaves(params.octaves)
+        }
+
+        if (typeof params.sensitivity !== 'undefined') {
+          effect.params.sensitivity = normalizeAutoWahSensitivity(params.sensitivity)
+        }
+
+        if (typeof params.follower !== 'undefined') {
+          effect.params.follower = normalizeAutoWahFollower(params.follower)
+        }
+
+        if (typeof params.q !== 'undefined') {
+          effect.params.q = normalizeAutoWahQ(params.q)
+        }
+
+        if (typeof params.gain !== 'undefined') {
+          effect.params.gain = normalizeAutoWahGain(params.gain)
         }
 
         if (typeof params.wet !== 'undefined') {

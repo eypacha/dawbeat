@@ -41,8 +41,29 @@ export function createAudioEffect(effect = {}) {
     case 'chebyshev':
       return createChebyshevAudioEffect(effect)
 
+    case 'autoWah':
+      return createAutoWahAudioEffect(effect)
+
     default:
       return null
+  }
+}
+
+export function createAutoWahAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'autoWah',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      baseFrequency: normalizeAutoWahBaseFrequency(effect.params?.baseFrequency ?? 100),
+      octaves: normalizeAutoWahOctaves(effect.params?.octaves ?? 6),
+      sensitivity: normalizeAutoWahSensitivity(effect.params?.sensitivity ?? 0),
+      follower: normalizeAutoWahFollower(effect.params?.follower ?? 0.2),
+      q: normalizeAutoWahQ(effect.params?.q ?? 2),
+      gain: normalizeAutoWahGain(effect.params?.gain ?? 2),
+      wet: normalizeWet(effect.params?.wet ?? 1)
+    }
   }
 }
 
@@ -382,6 +403,66 @@ export function normalizeOrder(value) {
   }
 
   return Math.min(100, Math.max(1, Math.round(numericValue)))
+}
+
+export function normalizeAutoWahBaseFrequency(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 100
+  }
+
+  return Math.min(1000, Math.max(20, numericValue))
+}
+
+export function normalizeAutoWahOctaves(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 6
+  }
+
+  return Math.min(8, Math.max(0, numericValue))
+}
+
+export function normalizeAutoWahSensitivity(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 0
+  }
+
+  return Math.min(0, Math.max(-60, numericValue))
+}
+
+export function normalizeAutoWahFollower(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 0.2
+  }
+
+  return Math.min(1, Math.max(0.01, numericValue))
+}
+
+export function normalizeAutoWahQ(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 2
+  }
+
+  return Math.min(10, Math.max(0.1, numericValue))
+}
+
+export function normalizeAutoWahGain(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 2
+  }
+
+  return Math.min(20, Math.max(0, numericValue))
 }
 
 function normalizeEqFrequencies(lowFrequency, highFrequency) {

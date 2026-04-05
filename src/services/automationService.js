@@ -2,6 +2,12 @@ import {
   normalizeDecibels,
   normalizeDecay,
   normalizeBits,
+  normalizeAutoWahBaseFrequency,
+  normalizeAutoWahFollower,
+  normalizeAutoWahGain,
+  normalizeAutoWahOctaves,
+  normalizeAutoWahQ,
+  normalizeAutoWahSensitivity,
   normalizeDepth,
   normalizeDrive,
   normalizeFeedback,
@@ -60,6 +66,7 @@ const AUTOMATION_CURVE_LABELS = Object.freeze(
 )
 
 const AUDIO_EFFECT_TYPE_LABELS = {
+  autoWah: 'Auto Wah',
   bitCrusher: 'BitCrusher',
   chebyshev: 'Chebyshev',
   chorus: 'Chorus',
@@ -74,6 +81,15 @@ const AUDIO_EFFECT_TYPE_LABELS = {
 }
 
 const AUDIO_EFFECT_PARAM_CONFIGS = {
+  autoWah: {
+    baseFrequency: { label: 'Base Freq', min: 20, max: 1000, normalize: normalizeAutoWahBaseFrequency },
+    follower: { label: 'Follower', min: 0.01, max: 1, normalize: normalizeAutoWahFollower },
+    gain: { label: 'Gain', min: 0, max: 20, normalize: normalizeAutoWahGain },
+    octaves: { label: 'Octaves', min: 0, max: 8, normalize: normalizeAutoWahOctaves },
+    q: { label: 'Q', min: 0.1, max: 10, normalize: normalizeAutoWahQ },
+    sensitivity: { label: 'Sensitivity', min: -60, max: 0, normalize: normalizeAutoWahSensitivity },
+    wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }
+  },
   chebyshev: {
     order: { label: 'Order', min: 1, max: 100, normalize: normalizeOrder },
     wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }

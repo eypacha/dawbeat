@@ -1,8 +1,14 @@
-import { BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Vibrato, connect as toneConnect } from 'tone'
+import { AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Vibrato, connect as toneConnect } from 'tone'
 import {
   normalizeBits,
   normalizeChorusDelayTime,
   normalizeChorusFrequency,
+  normalizeAutoWahBaseFrequency,
+  normalizeAutoWahFollower,
+  normalizeAutoWahGain,
+  normalizeAutoWahOctaves,
+  normalizeAutoWahQ,
+  normalizeAutoWahSensitivity,
   normalizeDecay,
   normalizeDecibels,
   normalizeDepth,
@@ -309,6 +315,19 @@ async function createAudioEffectNode(effect) {
     })
   }
 
+  if (effect.type === 'autoWah') {
+    return new AutoWah({
+      context: toneContext,
+      baseFrequency: 100,
+      octaves: 6,
+      sensitivity: 0,
+      follower: 0.2,
+      Q: 2,
+      gain: 2,
+      wet: 1
+    })
+  }
+
   return null
 }
 
@@ -413,6 +432,17 @@ async function syncAudioEffectNode(effect) {
 
   if (effect.type === 'chebyshev') {
     node.order = normalizeOrder(effect.params?.order)
+    node.wet.value = normalizeWet(effect.params?.wet)
+    return node
+  }
+
+  if (effect.type === 'autoWah') {
+    node.baseFrequency = normalizeAutoWahBaseFrequency(effect.params?.baseFrequency)
+    node.octaves = normalizeAutoWahOctaves(effect.params?.octaves)
+    node.sensitivity = normalizeAutoWahSensitivity(effect.params?.sensitivity)
+    node.follower = normalizeAutoWahFollower(effect.params?.follower)
+    node.Q.value = normalizeAutoWahQ(effect.params?.q)
+    node.gain.value = normalizeAutoWahGain(effect.params?.gain)
     node.wet.value = normalizeWet(effect.params?.wet)
     return node
   }

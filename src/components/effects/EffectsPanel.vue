@@ -167,6 +167,7 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-vue-next'
+import AudioAutoWahItem from '@/components/effects/AudioAutoWahItem.vue'
 import AudioBitCrusherItem from '@/components/effects/AudioBitCrusherItem.vue'
 import AudioCompressorItem from '@/components/effects/AudioCompressorItem.vue'
 import AudioDelayItem from '@/components/effects/AudioDelayItem.vue'
@@ -222,6 +223,10 @@ const availableFormulaEffects = [
   }
 ]
 const availableAudioEffects = [
+  {
+    name: 'Auto Wah',
+    type: 'autoWah'
+  },
   {
     name: 'BitCrusher',
     type: 'bitCrusher'
@@ -317,6 +322,10 @@ function getEffectsBySection(section) {
 }
 
 function getAudioEffectComponent(effectType) {
+  if (effectType === 'autoWah') {
+    return AudioAutoWahItem
+  }
+
   if (effectType === 'bitCrusher') {
     return AudioBitCrusherItem
   }
