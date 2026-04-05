@@ -1,4 +1,4 @@
-import { BitCrusher, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, connect as toneConnect } from 'tone'
+import { BitCrusher, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Vibrato, connect as toneConnect } from 'tone'
 import * as lamejsModule from 'lamejs'
 import bitStreamModule from 'lamejs/src/js/BitStream.js'
 import lameCoreModule from 'lamejs/src/js/Lame.js'
@@ -19,6 +19,7 @@ import {
   normalizeDecay,
   normalizeDecibels,
   normalizeBits,
+  normalizeDepth,
   normalizeDrive,
   normalizeFeedback,
   normalizeFrequency,
@@ -26,6 +27,7 @@ import {
   normalizeRatio,
   normalizeThreshold,
   normalizeTime,
+  normalizeVibratoFrequency,
   normalizeWet,
   normalizeWidth
 } from '@/services/audioEffectService'
@@ -596,6 +598,21 @@ async function createOfflineAudioEffectNode(effect, toneContext) {
     return node
   }
 
+  if (effect.type === 'vibrato') {
+    const node = new Vibrato({
+      context: toneContext,
+      frequency: 5,
+      depth: 0.1,
+      wet: 1
+    })
+
+    node.frequency.value = normalizeVibratoFrequency(effect.params?.frequency)
+    node.depth.value = normalizeDepth(effect.params?.depth)
+    node.wet.value = normalizeWet(effect.params?.wet)
+
+    return node
+  }
+
   return null
 }
 
@@ -1114,6 +1131,22 @@ async function applyOfflineAudioEffectParamValue(node, effectType, paramKey, val
   if (effectType === 'bitCrusher') {
     if (paramKey === 'bits') {
       node.bits.value = normalizeBits(value)
+      return
+    }
+
+    if (paramKey === 'wet') {
+      node.wet.value = normalizeWet(value)
+    }
+  }
+
+  if (effectType === 'vibrato') {
+    if (paramKey === 'frequency') {
+      node.frequency.value = normalizeVibratoFrequency(value)
+      return
+    }
+
+    if (paramKey === 'depth') {
+      node.depth.value = normalizeDepth(value)
       return
     }
 

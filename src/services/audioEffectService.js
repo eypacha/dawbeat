@@ -32,8 +32,25 @@ export function createAudioEffect(effect = {}) {
     case 'bitCrusher':
       return createBitCrusherAudioEffect(effect)
 
+    case 'vibrato':
+      return createVibratoAudioEffect(effect)
+
     default:
       return null
+  }
+}
+
+export function createVibratoAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'vibrato',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      frequency: normalizeVibratoFrequency(effect.params?.frequency ?? 5),
+      depth: normalizeDepth(effect.params?.depth ?? 0.1),
+      wet: normalizeWet(effect.params?.wet ?? 1)
+    }
   }
 }
 
@@ -280,6 +297,26 @@ export function normalizeBits(value) {
   }
 
   return Math.min(16, Math.max(1, Math.round(numericValue)))
+}
+
+export function normalizeVibratoFrequency(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 5
+  }
+
+  return Math.min(20, Math.max(0.1, numericValue))
+}
+
+export function normalizeDepth(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 0.1
+  }
+
+  return Math.min(1, Math.max(0, numericValue))
 }
 
 function normalizeEqFrequencies(lowFrequency, highFrequency) {

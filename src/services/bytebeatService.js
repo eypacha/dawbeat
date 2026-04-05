@@ -1,8 +1,9 @@
-import { BitCrusher, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, connect as toneConnect } from 'tone'
+import { BitCrusher, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Vibrato, connect as toneConnect } from 'tone'
 import {
   normalizeBits,
   normalizeDecay,
   normalizeDecibels,
+  normalizeDepth,
   normalizeDrive,
   normalizeFeedback,
   normalizeFrequency,
@@ -11,6 +12,7 @@ import {
   normalizeRatio,
   normalizeThreshold,
   normalizeTime,
+  normalizeVibratoFrequency,
   normalizeWet,
   normalizeWidth
 } from '@/services/audioEffectService'
@@ -276,6 +278,15 @@ async function createAudioEffectNode(effect) {
     })
   }
 
+  if (effect.type === 'vibrato') {
+    return new Vibrato({
+      context: toneContext,
+      frequency: 5,
+      depth: 0.1,
+      wet: 1
+    })
+  }
+
   return null
 }
 
@@ -358,6 +369,13 @@ async function syncAudioEffectNode(effect) {
 
   if (effect.type === 'bitCrusher') {
     node.bits.value = normalizeBits(effect.params?.bits)
+    node.wet.value = normalizeWet(effect.params?.wet)
+    return node
+  }
+
+  if (effect.type === 'vibrato') {
+    node.frequency.value = normalizeVibratoFrequency(effect.params?.frequency)
+    node.depth.value = normalizeDepth(effect.params?.depth)
     node.wet.value = normalizeWet(effect.params?.wet)
     return node
   }

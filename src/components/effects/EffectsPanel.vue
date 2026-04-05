@@ -191,6 +191,7 @@ import AudioLimiterItem from '@/components/effects/AudioLimiterItem.vue'
 import AudioMasterGainItem from '@/components/effects/AudioMasterGainItem.vue'
 import AudioReverbItem from '@/components/effects/AudioReverbItem.vue'
 import AudioStereoWidenerItem from '@/components/effects/AudioStereoWidenerItem.vue'
+import AudioVibratoItem from '@/components/effects/AudioVibratoItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
 import Divider from '@/components/ui/Divider.vue'
@@ -266,6 +267,10 @@ const availableAudioEffects = [
   {
     name: 'Reverb',
     type: 'reverb'
+  },
+  {
+    name: 'Vibrato',
+    type: 'vibrato'
   }
 ]
 const totalEffects = computed(() => audioEffects.value.length + evalEffects.value.length)
@@ -344,6 +349,10 @@ function getAudioEffectComponent(effectType) {
 
   if (effectType === 'reverb') {
     return AudioReverbItem
+  }
+
+  if (effectType === 'vibrato') {
+    return AudioVibratoItem
   }
 
   return AudioEqItem

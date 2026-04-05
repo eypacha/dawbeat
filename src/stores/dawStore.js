@@ -46,9 +46,11 @@ import {
   createLimiterAudioEffect,
   createReverbAudioEffect,
   createStereoWidenerAudioEffect,
+  createVibratoAudioEffect,
   normalizeBits,
   normalizeDecay,
   normalizeDecibels,
+  normalizeDepth,
   normalizeDrive,
   normalizeFeedback,
   normalizeFrequency,
@@ -57,6 +59,7 @@ import {
   normalizeRatio,
   normalizeThreshold,
   normalizeTime,
+  normalizeVibratoFrequency,
   normalizeWet,
   normalizeWidth
 } from '@/services/audioEffectService'
@@ -2434,6 +2437,13 @@ export const useDawStore = defineStore('dawStore', {
           const defaults = createBitCrusherAudioEffect({ id: effect.id })
           effect.enabled = defaults.enabled
           effect.params = defaults.params
+          return
+        }
+
+        if (effect.type === 'vibrato') {
+          const defaults = createVibratoAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
         }
       })
     },
@@ -2559,6 +2569,20 @@ export const useDawStore = defineStore('dawStore', {
       if (effect.type === 'bitCrusher') {
         if (typeof params.bits !== 'undefined') {
           effect.params.bits = normalizeBits(params.bits)
+        }
+
+        if (typeof params.wet !== 'undefined') {
+          effect.params.wet = normalizeWet(params.wet)
+        }
+      }
+
+      if (effect.type === 'vibrato') {
+        if (typeof params.frequency !== 'undefined') {
+          effect.params.frequency = normalizeVibratoFrequency(params.frequency)
+        }
+
+        if (typeof params.depth !== 'undefined') {
+          effect.params.depth = normalizeDepth(params.depth)
         }
 
         if (typeof params.wet !== 'undefined') {
