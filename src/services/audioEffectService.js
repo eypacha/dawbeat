@@ -47,8 +47,25 @@ export function createAudioEffect(effect = {}) {
     case 'tremolo':
       return createTremoloAudioEffect(effect)
 
+    case 'pingPongDelay':
+      return createPingPongDelayAudioEffect(effect)
+
     default:
       return null
+  }
+}
+
+export function createPingPongDelayAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'pingPongDelay',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      delayTime: normalizeTime(effect.params?.delayTime ?? 0.25),
+      feedback: normalizeFeedback(effect.params?.feedback ?? 0.5),
+      wet: normalizeWet(effect.params?.wet ?? 1)
+    }
   }
 }
 

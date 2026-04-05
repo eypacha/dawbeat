@@ -77,6 +77,7 @@ const AUDIO_EFFECT_TYPE_LABELS = {
   distortion: 'Distortion',
   eq: 'EQ3',
   limiter: 'Limiter',
+  pingPongDelay: 'Ping Pong Delay',
   reverb: 'Reverb',
   stereoWidener: 'Stereo Widener',
   tremolo: 'Tremolo',
@@ -151,6 +152,11 @@ const AUDIO_EFFECT_PARAM_CONFIGS = {
     depth: { label: 'Depth', min: 0, max: 1, normalize: normalizeDepth },
     frequency: { label: 'Frequency', min: 0.1, max: 20, normalize: normalizeTremoloFrequency },
     spread: { label: 'Spread', min: 0, max: 180, normalize: normalizeTremoloSpread },
+    wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }
+  },
+  pingPongDelay: {
+    delayTime: { label: 'Delay Time', min: 0, max: 1, normalize: normalizeTime },
+    feedback: { label: 'Feedback', min: 0, max: 1, normalize: normalizeFeedback },
     wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }
   }
 }

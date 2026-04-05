@@ -1,4 +1,4 @@
-import { AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
+import { AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, PingPongDelay, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
 import {
   normalizeBits,
   normalizeChorusDelayTime,
@@ -342,6 +342,15 @@ async function createAudioEffectNode(effect) {
     }).start()
   }
 
+  if (effect.type === 'pingPongDelay') {
+    return new PingPongDelay({
+      context: toneContext,
+      delayTime: 0.25,
+      feedback: 0.5,
+      wet: 1
+    })
+  }
+
   return null
 }
 
@@ -466,6 +475,13 @@ async function syncAudioEffectNode(effect) {
     node.depth.value = normalizeDepth(effect.params?.depth)
     node.spread = normalizeTremoloSpread(effect.params?.spread)
     node.type = normalizeTremoloType(effect.params?.type)
+    node.wet.value = normalizeWet(effect.params?.wet)
+    return node
+  }
+
+  if (effect.type === 'pingPongDelay') {
+    node.delayTime.value = normalizeTime(effect.params?.delayTime)
+    node.feedback.value = normalizeFeedback(effect.params?.feedback)
     node.wet.value = normalizeWet(effect.params?.wet)
     return node
   }

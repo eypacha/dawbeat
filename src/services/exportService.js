@@ -1,4 +1,4 @@
-import { AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
+import { AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, PingPongDelay, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
 import * as lamejsModule from 'lamejs'
 import bitStreamModule from 'lamejs/src/js/BitStream.js'
 import lameCoreModule from 'lamejs/src/js/Lame.js'
@@ -60,7 +60,7 @@ import { validateFormula } from '@/utils/formulaValidation'
 import { getClipEnd, samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 
 const SILENT_EVALUATOR = () => 0
-const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev', 'autoWah', 'tremolo']
+const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev', 'autoWah', 'tremolo', 'pingPongDelay']
 const MIN_AUTOMATION_CURVE_SAMPLES = 16
 const MAX_AUTOMATION_CURVE_SAMPLES = 128
 const EXPORT_UI_YIELD_INTERVAL_MS = 12
@@ -698,6 +698,21 @@ async function createOfflineAudioEffectNode(effect, toneContext) {
     node.depth.value = normalizeDepth(effect.params?.depth)
     node.spread = normalizeTremoloSpread(effect.params?.spread)
     node.type = normalizeTremoloType(effect.params?.type)
+    node.wet.value = normalizeWet(effect.params?.wet)
+
+    return node
+  }
+
+  if (effect.type === 'pingPongDelay') {
+    const node = new PingPongDelay({
+      context: toneContext,
+      delayTime: 0.25,
+      feedback: 0.5,
+      wet: 1
+    })
+
+    node.delayTime.value = normalizeTime(effect.params?.delayTime)
+    node.feedback.value = normalizeFeedback(effect.params?.feedback)
     node.wet.value = normalizeWet(effect.params?.wet)
 
     return node
@@ -1343,6 +1358,22 @@ async function applyOfflineAudioEffectParamValue(node, effectType, paramKey, val
       node.wet.value = normalizeWet(value)
     }
   }
+
+  if (effectType === 'pingPongDelay') {
+    if (paramKey === 'delayTime') {
+      node.delayTime.value = normalizeTime(value)
+      return
+    }
+
+    if (paramKey === 'feedback') {
+      node.feedback.value = normalizeFeedback(value)
+      return
+    }
+
+    if (paramKey === 'wet') {
+      node.wet.value = normalizeWet(value)
+    }
+  }
 }
 
 function normalizeAudioEffectParamValue(effectType, paramKey, value) {
@@ -1448,6 +1479,12 @@ function normalizeAudioEffectParamValue(effectType, paramKey, value) {
     if (paramKey === 'depth') return normalizeDepth(value)
     if (paramKey === 'spread') return normalizeTremoloSpread(value)
     if (paramKey === 'type') return normalizeTremoloType(value)
+    if (paramKey === 'wet') return normalizeWet(value)
+  }
+
+  if (effectType === 'pingPongDelay') {
+    if (paramKey === 'delayTime') return normalizeTime(value)
+    if (paramKey === 'feedback') return normalizeFeedback(value)
     if (paramKey === 'wet') return normalizeWet(value)
   }
 

@@ -181,6 +181,7 @@ import AudioChorusItem from '@/components/effects/AudioChorusItem.vue'
 import AudioChebyshevItem from '@/components/effects/AudioChebyshevItem.vue'
 import AudioVibratoItem from '@/components/effects/AudioVibratoItem.vue'
 import AudioTremoloItem from '@/components/effects/AudioTremoloItem.vue'
+import AudioPingPongDelayItem from '@/components/effects/AudioPingPongDelayItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
 import IconButton from '@/components/ui/IconButton.vue'
@@ -259,6 +260,10 @@ const availableAudioEffects = [
   {
     name: 'Limiter',
     type: 'limiter'
+  },
+  {
+    name: 'Ping Pong Delay',
+    type: 'pingPongDelay'
   },
   {
     name: 'Reverb',
@@ -365,6 +370,10 @@ function getAudioEffectComponent(effectType) {
 
   if (effectType === 'tremolo') {
     return AudioTremoloItem
+  }
+
+  if (effectType === 'pingPongDelay') {
+    return AudioPingPongDelayItem
   }
 
   if (effectType === 'chorus') {

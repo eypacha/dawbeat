@@ -49,6 +49,7 @@ import {
   createChorusAudioEffect,
   createChebyshevAudioEffect,
   createAutoWahAudioEffect,
+  createPingPongDelayAudioEffect,
   createTremoloAudioEffect,
   createVibratoAudioEffect,
   normalizeBits,
@@ -2486,6 +2487,12 @@ export const useDawStore = defineStore('dawStore', {
           effect.enabled = defaults.enabled
           effect.params = defaults.params
         }
+
+        if (effect.type === 'pingPongDelay') {
+          const defaults = createPingPongDelayAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+        }
       })
     },
 
@@ -2708,6 +2715,20 @@ export const useDawStore = defineStore('dawStore', {
 
         if (typeof params.type !== 'undefined') {
           effect.params.type = normalizeTremoloType(params.type)
+        }
+
+        if (typeof params.wet !== 'undefined') {
+          effect.params.wet = normalizeWet(params.wet)
+        }
+      }
+
+      if (effect.type === 'pingPongDelay') {
+        if (typeof params.delayTime !== 'undefined') {
+          effect.params.delayTime = normalizeTime(params.delayTime)
+        }
+
+        if (typeof params.feedback !== 'undefined') {
+          effect.params.feedback = normalizeFeedback(params.feedback)
         }
 
         if (typeof params.wet !== 'undefined') {
