@@ -68,16 +68,6 @@
       </div>
 
       <section class="mt-3 flex min-h-0 flex-1 flex-col border border-zinc-800 bg-zinc-950/50">
-        <div class="flex items-center justify-between gap-3 px-4 py-3">
-          <p class="text-xs uppercase tracking-[0.3em] text-zinc-500">
-            {{ activeSection === 'formula' ? 'Formula Effects' : 'Audio Effects' }}
-          </p>
-          <span class="text-[10px] uppercase tracking-[0.24em] text-zinc-600">
-            {{ activeSection === 'formula' ? evalEffects.length : audioEffects.length }} total
-          </span>
-        </div>
-
-        <Divider orientation="horizontal" />
 
         <div class="flex min-h-0 flex-1 flex-col p-4 pt-4">
           <div class="relative shrink-0" :data-effects-add-menu="activeSection">
