@@ -44,8 +44,27 @@ export function createAudioEffect(effect = {}) {
     case 'autoWah':
       return createAutoWahAudioEffect(effect)
 
+    case 'tremolo':
+      return createTremoloAudioEffect(effect)
+
     default:
       return null
+  }
+}
+
+export function createTremoloAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'tremolo',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      frequency: normalizeTremoloFrequency(effect.params?.frequency ?? 10),
+      depth: normalizeDepth(effect.params?.depth ?? 0.5),
+      spread: normalizeTremoloSpread(effect.params?.spread ?? 180),
+      type: normalizeTremoloType(effect.params?.type ?? 'sine'),
+      wet: normalizeWet(effect.params?.wet ?? 1)
+    }
   }
 }
 
@@ -463,6 +482,32 @@ export function normalizeAutoWahGain(value) {
   }
 
   return Math.min(20, Math.max(0, numericValue))
+}
+
+const TREMOLO_TYPES = Object.freeze(['sine', 'square', 'triangle', 'sawtooth'])
+
+export function normalizeTremoloType(value) {
+  return TREMOLO_TYPES.includes(value) ? value : 'sine'
+}
+
+export function normalizeTremoloFrequency(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 10
+  }
+
+  return Math.min(20, Math.max(0.1, numericValue))
+}
+
+export function normalizeTremoloSpread(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 180
+  }
+
+  return Math.min(180, Math.max(0, numericValue))
 }
 
 function normalizeEqFrequencies(lowFrequency, highFrequency) {

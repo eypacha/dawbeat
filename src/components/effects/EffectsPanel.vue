@@ -180,6 +180,7 @@ import AudioStereoWidenerItem from '@/components/effects/AudioStereoWidenerItem.
 import AudioChorusItem from '@/components/effects/AudioChorusItem.vue'
 import AudioChebyshevItem from '@/components/effects/AudioChebyshevItem.vue'
 import AudioVibratoItem from '@/components/effects/AudioVibratoItem.vue'
+import AudioTremoloItem from '@/components/effects/AudioTremoloItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
 import IconButton from '@/components/ui/IconButton.vue'
@@ -266,6 +267,10 @@ const availableAudioEffects = [
   {
     name: 'Stereo Widener',
     type: 'stereoWidener'
+  },
+  {
+    name: 'Tremolo',
+    type: 'tremolo'
   },
   {
     name: 'Vibrato',
@@ -356,6 +361,10 @@ function getAudioEffectComponent(effectType) {
 
   if (effectType === 'vibrato') {
     return AudioVibratoItem
+  }
+
+  if (effectType === 'tremolo') {
+    return AudioTremoloItem
   }
 
   if (effectType === 'chorus') {

@@ -1,4 +1,4 @@
-import { AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Vibrato, connect as toneConnect } from 'tone'
+import { AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
 import * as lamejsModule from 'lamejs'
 import bitStreamModule from 'lamejs/src/js/BitStream.js'
 import lameCoreModule from 'lamejs/src/js/Lame.js'
@@ -36,6 +36,9 @@ import {
   normalizeRatio,
   normalizeThreshold,
   normalizeTime,
+  normalizeTremoloFrequency,
+  normalizeTremoloSpread,
+  normalizeTremoloType,
   normalizeVibratoFrequency,
   normalizeWet,
   normalizeWidth
@@ -57,7 +60,7 @@ import { validateFormula } from '@/utils/formulaValidation'
 import { getClipEnd, samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 
 const SILENT_EVALUATOR = () => 0
-const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev', 'autoWah']
+const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev', 'autoWah', 'tremolo']
 const MIN_AUTOMATION_CURVE_SAMPLES = 16
 const MAX_AUTOMATION_CURVE_SAMPLES = 128
 const EXPORT_UI_YIELD_INTERVAL_MS = 12
@@ -68,7 +71,8 @@ const MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS = {
   chebyshev: ['order'],
   chorus: ['depth', 'delayTime'],
   distortion: ['drive'],
-  reverb: ['decay', 'preDelay']
+  reverb: ['decay', 'preDelay'],
+  tremolo: ['spread', 'type']
 }
 
 export async function downloadProjectWav(
@@ -675,6 +679,25 @@ async function createOfflineAudioEffectNode(effect, toneContext) {
     node.follower = normalizeAutoWahFollower(effect.params?.follower)
     node.Q.value = normalizeAutoWahQ(effect.params?.q)
     node.gain.value = normalizeAutoWahGain(effect.params?.gain)
+    node.wet.value = normalizeWet(effect.params?.wet)
+
+    return node
+  }
+
+  if (effect.type === 'tremolo') {
+    const node = new Tremolo({
+      context: toneContext,
+      frequency: 10,
+      depth: 0.5,
+      spread: 180,
+      type: 'sine',
+      wet: 1
+    }).start()
+
+    node.frequency.value = normalizeTremoloFrequency(effect.params?.frequency)
+    node.depth.value = normalizeDepth(effect.params?.depth)
+    node.spread = normalizeTremoloSpread(effect.params?.spread)
+    node.type = normalizeTremoloType(effect.params?.type)
     node.wet.value = normalizeWet(effect.params?.wet)
 
     return node
@@ -1294,6 +1317,32 @@ async function applyOfflineAudioEffectParamValue(node, effectType, paramKey, val
       node.wet.value = normalizeWet(value)
     }
   }
+
+  if (effectType === 'tremolo') {
+    if (paramKey === 'frequency') {
+      node.frequency.value = normalizeTremoloFrequency(value)
+      return
+    }
+
+    if (paramKey === 'depth') {
+      node.depth.value = normalizeDepth(value)
+      return
+    }
+
+    if (paramKey === 'spread') {
+      node.spread = normalizeTremoloSpread(value)
+      return
+    }
+
+    if (paramKey === 'type') {
+      node.type = normalizeTremoloType(value)
+      return
+    }
+
+    if (paramKey === 'wet') {
+      node.wet.value = normalizeWet(value)
+    }
+  }
 }
 
 function normalizeAudioEffectParamValue(effectType, paramKey, value) {
@@ -1391,6 +1440,14 @@ function normalizeAudioEffectParamValue(effectType, paramKey, value) {
     if (paramKey === 'follower') return normalizeAutoWahFollower(value)
     if (paramKey === 'q') return normalizeAutoWahQ(value)
     if (paramKey === 'gain') return normalizeAutoWahGain(value)
+    if (paramKey === 'wet') return normalizeWet(value)
+  }
+
+  if (effectType === 'tremolo') {
+    if (paramKey === 'frequency') return normalizeTremoloFrequency(value)
+    if (paramKey === 'depth') return normalizeDepth(value)
+    if (paramKey === 'spread') return normalizeTremoloSpread(value)
+    if (paramKey === 'type') return normalizeTremoloType(value)
     if (paramKey === 'wet') return normalizeWet(value)
   }
 

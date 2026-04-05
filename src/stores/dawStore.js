@@ -49,6 +49,7 @@ import {
   createChorusAudioEffect,
   createChebyshevAudioEffect,
   createAutoWahAudioEffect,
+  createTremoloAudioEffect,
   createVibratoAudioEffect,
   normalizeBits,
   normalizeDecay,
@@ -72,6 +73,9 @@ import {
   normalizeAutoWahQ,
   normalizeAutoWahSensitivity,
   normalizeOrder,
+  normalizeTremoloFrequency,
+  normalizeTremoloSpread,
+  normalizeTremoloType,
   normalizeWet,
   normalizeWidth
 } from '@/services/audioEffectService'
@@ -2476,6 +2480,12 @@ export const useDawStore = defineStore('dawStore', {
           effect.enabled = defaults.enabled
           effect.params = defaults.params
         }
+
+        if (effect.type === 'tremolo') {
+          const defaults = createTremoloAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+        }
       })
     },
 
@@ -2676,6 +2686,28 @@ export const useDawStore = defineStore('dawStore', {
 
         if (typeof params.gain !== 'undefined') {
           effect.params.gain = normalizeAutoWahGain(params.gain)
+        }
+
+        if (typeof params.wet !== 'undefined') {
+          effect.params.wet = normalizeWet(params.wet)
+        }
+      }
+
+      if (effect.type === 'tremolo') {
+        if (typeof params.frequency !== 'undefined') {
+          effect.params.frequency = normalizeTremoloFrequency(params.frequency)
+        }
+
+        if (typeof params.depth !== 'undefined') {
+          effect.params.depth = normalizeDepth(params.depth)
+        }
+
+        if (typeof params.spread !== 'undefined') {
+          effect.params.spread = normalizeTremoloSpread(params.spread)
+        }
+
+        if (typeof params.type !== 'undefined') {
+          effect.params.type = normalizeTremoloType(params.type)
         }
 
         if (typeof params.wet !== 'undefined') {

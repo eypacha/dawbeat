@@ -21,6 +21,8 @@ import {
   normalizeChorusFrequency,
   normalizeVibratoFrequency,
   normalizeOrder,
+  normalizeTremoloFrequency,
+  normalizeTremoloSpread,
   normalizeWet,
   normalizeWidth
 } from '@/services/audioEffectService'
@@ -77,6 +79,7 @@ const AUDIO_EFFECT_TYPE_LABELS = {
   limiter: 'Limiter',
   reverb: 'Reverb',
   stereoWidener: 'Stereo Widener',
+  tremolo: 'Tremolo',
   vibrato: 'Vibrato'
 }
 
@@ -142,6 +145,12 @@ const AUDIO_EFFECT_PARAM_CONFIGS = {
   vibrato: {
     depth: { label: 'Depth', min: 0, max: 1, normalize: normalizeDepth },
     frequency: { label: 'Frequency', min: 0.1, max: 20, normalize: normalizeVibratoFrequency },
+    wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }
+  },
+  tremolo: {
+    depth: { label: 'Depth', min: 0, max: 1, normalize: normalizeDepth },
+    frequency: { label: 'Frequency', min: 0.1, max: 20, normalize: normalizeTremoloFrequency },
+    spread: { label: 'Spread', min: 0, max: 180, normalize: normalizeTremoloSpread },
     wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }
   }
 }

@@ -1,4 +1,4 @@
-import { AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Vibrato, connect as toneConnect } from 'tone'
+import { AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
 import {
   normalizeBits,
   normalizeChorusDelayTime,
@@ -21,6 +21,9 @@ import {
   normalizeRatio,
   normalizeThreshold,
   normalizeTime,
+  normalizeTremoloFrequency,
+  normalizeTremoloSpread,
+  normalizeTremoloType,
   normalizeVibratoFrequency,
   normalizeWet,
   normalizeWidth
@@ -328,6 +331,17 @@ async function createAudioEffectNode(effect) {
     })
   }
 
+  if (effect.type === 'tremolo') {
+    return new Tremolo({
+      context: toneContext,
+      frequency: 10,
+      depth: 0.5,
+      spread: 180,
+      type: 'sine',
+      wet: 1
+    }).start()
+  }
+
   return null
 }
 
@@ -443,6 +457,15 @@ async function syncAudioEffectNode(effect) {
     node.follower = normalizeAutoWahFollower(effect.params?.follower)
     node.Q.value = normalizeAutoWahQ(effect.params?.q)
     node.gain.value = normalizeAutoWahGain(effect.params?.gain)
+    node.wet.value = normalizeWet(effect.params?.wet)
+    return node
+  }
+
+  if (effect.type === 'tremolo') {
+    node.frequency.value = normalizeTremoloFrequency(effect.params?.frequency)
+    node.depth.value = normalizeDepth(effect.params?.depth)
+    node.spread = normalizeTremoloSpread(effect.params?.spread)
+    node.type = normalizeTremoloType(effect.params?.type)
     node.wet.value = normalizeWet(effect.params?.wet)
     return node
   }
