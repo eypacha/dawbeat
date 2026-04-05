@@ -223,28 +223,32 @@ const availableFormulaEffects = [
 ]
 const availableAudioEffects = [
   {
-    name: 'EQ3',
-    type: 'eq'
-  },
-  {
     name: 'BitCrusher',
     type: 'bitCrusher'
+  },
+  {
+    name: 'Chebyshev',
+    type: 'chebyshev'
+  },
+  {
+    name: 'Chorus',
+    type: 'chorus'
+  },
+  {
+    name: 'Compressor',
+    type: 'compressor'
   },
   {
     name: 'Distortion',
     type: 'distortion'
   },
   {
-    name: 'Stereo Widener',
-    type: 'stereoWidener'
+    name: 'EQ3',
+    type: 'eq'
   },
   {
     name: 'Feedback Delay',
     type: 'delay'
-  },
-  {
-    name: 'Compressor',
-    type: 'compressor'
   },
   {
     name: 'Limiter',
@@ -255,16 +259,12 @@ const availableAudioEffects = [
     type: 'reverb'
   },
   {
-    name: 'Chorus',
-    type: 'chorus'
+    name: 'Stereo Widener',
+    type: 'stereoWidener'
   },
   {
     name: 'Vibrato',
     type: 'vibrato'
-  },
-  {
-    name: 'Chebyshev',
-    type: 'chebyshev'
   }
 ]
 const totalEffects = computed(() => audioEffects.value.length + evalEffects.value.length)
