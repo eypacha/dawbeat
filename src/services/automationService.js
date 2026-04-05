@@ -11,6 +11,8 @@ import {
   normalizeRatio,
   normalizeThreshold,
   normalizeTime,
+  normalizeChorusDelayTime,
+  normalizeChorusFrequency,
   normalizeVibratoFrequency,
   normalizeWet,
   normalizeWidth
@@ -58,6 +60,7 @@ const AUTOMATION_CURVE_LABELS = Object.freeze(
 
 const AUDIO_EFFECT_TYPE_LABELS = {
   bitCrusher: 'BitCrusher',
+  chorus: 'Chorus',
   compressor: 'Compressor',
   delay: 'Delay',
   distortion: 'Distortion',
@@ -69,6 +72,13 @@ const AUDIO_EFFECT_TYPE_LABELS = {
 }
 
 const AUDIO_EFFECT_PARAM_CONFIGS = {
+  chorus: {
+    delayTime: { label: 'Delay Time', min: 2, max: 20, normalize: normalizeChorusDelayTime },
+    depth: { label: 'Depth', min: 0, max: 1, normalize: normalizeDepth },
+    feedback: { label: 'Feedback', min: 0, max: 0.95, normalize: normalizeFeedback },
+    frequency: { label: 'Frequency', min: 0.1, max: 20, normalize: normalizeChorusFrequency },
+    wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }
+  },
   bitCrusher: {
     bits: { label: 'Bits', min: 1, max: 16, normalize: normalizeBits },
     wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }

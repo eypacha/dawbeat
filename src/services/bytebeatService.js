@@ -1,6 +1,8 @@
-import { BitCrusher, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Vibrato, connect as toneConnect } from 'tone'
+import { BitCrusher, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Vibrato, connect as toneConnect } from 'tone'
 import {
   normalizeBits,
+  normalizeChorusDelayTime,
+  normalizeChorusFrequency,
   normalizeDecay,
   normalizeDecibels,
   normalizeDepth,
@@ -287,6 +289,17 @@ async function createAudioEffectNode(effect) {
     })
   }
 
+  if (effect.type === 'chorus') {
+    return new Chorus({
+      context: toneContext,
+      frequency: 1.5,
+      delayTime: 3.5,
+      depth: 0.7,
+      feedback: 0,
+      wet: 0.5
+    }).start()
+  }
+
   return null
 }
 
@@ -376,6 +389,15 @@ async function syncAudioEffectNode(effect) {
   if (effect.type === 'vibrato') {
     node.frequency.value = normalizeVibratoFrequency(effect.params?.frequency)
     node.depth.value = normalizeDepth(effect.params?.depth)
+    node.wet.value = normalizeWet(effect.params?.wet)
+    return node
+  }
+
+  if (effect.type === 'chorus') {
+    node.frequency.value = normalizeChorusFrequency(effect.params?.frequency)
+    node.depth = normalizeDepth(effect.params?.depth)
+    node.delayTime = normalizeChorusDelayTime(effect.params?.delayTime)
+    node.feedback.value = normalizeFeedback(effect.params?.feedback)
     node.wet.value = normalizeWet(effect.params?.wet)
     return node
   }

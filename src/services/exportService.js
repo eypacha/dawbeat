@@ -1,4 +1,4 @@
-import { BitCrusher, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Vibrato, connect as toneConnect } from 'tone'
+import { BitCrusher, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Vibrato, connect as toneConnect } from 'tone'
 import * as lamejsModule from 'lamejs'
 import bitStreamModule from 'lamejs/src/js/BitStream.js'
 import lameCoreModule from 'lamejs/src/js/Lame.js'
@@ -19,6 +19,8 @@ import {
   normalizeDecay,
   normalizeDecibels,
   normalizeBits,
+  normalizeChorusDelayTime,
+  normalizeChorusFrequency,
   normalizeDepth,
   normalizeDrive,
   normalizeFeedback,
@@ -55,6 +57,7 @@ const EXPORT_UI_YIELD_INTERVAL_MS = 12
 const EXPORT_SAMPLE_YIELD_CHUNK_SIZE = 2048
 const MP3_ENCODER = resolveMp3Encoder()
 const MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS = {
+  chorus: ['depth', 'delayTime'],
   distortion: ['drive'],
   reverb: ['decay', 'preDelay']
 }
@@ -613,6 +616,25 @@ async function createOfflineAudioEffectNode(effect, toneContext) {
     return node
   }
 
+  if (effect.type === 'chorus') {
+    const node = new Chorus({
+      context: toneContext,
+      frequency: 1.5,
+      delayTime: 3.5,
+      depth: 0.7,
+      feedback: 0,
+      wet: 0.5
+    }).start()
+
+    node.frequency.value = normalizeChorusFrequency(effect.params?.frequency)
+    node.depth = normalizeDepth(effect.params?.depth)
+    node.delayTime = normalizeChorusDelayTime(effect.params?.delayTime)
+    node.feedback.value = normalizeFeedback(effect.params?.feedback)
+    node.wet.value = normalizeWet(effect.params?.wet)
+
+    return node
+  }
+
   return null
 }
 
@@ -1154,6 +1176,32 @@ async function applyOfflineAudioEffectParamValue(node, effectType, paramKey, val
       node.wet.value = normalizeWet(value)
     }
   }
+
+  if (effectType === 'chorus') {
+    if (paramKey === 'frequency') {
+      node.frequency.value = normalizeChorusFrequency(value)
+      return
+    }
+
+    if (paramKey === 'depth') {
+      node.depth = normalizeDepth(value)
+      return
+    }
+
+    if (paramKey === 'delayTime') {
+      node.delayTime = normalizeChorusDelayTime(value)
+      return
+    }
+
+    if (paramKey === 'feedback') {
+      node.feedback.value = normalizeFeedback(value)
+      return
+    }
+
+    if (paramKey === 'wet') {
+      node.wet.value = normalizeWet(value)
+    }
+  }
 }
 
 function normalizeAudioEffectParamValue(effectType, paramKey, value) {
@@ -1229,6 +1277,14 @@ function normalizeAudioEffectParamValue(effectType, paramKey, value) {
     if (paramKey === 'preDelay') {
       return normalizeTime(value)
     }
+  }
+
+  if (effectType === 'chorus') {
+    if (paramKey === 'frequency') return normalizeChorusFrequency(value)
+    if (paramKey === 'depth') return normalizeDepth(value)
+    if (paramKey === 'delayTime') return normalizeChorusDelayTime(value)
+    if (paramKey === 'feedback') return normalizeFeedback(value)
+    if (paramKey === 'wet') return normalizeWet(value)
   }
 
   return value

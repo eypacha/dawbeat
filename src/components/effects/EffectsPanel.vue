@@ -191,6 +191,7 @@ import AudioLimiterItem from '@/components/effects/AudioLimiterItem.vue'
 import AudioMasterGainItem from '@/components/effects/AudioMasterGainItem.vue'
 import AudioReverbItem from '@/components/effects/AudioReverbItem.vue'
 import AudioStereoWidenerItem from '@/components/effects/AudioStereoWidenerItem.vue'
+import AudioChorusItem from '@/components/effects/AudioChorusItem.vue'
 import AudioVibratoItem from '@/components/effects/AudioVibratoItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
@@ -267,6 +268,10 @@ const availableAudioEffects = [
   {
     name: 'Reverb',
     type: 'reverb'
+  },
+  {
+    name: 'Chorus',
+    type: 'chorus'
   },
   {
     name: 'Vibrato',
@@ -353,6 +358,10 @@ function getAudioEffectComponent(effectType) {
 
   if (effectType === 'vibrato') {
     return AudioVibratoItem
+  }
+
+  if (effectType === 'chorus') {
+    return AudioChorusItem
   }
 
   return AudioEqItem

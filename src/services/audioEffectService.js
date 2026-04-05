@@ -35,8 +35,27 @@ export function createAudioEffect(effect = {}) {
     case 'vibrato':
       return createVibratoAudioEffect(effect)
 
+    case 'chorus':
+      return createChorusAudioEffect(effect)
+
     default:
       return null
+  }
+}
+
+export function createChorusAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'chorus',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      frequency: normalizeChorusFrequency(effect.params?.frequency ?? 1.5),
+      delayTime: normalizeChorusDelayTime(effect.params?.delayTime ?? 3.5),
+      depth: normalizeDepth(effect.params?.depth ?? 0.7),
+      feedback: normalizeFeedback(effect.params?.feedback ?? 0),
+      wet: normalizeWet(effect.params?.wet ?? 0.5)
+    }
   }
 }
 
@@ -317,6 +336,26 @@ export function normalizeDepth(value) {
   }
 
   return Math.min(1, Math.max(0, numericValue))
+}
+
+export function normalizeChorusFrequency(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 1.5
+  }
+
+  return Math.min(20, Math.max(0.1, numericValue))
+}
+
+export function normalizeChorusDelayTime(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 3.5
+  }
+
+  return Math.min(20, Math.max(2, numericValue))
 }
 
 function normalizeEqFrequencies(lowFrequency, highFrequency) {

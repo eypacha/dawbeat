@@ -46,6 +46,7 @@ import {
   createLimiterAudioEffect,
   createReverbAudioEffect,
   createStereoWidenerAudioEffect,
+  createChorusAudioEffect,
   createVibratoAudioEffect,
   normalizeBits,
   normalizeDecay,
@@ -59,6 +60,8 @@ import {
   normalizeRatio,
   normalizeThreshold,
   normalizeTime,
+  normalizeChorusDelayTime,
+  normalizeChorusFrequency,
   normalizeVibratoFrequency,
   normalizeWet,
   normalizeWidth
@@ -2444,6 +2447,13 @@ export const useDawStore = defineStore('dawStore', {
           const defaults = createVibratoAudioEffect({ id: effect.id })
           effect.enabled = defaults.enabled
           effect.params = defaults.params
+          return
+        }
+
+        if (effect.type === 'chorus') {
+          const defaults = createChorusAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
         }
       })
     },
@@ -2583,6 +2593,28 @@ export const useDawStore = defineStore('dawStore', {
 
         if (typeof params.depth !== 'undefined') {
           effect.params.depth = normalizeDepth(params.depth)
+        }
+
+        if (typeof params.wet !== 'undefined') {
+          effect.params.wet = normalizeWet(params.wet)
+        }
+      }
+
+      if (effect.type === 'chorus') {
+        if (typeof params.frequency !== 'undefined') {
+          effect.params.frequency = normalizeChorusFrequency(params.frequency)
+        }
+
+        if (typeof params.delayTime !== 'undefined') {
+          effect.params.delayTime = normalizeChorusDelayTime(params.delayTime)
+        }
+
+        if (typeof params.depth !== 'undefined') {
+          effect.params.depth = normalizeDepth(params.depth)
+        }
+
+        if (typeof params.feedback !== 'undefined') {
+          effect.params.feedback = normalizeFeedback(params.feedback)
         }
 
         if (typeof params.wet !== 'undefined') {
