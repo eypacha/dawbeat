@@ -1,4 +1,4 @@
-import { BitCrusher, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Vibrato, connect as toneConnect } from 'tone'
+import { BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Reverb, StereoWidener, Vibrato, connect as toneConnect } from 'tone'
 import {
   normalizeBits,
   normalizeChorusDelayTime,
@@ -11,6 +11,7 @@ import {
   normalizeFrequency,
   normalizeKnee,
   normalizeMasterGain,
+  normalizeOrder,
   normalizeRatio,
   normalizeThreshold,
   normalizeTime,
@@ -300,6 +301,14 @@ async function createAudioEffectNode(effect) {
     }).start()
   }
 
+  if (effect.type === 'chebyshev') {
+    return new Chebyshev({
+      context: toneContext,
+      order: 50,
+      wet: 1
+    })
+  }
+
   return null
 }
 
@@ -398,6 +407,12 @@ async function syncAudioEffectNode(effect) {
     node.depth = normalizeDepth(effect.params?.depth)
     node.delayTime = normalizeChorusDelayTime(effect.params?.delayTime)
     node.feedback.value = normalizeFeedback(effect.params?.feedback)
+    node.wet.value = normalizeWet(effect.params?.wet)
+    return node
+  }
+
+  if (effect.type === 'chebyshev') {
+    node.order = normalizeOrder(effect.params?.order)
     node.wet.value = normalizeWet(effect.params?.wet)
     return node
   }

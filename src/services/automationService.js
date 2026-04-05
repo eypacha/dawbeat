@@ -14,6 +14,7 @@ import {
   normalizeChorusDelayTime,
   normalizeChorusFrequency,
   normalizeVibratoFrequency,
+  normalizeOrder,
   normalizeWet,
   normalizeWidth
 } from '@/services/audioEffectService'
@@ -60,6 +61,7 @@ const AUTOMATION_CURVE_LABELS = Object.freeze(
 
 const AUDIO_EFFECT_TYPE_LABELS = {
   bitCrusher: 'BitCrusher',
+  chebyshev: 'Chebyshev',
   chorus: 'Chorus',
   compressor: 'Compressor',
   delay: 'Delay',
@@ -72,6 +74,10 @@ const AUDIO_EFFECT_TYPE_LABELS = {
 }
 
 const AUDIO_EFFECT_PARAM_CONFIGS = {
+  chebyshev: {
+    order: { label: 'Order', min: 1, max: 100, normalize: normalizeOrder },
+    wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }
+  },
   chorus: {
     delayTime: { label: 'Delay Time', min: 2, max: 20, normalize: normalizeChorusDelayTime },
     depth: { label: 'Depth', min: 0, max: 1, normalize: normalizeDepth },

@@ -47,6 +47,7 @@ import {
   createReverbAudioEffect,
   createStereoWidenerAudioEffect,
   createChorusAudioEffect,
+  createChebyshevAudioEffect,
   createVibratoAudioEffect,
   normalizeBits,
   normalizeDecay,
@@ -63,6 +64,7 @@ import {
   normalizeChorusDelayTime,
   normalizeChorusFrequency,
   normalizeVibratoFrequency,
+  normalizeOrder,
   normalizeWet,
   normalizeWidth
 } from '@/services/audioEffectService'
@@ -2455,6 +2457,12 @@ export const useDawStore = defineStore('dawStore', {
           effect.enabled = defaults.enabled
           effect.params = defaults.params
         }
+
+        if (effect.type === 'chebyshev') {
+          const defaults = createChebyshevAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+        }
       })
     },
 
@@ -2615,6 +2623,16 @@ export const useDawStore = defineStore('dawStore', {
 
         if (typeof params.feedback !== 'undefined') {
           effect.params.feedback = normalizeFeedback(params.feedback)
+        }
+
+        if (typeof params.wet !== 'undefined') {
+          effect.params.wet = normalizeWet(params.wet)
+        }
+      }
+
+      if (effect.type === 'chebyshev') {
+        if (typeof params.order !== 'undefined') {
+          effect.params.order = normalizeOrder(params.order)
         }
 
         if (typeof params.wet !== 'undefined') {

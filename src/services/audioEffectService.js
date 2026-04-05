@@ -38,8 +38,24 @@ export function createAudioEffect(effect = {}) {
     case 'chorus':
       return createChorusAudioEffect(effect)
 
+    case 'chebyshev':
+      return createChebyshevAudioEffect(effect)
+
     default:
       return null
+  }
+}
+
+export function createChebyshevAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'chebyshev',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      order: normalizeOrder(effect.params?.order ?? 50),
+      wet: normalizeWet(effect.params?.wet ?? 1)
+    }
   }
 }
 
@@ -356,6 +372,16 @@ export function normalizeChorusDelayTime(value) {
   }
 
   return Math.min(20, Math.max(2, numericValue))
+}
+
+export function normalizeOrder(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 50
+  }
+
+  return Math.min(100, Math.max(1, Math.round(numericValue)))
 }
 
 function normalizeEqFrequencies(lowFrequency, highFrequency) {

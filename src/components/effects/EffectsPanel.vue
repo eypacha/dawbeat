@@ -182,10 +182,10 @@ import AudioMasterGainItem from '@/components/effects/AudioMasterGainItem.vue'
 import AudioReverbItem from '@/components/effects/AudioReverbItem.vue'
 import AudioStereoWidenerItem from '@/components/effects/AudioStereoWidenerItem.vue'
 import AudioChorusItem from '@/components/effects/AudioChorusItem.vue'
+import AudioChebyshevItem from '@/components/effects/AudioChebyshevItem.vue'
 import AudioVibratoItem from '@/components/effects/AudioVibratoItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
-import Divider from '@/components/ui/Divider.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import Panel from '@/components/ui/Panel.vue'
 import { resolveAudioEffectAtTime } from '@/services/automationService'
@@ -266,6 +266,10 @@ const availableAudioEffects = [
   {
     name: 'Vibrato',
     type: 'vibrato'
+  },
+  {
+    name: 'Chebyshev',
+    type: 'chebyshev'
   }
 ]
 const totalEffects = computed(() => audioEffects.value.length + evalEffects.value.length)
@@ -352,6 +356,10 @@ function getAudioEffectComponent(effectType) {
 
   if (effectType === 'chorus') {
     return AudioChorusItem
+  }
+
+  if (effectType === 'chebyshev') {
+    return AudioChebyshevItem
   }
 
   return AudioEqItem
