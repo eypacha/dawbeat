@@ -20,7 +20,7 @@ The main app is desktop-oriented. On phones/tablets, the companion view is inten
 
 - Multi-lane timeline with formula tracks, variable tracks, value tracker tracks, automation lanes, and section labels.
 - Clip editing workflows including move, resize, duplicate, marquee selection, group editing, copy/paste, nudging, and undo/redo history.
-- Formula evaluation with waveform previews and an evaluated expression panel.
+- Formula evaluation with waveform previews, an evaluated expression panel, and a Simplify button to replace the current formula with a simplified version.
 - Variable tracks and value trackers with keyboard override, variable binding, MIDI CC, MIDI Note, MIDI learn, and live recording workflows.
 - Automation lanes for master gain and audio effect parameters, including curve controls and live remote input.
 - Audio effects: Auto Filter, Auto Panner, Auto Wah, BitCrusher, Chebyshev, Chorus, Compressor, Distortion, EQ3, Feedback Delay, Freeverb, Gate, JC Reverb, Limiter, Mid/Side Compressor, Multiband Compressor, Phaser, Ping Pong Delay, Pitch Shift, Reverb, Stereo Widener, Tremolo, Vibrato, and Master Gain.
