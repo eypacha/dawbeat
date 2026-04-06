@@ -12,6 +12,7 @@
     "@supabase/supabase-js": "^2.100.1",
     "lamejs": "^1.2.1",
     "lucide-vue-next": "^0.517.0",
+    "nerdamer": "^1.1.13",
     "opus-recorder": "^8.0.5",
     "peerjs": "^1.5.5",
     "pinia": "^3.0.4",

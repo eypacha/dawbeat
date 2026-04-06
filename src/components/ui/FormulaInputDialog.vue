@@ -10,9 +10,10 @@
     </template>
 
     <template v-if="draftStereo">
-      <label class="mt-4 block text-xs uppercase tracking-[0.18em] text-zinc-500">
-        Left
-      </label>
+      <div class="mt-4 flex items-center justify-between">
+        <span class="text-xs uppercase tracking-[0.18em] text-zinc-500">Left</span>
+        <button type="button" class="text-[10px] uppercase tracking-[0.12em] text-zinc-500 transition hover:text-zinc-200" @click="handleSimplify('left')">Simplify</button>
+      </div>
 
       <div class="formula-editor mt-2">
         <div
@@ -38,9 +39,10 @@
         />
       </div>
 
-      <label class="mt-4 block text-xs uppercase tracking-[0.18em] text-zinc-500">
-        Right
-      </label>
+      <div class="mt-4 flex items-center justify-between">
+        <span class="text-xs uppercase tracking-[0.18em] text-zinc-500">Right</span>
+        <button type="button" class="text-[10px] uppercase tracking-[0.12em] text-zinc-500 transition hover:text-zinc-200" @click="handleSimplify('right')">Simplify</button>
+      </div>
 
       <div class="formula-editor mt-2">
         <div
@@ -68,9 +70,10 @@
     </template>
 
     <template v-else>
-      <label class="mt-4 block text-xs uppercase tracking-[0.18em] text-zinc-500">
-        {{ label }}
-      </label>
+      <div class="mt-4 flex items-center justify-between">
+        <span class="text-xs uppercase tracking-[0.18em] text-zinc-500">{{ label }}</span>
+        <button type="button" class="text-[10px] uppercase tracking-[0.12em] text-zinc-500 transition hover:text-zinc-200" @click="handleSimplify('mono')">Simplify</button>
+      </div>
 
       <div class="formula-editor mt-2">
         <div
@@ -197,6 +200,7 @@ import {
 } from '@/services/valueTrackerService'
 import { renderFormulaTokensToHtmlWithOptions } from '@/utils/formulaTokenizer'
 import { validateFormulaWithOptions } from '@/utils/formulaValidation'
+import formulaSimplifier from '@/services/formulaSimplifier'
 
 const props = defineProps({
   initialValue: {
@@ -611,6 +615,13 @@ function focusActiveTextarea(select = false) {
   if (select) {
     textarea.select()
   }
+}
+
+function handleSimplify(kind) {
+  const simplified = formulaSimplifier(getDraftValueByKind(kind))
+  setDraftValueByKind(kind, simplified)
+  syncFormulaValidity()
+  void nextTick(() => syncHighlightScroll(kind))
 }
 
 function getDraftValueByKind(kind) {
