@@ -1,4 +1,4 @@
-import { AutoFilter, AutoPanner, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Freeverb, Gate, JCReverb, Limiter, Phaser, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
+import { AutoFilter, AutoPanner, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Freeverb, Gate, JCReverb, Limiter, MidSideCompressor, MultibandCompressor, Phaser, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
 import {
   normalizeBits,
   normalizeChorusDelayTime,
@@ -260,6 +260,25 @@ async function createAudioEffectNode(effect) {
     })
   }
 
+  if (effect.type === 'midSideCompressor') {
+    return new MidSideCompressor({
+      context: toneContext,
+      mid: { threshold: -24, ratio: 3, attack: 0.02, release: 0.03, knee: 16 },
+      side: { threshold: -30, ratio: 6, attack: 0.03, release: 0.25, knee: 10 }
+    })
+  }
+
+  if (effect.type === 'multibandCompressor') {
+    return new MultibandCompressor({
+      context: toneContext,
+      lowFrequency: 250,
+      highFrequency: 2000,
+      low: { threshold: -30, ratio: 6, attack: 0.03, release: 0.25, knee: 10 },
+      mid: { threshold: -24, ratio: 3, attack: 0.02, release: 0.03, knee: 16 },
+      high: { threshold: -24, ratio: 3, attack: 0.02, release: 0.03, knee: 16 }
+    })
+  }
+
   if (effect.type === 'delay') {
     return new FeedbackDelay({
       context: toneContext,
@@ -485,6 +504,41 @@ async function syncAudioEffectNode(effect) {
 
   if (effect.type === 'stereoWidener') {
     node.width.value = normalizeWidth(effect.params?.width)
+    return node
+  }
+
+  if (effect.type === 'midSideCompressor') {
+    node.mid.threshold.value = normalizeThreshold(effect.params?.midThreshold)
+    node.mid.ratio.value = normalizeRatio(effect.params?.midRatio)
+    node.mid.attack.value = normalizeTime(effect.params?.midAttack)
+    node.mid.release.value = normalizeTime(effect.params?.midRelease)
+    node.mid.knee.value = normalizeKnee(effect.params?.midKnee)
+    node.side.threshold.value = normalizeThreshold(effect.params?.sideThreshold)
+    node.side.ratio.value = normalizeRatio(effect.params?.sideRatio)
+    node.side.attack.value = normalizeTime(effect.params?.sideAttack)
+    node.side.release.value = normalizeTime(effect.params?.sideRelease)
+    node.side.knee.value = normalizeKnee(effect.params?.sideKnee)
+    return node
+  }
+
+  if (effect.type === 'multibandCompressor') {
+    node.lowFrequency.value = normalizeFrequency(effect.params?.lowFrequency)
+    node.highFrequency.value = normalizeFrequency(effect.params?.highFrequency)
+    node.low.threshold.value = normalizeThreshold(effect.params?.lowThreshold)
+    node.low.ratio.value = normalizeRatio(effect.params?.lowRatio)
+    node.low.attack.value = normalizeTime(effect.params?.lowAttack)
+    node.low.release.value = normalizeTime(effect.params?.lowRelease)
+    node.low.knee.value = normalizeKnee(effect.params?.lowKnee)
+    node.mid.threshold.value = normalizeThreshold(effect.params?.midThreshold)
+    node.mid.ratio.value = normalizeRatio(effect.params?.midRatio)
+    node.mid.attack.value = normalizeTime(effect.params?.midAttack)
+    node.mid.release.value = normalizeTime(effect.params?.midRelease)
+    node.mid.knee.value = normalizeKnee(effect.params?.midKnee)
+    node.high.threshold.value = normalizeThreshold(effect.params?.highThreshold)
+    node.high.ratio.value = normalizeRatio(effect.params?.highRatio)
+    node.high.attack.value = normalizeTime(effect.params?.highAttack)
+    node.high.release.value = normalizeTime(effect.params?.highRelease)
+    node.high.knee.value = normalizeKnee(effect.params?.highKnee)
     return node
   }
 

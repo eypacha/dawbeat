@@ -1,4 +1,4 @@
-import { AutoFilter, AutoPanner, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Freeverb, Gate, JCReverb, Limiter, Phaser, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
+import { AutoFilter, AutoPanner, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Freeverb, Gate, JCReverb, Limiter, MidSideCompressor, MultibandCompressor, Phaser, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
 import * as lamejsModule from 'lamejs'
 import bitStreamModule from 'lamejs/src/js/BitStream.js'
 import lameCoreModule from 'lamejs/src/js/Lame.js'
@@ -79,7 +79,7 @@ import { validateFormula } from '@/utils/formulaValidation'
 import { getClipEnd, samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 
 const SILENT_EVALUATOR = () => 0
-const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev', 'autoWah', 'tremolo', 'pingPongDelay', 'pitchShift', 'autoFilter', 'autoPanner', 'phaser', 'freeverb', 'gate', 'jcReverb']
+const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev', 'autoWah', 'tremolo', 'pingPongDelay', 'pitchShift', 'autoFilter', 'autoPanner', 'phaser', 'freeverb', 'gate', 'jcReverb', 'midSideCompressor', 'multibandCompressor']
 const MIN_AUTOMATION_CURVE_SAMPLES = 16
 const MAX_AUTOMATION_CURVE_SAMPLES = 128
 const EXPORT_UI_YIELD_INTERVAL_MS = 12
@@ -577,6 +577,58 @@ async function createOfflineAudioEffectNode(effect, toneContext) {
     node.delayTime.value = normalizeTime(effect.params?.delayTime)
     node.feedback.value = normalizeFeedback(effect.params?.feedback)
     node.wet.value = normalizeWet(effect.params?.wet)
+
+    return node
+  }
+
+  if (effect.type === 'midSideCompressor') {
+    const node = new MidSideCompressor({
+      context: toneContext,
+      mid: { threshold: -24, ratio: 3, attack: 0.02, release: 0.03, knee: 16 },
+      side: { threshold: -30, ratio: 6, attack: 0.03, release: 0.25, knee: 10 }
+    })
+
+    node.mid.threshold.value = normalizeThreshold(effect.params?.midThreshold)
+    node.mid.ratio.value = normalizeRatio(effect.params?.midRatio)
+    node.mid.attack.value = normalizeTime(effect.params?.midAttack)
+    node.mid.release.value = normalizeTime(effect.params?.midRelease)
+    node.mid.knee.value = normalizeKnee(effect.params?.midKnee)
+    node.side.threshold.value = normalizeThreshold(effect.params?.sideThreshold)
+    node.side.ratio.value = normalizeRatio(effect.params?.sideRatio)
+    node.side.attack.value = normalizeTime(effect.params?.sideAttack)
+    node.side.release.value = normalizeTime(effect.params?.sideRelease)
+    node.side.knee.value = normalizeKnee(effect.params?.sideKnee)
+
+    return node
+  }
+
+  if (effect.type === 'multibandCompressor') {
+    const node = new MultibandCompressor({
+      context: toneContext,
+      lowFrequency: 250,
+      highFrequency: 2000,
+      low: { threshold: -30, ratio: 6, attack: 0.03, release: 0.25, knee: 10 },
+      mid: { threshold: -24, ratio: 3, attack: 0.02, release: 0.03, knee: 16 },
+      high: { threshold: -24, ratio: 3, attack: 0.02, release: 0.03, knee: 16 }
+    })
+
+    node.lowFrequency.value = normalizeFrequency(effect.params?.lowFrequency)
+    node.highFrequency.value = normalizeFrequency(effect.params?.highFrequency)
+    node.low.threshold.value = normalizeThreshold(effect.params?.lowThreshold)
+    node.low.ratio.value = normalizeRatio(effect.params?.lowRatio)
+    node.low.attack.value = normalizeTime(effect.params?.lowAttack)
+    node.low.release.value = normalizeTime(effect.params?.lowRelease)
+    node.low.knee.value = normalizeKnee(effect.params?.lowKnee)
+    node.mid.threshold.value = normalizeThreshold(effect.params?.midThreshold)
+    node.mid.ratio.value = normalizeRatio(effect.params?.midRatio)
+    node.mid.attack.value = normalizeTime(effect.params?.midAttack)
+    node.mid.release.value = normalizeTime(effect.params?.midRelease)
+    node.mid.knee.value = normalizeKnee(effect.params?.midKnee)
+    node.high.threshold.value = normalizeThreshold(effect.params?.highThreshold)
+    node.high.ratio.value = normalizeRatio(effect.params?.highRatio)
+    node.high.attack.value = normalizeTime(effect.params?.highAttack)
+    node.high.release.value = normalizeTime(effect.params?.highRelease)
+    node.high.knee.value = normalizeKnee(effect.params?.highKnee)
 
     return node
   }
@@ -1198,6 +1250,39 @@ function getOfflineAudioEffectAutomationTarget(node, effectType, paramKey) {
     }
   }
 
+  if (effectType === 'midSideCompressor') {
+    if (paramKey === 'midThreshold') return node.mid.threshold
+    if (paramKey === 'midRatio') return node.mid.ratio
+    if (paramKey === 'midAttack') return node.mid.attack
+    if (paramKey === 'midRelease') return node.mid.release
+    if (paramKey === 'midKnee') return node.mid.knee
+    if (paramKey === 'sideThreshold') return node.side.threshold
+    if (paramKey === 'sideRatio') return node.side.ratio
+    if (paramKey === 'sideAttack') return node.side.attack
+    if (paramKey === 'sideRelease') return node.side.release
+    if (paramKey === 'sideKnee') return node.side.knee
+  }
+
+  if (effectType === 'multibandCompressor') {
+    if (paramKey === 'lowFrequency') return node.lowFrequency
+    if (paramKey === 'highFrequency') return node.highFrequency
+    if (paramKey === 'lowThreshold') return node.low.threshold
+    if (paramKey === 'lowRatio') return node.low.ratio
+    if (paramKey === 'lowAttack') return node.low.attack
+    if (paramKey === 'lowRelease') return node.low.release
+    if (paramKey === 'lowKnee') return node.low.knee
+    if (paramKey === 'midThreshold') return node.mid.threshold
+    if (paramKey === 'midRatio') return node.mid.ratio
+    if (paramKey === 'midAttack') return node.mid.attack
+    if (paramKey === 'midRelease') return node.mid.release
+    if (paramKey === 'midKnee') return node.mid.knee
+    if (paramKey === 'highThreshold') return node.high.threshold
+    if (paramKey === 'highRatio') return node.high.ratio
+    if (paramKey === 'highAttack') return node.high.attack
+    if (paramKey === 'highRelease') return node.high.release
+    if (paramKey === 'highKnee') return node.high.knee
+  }
+
   if (effectType === 'compressor') {
     if (paramKey === 'threshold') {
       return node.threshold
@@ -1320,6 +1405,39 @@ async function applyOfflineAudioEffectParamValue(node, effectType, paramKey, val
     }
 
     return
+  }
+
+  if (effectType === 'midSideCompressor') {
+    if (paramKey === 'midThreshold') { node.mid.threshold.value = normalizeThreshold(value); return }
+    if (paramKey === 'midRatio') { node.mid.ratio.value = normalizeRatio(value); return }
+    if (paramKey === 'midAttack') { node.mid.attack.value = normalizeTime(value); return }
+    if (paramKey === 'midRelease') { node.mid.release.value = normalizeTime(value); return }
+    if (paramKey === 'midKnee') { node.mid.knee.value = normalizeKnee(value); return }
+    if (paramKey === 'sideThreshold') { node.side.threshold.value = normalizeThreshold(value); return }
+    if (paramKey === 'sideRatio') { node.side.ratio.value = normalizeRatio(value); return }
+    if (paramKey === 'sideAttack') { node.side.attack.value = normalizeTime(value); return }
+    if (paramKey === 'sideRelease') { node.side.release.value = normalizeTime(value); return }
+    if (paramKey === 'sideKnee') { node.side.knee.value = normalizeKnee(value); return }
+  }
+
+  if (effectType === 'multibandCompressor') {
+    if (paramKey === 'lowFrequency') { node.lowFrequency.value = normalizeFrequency(value); return }
+    if (paramKey === 'highFrequency') { node.highFrequency.value = normalizeFrequency(value); return }
+    if (paramKey === 'lowThreshold') { node.low.threshold.value = normalizeThreshold(value); return }
+    if (paramKey === 'lowRatio') { node.low.ratio.value = normalizeRatio(value); return }
+    if (paramKey === 'lowAttack') { node.low.attack.value = normalizeTime(value); return }
+    if (paramKey === 'lowRelease') { node.low.release.value = normalizeTime(value); return }
+    if (paramKey === 'lowKnee') { node.low.knee.value = normalizeKnee(value); return }
+    if (paramKey === 'midThreshold') { node.mid.threshold.value = normalizeThreshold(value); return }
+    if (paramKey === 'midRatio') { node.mid.ratio.value = normalizeRatio(value); return }
+    if (paramKey === 'midAttack') { node.mid.attack.value = normalizeTime(value); return }
+    if (paramKey === 'midRelease') { node.mid.release.value = normalizeTime(value); return }
+    if (paramKey === 'midKnee') { node.mid.knee.value = normalizeKnee(value); return }
+    if (paramKey === 'highThreshold') { node.high.threshold.value = normalizeThreshold(value); return }
+    if (paramKey === 'highRatio') { node.high.ratio.value = normalizeRatio(value); return }
+    if (paramKey === 'highAttack') { node.high.attack.value = normalizeTime(value); return }
+    if (paramKey === 'highRelease') { node.high.release.value = normalizeTime(value); return }
+    if (paramKey === 'highKnee') { node.high.knee.value = normalizeKnee(value); return }
   }
 
   if (effectType === 'compressor') {
@@ -1703,6 +1821,21 @@ function normalizeAudioEffectParamValue(effectType, paramKey, value) {
     if (paramKey === 'wet') {
       return normalizeWet(value)
     }
+  }
+
+  if (effectType === 'midSideCompressor') {
+    if (paramKey === 'midThreshold' || paramKey === 'sideThreshold') return normalizeThreshold(value)
+    if (paramKey === 'midRatio' || paramKey === 'sideRatio') return normalizeRatio(value)
+    if (paramKey === 'midAttack' || paramKey === 'sideAttack' || paramKey === 'midRelease' || paramKey === 'sideRelease') return normalizeTime(value)
+    if (paramKey === 'midKnee' || paramKey === 'sideKnee') return normalizeKnee(value)
+  }
+
+  if (effectType === 'multibandCompressor') {
+    if (paramKey === 'lowFrequency' || paramKey === 'highFrequency') return normalizeFrequency(value)
+    if (paramKey === 'lowThreshold' || paramKey === 'midThreshold' || paramKey === 'highThreshold') return normalizeThreshold(value)
+    if (paramKey === 'lowRatio' || paramKey === 'midRatio' || paramKey === 'highRatio') return normalizeRatio(value)
+    if (paramKey === 'lowAttack' || paramKey === 'midAttack' || paramKey === 'highAttack' || paramKey === 'lowRelease' || paramKey === 'midRelease' || paramKey === 'highRelease') return normalizeTime(value)
+    if (paramKey === 'lowKnee' || paramKey === 'midKnee' || paramKey === 'highKnee') return normalizeKnee(value)
   }
 
   if (effectType === 'compressor') {

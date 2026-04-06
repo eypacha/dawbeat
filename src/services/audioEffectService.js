@@ -71,6 +71,12 @@ export function createAudioEffect(effect = {}) {
     case 'jcReverb':
       return createJCReverbAudioEffect(effect)
 
+    case 'midSideCompressor':
+      return createMidSideCompressorAudioEffect(effect)
+
+    case 'multibandCompressor':
+      return createMultibandCompressorAudioEffect(effect)
+
     default:
       return null
   }
@@ -85,6 +91,55 @@ export function createGateAudioEffect(effect = {}) {
     params: {
       threshold: normalizeGateThreshold(effect.params?.threshold ?? -40),
       smoothing: normalizeGateSmoothing(effect.params?.smoothing ?? 0.1)
+    }
+  }
+}
+
+export function createMidSideCompressorAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'midSideCompressor',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      midThreshold: normalizeThreshold(effect.params?.midThreshold ?? -24),
+      midRatio: normalizeRatio(effect.params?.midRatio ?? 3),
+      midAttack: normalizeTime(effect.params?.midAttack ?? 0.02),
+      midRelease: normalizeTime(effect.params?.midRelease ?? 0.03),
+      midKnee: normalizeKnee(effect.params?.midKnee ?? 16),
+      sideThreshold: normalizeThreshold(effect.params?.sideThreshold ?? -30),
+      sideRatio: normalizeRatio(effect.params?.sideRatio ?? 6),
+      sideAttack: normalizeTime(effect.params?.sideAttack ?? 0.03),
+      sideRelease: normalizeTime(effect.params?.sideRelease ?? 0.25),
+      sideKnee: normalizeKnee(effect.params?.sideKnee ?? 10)
+    }
+  }
+}
+
+export function createMultibandCompressorAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'multibandCompressor',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      lowFrequency: normalizeFrequency(effect.params?.lowFrequency ?? 250),
+      highFrequency: normalizeFrequency(effect.params?.highFrequency ?? 2000),
+      lowThreshold: normalizeThreshold(effect.params?.lowThreshold ?? -30),
+      lowRatio: normalizeRatio(effect.params?.lowRatio ?? 6),
+      lowAttack: normalizeTime(effect.params?.lowAttack ?? 0.03),
+      lowRelease: normalizeTime(effect.params?.lowRelease ?? 0.25),
+      lowKnee: normalizeKnee(effect.params?.lowKnee ?? 10),
+      midThreshold: normalizeThreshold(effect.params?.midThreshold ?? -24),
+      midRatio: normalizeRatio(effect.params?.midRatio ?? 3),
+      midAttack: normalizeTime(effect.params?.midAttack ?? 0.02),
+      midRelease: normalizeTime(effect.params?.midRelease ?? 0.03),
+      midKnee: normalizeKnee(effect.params?.midKnee ?? 16),
+      highThreshold: normalizeThreshold(effect.params?.highThreshold ?? -24),
+      highRatio: normalizeRatio(effect.params?.highRatio ?? 3),
+      highAttack: normalizeTime(effect.params?.highAttack ?? 0.02),
+      highRelease: normalizeTime(effect.params?.highRelease ?? 0.03),
+      highKnee: normalizeKnee(effect.params?.highKnee ?? 16)
     }
   }
 }

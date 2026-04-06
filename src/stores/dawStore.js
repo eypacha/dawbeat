@@ -55,6 +55,8 @@ import {
   createFreeverbAudioEffect,
   createGateAudioEffect,
   createJCReverbAudioEffect,
+  createMidSideCompressorAudioEffect,
+  createMultibandCompressorAudioEffect,
   createPingPongDelayAudioEffect,
   createPitchShiftAudioEffect,
   createTremoloAudioEffect,
@@ -2462,6 +2464,20 @@ export const useDawStore = defineStore('dawStore', {
           return
         }
 
+        if (effect.type === 'midSideCompressor') {
+          const defaults = createMidSideCompressorAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+          return
+        }
+
+        if (effect.type === 'multibandCompressor') {
+          const defaults = createMultibandCompressorAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+          return
+        }
+
         if (effect.type === 'reverb') {
           const defaults = createReverbAudioEffect({ id: effect.id })
           effect.enabled = defaults.enabled
@@ -2655,6 +2671,36 @@ export const useDawStore = defineStore('dawStore', {
 
         if (typeof params.knee !== 'undefined') {
           effect.params.knee = normalizeKnee(params.knee)
+        }
+
+        return
+      }
+
+      if (effect.type === 'midSideCompressor') {
+        const bandKeys = ['midThreshold', 'midRatio', 'midAttack', 'midRelease', 'midKnee', 'sideThreshold', 'sideRatio', 'sideAttack', 'sideRelease', 'sideKnee']
+        for (const key of bandKeys) {
+          if (typeof params[key] !== 'undefined') {
+            if (key.endsWith('Threshold')) effect.params[key] = normalizeThreshold(params[key])
+            else if (key.endsWith('Ratio')) effect.params[key] = normalizeRatio(params[key])
+            else if (key.endsWith('Attack') || key.endsWith('Release')) effect.params[key] = normalizeTime(params[key])
+            else if (key.endsWith('Knee')) effect.params[key] = normalizeKnee(params[key])
+          }
+        }
+
+        return
+      }
+
+      if (effect.type === 'multibandCompressor') {
+        if (typeof params.lowFrequency !== 'undefined') effect.params.lowFrequency = normalizeFrequency(params.lowFrequency)
+        if (typeof params.highFrequency !== 'undefined') effect.params.highFrequency = normalizeFrequency(params.highFrequency)
+        const bandKeys = ['lowThreshold', 'lowRatio', 'lowAttack', 'lowRelease', 'lowKnee', 'midThreshold', 'midRatio', 'midAttack', 'midRelease', 'midKnee', 'highThreshold', 'highRatio', 'highAttack', 'highRelease', 'highKnee']
+        for (const key of bandKeys) {
+          if (typeof params[key] !== 'undefined') {
+            if (key.endsWith('Threshold')) effect.params[key] = normalizeThreshold(params[key])
+            else if (key.endsWith('Ratio')) effect.params[key] = normalizeRatio(params[key])
+            else if (key.endsWith('Attack') || key.endsWith('Release')) effect.params[key] = normalizeTime(params[key])
+            else if (key.endsWith('Knee')) effect.params[key] = normalizeKnee(params[key])
+          }
         }
 
         return

@@ -87,6 +87,8 @@ const AUDIO_EFFECT_TYPE_LABELS = {
   chorus: 'Chorus',
   compressor: 'Compressor',
   delay: 'Delay',
+  midSideCompressor: 'Mid/Side Comp',
+  multibandCompressor: 'Multiband Comp',
   distortion: 'Distortion',
   eq: 'EQ3',
   freeverb: 'Freeverb',
@@ -158,6 +160,22 @@ const AUDIO_EFFECT_PARAM_CONFIGS = {
     ratio: { label: 'Ratio', min: 1, max: 20, normalize: normalizeRatio },
     release: { label: 'Release', min: 0, max: 1, normalize: normalizeTime },
     threshold: { label: 'Threshold', min: -100, max: 0, normalize: normalizeThreshold }
+  },
+  midSideCompressor: {
+    midThreshold: { label: 'Mid Threshold', min: -100, max: 0, normalize: normalizeThreshold },
+    midRatio: { label: 'Mid Ratio', min: 1, max: 20, normalize: normalizeRatio },
+    sideThreshold: { label: 'Side Threshold', min: -100, max: 0, normalize: normalizeThreshold },
+    sideRatio: { label: 'Side Ratio', min: 1, max: 20, normalize: normalizeRatio }
+  },
+  multibandCompressor: {
+    lowFrequency: { label: 'Low Cut', min: 20, max: 5000, normalize: normalizeFrequency },
+    highFrequency: { label: 'High Cut', min: 200, max: 20000, normalize: normalizeFrequency },
+    lowThreshold: { label: 'Low Threshold', min: -100, max: 0, normalize: normalizeThreshold },
+    midThreshold: { label: 'Mid Threshold', min: -100, max: 0, normalize: normalizeThreshold },
+    highThreshold: { label: 'High Threshold', min: -100, max: 0, normalize: normalizeThreshold },
+    lowRatio: { label: 'Low Ratio', min: 1, max: 20, normalize: normalizeRatio },
+    midRatio: { label: 'Mid Ratio', min: 1, max: 20, normalize: normalizeRatio },
+    highRatio: { label: 'High Ratio', min: 1, max: 20, normalize: normalizeRatio }
   },
   delay: {
     delayTime: { label: 'Time', min: 0, max: 1, normalize: normalizeTime },

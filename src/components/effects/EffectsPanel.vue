@@ -189,6 +189,8 @@ import AudioPhaserItem from '@/components/effects/AudioPhaserItem.vue'
 import AudioFreeverbItem from '@/components/effects/AudioFreeverbItem.vue'
 import AudioGateItem from '@/components/effects/AudioGateItem.vue'
 import AudioJCReverbItem from '@/components/effects/AudioJCReverbItem.vue'
+import AudioMidSideCompressorItem from '@/components/effects/AudioMidSideCompressorItem.vue'
+import AudioMultibandCompressorItem from '@/components/effects/AudioMultibandCompressorItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
 import IconButton from '@/components/ui/IconButton.vue'
@@ -287,6 +289,14 @@ const availableAudioEffects = [
   {
     name: 'Limiter',
     type: 'limiter'
+  },
+  {
+    name: 'Mid/Side Comp',
+    type: 'midSideCompressor'
+  },
+  {
+    name: 'Multiband Comp',
+    type: 'multibandCompressor'
   },
   {
     name: 'Phaser',
@@ -437,6 +447,14 @@ function getAudioEffectComponent(effectType) {
 
   if (effectType === 'jcReverb') {
     return AudioJCReverbItem
+  }
+
+  if (effectType === 'midSideCompressor') {
+    return AudioMidSideCompressorItem
+  }
+
+  if (effectType === 'multibandCompressor') {
+    return AudioMultibandCompressorItem
   }
 
   if (effectType === 'chorus') {
