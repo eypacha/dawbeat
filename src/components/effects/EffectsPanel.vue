@@ -185,6 +185,7 @@ import AudioVibratoItem from '@/components/effects/AudioVibratoItem.vue'
 import AudioTremoloItem from '@/components/effects/AudioTremoloItem.vue'
 import AudioPingPongDelayItem from '@/components/effects/AudioPingPongDelayItem.vue'
 import AudioPitchShiftItem from '@/components/effects/AudioPitchShiftItem.vue'
+import AudioPhaserItem from '@/components/effects/AudioPhaserItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
 import IconButton from '@/components/ui/IconButton.vue'
@@ -271,6 +272,10 @@ const availableAudioEffects = [
   {
     name: 'Limiter',
     type: 'limiter'
+  },
+  {
+    name: 'Phaser',
+    type: 'phaser'
   },
   {
     name: 'Ping Pong Delay',
@@ -401,6 +406,10 @@ function getAudioEffectComponent(effectType) {
 
   if (effectType === 'pitchShift') {
     return AudioPitchShiftItem
+  }
+
+  if (effectType === 'phaser') {
+    return AudioPhaserItem
   }
 
   if (effectType === 'chorus') {

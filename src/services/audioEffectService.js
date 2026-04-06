@@ -59,8 +59,28 @@ export function createAudioEffect(effect = {}) {
     case 'autoPanner':
       return createAutoPannerAudioEffect(effect)
 
+    case 'phaser':
+      return createPhaserAudioEffect(effect)
+
     default:
       return null
+  }
+}
+
+export function createPhaserAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'phaser',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      frequency: normalizePhaserFrequency(effect.params?.frequency ?? 0.5),
+      octaves: normalizePhaserOctaves(effect.params?.octaves ?? 3),
+      stages: normalizePhaserStages(effect.params?.stages ?? 10),
+      Q: normalizePhaserQ(effect.params?.Q ?? 10),
+      baseFrequency: normalizePhaserBaseFrequency(effect.params?.baseFrequency ?? 350),
+      wet: normalizeWet(effect.params?.wet ?? 1)
+    }
   }
 }
 
@@ -602,6 +622,56 @@ export function normalizePitchShiftWindowSize(value) {
   }
 
   return Math.min(0.1, Math.max(0.03, numericValue))
+}
+
+export function normalizePhaserFrequency(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 0.5
+  }
+
+  return Math.min(20, Math.max(0.01, numericValue))
+}
+
+export function normalizePhaserOctaves(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 3
+  }
+
+  return Math.min(8, Math.max(0, numericValue))
+}
+
+export function normalizePhaserStages(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 10
+  }
+
+  return Math.min(20, Math.max(1, Math.round(numericValue)))
+}
+
+export function normalizePhaserQ(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 10
+  }
+
+  return Math.min(100, Math.max(0.1, numericValue))
+}
+
+export function normalizePhaserBaseFrequency(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 350
+  }
+
+  return Math.min(10000, Math.max(20, numericValue))
 }
 
 const AUTO_PANNER_TYPES = Object.freeze(['sine', 'square', 'triangle', 'sawtooth'])

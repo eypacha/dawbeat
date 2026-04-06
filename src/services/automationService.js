@@ -26,6 +26,8 @@ import {
   normalizePitchShiftPitch,
   normalizePitchShiftWindowSize,
   normalizeAutoPannerFrequency,
+  normalizePhaserFrequency,
+  normalizePhaserQ,
   normalizeAutoFilterFrequency,
   normalizeAutoFilterBaseFrequency,
   normalizeAutoFilterOctaves,
@@ -85,6 +87,7 @@ const AUDIO_EFFECT_TYPE_LABELS = {
   distortion: 'Distortion',
   eq: 'EQ3',
   limiter: 'Limiter',
+  phaser: 'Phaser',
   pingPongDelay: 'Ping Pong Delay',
   pitchShift: 'Pitch Shift',
   reverb: 'Reverb',
@@ -104,6 +107,11 @@ const AUDIO_EFFECT_PARAM_CONFIGS = {
   autoPanner: {
     depth: { label: 'Depth', min: 0, max: 1, normalize: normalizeDepth },
     frequency: { label: 'Frequency', min: 0.01, max: 20, normalize: normalizeAutoPannerFrequency },
+    wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }
+  },
+  phaser: {
+    frequency: { label: 'Frequency', min: 0.01, max: 20, normalize: normalizePhaserFrequency },
+    Q: { label: 'Q', min: 0.1, max: 100, normalize: normalizePhaserQ },
     wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }
   },
   autoWah: {

@@ -51,6 +51,7 @@ import {
   createAutoWahAudioEffect,
   createAutoFilterAudioEffect,
   createAutoPannerAudioEffect,
+  createPhaserAudioEffect,
   createPingPongDelayAudioEffect,
   createPitchShiftAudioEffect,
   createTremoloAudioEffect,
@@ -89,6 +90,11 @@ import {
   normalizeAutoFilterOctaves,
   normalizeAutoPannerType,
   normalizeAutoPannerFrequency,
+  normalizePhaserFrequency,
+  normalizePhaserOctaves,
+  normalizePhaserStages,
+  normalizePhaserQ,
+  normalizePhaserBaseFrequency,
   normalizeWet,
   normalizeWidth
 } from '@/services/audioEffectService'
@@ -2523,6 +2529,12 @@ export const useDawStore = defineStore('dawStore', {
           effect.enabled = defaults.enabled
           effect.params = defaults.params
         }
+
+        if (effect.type === 'phaser') {
+          const defaults = createPhaserAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+        }
       })
     },
 
@@ -2825,6 +2837,32 @@ export const useDawStore = defineStore('dawStore', {
 
         if (typeof params.type !== 'undefined') {
           effect.params.type = normalizeAutoPannerType(params.type)
+        }
+
+        if (typeof params.wet !== 'undefined') {
+          effect.params.wet = normalizeWet(params.wet)
+        }
+      }
+
+      if (effect.type === 'phaser') {
+        if (typeof params.frequency !== 'undefined') {
+          effect.params.frequency = normalizePhaserFrequency(params.frequency)
+        }
+
+        if (typeof params.octaves !== 'undefined') {
+          effect.params.octaves = normalizePhaserOctaves(params.octaves)
+        }
+
+        if (typeof params.stages !== 'undefined') {
+          effect.params.stages = normalizePhaserStages(params.stages)
+        }
+
+        if (typeof params.Q !== 'undefined') {
+          effect.params.Q = normalizePhaserQ(params.Q)
+        }
+
+        if (typeof params.baseFrequency !== 'undefined') {
+          effect.params.baseFrequency = normalizePhaserBaseFrequency(params.baseFrequency)
         }
 
         if (typeof params.wet !== 'undefined') {

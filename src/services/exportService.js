@@ -1,4 +1,4 @@
-import { AutoFilter, AutoPanner, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
+import { AutoFilter, AutoPanner, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Phaser, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
 import * as lamejsModule from 'lamejs'
 import bitStreamModule from 'lamejs/src/js/BitStream.js'
 import lameCoreModule from 'lamejs/src/js/Lame.js'
@@ -43,6 +43,11 @@ import {
   normalizePitchShiftWindowSize,
   normalizeAutoPannerType,
   normalizeAutoPannerFrequency,
+  normalizePhaserFrequency,
+  normalizePhaserOctaves,
+  normalizePhaserStages,
+  normalizePhaserQ,
+  normalizePhaserBaseFrequency,
   normalizeAutoFilterType,
   normalizeAutoFilterFilterType,
   normalizeAutoFilterFrequency,
@@ -69,7 +74,7 @@ import { validateFormula } from '@/utils/formulaValidation'
 import { getClipEnd, samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 
 const SILENT_EVALUATOR = () => 0
-const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev', 'autoWah', 'tremolo', 'pingPongDelay', 'pitchShift', 'autoFilter', 'autoPanner']
+const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev', 'autoWah', 'tremolo', 'pingPongDelay', 'pitchShift', 'autoFilter', 'autoPanner', 'phaser']
 const MIN_AUTOMATION_CURVE_SAMPLES = 16
 const MAX_AUTOMATION_CURVE_SAMPLES = 128
 const EXPORT_UI_YIELD_INTERVAL_MS = 12
@@ -84,7 +89,8 @@ const MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS = {
   tremolo: ['spread', 'type'],
   pitchShift: ['pitch', 'windowSize'],
   autoFilter: ['type', 'baseFrequency', 'octaves', 'filterType'],
-  autoPanner: ['type']
+  autoPanner: ['type'],
+  phaser: ['octaves', 'stages', 'baseFrequency']
 }
 
 export async function downloadProjectWav(
@@ -742,6 +748,27 @@ async function createOfflineAudioEffectNode(effect, toneContext) {
     node.pitch = normalizePitchShiftPitch(effect.params?.pitch)
     node.windowSize = normalizePitchShiftWindowSize(effect.params?.windowSize)
     node.feedback.value = normalizeFeedback(effect.params?.feedback)
+    node.wet.value = normalizeWet(effect.params?.wet)
+
+    return node
+  }
+
+  if (effect.type === 'phaser') {
+    const node = new Phaser({
+      context: toneContext,
+      frequency: 0.5,
+      octaves: 3,
+      stages: 10,
+      Q: 10,
+      baseFrequency: 350,
+      wet: 1
+    })
+
+    node.frequency.value = normalizePhaserFrequency(effect.params?.frequency)
+    node.octaves = normalizePhaserOctaves(effect.params?.octaves)
+    node.stages = normalizePhaserStages(effect.params?.stages)
+    node.Q.value = normalizePhaserQ(effect.params?.Q)
+    node.baseFrequency = normalizePhaserBaseFrequency(effect.params?.baseFrequency)
     node.wet.value = normalizeWet(effect.params?.wet)
 
     return node
@@ -1464,6 +1491,37 @@ async function applyOfflineAudioEffectParamValue(node, effectType, paramKey, val
     }
   }
 
+  if (effectType === 'phaser') {
+    if (paramKey === 'frequency') {
+      node.frequency.value = normalizePhaserFrequency(value)
+      return
+    }
+
+    if (paramKey === 'octaves') {
+      node.octaves = normalizePhaserOctaves(value)
+      return
+    }
+
+    if (paramKey === 'stages') {
+      node.stages = normalizePhaserStages(value)
+      return
+    }
+
+    if (paramKey === 'Q') {
+      node.Q.value = normalizePhaserQ(value)
+      return
+    }
+
+    if (paramKey === 'baseFrequency') {
+      node.baseFrequency = normalizePhaserBaseFrequency(value)
+      return
+    }
+
+    if (paramKey === 'wet') {
+      node.wet.value = normalizeWet(value)
+    }
+  }
+
   if (effectType === 'autoPanner') {
     if (paramKey === 'frequency') {
       node.frequency.value = normalizeAutoPannerFrequency(value)
@@ -1638,6 +1696,15 @@ function normalizeAudioEffectParamValue(effectType, paramKey, value) {
     if (paramKey === 'pitch') return normalizePitchShiftPitch(value)
     if (paramKey === 'windowSize') return normalizePitchShiftWindowSize(value)
     if (paramKey === 'feedback') return normalizeFeedback(value)
+    if (paramKey === 'wet') return normalizeWet(value)
+  }
+
+  if (effectType === 'phaser') {
+    if (paramKey === 'frequency') return normalizePhaserFrequency(value)
+    if (paramKey === 'octaves') return normalizePhaserOctaves(value)
+    if (paramKey === 'stages') return normalizePhaserStages(value)
+    if (paramKey === 'Q') return normalizePhaserQ(value)
+    if (paramKey === 'baseFrequency') return normalizePhaserBaseFrequency(value)
     if (paramKey === 'wet') return normalizeWet(value)
   }
 

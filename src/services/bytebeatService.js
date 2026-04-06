@@ -1,4 +1,4 @@
-import { AutoFilter, AutoPanner, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
+import { AutoFilter, AutoPanner, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Phaser, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
 import {
   normalizeBits,
   normalizeChorusDelayTime,
@@ -28,6 +28,11 @@ import {
   normalizePitchShiftWindowSize,
   normalizeAutoPannerType,
   normalizeAutoPannerFrequency,
+  normalizePhaserFrequency,
+  normalizePhaserOctaves,
+  normalizePhaserStages,
+  normalizePhaserQ,
+  normalizePhaserBaseFrequency,
   normalizeAutoFilterType,
   normalizeAutoFilterFilterType,
   normalizeAutoFilterFrequency,
@@ -370,6 +375,18 @@ async function createAudioEffectNode(effect) {
     })
   }
 
+  if (effect.type === 'phaser') {
+    return new Phaser({
+      context: toneContext,
+      frequency: 0.5,
+      octaves: 3,
+      stages: 10,
+      Q: 10,
+      baseFrequency: 350,
+      wet: 1
+    })
+  }
+
   if (effect.type === 'autoPanner') {
     return new AutoPanner({
       context: toneContext,
@@ -531,6 +548,16 @@ async function syncAudioEffectNode(effect) {
     node.pitch = normalizePitchShiftPitch(effect.params?.pitch)
     node.windowSize = normalizePitchShiftWindowSize(effect.params?.windowSize)
     node.feedback.value = normalizeFeedback(effect.params?.feedback)
+    node.wet.value = normalizeWet(effect.params?.wet)
+    return node
+  }
+
+  if (effect.type === 'phaser') {
+    node.frequency.value = normalizePhaserFrequency(effect.params?.frequency)
+    node.octaves = normalizePhaserOctaves(effect.params?.octaves)
+    node.stages = normalizePhaserStages(effect.params?.stages)
+    node.Q.value = normalizePhaserQ(effect.params?.Q)
+    node.baseFrequency = normalizePhaserBaseFrequency(effect.params?.baseFrequency)
     node.wet.value = normalizeWet(effect.params?.wet)
     return node
   }
