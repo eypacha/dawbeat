@@ -1,4 +1,4 @@
-import { AutoFilter, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
+import { AutoFilter, AutoPanner, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
 import {
   normalizeBits,
   normalizeChorusDelayTime,
@@ -26,6 +26,8 @@ import {
   normalizeTremoloType,
   normalizePitchShiftPitch,
   normalizePitchShiftWindowSize,
+  normalizeAutoPannerType,
+  normalizeAutoPannerFrequency,
   normalizeAutoFilterType,
   normalizeAutoFilterFilterType,
   normalizeAutoFilterFrequency,
@@ -368,6 +370,16 @@ async function createAudioEffectNode(effect) {
     })
   }
 
+  if (effect.type === 'autoPanner') {
+    return new AutoPanner({
+      context: toneContext,
+      frequency: 1,
+      depth: 1,
+      type: 'sine',
+      wet: 1
+    }).start()
+  }
+
   if (effect.type === 'autoFilter') {
     return new AutoFilter({
       context: toneContext,
@@ -519,6 +531,14 @@ async function syncAudioEffectNode(effect) {
     node.pitch = normalizePitchShiftPitch(effect.params?.pitch)
     node.windowSize = normalizePitchShiftWindowSize(effect.params?.windowSize)
     node.feedback.value = normalizeFeedback(effect.params?.feedback)
+    node.wet.value = normalizeWet(effect.params?.wet)
+    return node
+  }
+
+  if (effect.type === 'autoPanner') {
+    node.frequency.value = normalizeAutoPannerFrequency(effect.params?.frequency)
+    node.depth.value = normalizeDepth(effect.params?.depth)
+    node.type = normalizeAutoPannerType(effect.params?.type)
     node.wet.value = normalizeWet(effect.params?.wet)
     return node
   }

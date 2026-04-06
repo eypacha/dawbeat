@@ -56,8 +56,26 @@ export function createAudioEffect(effect = {}) {
     case 'autoFilter':
       return createAutoFilterAudioEffect(effect)
 
+    case 'autoPanner':
+      return createAutoPannerAudioEffect(effect)
+
     default:
       return null
+  }
+}
+
+export function createAutoPannerAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'autoPanner',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      frequency: normalizeAutoPannerFrequency(effect.params?.frequency ?? 1),
+      depth: normalizeDepth(effect.params?.depth ?? 1),
+      type: normalizeAutoPannerType(effect.params?.type ?? 'sine'),
+      wet: normalizeWet(effect.params?.wet ?? 1)
+    }
   }
 }
 
@@ -584,6 +602,22 @@ export function normalizePitchShiftWindowSize(value) {
   }
 
   return Math.min(0.1, Math.max(0.03, numericValue))
+}
+
+const AUTO_PANNER_TYPES = Object.freeze(['sine', 'square', 'triangle', 'sawtooth'])
+
+export function normalizeAutoPannerType(value) {
+  return AUTO_PANNER_TYPES.includes(value) ? value : 'sine'
+}
+
+export function normalizeAutoPannerFrequency(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 1
+  }
+
+  return Math.min(20, Math.max(0.01, numericValue))
 }
 
 const AUTO_FILTER_TYPES = Object.freeze(['sine', 'square', 'triangle', 'sawtooth'])

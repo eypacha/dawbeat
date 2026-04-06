@@ -25,6 +25,7 @@ import {
   normalizeTremoloSpread,
   normalizePitchShiftPitch,
   normalizePitchShiftWindowSize,
+  normalizeAutoPannerFrequency,
   normalizeAutoFilterFrequency,
   normalizeAutoFilterBaseFrequency,
   normalizeAutoFilterOctaves,
@@ -74,6 +75,7 @@ const AUTOMATION_CURVE_LABELS = Object.freeze(
 
 const AUDIO_EFFECT_TYPE_LABELS = {
   autoFilter: 'Auto Filter',
+  autoPanner: 'Auto Panner',
   autoWah: 'Auto Wah',
   bitCrusher: 'BitCrusher',
   chebyshev: 'Chebyshev',
@@ -97,6 +99,11 @@ const AUDIO_EFFECT_PARAM_CONFIGS = {
     depth: { label: 'Depth', min: 0, max: 1, normalize: normalizeDepth },
     frequency: { label: 'Frequency', min: 0.01, max: 20, normalize: normalizeAutoFilterFrequency },
     octaves: { label: 'Octaves', min: 0.1, max: 10, normalize: normalizeAutoFilterOctaves },
+    wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }
+  },
+  autoPanner: {
+    depth: { label: 'Depth', min: 0, max: 1, normalize: normalizeDepth },
+    frequency: { label: 'Frequency', min: 0.01, max: 20, normalize: normalizeAutoPannerFrequency },
     wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }
   },
   autoWah: {

@@ -1,4 +1,4 @@
-import { AutoFilter, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
+import { AutoFilter, AutoPanner, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
 import * as lamejsModule from 'lamejs'
 import bitStreamModule from 'lamejs/src/js/BitStream.js'
 import lameCoreModule from 'lamejs/src/js/Lame.js'
@@ -41,6 +41,8 @@ import {
   normalizeTremoloType,
   normalizePitchShiftPitch,
   normalizePitchShiftWindowSize,
+  normalizeAutoPannerType,
+  normalizeAutoPannerFrequency,
   normalizeAutoFilterType,
   normalizeAutoFilterFilterType,
   normalizeAutoFilterFrequency,
@@ -67,7 +69,7 @@ import { validateFormula } from '@/utils/formulaValidation'
 import { getClipEnd, samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 
 const SILENT_EVALUATOR = () => 0
-const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev', 'autoWah', 'tremolo', 'pingPongDelay', 'pitchShift', 'autoFilter']
+const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev', 'autoWah', 'tremolo', 'pingPongDelay', 'pitchShift', 'autoFilter', 'autoPanner']
 const MIN_AUTOMATION_CURVE_SAMPLES = 16
 const MAX_AUTOMATION_CURVE_SAMPLES = 128
 const EXPORT_UI_YIELD_INTERVAL_MS = 12
@@ -81,7 +83,8 @@ const MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS = {
   reverb: ['decay', 'preDelay'],
   tremolo: ['spread', 'type'],
   pitchShift: ['pitch', 'windowSize'],
-  autoFilter: ['type', 'baseFrequency', 'octaves', 'filterType']
+  autoFilter: ['type', 'baseFrequency', 'octaves', 'filterType'],
+  autoPanner: ['type']
 }
 
 export async function downloadProjectWav(
@@ -739,6 +742,23 @@ async function createOfflineAudioEffectNode(effect, toneContext) {
     node.pitch = normalizePitchShiftPitch(effect.params?.pitch)
     node.windowSize = normalizePitchShiftWindowSize(effect.params?.windowSize)
     node.feedback.value = normalizeFeedback(effect.params?.feedback)
+    node.wet.value = normalizeWet(effect.params?.wet)
+
+    return node
+  }
+
+  if (effect.type === 'autoPanner') {
+    const node = new AutoPanner({
+      context: toneContext,
+      frequency: 1,
+      depth: 1,
+      type: 'sine',
+      wet: 1
+    }).start()
+
+    node.frequency.value = normalizeAutoPannerFrequency(effect.params?.frequency)
+    node.depth.value = normalizeDepth(effect.params?.depth)
+    node.type = normalizeAutoPannerType(effect.params?.type)
     node.wet.value = normalizeWet(effect.params?.wet)
 
     return node
@@ -1444,6 +1464,27 @@ async function applyOfflineAudioEffectParamValue(node, effectType, paramKey, val
     }
   }
 
+  if (effectType === 'autoPanner') {
+    if (paramKey === 'frequency') {
+      node.frequency.value = normalizeAutoPannerFrequency(value)
+      return
+    }
+
+    if (paramKey === 'depth') {
+      node.depth.value = normalizeDepth(value)
+      return
+    }
+
+    if (paramKey === 'type') {
+      node.type = normalizeAutoPannerType(value)
+      return
+    }
+
+    if (paramKey === 'wet') {
+      node.wet.value = normalizeWet(value)
+    }
+  }
+
   if (effectType === 'autoFilter') {
     if (paramKey === 'frequency') {
       node.frequency.value = normalizeAutoFilterFrequency(value)
@@ -1597,6 +1638,13 @@ function normalizeAudioEffectParamValue(effectType, paramKey, value) {
     if (paramKey === 'pitch') return normalizePitchShiftPitch(value)
     if (paramKey === 'windowSize') return normalizePitchShiftWindowSize(value)
     if (paramKey === 'feedback') return normalizeFeedback(value)
+    if (paramKey === 'wet') return normalizeWet(value)
+  }
+
+  if (effectType === 'autoPanner') {
+    if (paramKey === 'frequency') return normalizeAutoPannerFrequency(value)
+    if (paramKey === 'depth') return normalizeDepth(value)
+    if (paramKey === 'type') return normalizeAutoPannerType(value)
     if (paramKey === 'wet') return normalizeWet(value)
   }
 

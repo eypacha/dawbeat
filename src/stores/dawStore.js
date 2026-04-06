@@ -50,6 +50,7 @@ import {
   createChebyshevAudioEffect,
   createAutoWahAudioEffect,
   createAutoFilterAudioEffect,
+  createAutoPannerAudioEffect,
   createPingPongDelayAudioEffect,
   createPitchShiftAudioEffect,
   createTremoloAudioEffect,
@@ -86,6 +87,8 @@ import {
   normalizeAutoFilterFrequency,
   normalizeAutoFilterBaseFrequency,
   normalizeAutoFilterOctaves,
+  normalizeAutoPannerType,
+  normalizeAutoPannerFrequency,
   normalizeWet,
   normalizeWidth
 } from '@/services/audioEffectService'
@@ -2514,6 +2517,12 @@ export const useDawStore = defineStore('dawStore', {
           effect.enabled = defaults.enabled
           effect.params = defaults.params
         }
+
+        if (effect.type === 'autoPanner') {
+          const defaults = createAutoPannerAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+        }
       })
     },
 
@@ -2798,6 +2807,24 @@ export const useDawStore = defineStore('dawStore', {
 
         if (typeof params.filterType !== 'undefined') {
           effect.params.filterType = normalizeAutoFilterFilterType(params.filterType)
+        }
+
+        if (typeof params.wet !== 'undefined') {
+          effect.params.wet = normalizeWet(params.wet)
+        }
+      }
+
+      if (effect.type === 'autoPanner') {
+        if (typeof params.frequency !== 'undefined') {
+          effect.params.frequency = normalizeAutoPannerFrequency(params.frequency)
+        }
+
+        if (typeof params.depth !== 'undefined') {
+          effect.params.depth = normalizeDepth(params.depth)
+        }
+
+        if (typeof params.type !== 'undefined') {
+          effect.params.type = normalizeAutoPannerType(params.type)
         }
 
         if (typeof params.wet !== 'undefined') {
