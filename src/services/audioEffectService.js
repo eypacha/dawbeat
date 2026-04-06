@@ -65,11 +65,27 @@ export function createAudioEffect(effect = {}) {
     case 'freeverb':
       return createFreeverbAudioEffect(effect)
 
+    case 'gate':
+      return createGateAudioEffect(effect)
+
     case 'jcReverb':
       return createJCReverbAudioEffect(effect)
 
     default:
       return null
+  }
+}
+
+export function createGateAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'gate',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      threshold: normalizeGateThreshold(effect.params?.threshold ?? -40),
+      smoothing: normalizeGateSmoothing(effect.params?.smoothing ?? 0.1)
+    }
   }
 }
 
@@ -682,6 +698,26 @@ export function normalizeJCReverbRoomSize(value) {
 
   if (!Number.isFinite(numericValue)) {
     return 0.5
+  }
+
+  return Math.min(1, Math.max(0, numericValue))
+}
+
+export function normalizeGateThreshold(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return -40
+  }
+
+  return Math.min(0, Math.max(-80, numericValue))
+}
+
+export function normalizeGateSmoothing(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 0.1
   }
 
   return Math.min(1, Math.max(0, numericValue))

@@ -187,6 +187,7 @@ import AudioPingPongDelayItem from '@/components/effects/AudioPingPongDelayItem.
 import AudioPitchShiftItem from '@/components/effects/AudioPitchShiftItem.vue'
 import AudioPhaserItem from '@/components/effects/AudioPhaserItem.vue'
 import AudioFreeverbItem from '@/components/effects/AudioFreeverbItem.vue'
+import AudioGateItem from '@/components/effects/AudioGateItem.vue'
 import AudioJCReverbItem from '@/components/effects/AudioJCReverbItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
@@ -274,6 +275,10 @@ const availableAudioEffects = [
   {
     name: 'Freeverb',
     type: 'freeverb'
+  },
+  {
+    name: 'Gate',
+    type: 'gate'
   },
   {
     name: 'JC Reverb',
@@ -424,6 +429,10 @@ function getAudioEffectComponent(effectType) {
 
   if (effectType === 'freeverb') {
     return AudioFreeverbItem
+  }
+
+  if (effectType === 'gate') {
+    return AudioGateItem
   }
 
   if (effectType === 'jcReverb') {

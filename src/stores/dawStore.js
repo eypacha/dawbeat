@@ -53,6 +53,7 @@ import {
   createAutoPannerAudioEffect,
   createPhaserAudioEffect,
   createFreeverbAudioEffect,
+  createGateAudioEffect,
   createJCReverbAudioEffect,
   createPingPongDelayAudioEffect,
   createPitchShiftAudioEffect,
@@ -100,6 +101,8 @@ import {
   normalizeFreeverbRoomSize,
   normalizeFreeverbDampening,
   normalizeJCReverbRoomSize,
+  normalizeGateThreshold,
+  normalizeGateSmoothing,
   normalizeWet,
   normalizeWidth
 } from '@/services/audioEffectService'
@@ -2547,6 +2550,12 @@ export const useDawStore = defineStore('dawStore', {
           effect.params = defaults.params
         }
 
+        if (effect.type === 'gate') {
+          const defaults = createGateAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+        }
+
         if (effect.type === 'jcReverb') {
           const defaults = createJCReverbAudioEffect({ id: effect.id })
           effect.enabled = defaults.enabled
@@ -2908,6 +2917,16 @@ export const useDawStore = defineStore('dawStore', {
 
         if (typeof params.wet !== 'undefined') {
           effect.params.wet = normalizeWet(params.wet)
+        }
+      }
+
+      if (effect.type === 'gate') {
+        if (typeof params.threshold !== 'undefined') {
+          effect.params.threshold = normalizeGateThreshold(params.threshold)
+        }
+
+        if (typeof params.smoothing !== 'undefined') {
+          effect.params.smoothing = normalizeGateSmoothing(params.smoothing)
         }
       }
     },

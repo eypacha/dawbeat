@@ -1,4 +1,4 @@
-import { AutoFilter, AutoPanner, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Freeverb, JCReverb, Limiter, Phaser, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
+import { AutoFilter, AutoPanner, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Freeverb, Gate, JCReverb, Limiter, Phaser, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
 import * as lamejsModule from 'lamejs'
 import bitStreamModule from 'lamejs/src/js/BitStream.js'
 import lameCoreModule from 'lamejs/src/js/Lame.js'
@@ -56,6 +56,8 @@ import {
   normalizeFreeverbRoomSize,
   normalizeFreeverbDampening,
   normalizeJCReverbRoomSize,
+  normalizeGateThreshold,
+  normalizeGateSmoothing,
   normalizeVibratoFrequency,
   normalizeWet,
   normalizeWidth
@@ -77,7 +79,7 @@ import { validateFormula } from '@/utils/formulaValidation'
 import { getClipEnd, samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 
 const SILENT_EVALUATOR = () => 0
-const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev', 'autoWah', 'tremolo', 'pingPongDelay', 'pitchShift', 'autoFilter', 'autoPanner', 'phaser', 'freeverb', 'jcReverb']
+const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev', 'autoWah', 'tremolo', 'pingPongDelay', 'pitchShift', 'autoFilter', 'autoPanner', 'phaser', 'freeverb', 'gate', 'jcReverb']
 const MIN_AUTOMATION_CURVE_SAMPLES = 16
 const MAX_AUTOMATION_CURVE_SAMPLES = 128
 const EXPORT_UI_YIELD_INTERVAL_MS = 12
@@ -94,6 +96,7 @@ const MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS = {
   autoFilter: ['type', 'baseFrequency', 'octaves', 'filterType'],
   autoPanner: ['type'],
   freeverb: ['dampening'],
+  gate: ['threshold', 'smoothing'],
   phaser: ['octaves', 'stages', 'baseFrequency']
 }
 
@@ -753,6 +756,19 @@ async function createOfflineAudioEffectNode(effect, toneContext) {
     node.windowSize = normalizePitchShiftWindowSize(effect.params?.windowSize)
     node.feedback.value = normalizeFeedback(effect.params?.feedback)
     node.wet.value = normalizeWet(effect.params?.wet)
+
+    return node
+  }
+
+  if (effect.type === 'gate') {
+    const node = new Gate({
+      context: toneContext,
+      threshold: -40,
+      smoothing: 0.1
+    })
+
+    node.threshold = normalizeGateThreshold(effect.params?.threshold)
+    node.smoothing = normalizeGateSmoothing(effect.params?.smoothing)
 
     return node
   }
@@ -1523,6 +1539,17 @@ async function applyOfflineAudioEffectParamValue(node, effectType, paramKey, val
     }
   }
 
+  if (effectType === 'gate') {
+    if (paramKey === 'threshold') {
+      node.threshold = normalizeGateThreshold(value)
+      return
+    }
+
+    if (paramKey === 'smoothing') {
+      node.smoothing = normalizeGateSmoothing(value)
+    }
+  }
+
   if (effectType === 'freeverb') {
     if (paramKey === 'roomSize') {
       node.roomSize.value = normalizeFreeverbRoomSize(value)
@@ -1756,6 +1783,11 @@ function normalizeAudioEffectParamValue(effectType, paramKey, value) {
     if (paramKey === 'windowSize') return normalizePitchShiftWindowSize(value)
     if (paramKey === 'feedback') return normalizeFeedback(value)
     if (paramKey === 'wet') return normalizeWet(value)
+  }
+
+  if (effectType === 'gate') {
+    if (paramKey === 'threshold') return normalizeGateThreshold(value)
+    if (paramKey === 'smoothing') return normalizeGateSmoothing(value)
   }
 
   if (effectType === 'freeverb') {

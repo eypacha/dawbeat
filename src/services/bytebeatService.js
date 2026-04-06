@@ -1,4 +1,4 @@
-import { AutoFilter, AutoPanner, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Freeverb, JCReverb, Limiter, Phaser, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
+import { AutoFilter, AutoPanner, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Freeverb, Gate, JCReverb, Limiter, Phaser, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
 import {
   normalizeBits,
   normalizeChorusDelayTime,
@@ -34,7 +34,9 @@ import {
   normalizePhaserQ,
   normalizePhaserBaseFrequency,  normalizeFreeverbRoomSize,
   normalizeFreeverbDampening,
-  normalizeJCReverbRoomSize,  normalizeAutoFilterType,
+  normalizeJCReverbRoomSize,
+  normalizeGateThreshold,
+  normalizeGateSmoothing,  normalizeAutoFilterType,
   normalizeAutoFilterFilterType,
   normalizeAutoFilterFrequency,
   normalizeAutoFilterBaseFrequency,
@@ -376,6 +378,14 @@ async function createAudioEffectNode(effect) {
     })
   }
 
+  if (effect.type === 'gate') {
+    return new Gate({
+      context: toneContext,
+      threshold: -40,
+      smoothing: 0.1
+    })
+  }
+
   if (effect.type === 'freeverb') {
     return new Freeverb({
       context: toneContext,
@@ -567,6 +577,12 @@ async function syncAudioEffectNode(effect) {
     node.windowSize = normalizePitchShiftWindowSize(effect.params?.windowSize)
     node.feedback.value = normalizeFeedback(effect.params?.feedback)
     node.wet.value = normalizeWet(effect.params?.wet)
+    return node
+  }
+
+  if (effect.type === 'gate') {
+    node.threshold = normalizeGateThreshold(effect.params?.threshold)
+    node.smoothing = normalizeGateSmoothing(effect.params?.smoothing)
     return node
   }
 
