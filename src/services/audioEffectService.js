@@ -62,8 +62,41 @@ export function createAudioEffect(effect = {}) {
     case 'phaser':
       return createPhaserAudioEffect(effect)
 
+    case 'freeverb':
+      return createFreeverbAudioEffect(effect)
+
+    case 'jcReverb':
+      return createJCReverbAudioEffect(effect)
+
     default:
       return null
+  }
+}
+
+export function createFreeverbAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'freeverb',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      roomSize: normalizeFreeverbRoomSize(effect.params?.roomSize ?? 0.7),
+      dampening: normalizeFreeverbDampening(effect.params?.dampening ?? 3000),
+      wet: normalizeWet(effect.params?.wet ?? 0.3)
+    }
+  }
+}
+
+export function createJCReverbAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'jcReverb',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      roomSize: normalizeJCReverbRoomSize(effect.params?.roomSize ?? 0.5),
+      wet: normalizeWet(effect.params?.wet ?? 0.3)
+    }
   }
 }
 
@@ -622,6 +655,36 @@ export function normalizePitchShiftWindowSize(value) {
   }
 
   return Math.min(0.1, Math.max(0.03, numericValue))
+}
+
+export function normalizeFreeverbRoomSize(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 0.7
+  }
+
+  return Math.min(1, Math.max(0, numericValue))
+}
+
+export function normalizeFreeverbDampening(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 3000
+  }
+
+  return Math.min(10000, Math.max(0, numericValue))
+}
+
+export function normalizeJCReverbRoomSize(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 0.5
+  }
+
+  return Math.min(1, Math.max(0, numericValue))
 }
 
 export function normalizePhaserFrequency(value) {

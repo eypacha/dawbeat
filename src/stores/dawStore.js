@@ -52,6 +52,8 @@ import {
   createAutoFilterAudioEffect,
   createAutoPannerAudioEffect,
   createPhaserAudioEffect,
+  createFreeverbAudioEffect,
+  createJCReverbAudioEffect,
   createPingPongDelayAudioEffect,
   createPitchShiftAudioEffect,
   createTremoloAudioEffect,
@@ -95,6 +97,9 @@ import {
   normalizePhaserStages,
   normalizePhaserQ,
   normalizePhaserBaseFrequency,
+  normalizeFreeverbRoomSize,
+  normalizeFreeverbDampening,
+  normalizeJCReverbRoomSize,
   normalizeWet,
   normalizeWidth
 } from '@/services/audioEffectService'
@@ -2535,6 +2540,18 @@ export const useDawStore = defineStore('dawStore', {
           effect.enabled = defaults.enabled
           effect.params = defaults.params
         }
+
+        if (effect.type === 'freeverb') {
+          const defaults = createFreeverbAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+        }
+
+        if (effect.type === 'jcReverb') {
+          const defaults = createJCReverbAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+        }
       })
     },
 
@@ -2863,6 +2880,30 @@ export const useDawStore = defineStore('dawStore', {
 
         if (typeof params.baseFrequency !== 'undefined') {
           effect.params.baseFrequency = normalizePhaserBaseFrequency(params.baseFrequency)
+        }
+
+        if (typeof params.wet !== 'undefined') {
+          effect.params.wet = normalizeWet(params.wet)
+        }
+      }
+
+      if (effect.type === 'freeverb') {
+        if (typeof params.roomSize !== 'undefined') {
+          effect.params.roomSize = normalizeFreeverbRoomSize(params.roomSize)
+        }
+
+        if (typeof params.dampening !== 'undefined') {
+          effect.params.dampening = normalizeFreeverbDampening(params.dampening)
+        }
+
+        if (typeof params.wet !== 'undefined') {
+          effect.params.wet = normalizeWet(params.wet)
+        }
+      }
+
+      if (effect.type === 'jcReverb') {
+        if (typeof params.roomSize !== 'undefined') {
+          effect.params.roomSize = normalizeJCReverbRoomSize(params.roomSize)
         }
 
         if (typeof params.wet !== 'undefined') {

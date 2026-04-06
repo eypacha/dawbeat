@@ -1,4 +1,4 @@
-import { AutoFilter, AutoPanner, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, Phaser, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
+import { AutoFilter, AutoPanner, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Freeverb, JCReverb, Limiter, Phaser, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
 import {
   normalizeBits,
   normalizeChorusDelayTime,
@@ -32,8 +32,9 @@ import {
   normalizePhaserOctaves,
   normalizePhaserStages,
   normalizePhaserQ,
-  normalizePhaserBaseFrequency,
-  normalizeAutoFilterType,
+  normalizePhaserBaseFrequency,  normalizeFreeverbRoomSize,
+  normalizeFreeverbDampening,
+  normalizeJCReverbRoomSize,  normalizeAutoFilterType,
   normalizeAutoFilterFilterType,
   normalizeAutoFilterFrequency,
   normalizeAutoFilterBaseFrequency,
@@ -375,6 +376,23 @@ async function createAudioEffectNode(effect) {
     })
   }
 
+  if (effect.type === 'freeverb') {
+    return new Freeverb({
+      context: toneContext,
+      roomSize: 0.7,
+      dampening: 3000,
+      wet: 0.3
+    })
+  }
+
+  if (effect.type === 'jcReverb') {
+    return new JCReverb({
+      context: toneContext,
+      roomSize: 0.5,
+      wet: 0.3
+    })
+  }
+
   if (effect.type === 'phaser') {
     return new Phaser({
       context: toneContext,
@@ -548,6 +566,19 @@ async function syncAudioEffectNode(effect) {
     node.pitch = normalizePitchShiftPitch(effect.params?.pitch)
     node.windowSize = normalizePitchShiftWindowSize(effect.params?.windowSize)
     node.feedback.value = normalizeFeedback(effect.params?.feedback)
+    node.wet.value = normalizeWet(effect.params?.wet)
+    return node
+  }
+
+  if (effect.type === 'freeverb') {
+    node.roomSize.value = normalizeFreeverbRoomSize(effect.params?.roomSize)
+    node.dampening = normalizeFreeverbDampening(effect.params?.dampening)
+    node.wet.value = normalizeWet(effect.params?.wet)
+    return node
+  }
+
+  if (effect.type === 'jcReverb') {
+    node.roomSize.value = normalizeJCReverbRoomSize(effect.params?.roomSize)
     node.wet.value = normalizeWet(effect.params?.wet)
     return node
   }

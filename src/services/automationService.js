@@ -28,6 +28,9 @@ import {
   normalizeAutoPannerFrequency,
   normalizePhaserFrequency,
   normalizePhaserQ,
+  normalizeFreeverbRoomSize,
+  normalizeFreeverbDampening,
+  normalizeJCReverbRoomSize,
   normalizeAutoFilterFrequency,
   normalizeAutoFilterBaseFrequency,
   normalizeAutoFilterOctaves,
@@ -86,6 +89,8 @@ const AUDIO_EFFECT_TYPE_LABELS = {
   delay: 'Delay',
   distortion: 'Distortion',
   eq: 'EQ3',
+  freeverb: 'Freeverb',
+  jcReverb: 'JC Reverb',
   limiter: 'Limiter',
   phaser: 'Phaser',
   pingPongDelay: 'Ping Pong Delay',
@@ -112,6 +117,15 @@ const AUDIO_EFFECT_PARAM_CONFIGS = {
   phaser: {
     frequency: { label: 'Frequency', min: 0.01, max: 20, normalize: normalizePhaserFrequency },
     Q: { label: 'Q', min: 0.1, max: 100, normalize: normalizePhaserQ },
+    wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }
+  },
+  freeverb: {
+    dampening: { label: 'Dampening', min: 0, max: 10000, normalize: normalizeFreeverbDampening },
+    roomSize: { label: 'Room Size', min: 0, max: 1, normalize: normalizeFreeverbRoomSize },
+    wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }
+  },
+  jcReverb: {
+    roomSize: { label: 'Room Size', min: 0, max: 1, normalize: normalizeJCReverbRoomSize },
     wet: { label: 'Wet', min: 0, max: 1, normalize: normalizeWet }
   },
   autoWah: {

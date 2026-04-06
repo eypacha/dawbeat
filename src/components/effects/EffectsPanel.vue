@@ -186,6 +186,8 @@ import AudioTremoloItem from '@/components/effects/AudioTremoloItem.vue'
 import AudioPingPongDelayItem from '@/components/effects/AudioPingPongDelayItem.vue'
 import AudioPitchShiftItem from '@/components/effects/AudioPitchShiftItem.vue'
 import AudioPhaserItem from '@/components/effects/AudioPhaserItem.vue'
+import AudioFreeverbItem from '@/components/effects/AudioFreeverbItem.vue'
+import AudioJCReverbItem from '@/components/effects/AudioJCReverbItem.vue'
 import EvalEffectItem from '@/components/effects/EvalEffectItem.vue'
 import Button from '@/components/ui/Button.vue'
 import IconButton from '@/components/ui/IconButton.vue'
@@ -268,6 +270,14 @@ const availableAudioEffects = [
   {
     name: 'Feedback Delay',
     type: 'delay'
+  },
+  {
+    name: 'Freeverb',
+    type: 'freeverb'
+  },
+  {
+    name: 'JC Reverb',
+    type: 'jcReverb'
   },
   {
     name: 'Limiter',
@@ -410,6 +420,14 @@ function getAudioEffectComponent(effectType) {
 
   if (effectType === 'phaser') {
     return AudioPhaserItem
+  }
+
+  if (effectType === 'freeverb') {
+    return AudioFreeverbItem
+  }
+
+  if (effectType === 'jcReverb') {
+    return AudioJCReverbItem
   }
 
   if (effectType === 'chorus') {
