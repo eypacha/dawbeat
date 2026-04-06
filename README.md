@@ -23,9 +23,11 @@ The main app is desktop-oriented. On phones/tablets, the companion view is inten
 - Formula evaluation with waveform previews and an evaluated expression panel.
 - Variable tracks and value trackers with keyboard override, variable binding, MIDI CC, MIDI Note, MIDI learn, and live recording workflows.
 - Automation lanes for master gain and audio effect parameters, including curve controls and live remote input.
-- Audio effects: EQ, distortion, stereo widener, delay, compressor, reverb, limiter, and master gain.
-- Transport controls with editable BPM unit, sample rate, looping, and external MIDI Clock receive/lock state.
-- WAV and MP3 export with full renders or looped render passes.
+- Audio effects: Auto Filter, Auto Panner, Auto Wah, BitCrusher, Chebyshev, Chorus, Compressor, Distortion, EQ3, Feedback Delay, Freeverb, Gate, JC Reverb, Limiter, Mid/Side Compressor, Multiband Compressor, Phaser, Ping Pong Delay, Pitch Shift, Reverb, Stereo Widener, Tremolo, Vibrato, and Master Gain.
+- Transport controls with editable BPM unit, sample rate, bytebeat type (ByteBeat / FloatBeat / Signed ByteBeat), looping, and external MIDI Clock receive/lock state.
+- Clip splitting via right-click context menu on clips and the timeline (Split All at playhead position).
+- Timeline right-click context menu for adding section labels, splitting all clips at a time position, and inserting bars.
+- WAV, MP3, and OGG Opus export with full renders or looped render passes.
 - Auto-save in `localStorage` plus JSON project import/export.
 - Immutable shared snapshots via Supabase (`/#/app/p/:id`).
 - PeerJS-based remote companion with shareable lane QR links (`/#/app/companion`).
@@ -40,6 +42,7 @@ The main app is desktop-oriented. On phones/tablets, the companion view is inten
 - Tone.js (audio/effects)
 - PeerJS (remote companion)
 - lamejs (MP3 encoding)
+- ogg-opus-encoder / WebAssembly Opus encoder (OGG Opus encoding)
 
 ## Requirements
 
@@ -131,7 +134,7 @@ yarn preview
 3. Add modulation with variable tracks, value trackers, or automation lanes.
 4. Adjust BPM, measure, and sample rate from the transport toolbar.
 5. Enable loop to iterate on a section and use record for automation/value capture when needed.
-6. Use Export to generate WAV or MP3, or Save JSON for a local project file.
+6. Use Export to generate WAV, MP3, or OGG Opus, or Save JSON for a local project file.
 7. Press Share to create an immutable Supabase snapshot and copy a shared URL.
 
 ## Keyboard Shortcuts
