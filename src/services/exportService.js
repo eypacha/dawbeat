@@ -1,4 +1,4 @@
-import { AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
+import { AutoFilter, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
 import * as lamejsModule from 'lamejs'
 import bitStreamModule from 'lamejs/src/js/BitStream.js'
 import lameCoreModule from 'lamejs/src/js/Lame.js'
@@ -41,6 +41,11 @@ import {
   normalizeTremoloType,
   normalizePitchShiftPitch,
   normalizePitchShiftWindowSize,
+  normalizeAutoFilterType,
+  normalizeAutoFilterFilterType,
+  normalizeAutoFilterFrequency,
+  normalizeAutoFilterBaseFrequency,
+  normalizeAutoFilterOctaves,
   normalizeVibratoFrequency,
   normalizeWet,
   normalizeWidth
@@ -62,7 +67,7 @@ import { validateFormula } from '@/utils/formulaValidation'
 import { getClipEnd, samplesToTicks, ticksToSamples } from '@/utils/timeUtils'
 
 const SILENT_EVALUATOR = () => 0
-const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev', 'autoWah', 'tremolo', 'pingPongDelay', 'pitchShift']
+const OFFLINE_RENDERABLE_AUDIO_EFFECT_TYPES = ['eq', 'distortion', 'stereoWidener', 'delay', 'compressor', 'reverb', 'limiter', 'bitCrusher', 'vibrato', 'chorus', 'chebyshev', 'autoWah', 'tremolo', 'pingPongDelay', 'pitchShift', 'autoFilter']
 const MIN_AUTOMATION_CURVE_SAMPLES = 16
 const MAX_AUTOMATION_CURVE_SAMPLES = 128
 const EXPORT_UI_YIELD_INTERVAL_MS = 12
@@ -75,7 +80,8 @@ const MANUAL_OFFLINE_AUTOMATION_PARAM_KEYS = {
   distortion: ['drive'],
   reverb: ['decay', 'preDelay'],
   tremolo: ['spread', 'type'],
-  pitchShift: ['pitch', 'windowSize']
+  pitchShift: ['pitch', 'windowSize'],
+  autoFilter: ['type', 'baseFrequency', 'octaves', 'filterType']
 }
 
 export async function downloadProjectWav(
@@ -733,6 +739,28 @@ async function createOfflineAudioEffectNode(effect, toneContext) {
     node.pitch = normalizePitchShiftPitch(effect.params?.pitch)
     node.windowSize = normalizePitchShiftWindowSize(effect.params?.windowSize)
     node.feedback.value = normalizeFeedback(effect.params?.feedback)
+    node.wet.value = normalizeWet(effect.params?.wet)
+
+    return node
+  }
+
+  if (effect.type === 'autoFilter') {
+    const node = new AutoFilter({
+      context: toneContext,
+      frequency: 1,
+      depth: 1,
+      type: 'sine',
+      baseFrequency: 200,
+      octaves: 2.6,
+      wet: 1
+    }).start()
+
+    node.frequency.value = normalizeAutoFilterFrequency(effect.params?.frequency)
+    node.depth.value = normalizeDepth(effect.params?.depth)
+    node.type = normalizeAutoFilterType(effect.params?.type)
+    node.baseFrequency = normalizeAutoFilterBaseFrequency(effect.params?.baseFrequency)
+    node.octaves = normalizeAutoFilterOctaves(effect.params?.octaves)
+    node.filter.type = normalizeAutoFilterFilterType(effect.params?.filterType)
     node.wet.value = normalizeWet(effect.params?.wet)
 
     return node
@@ -1415,6 +1443,42 @@ async function applyOfflineAudioEffectParamValue(node, effectType, paramKey, val
       node.wet.value = normalizeWet(value)
     }
   }
+
+  if (effectType === 'autoFilter') {
+    if (paramKey === 'frequency') {
+      node.frequency.value = normalizeAutoFilterFrequency(value)
+      return
+    }
+
+    if (paramKey === 'depth') {
+      node.depth.value = normalizeDepth(value)
+      return
+    }
+
+    if (paramKey === 'type') {
+      node.type = normalizeAutoFilterType(value)
+      return
+    }
+
+    if (paramKey === 'baseFrequency') {
+      node.baseFrequency = normalizeAutoFilterBaseFrequency(value)
+      return
+    }
+
+    if (paramKey === 'octaves') {
+      node.octaves = normalizeAutoFilterOctaves(value)
+      return
+    }
+
+    if (paramKey === 'filterType') {
+      node.filter.type = normalizeAutoFilterFilterType(value)
+      return
+    }
+
+    if (paramKey === 'wet') {
+      node.wet.value = normalizeWet(value)
+    }
+  }
 }
 
 function normalizeAudioEffectParamValue(effectType, paramKey, value) {
@@ -1533,6 +1597,16 @@ function normalizeAudioEffectParamValue(effectType, paramKey, value) {
     if (paramKey === 'pitch') return normalizePitchShiftPitch(value)
     if (paramKey === 'windowSize') return normalizePitchShiftWindowSize(value)
     if (paramKey === 'feedback') return normalizeFeedback(value)
+    if (paramKey === 'wet') return normalizeWet(value)
+  }
+
+  if (effectType === 'autoFilter') {
+    if (paramKey === 'frequency') return normalizeAutoFilterFrequency(value)
+    if (paramKey === 'depth') return normalizeDepth(value)
+    if (paramKey === 'type') return normalizeAutoFilterType(value)
+    if (paramKey === 'baseFrequency') return normalizeAutoFilterBaseFrequency(value)
+    if (paramKey === 'octaves') return normalizeAutoFilterOctaves(value)
+    if (paramKey === 'filterType') return normalizeAutoFilterFilterType(value)
     if (paramKey === 'wet') return normalizeWet(value)
   }
 

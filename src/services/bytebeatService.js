@@ -1,4 +1,4 @@
-import { AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
+import { AutoFilter, AutoWah, BitCrusher, Chebyshev, Chorus, Compressor, Context as ToneContext, Distortion, EQ3, FeedbackDelay, Limiter, PingPongDelay, PitchShift, Reverb, StereoWidener, Tremolo, Vibrato, connect as toneConnect } from 'tone'
 import {
   normalizeBits,
   normalizeChorusDelayTime,
@@ -26,6 +26,11 @@ import {
   normalizeTremoloType,
   normalizePitchShiftPitch,
   normalizePitchShiftWindowSize,
+  normalizeAutoFilterType,
+  normalizeAutoFilterFilterType,
+  normalizeAutoFilterFrequency,
+  normalizeAutoFilterBaseFrequency,
+  normalizeAutoFilterOctaves,
   normalizeVibratoFrequency,
   normalizeWet,
   normalizeWidth
@@ -363,6 +368,18 @@ async function createAudioEffectNode(effect) {
     })
   }
 
+  if (effect.type === 'autoFilter') {
+    return new AutoFilter({
+      context: toneContext,
+      frequency: 1,
+      depth: 1,
+      type: 'sine',
+      baseFrequency: 200,
+      octaves: 2.6,
+      wet: 1
+    }).start()
+  }
+
   return null
 }
 
@@ -502,6 +519,17 @@ async function syncAudioEffectNode(effect) {
     node.pitch = normalizePitchShiftPitch(effect.params?.pitch)
     node.windowSize = normalizePitchShiftWindowSize(effect.params?.windowSize)
     node.feedback.value = normalizeFeedback(effect.params?.feedback)
+    node.wet.value = normalizeWet(effect.params?.wet)
+    return node
+  }
+
+  if (effect.type === 'autoFilter') {
+    node.frequency.value = normalizeAutoFilterFrequency(effect.params?.frequency)
+    node.depth.value = normalizeDepth(effect.params?.depth)
+    node.type = normalizeAutoFilterType(effect.params?.type)
+    node.baseFrequency = normalizeAutoFilterBaseFrequency(effect.params?.baseFrequency)
+    node.octaves = normalizeAutoFilterOctaves(effect.params?.octaves)
+    node.filter.type = normalizeAutoFilterFilterType(effect.params?.filterType)
     node.wet.value = normalizeWet(effect.params?.wet)
     return node
   }

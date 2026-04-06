@@ -53,8 +53,29 @@ export function createAudioEffect(effect = {}) {
     case 'pitchShift':
       return createPitchShiftAudioEffect(effect)
 
+    case 'autoFilter':
+      return createAutoFilterAudioEffect(effect)
+
     default:
       return null
+  }
+}
+
+export function createAutoFilterAudioEffect(effect = {}) {
+  return {
+    id: effect.id ?? createAudioEffectId(),
+    type: 'autoFilter',
+    enabled: effect.enabled ?? true,
+    expanded: effect.expanded ?? false,
+    params: {
+      frequency: normalizeAutoFilterFrequency(effect.params?.frequency ?? 1),
+      depth: normalizeDepth(effect.params?.depth ?? 1),
+      type: normalizeAutoFilterType(effect.params?.type ?? 'sine'),
+      baseFrequency: normalizeAutoFilterBaseFrequency(effect.params?.baseFrequency ?? 200),
+      octaves: normalizeAutoFilterOctaves(effect.params?.octaves ?? 2.6),
+      filterType: normalizeAutoFilterFilterType(effect.params?.filterType ?? 'lowpass'),
+      wet: normalizeWet(effect.params?.wet ?? 1)
+    }
   }
 }
 
@@ -563,6 +584,47 @@ export function normalizePitchShiftWindowSize(value) {
   }
 
   return Math.min(0.1, Math.max(0.03, numericValue))
+}
+
+const AUTO_FILTER_TYPES = Object.freeze(['sine', 'square', 'triangle', 'sawtooth'])
+const AUTO_FILTER_FILTER_TYPES = Object.freeze(['lowpass', 'highpass', 'bandpass', 'notch'])
+
+export function normalizeAutoFilterType(value) {
+  return AUTO_FILTER_TYPES.includes(value) ? value : 'sine'
+}
+
+export function normalizeAutoFilterFilterType(value) {
+  return AUTO_FILTER_FILTER_TYPES.includes(value) ? value : 'lowpass'
+}
+
+export function normalizeAutoFilterFrequency(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 1
+  }
+
+  return Math.min(20, Math.max(0.01, numericValue))
+}
+
+export function normalizeAutoFilterBaseFrequency(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 200
+  }
+
+  return Math.min(10000, Math.max(20, numericValue))
+}
+
+export function normalizeAutoFilterOctaves(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 2.6
+  }
+
+  return Math.min(10, Math.max(0.1, numericValue))
 }
 
 function normalizeEqFrequencies(lowFrequency, highFrequency) {

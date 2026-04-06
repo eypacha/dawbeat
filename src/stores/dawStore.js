@@ -49,6 +49,7 @@ import {
   createChorusAudioEffect,
   createChebyshevAudioEffect,
   createAutoWahAudioEffect,
+  createAutoFilterAudioEffect,
   createPingPongDelayAudioEffect,
   createPitchShiftAudioEffect,
   createTremoloAudioEffect,
@@ -80,6 +81,11 @@ import {
   normalizeTremoloType,
   normalizePitchShiftPitch,
   normalizePitchShiftWindowSize,
+  normalizeAutoFilterType,
+  normalizeAutoFilterFilterType,
+  normalizeAutoFilterFrequency,
+  normalizeAutoFilterBaseFrequency,
+  normalizeAutoFilterOctaves,
   normalizeWet,
   normalizeWidth
 } from '@/services/audioEffectService'
@@ -2502,6 +2508,12 @@ export const useDawStore = defineStore('dawStore', {
           effect.enabled = defaults.enabled
           effect.params = defaults.params
         }
+
+        if (effect.type === 'autoFilter') {
+          const defaults = createAutoFilterAudioEffect({ id: effect.id })
+          effect.enabled = defaults.enabled
+          effect.params = defaults.params
+        }
       })
     },
 
@@ -2756,6 +2768,36 @@ export const useDawStore = defineStore('dawStore', {
 
         if (typeof params.feedback !== 'undefined') {
           effect.params.feedback = normalizeFeedback(params.feedback)
+        }
+
+        if (typeof params.wet !== 'undefined') {
+          effect.params.wet = normalizeWet(params.wet)
+        }
+      }
+
+      if (effect.type === 'autoFilter') {
+        if (typeof params.frequency !== 'undefined') {
+          effect.params.frequency = normalizeAutoFilterFrequency(params.frequency)
+        }
+
+        if (typeof params.depth !== 'undefined') {
+          effect.params.depth = normalizeDepth(params.depth)
+        }
+
+        if (typeof params.type !== 'undefined') {
+          effect.params.type = normalizeAutoFilterType(params.type)
+        }
+
+        if (typeof params.baseFrequency !== 'undefined') {
+          effect.params.baseFrequency = normalizeAutoFilterBaseFrequency(params.baseFrequency)
+        }
+
+        if (typeof params.octaves !== 'undefined') {
+          effect.params.octaves = normalizeAutoFilterOctaves(params.octaves)
+        }
+
+        if (typeof params.filterType !== 'undefined') {
+          effect.params.filterType = normalizeAutoFilterFilterType(params.filterType)
         }
 
         if (typeof params.wet !== 'undefined') {
