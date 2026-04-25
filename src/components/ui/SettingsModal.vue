@@ -178,39 +178,9 @@
             </div>
           </div>
 
-          <div>
-            <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Inputs</p>
-            <div v-if="midiState.inputs.length" class="mt-2 grid gap-2 md:grid-cols-2">
-              <div
-                v-for="midiInput in midiState.inputs"
-                :key="midiInput.id"
-                class="border border-zinc-800 bg-zinc-900/70 px-3 py-2"
-              >
-                <p class="text-sm text-zinc-200">{{ midiInput.name }}</p>
-                <p class="mt-1 text-xs text-zinc-500">
-                  {{ formatMidiInputMeta(midiInput) }}
-                </p>
-              </div>
-            </div>
-            <p v-else class="mt-2 text-xs text-zinc-500">
-              No MIDI inputs detected yet.
-            </p>
-          </div>
-
-          <div>
-            <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Recent messages</p>
-            <div class="mt-2 max-h-52 space-y-2 overflow-auto pr-1">
-              <div
-                v-for="message in midiState.recentMessages"
-                :key="message.id"
-                class="border border-zinc-800 bg-zinc-900/70 px-3 py-2"
-              >
-                <p class="text-sm text-zinc-200">{{ formatMidiDebugMessage(message) }}</p>
-              </div>
-              <p v-if="!midiState.recentMessages.length" class="text-xs text-zinc-500">
-                No MIDI messages received yet.
-              </p>
-            </div>
+          <div class="border border-zinc-800 bg-zinc-900/70 px-3 py-2">
+            <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Last message</p>
+            <p class="mt-1 text-sm text-zinc-200">{{ lastMidiMessageLabel }}</p>
           </div>
         </section>
       </template>
@@ -358,6 +328,11 @@ const midiClockSampleRateLabel = computed(() =>
 const midiClockInputLabel = computed(() =>
   midiClockState.syncSourceName || 'No input selected'
 )
+const lastMidiMessageLabel = computed(() =>
+  midiState.recentMessages.length
+    ? formatMidiDebugMessage(midiState.recentMessages[0])
+    : 'No MIDI messages received yet.'
+)
 
 function handleShowClipWaveformsChange(event) {
   dawStore.setShowClipWaveforms(event.target.checked)
@@ -387,11 +362,6 @@ function handleMidiRefresh() {
   if (!refreshMidiInputs()) {
     void enableMidiInput()
   }
-}
-
-function formatMidiInputMeta(midiInput) {
-  const manufacturer = midiInput.manufacturer || 'Unknown manufacturer'
-  return `${manufacturer} · ${midiInput.state} · ${midiInput.connection}`
 }
 
 function formatNumberLabel(value) {
