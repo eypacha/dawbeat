@@ -4,6 +4,7 @@ export const VALUE_TRACKER_MIN = 0
 export const VALUE_TRACKER_MAX = 0xFFFF
 export const DEFAULT_VALUE_TRACKER_STEP_SUBDIVISION = TIMELINE_SNAP_SUBDIVISIONS
 export const DEFAULT_VALUE_TRACKER_TRACK_NAME_PREFIX = 'Value Tracker'
+export const DEFAULT_MIDI_CC_BITS = 8
 export const VALUE_TRACKER_BINDING_TYPES = Object.freeze([
   'midiCc',
   'midiNote',
@@ -17,7 +18,8 @@ export function createDefaultValueTrackerBinding(binding = {}) {
     deviceId: normalizeNullableString(binding?.deviceId),
     channel: normalizeNullableInteger(binding?.channel),
     controller: normalizeNullableInteger(binding?.controller),
-    note: normalizeNullableInteger(binding?.note)
+    note: normalizeNullableInteger(binding?.note),
+    bits: normalizeMidiCcBits(binding?.bits)
   }
 
   if (type === 'midiCc') {
@@ -30,7 +32,10 @@ export function createDefaultValueTrackerBinding(binding = {}) {
   if (type === 'midiNote') {
     return {
       ...normalizedBinding,
-      controller: null
+      channel: null,
+      controller: null,
+      note: null,
+      bits: null
     }
   }
 
@@ -40,7 +45,8 @@ export function createDefaultValueTrackerBinding(binding = {}) {
       channel: null,
       controller: null,
       deviceId: null,
-      note: null
+      note: null,
+      bits: null
     }
   }
 
@@ -49,7 +55,8 @@ export function createDefaultValueTrackerBinding(binding = {}) {
     deviceId: null,
     channel: null,
     controller: null,
-    note: null
+    note: null,
+    bits: null
   }
 }
 
@@ -408,7 +415,7 @@ export function doesValueTrackerBindingMatchInput(binding, input = {}) {
   }
 
   if (normalizedBinding.type === 'midiNote') {
-    return doesMidiValueTrackerBindingMatch(normalizedBinding, input, 'note')
+    return doesMidiValueTrackerBindingMatch(normalizedBinding, input, null)
   }
 
   if (normalizedBinding.type === 'keyboard') {
@@ -428,6 +435,7 @@ export function getValueTrackerBindingSummary(binding, resolveDeviceName = null)
   if (normalizedBinding.type === 'midiCc') {
     return [
       `MIDI CC ${normalizedBinding.controller ?? 'Any'}`,
+      `${normalizeMidiCcBits(normalizedBinding.bits)} bits`,
       normalizedBinding.channel ? `Ch ${normalizedBinding.channel}` : 'Any ch',
       getValueTrackerBindingDeviceSummary(normalizedBinding.deviceId, resolveDeviceName)
     ].filter(Boolean).join(' · ')
@@ -435,8 +443,7 @@ export function getValueTrackerBindingSummary(binding, resolveDeviceName = null)
 
   if (normalizedBinding.type === 'midiNote') {
     return [
-      `MIDI Note ${normalizedBinding.note ?? 'Any'}`,
-      normalizedBinding.channel ? `Ch ${normalizedBinding.channel}` : 'Any ch',
+      'MIDI Note',
       getValueTrackerBindingDeviceSummary(normalizedBinding.deviceId, resolveDeviceName)
     ].filter(Boolean).join(' · ')
   }
@@ -470,10 +477,33 @@ function normalizeNullableInteger(value) {
   return Number.isInteger(numericValue) ? numericValue : null
 }
 
+export function normalizeMidiCcBits(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isInteger(numericValue) || numericValue < 1) {
+    return DEFAULT_MIDI_CC_BITS
+  }
+
+  return Math.min(16, numericValue)
+}
+
+export function resolveMidiCcValueForBits(value, bits = DEFAULT_MIDI_CC_BITS) {
+  const normalizedBits = normalizeMidiCcBits(bits)
+  const normalizedInputValue = clamp(Math.round(Number(value) || 0), 0, 127)
+  const normalized16BitValue = Math.round((normalizedInputValue / 127) * VALUE_TRACKER_MAX)
+  const targetMaxValue = (1 << normalizedBits) - 1
+
+  if (normalizedBits >= 16) {
+    return normalized16BitValue
+  }
+
+  return Math.floor((normalized16BitValue * targetMaxValue) / VALUE_TRACKER_MAX)
+}
+
 function doesMidiValueTrackerBindingMatch(binding, input, valueKey) {
   const inputDeviceId = normalizeNullableString(input?.deviceId)
   const inputChannel = normalizeNullableInteger(input?.channel)
-  const inputValueKey = normalizeNullableInteger(input?.[valueKey])
+  const inputValueKey = valueKey ? normalizeNullableInteger(input?.[valueKey]) : null
 
   if (binding.deviceId && binding.deviceId !== inputDeviceId) {
     return false
@@ -483,7 +513,7 @@ function doesMidiValueTrackerBindingMatch(binding, input, valueKey) {
     return false
   }
 
-  if (binding[valueKey] !== null && binding[valueKey] !== inputValueKey) {
+  if (valueKey && binding[valueKey] !== null && binding[valueKey] !== inputValueKey) {
     return false
   }
 

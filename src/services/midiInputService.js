@@ -1,7 +1,6 @@
 import { reactive } from 'vue'
 import { dispatchValueTrackerInput } from '@/services/valueTrackerInputService'
 import { enqueueSnackbar } from '@/services/notifications'
-import { VALUE_TRACKER_MAX } from '@/services/valueTrackerService'
 
 const MIDI_NOTE_OFF = 0x80
 const MIDI_NOTE_ON = 0x90
@@ -225,6 +224,11 @@ function handleMidiMessage(event, input) {
   ].slice(0, MAX_RECENT_MESSAGES)
 
   maybeCompleteMidiLearn(normalizedMessage)
+
+  if (normalizedMessage.source === 'midiNote' && normalizedMessage.isNoteOff) {
+    return
+  }
+
   dispatchValueTrackerInput(normalizedMessage)
 }
 
@@ -296,17 +300,21 @@ function normalizeMidiMessage(event) {
       controller: data1,
       note: null,
       source: 'midiCc',
-      value: scaleMidi7BitValue(data2)
+      value: data2
     }
   }
 
   if (command === MIDI_NOTE_ON) {
+    const noteValue = normalizeMidiNoteValue(data1)
+    const isNoteOff = data2 <= 0
+
     return {
       ...baseMessage,
       controller: null,
-      note: data1,
+      isNoteOff,
+      note: noteValue,
       source: 'midiNote',
-      value: data2 > 0 ? scaleMidi7BitValue(data2) : 0
+      value: isNoteOff ? null : noteValue
     }
   }
 
@@ -314,9 +322,10 @@ function normalizeMidiMessage(event) {
     return {
       ...baseMessage,
       controller: null,
-      note: data1,
+      isNoteOff: true,
+      note: normalizeMidiNoteValue(data1),
       source: 'midiNote',
-      value: 0
+      value: null
     }
   }
 
@@ -337,10 +346,10 @@ function createMidiLearnBinding(message) {
 
   if (message.source === 'midiNote') {
     return {
-      channel: message.channel,
+      channel: null,
       controller: null,
       deviceId: message.deviceId,
-      note: message.note,
+      note: null,
       type: 'midiNote',
       variableName: null
     }
@@ -356,14 +365,14 @@ function createMidiLearnBinding(message) {
   }
 }
 
-function scaleMidi7BitValue(value) {
+function normalizeMidiNoteValue(value) {
   const numericValue = Number(value)
 
   if (!Number.isFinite(numericValue)) {
     return 0
   }
 
-  return Math.max(0, Math.min(VALUE_TRACKER_MAX, Math.round((numericValue / 127) * VALUE_TRACKER_MAX)))
+  return Math.max(0, Math.min(127, Math.round(numericValue)))
 }
 
 function createMidiMessageId() {

@@ -188,6 +188,7 @@ import {
   normalizeValueTrackerValue,
   normalizeValueTrackerValues,
   normalizeValueTrackerTrackName,
+  resolveMidiCcValueForBits,
   resizeValueTrackerValues
 } from '@/services/valueTrackerService'
 import { enqueueSnackbar } from '@/services/notifications'
@@ -408,6 +409,14 @@ function resolveValueTrackerTracksForInput(state, input = {}) {
   return state.valueTrackerTracks.filter((valueTrackerTrack) =>
     doesValueTrackerBindingMatchInput(valueTrackerTrack.binding, input)
   )
+}
+
+function resolveValueTrackerInputValueForTrack(valueTrackerTrack, input = {}) {
+  if (input?.source === 'midiCc') {
+    return resolveMidiCcValueForBits(input.value, valueTrackerTrack?.binding?.bits)
+  }
+
+  return input?.value
 }
 
 function createValueTrackerRecordingResult(ok, extras = {}) {
@@ -3171,9 +3180,11 @@ export const useDawStore = defineStore('dawStore', {
       let applied = false
 
       for (const targetValueTrackerTrack of targetValueTrackerTracks) {
+        const resolvedValue = resolveValueTrackerInputValueForTrack(targetValueTrackerTrack, input)
+
         if (!this.setValueTrackerTrackLiveInput(
           targetValueTrackerTrack.id,
-          input.value,
+          resolvedValue,
           normalizedTimeTicks
         )) {
           continue
@@ -3185,7 +3196,7 @@ export const useDawStore = defineStore('dawStore', {
           captureValueTrackerRecordingInput(
             this,
             this.valueTrackerRecordingSession,
-            input.value,
+            resolvedValue,
             normalizedTimeTicks
           )
         }

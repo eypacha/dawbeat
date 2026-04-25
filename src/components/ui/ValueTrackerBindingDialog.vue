@@ -34,24 +34,24 @@
       </label>
 
       <template v-if="usesMidiBinding">
-        <div class="grid grid-cols-2 gap-3">
-          <label class="block col-span-2">
-            <span class="text-xs uppercase tracking-[0.18em] text-zinc-500">Device</span>
-            <select
-              v-model="draft.deviceId"
-              class="mt-2 w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
+        <label class="block">
+          <span class="text-xs uppercase tracking-[0.18em] text-zinc-500">Device</span>
+          <select
+            v-model="draft.deviceId"
+            class="mt-2 w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-zinc-500"
+          >
+            <option value="">Any device</option>
+            <option
+              v-for="midiInput in midiInputs"
+              :key="midiInput.id"
+              :value="midiInput.id"
             >
-              <option value="">Any device</option>
-              <option
-                v-for="midiInput in midiInputs"
-                :key="midiInput.id"
-                :value="midiInput.id"
-              >
-                {{ midiInput.name }}
-              </option>
-            </select>
-          </label>
+              {{ midiInput.name }}
+            </option>
+          </select>
+        </label>
 
+        <div v-if="draft.type === 'midiCc'" class="grid grid-cols-2 gap-3">
           <label class="block">
             <span class="text-xs uppercase tracking-[0.18em] text-zinc-500">Channel</span>
             <input
@@ -65,7 +65,7 @@
             >
           </label>
 
-          <label v-if="draft.type === 'midiCc'" class="block">
+          <label class="block">
             <span class="text-xs uppercase tracking-[0.18em] text-zinc-500">Controller</span>
             <input
               :value="draft.controller"
@@ -78,18 +78,24 @@
             >
           </label>
 
-          <label v-else class="block">
-            <span class="text-xs uppercase tracking-[0.18em] text-zinc-500">Note</span>
+          <label class="block col-span-2">
+            <span class="text-xs uppercase tracking-[0.18em] text-zinc-500">Bits</span>
             <input
-              :value="draft.note"
+              :value="draft.bits"
               class="mt-2 w-full rounded border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-zinc-500"
-              max="127"
-              min="0"
-              placeholder="Any"
+              max="16"
+              min="1"
+              placeholder="8"
+              step="1"
               type="number"
-              @input="draft.note = $event.target.value"
+              @input="draft.bits = $event.target.value"
             >
+            <p class="mt-1 text-[10px] text-zinc-500">1 to 16 bits. 8 gives 0 to 255.</p>
           </label>
+        </div>
+
+        <div v-else class="rounded border border-zinc-800 bg-zinc-950/70 p-3 text-xs text-zinc-500">
+          MIDI Note bindings use every note from the selected device and write the note number directly. Releasing a key keeps the last value. Select the device and save.
         </div>
 
         <div class="rounded border border-zinc-800 bg-zinc-950/70 p-3">
@@ -111,6 +117,7 @@
               </Button>
 
               <Button
+                v-if="showMidiLearnButton"
                 size="xs"
                 :variant="isListeningForLearn ? 'danger' : 'primary'"
                 :disabled="midiState.initializing"
@@ -188,13 +195,18 @@ const draft = reactive(createBindingDraft(props.initialBinding))
 const isListeningForLearn = ref(false)
 
 const usesMidiBinding = computed(() => draft.type === 'midiCc' || draft.type === 'midiNote')
+const showMidiLearnButton = computed(() => draft.type === 'midiCc')
 const midiInputs = computed(() => midiState.inputs)
 const bindingSummary = computed(() =>
   getValueTrackerBindingSummary(getNormalizedDraftBinding(), getMidiInputDisplayName)
 )
 const midiLearnStatus = computed(() => {
+  if (draft.type === 'midiNote') {
+    return 'MIDI Note bindings use the selected device only. Learn is not needed.'
+  }
+
   if (isListeningForLearn.value) {
-    return `Listening for the next ${draft.type === 'midiCc' ? 'CC' : 'note'} message.`
+    return 'Listening for the next CC message.'
   }
 
   if (!midiState.supported) {
@@ -246,7 +258,7 @@ async function handleEnableMidi() {
 }
 
 async function handleLearn() {
-  if (!usesMidiBinding.value) {
+  if (draft.type !== 'midiCc') {
     return
   }
 
@@ -298,6 +310,7 @@ function getNormalizedDraftBinding() {
   return createDefaultValueTrackerBinding({
     channel: normalizeDraftNumber(draft.channel),
     controller: normalizeDraftNumber(draft.controller),
+    bits: normalizeDraftNumber(draft.bits),
     deviceId: draft.deviceId || null,
     note: normalizeDraftNumber(draft.note),
     type: draft.type || null
@@ -310,6 +323,7 @@ function createBindingDraft(binding) {
   return {
     channel: formatNullableNumber(normalizedBinding.channel),
     controller: formatNullableNumber(normalizedBinding.controller),
+    bits: formatNullableNumber(normalizedBinding.bits),
     deviceId: normalizedBinding.deviceId ?? '',
     note: formatNullableNumber(normalizedBinding.note),
     type: normalizedBinding.type ?? ''
