@@ -15,11 +15,6 @@
     </template>
 
     <div class="space-y-4">
-      <div>
-        <p class="text-xs uppercase tracking-[0.18em] text-zinc-500">Current input</p>
-        <p class="mt-1 text-sm text-zinc-200">{{ bindingSummary }}</p>
-      </div>
-
       <label class="block">
         <span class="text-xs uppercase tracking-[0.18em] text-zinc-500">Type</span>
         <select
@@ -94,10 +89,6 @@
           </label>
         </div>
 
-        <div v-else class="rounded border border-zinc-800 bg-zinc-950/70 p-3 text-xs text-zinc-500">
-          MIDI Note bindings use the raw MIDI note number from the selected device. Learn captures the device and channel from the first key you play. In standard MIDI, C-1 is 0 and C0 is 12. Releasing a key keeps the last value.
-        </div>
-
         <div class="rounded border border-zinc-800 bg-zinc-950/70 p-3">
           <div class="flex items-start justify-between gap-3">
             <div>
@@ -159,15 +150,13 @@ import IconButton from '@/components/ui/IconButton.vue'
 import Modal from '@/components/ui/Modal.vue'
 import {
   enableMidiInput,
-  getMidiInputDisplayName,
   midiState,
   refreshMidiInputs,
   startMidiLearn,
   stopMidiLearn
 } from '@/services/midiInputService'
 import {
-  createDefaultValueTrackerBinding,
-  getValueTrackerBindingSummary
+  createDefaultValueTrackerBinding
 } from '@/services/valueTrackerService'
 
 const props = defineProps({
@@ -197,9 +186,6 @@ const isListeningForLearn = ref(false)
 const usesMidiBinding = computed(() => draft.type === 'midiCc' || draft.type === 'midiNote')
 const showMidiLearnButton = computed(() => draft.type === 'midiCc' || draft.type === 'midiNote')
 const midiInputs = computed(() => midiState.inputs)
-const bindingSummary = computed(() =>
-  getValueTrackerBindingSummary(getNormalizedDraftBinding(), getMidiInputDisplayName)
-)
 const midiLearnStatus = computed(() => {
   if (!midiState.supported) {
     return 'This browser does not expose Web MIDI.'
@@ -219,10 +205,10 @@ const midiLearnStatus = computed(() => {
 
   if (draft.type === 'midiNote') {
     if (draft.deviceId) {
-      return 'Press Learn and play a key to capture this device and its channel. The tracker reads raw MIDI note numbers, so standard MIDI note 0 is C-1.'
+      return 'Press Learn and play a key to capture this device and its channel.'
     }
 
-    return 'Press Learn and play a key to capture the device and channel. The tracker reads raw MIDI note numbers, so standard MIDI note 0 is C-1.'
+    return 'Press Learn and play a key to capture the device and channel.'
   }
 
   if (draft.type === 'midiCc') {
