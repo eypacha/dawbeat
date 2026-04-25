@@ -32,7 +32,6 @@ export function createDefaultValueTrackerBinding(binding = {}) {
   if (type === 'midiNote') {
     return {
       ...normalizedBinding,
-      channel: null,
       controller: null,
       note: null,
       bits: null
@@ -444,7 +443,8 @@ export function getValueTrackerBindingSummary(binding, resolveDeviceName = null)
   if (normalizedBinding.type === 'midiNote') {
     return [
       'MIDI Note',
-      'C0 = 0',
+      'C-1 = 0',
+      normalizedBinding.channel !== null ? `Ch ${normalizedBinding.channel}` : 'Any ch',
       getValueTrackerBindingDeviceSummary(normalizedBinding.deviceId, resolveDeviceName)
     ].filter(Boolean).join(' · ')
   }

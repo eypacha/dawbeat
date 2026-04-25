@@ -95,7 +95,7 @@
         </div>
 
         <div v-else class="rounded border border-zinc-800 bg-zinc-950/70 p-3 text-xs text-zinc-500">
-          MIDI Note bindings use every note from the selected device and write a keyboard index directly. C0 becomes 0 and C#0 becomes 1. Releasing a key keeps the last value. Select the device and save.
+          MIDI Note bindings use the raw MIDI note number from the selected device. Learn captures the device and channel from the first key you play. In standard MIDI, C-1 is 0 and C0 is 12. Releasing a key keeps the last value.
         </div>
 
         <div class="rounded border border-zinc-800 bg-zinc-950/70 p-3">
@@ -195,20 +195,12 @@ const draft = reactive(createBindingDraft(props.initialBinding))
 const isListeningForLearn = ref(false)
 
 const usesMidiBinding = computed(() => draft.type === 'midiCc' || draft.type === 'midiNote')
-const showMidiLearnButton = computed(() => draft.type === 'midiCc')
+const showMidiLearnButton = computed(() => draft.type === 'midiCc' || draft.type === 'midiNote')
 const midiInputs = computed(() => midiState.inputs)
 const bindingSummary = computed(() =>
   getValueTrackerBindingSummary(getNormalizedDraftBinding(), getMidiInputDisplayName)
 )
 const midiLearnStatus = computed(() => {
-  if (draft.type === 'midiNote') {
-    return 'MIDI Note bindings use the selected device only. C0 becomes 0, so Learn is not needed.'
-  }
-
-  if (isListeningForLearn.value) {
-    return 'Listening for the next CC message.'
-  }
-
   if (!midiState.supported) {
     return 'This browser does not expose Web MIDI.'
   }
@@ -217,8 +209,24 @@ const midiLearnStatus = computed(() => {
     return 'Enable MIDI first, then use Learn or fill the fields manually.'
   }
 
+  if (isListeningForLearn.value) {
+    return 'Listening for the next MIDI message.'
+  }
+
   if (!midiInputs.value.length) {
     return 'MIDI is enabled, but no inputs are currently connected.'
+  }
+
+  if (draft.type === 'midiNote') {
+    if (draft.deviceId) {
+      return 'Press Learn and play a key to capture this device and its channel. The tracker reads raw MIDI note numbers, so standard MIDI note 0 is C-1.'
+    }
+
+    return 'Press Learn and play a key to capture the device and channel. The tracker reads raw MIDI note numbers, so standard MIDI note 0 is C-1.'
+  }
+
+  if (draft.type === 'midiCc') {
+    return 'Use Learn to capture the next CC message from the selected device or any connected MIDI input.'
   }
 
   return `${midiInputs.value.length} MIDI input${midiInputs.value.length === 1 ? '' : 's'} available.`
@@ -258,7 +266,7 @@ async function handleEnableMidi() {
 }
 
 async function handleLearn() {
-  if (draft.type !== 'midiCc') {
+  if (draft.type !== 'midiCc' && draft.type !== 'midiNote') {
     return
   }
 
@@ -282,12 +290,13 @@ async function handleLearn() {
     Object.assign(draft, {
       channel: formatNullableNumber(binding.channel),
       controller: formatNullableNumber(binding.controller),
-      deviceId: binding.deviceId ?? '',
+      deviceId: binding.deviceId ?? draft.deviceId ?? '',
       note: formatNullableNumber(binding.note),
       type: binding.type ?? draft.type
     })
     isListeningForLearn.value = false
   }, {
+    deviceId: draft.deviceId || null,
     sources: [draft.type]
   })
 }
