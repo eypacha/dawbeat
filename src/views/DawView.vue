@@ -182,6 +182,14 @@
       @confirm="confirmValueTrackerTrackBinding"
     />
 
+    <AutomationBindingDialog
+      :initial-binding="automationBindingSelectedLaneBinding"
+      :lane="automationBindingSelectedLane"
+      :visible="automationBindingDialogState.open"
+      @cancel="closeAutomationBindingDialog"
+      @confirm="confirmAutomationBinding"
+    />
+
     <AutomationCompanionModal
       :lane="automationCompanionSelectedLane"
       :open="automationCompanionModalState.open"
@@ -214,6 +222,7 @@ import Toolbar from '@/components/transport/Toolbar.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import ContextMenu from '@/components/ui/ContextMenu.vue'
 import FormulaInputDialog from '@/components/ui/FormulaInputDialog.vue'
+import AutomationBindingDialog from '@/components/ui/AutomationBindingDialog.vue'
 import AutomationCompanionModal from '@/components/ui/AutomationCompanionModal.vue'
 import Panel from '@/components/ui/Panel.vue'
 import SnackbarContainer from '@/components/ui/SnackbarContainer.vue'
@@ -222,6 +231,10 @@ import TrackPresentationDialog from '@/components/ui/TrackPresentationDialog.vue
 import ValueTrackerBindingDialog from '@/components/ui/ValueTrackerBindingDialog.vue'
 import ValueTrackerClipEditorDialog from '@/components/ui/ValueTrackerClipEditorDialog.vue'
 import { provideContextMenu } from '@/composables/useContextMenu'
+import {
+  automationBindingDialogState,
+  closeAutomationBindingDialog
+} from '@/services/automationBindingDialogService'
 import {
   automationCompanionModalState,
   closeAutomationCompanionModal,
@@ -414,6 +427,14 @@ const automationCompanionSelectedLane = computed(() =>
   automationCompanionModalState.laneId
     ? dawStore.getAutomationLaneById(automationCompanionModalState.laneId)
     : null
+)
+const automationBindingSelectedLane = computed(() =>
+  automationBindingDialogState.laneId
+    ? dawStore.getAutomationLaneById(automationBindingDialogState.laneId)
+    : null
+)
+const automationBindingSelectedLaneBinding = computed(() =>
+  automationBindingSelectedLane.value?.binding ?? {}
 )
 const mainLayoutStyle = computed(() => ({
   '--effects-width': effectsCollapsed.value ? '56px' : '304px',
@@ -916,6 +937,14 @@ function confirmValueTrackerTrackBinding(nextBinding) {
   closeValueTrackerTrackBindingDialog()
 }
 
+function confirmAutomationBinding(nextBinding) {
+  if (automationBindingDialogState.laneId) {
+    dawStore.setAutomationLaneBinding(automationBindingDialogState.laneId, nextBinding)
+  }
+
+  closeAutomationBindingDialog()
+}
+
 function closeFormulaDialog() {
   dawStore.setEditingClip(null)
 }
@@ -949,6 +978,16 @@ watch(automationCompanionSelectedLane, (lane) => {
 
   if (!lane) {
     closeAutomationCompanionModal()
+  }
+})
+
+watch(automationBindingSelectedLane, (lane) => {
+  if (!automationBindingDialogState.open) {
+    return
+  }
+
+  if (!lane) {
+    closeAutomationBindingDialog()
   }
 })
 

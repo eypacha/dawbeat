@@ -49,6 +49,7 @@ export const AUTOMATION_CURVE_LINEAR = 'linear'
 export const AUTOMATION_CURVE_EASE_IN = 'easeIn'
 export const AUTOMATION_CURVE_EASE_OUT = 'easeOut'
 export const AUTOMATION_CURVE_EASE_IN_OUT = 'easeInOut'
+export const AUTOMATION_BINDING_MIDI_CC = 'midiCc'
 
 export const AUTOMATION_CURVE_OPTIONS = Object.freeze([
   {
@@ -77,6 +78,62 @@ const AUTOMATION_CURVE_LABELS = Object.freeze(
     return labels
   }, {})
 )
+
+export function createDefaultAutomationBinding(binding = {}) {
+  const type = binding?.type === AUTOMATION_BINDING_MIDI_CC ? AUTOMATION_BINDING_MIDI_CC : null
+
+  return {
+    type,
+    deviceId: normalizeNullableString(binding?.deviceId),
+    channel: normalizeNullableInteger(binding?.channel),
+    controller: normalizeNullableInteger(binding?.controller)
+  }
+}
+
+export function getAutomationBindingSummary(binding, resolveDeviceName = null) {
+  const normalizedBinding = createDefaultAutomationBinding(binding)
+
+  if (normalizedBinding.type !== AUTOMATION_BINDING_MIDI_CC) {
+    return 'No input binding'
+  }
+
+  return [
+    `MIDI CC ${normalizedBinding.controller ?? 'Any'}`,
+    normalizedBinding.channel !== null ? `Ch ${normalizedBinding.channel}` : 'Any ch',
+    getAutomationBindingDeviceSummary(normalizedBinding.deviceId, resolveDeviceName)
+  ].filter(Boolean).join(' · ')
+}
+
+export function doesAutomationBindingMatchInput(binding, input = {}) {
+  const normalizedBinding = createDefaultAutomationBinding(binding)
+  const normalizedSource = normalizeNullableString(input?.source)
+
+  if (normalizedBinding.type !== AUTOMATION_BINDING_MIDI_CC || normalizedSource !== AUTOMATION_BINDING_MIDI_CC) {
+    return false
+  }
+
+  if (normalizedBinding.deviceId && normalizedBinding.deviceId !== normalizeNullableString(input?.deviceId)) {
+    return false
+  }
+
+  if (normalizedBinding.channel !== null && normalizedBinding.channel !== normalizeNullableInteger(input?.channel)) {
+    return false
+  }
+
+  if (
+    normalizedBinding.controller !== null &&
+    normalizedBinding.controller !== normalizeNullableInteger(input?.controller)
+  ) {
+    return false
+  }
+
+  return true
+}
+
+export function resolveAutomationLaneValueFromMidiCc(lane, input = {}) {
+  const normalizedInputValue = clamp(Math.round(Number(input?.value) || 0), 0, 127)
+  return getAutomationLaneValueFromNormalized(lane, normalizedInputValue / 127)
+}
 
 const AUDIO_EFFECT_TYPE_LABELS = {
   autoFilter: 'Auto Filter',
@@ -232,6 +289,7 @@ export function createDefaultAutomationLane({ value = 1 } = {}) {
   return {
     id: MASTER_GAIN_AUTOMATION_LANE_ID,
     height: normalizeAutomationLaneHeight(undefined),
+    binding: createDefaultAutomationBinding(),
     type: MASTER_GAIN_AUTOMATION_LANE_TYPE,
     points: [
       {
@@ -253,6 +311,7 @@ export function createAudioEffectParamAutomationLane(effect, paramKey) {
   return {
     id: getAudioEffectParamAutomationLaneId(effect.id, paramKey),
     height: normalizeAutomationLaneHeight(undefined),
+    binding: createDefaultAutomationBinding(),
     type: AUDIO_EFFECT_PARAM_AUTOMATION_LANE_TYPE,
     effectId: effect.id,
     effectType: effect.type,
@@ -283,6 +342,7 @@ export function getAutomationLaneConfig(lane) {
   if (lane?.type === MASTER_GAIN_AUTOMATION_LANE_TYPE || lane?.id === MASTER_GAIN_AUTOMATION_LANE_ID) {
     return {
       id: MASTER_GAIN_AUTOMATION_LANE_ID,
+      binding: createDefaultAutomationBinding(lane.binding),
       label: 'Master Gain',
       min: 0,
       max: MASTER_GAIN_AUTOMATION_MAX,
@@ -302,6 +362,7 @@ export function getAutomationLaneConfig(lane) {
 
   return {
     ...paramConfig,
+    binding: createDefaultAutomationBinding(lane.binding),
     id: lane.id,
     label: `${AUDIO_EFFECT_TYPE_LABELS[lane.effectType] ?? lane.effectType} ${paramConfig.label}`
   }
@@ -413,6 +474,7 @@ export function normalizeAutomationLane(lane = {}) {
   if (lane.id === MASTER_GAIN_AUTOMATION_LANE_ID || lane.type === MASTER_GAIN_AUTOMATION_LANE_TYPE) {
     const nextLane = {
       id: MASTER_GAIN_AUTOMATION_LANE_ID,
+      binding: createDefaultAutomationBinding(lane.binding),
       height: normalizeAutomationLaneHeight(lane.height),
       type: MASTER_GAIN_AUTOMATION_LANE_TYPE
     }
@@ -447,6 +509,7 @@ export function normalizeAutomationLane(lane = {}) {
 
   return {
     ...nextLane,
+    binding: createDefaultAutomationBinding(lane.binding),
     points: Array.isArray(lane.points)
       ? lane.points.map((point) => normalizeAutomationPointForLane(point, nextLane)).filter(Boolean)
       : []
@@ -661,4 +724,30 @@ export function getAutomationLaneLiveOverrideValue(liveOverrides = null, laneId 
 
   const overrideValue = Number(liveOverrides[laneId])
   return Number.isFinite(overrideValue) ? overrideValue : null
+}
+
+function normalizeNullableString(value) {
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const trimmedValue = value.trim()
+  return trimmedValue || null
+}
+
+function normalizeNullableInteger(value) {
+  const numericValue = Number(value)
+  return Number.isInteger(numericValue) ? numericValue : null
+}
+
+function getAutomationBindingDeviceSummary(deviceId, resolveDeviceName) {
+  if (!deviceId) {
+    return 'Any device'
+  }
+
+  const resolvedDeviceName = typeof resolveDeviceName === 'function'
+    ? normalizeNullableString(resolveDeviceName(deviceId))
+    : null
+
+  return resolvedDeviceName || 'Specific device'
 }

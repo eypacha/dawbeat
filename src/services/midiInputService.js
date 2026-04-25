@@ -1,4 +1,5 @@
 import { reactive } from 'vue'
+import { dispatchAutomationInput } from '@/services/automationInputService'
 import { dispatchValueTrackerInput } from '@/services/valueTrackerInputService'
 import { enqueueSnackbar } from '@/services/notifications'
 
@@ -231,6 +232,7 @@ function handleMidiMessage(event, input) {
     return
   }
 
+  dispatchAutomationInput(normalizedMessage)
   dispatchValueTrackerInput(normalizedMessage)
 }
 

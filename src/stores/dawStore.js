@@ -111,6 +111,8 @@ import {
 import {
   createAudioEffectParamAutomationLane,
   createDefaultAutomationLane,
+  createDefaultAutomationBinding,
+  doesAutomationBindingMatchInput,
   getAutomationLaneByAudioEffectParam,
   getAutomationLaneConfig,
   getAutomationLaneById as findAutomationLaneById,
@@ -120,6 +122,7 @@ import {
   getDefaultAutomationLanes,
   normalizeAutomationCurveType,
   normalizeAutomationPointForLane,
+  resolveAutomationLaneValueFromMidiCc,
   upsertAutomationPointForLane
 } from '@/services/automationService'
 import {
@@ -414,6 +417,24 @@ function resolveValueTrackerTracksForInput(state, input = {}) {
 function resolveValueTrackerInputValueForTrack(valueTrackerTrack, input = {}) {
   if (input?.source === 'midiCc') {
     return resolveMidiCcValueForBits(input.value, valueTrackerTrack?.binding?.bits)
+  }
+
+  return input?.value
+}
+
+function resolveAutomationLanesForInput(state, input = {}) {
+  if (input?.source !== 'midiCc') {
+    return []
+  }
+
+  return (state.automationLanes ?? []).filter((lane) =>
+    doesAutomationBindingMatchInput(lane.binding, input)
+  )
+}
+
+function resolveAutomationInputValueForLane(lane, input = {}) {
+  if (input?.source === 'midiCc') {
+    return resolveAutomationLaneValueFromMidiCc(lane, input)
   }
 
   return input?.value
@@ -3064,6 +3085,20 @@ export const useDawStore = defineStore('dawStore', {
       return true
     },
 
+    setAutomationLaneBinding(laneId, binding) {
+      return this.recordHistoryStep('set-automation-lane-binding', () => {
+        const lane = this.getAutomationLaneById(laneId)
+
+        if (!lane) {
+          return false
+        }
+
+        lane.binding = createDefaultAutomationBinding(binding)
+        this.clearAutomationLiveOverride(laneId)
+        return true
+      })
+    },
+
     setValueTrackerTrackLiveInput(valueTrackerTrackId, value, time = this.time) {
       const valueTrackerTrack = findValueTrackerTrack(this.valueTrackerTracks, valueTrackerTrackId)
 
@@ -3196,6 +3231,32 @@ export const useDawStore = defineStore('dawStore', {
             normalizedTimeTicks
           )
         }
+      }
+
+      return applied
+    },
+
+    ingestAutomationInput(input = {}) {
+      const targetAutomationLanes = resolveAutomationLanesForInput(this.$state, input)
+
+      if (!targetAutomationLanes.length) {
+        return false
+      }
+
+      let applied = false
+
+      for (const targetAutomationLane of targetAutomationLanes) {
+        const resolvedValue = resolveAutomationInputValueForLane(targetAutomationLane, input)
+
+        if (!Number.isFinite(Number(resolvedValue))) {
+          continue
+        }
+
+        if (!this.setAutomationLiveOverride(targetAutomationLane.id, resolvedValue)) {
+          continue
+        }
+
+        applied = true
       }
 
       return applied

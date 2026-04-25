@@ -12,15 +12,27 @@
         <span class="mt-1 block truncate text-sm text-zinc-100">{{ laneLabel }}</span>
       </div>
 
-      <button
-        class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-[10px] transition-colors"
-        :class="companionButtonClassName"
-        :title="companionButtonTitle"
-        type="button"
-        @click.stop="openAutomationCompanionQr"
-      >
-        <Smartphone class="h-3.5 w-3.5" />
-      </button>
+      <div class="flex shrink-0 items-center gap-1">
+        <button
+          class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-[10px] transition-colors"
+          :class="bindingButtonClassName"
+          :title="bindingButtonTitle"
+          type="button"
+          @click.stop="openAutomationBinding"
+        >
+          <SlidersHorizontal class="h-3.5 w-3.5" />
+        </button>
+
+        <button
+          class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-[10px] transition-colors"
+          :class="companionButtonClassName"
+          :title="companionButtonTitle"
+          type="button"
+          @click.stop="openAutomationCompanionQr"
+        >
+          <Smartphone class="h-3.5 w-3.5" />
+        </button>
+      </div>
     </div>
 
     <div
@@ -75,21 +87,25 @@
 <script setup>
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { Smartphone } from 'lucide-vue-next'
+import { Smartphone, SlidersHorizontal } from 'lucide-vue-next'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { useTimelineLaneResize } from '@/composables/useTimelineLaneResize'
 import {
-  isAutomationCompanionLaneControlled,
-  openAutomationCompanionModal
-} from '@/services/automationCompanionService'
-import {
+  AUTOMATION_BINDING_MIDI_CC,
+  getAutomationBindingSummary,
+  getAutomationLaneConfig,
   DEFAULT_AUTOMATION_CURVE,
   AUTOMATION_CURVE_LINEAR,
   AUTOMATION_CURVE_OPTIONS,
   getAutomationCurveLabel,
-  getAutomationLaneConfig,
   interpolateAutomationSegmentValue
 } from '@/services/automationService'
+import {
+  isAutomationCompanionLaneControlled,
+  openAutomationCompanionModal
+} from '@/services/automationCompanionService'
+import { openAutomationBindingDialog } from '@/services/automationBindingDialogService'
+import { getMidiInputDisplayName } from '@/services/midiInputService'
 import { getDraggedTick, resolvePointerEventSnap } from '@/services/snapService'
 import { useDawStore } from '@/stores/dawStore'
 import { clamp, getVisibleTimelineTickStep, pixelsToTicks, ticksToPixels } from '@/utils/timeUtils'
@@ -136,8 +152,22 @@ const selectedPointIndex = computed(() =>
   selectedAutomationPoint.value?.laneId === props.lane.id ? selectedAutomationPoint.value.index : -1
 )
 const companionControlled = computed(() => isAutomationCompanionLaneControlled(props.lane.id))
+const hasAutomationBinding = computed(() => props.lane.binding?.type === AUTOMATION_BINDING_MIDI_CC)
 const selectedHeaderClassName = computed(() =>
   selectedPointIndex.value >= 0 ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-900 text-zinc-300'
+)
+const automationBindingSummary = computed(() =>
+  getAutomationBindingSummary(props.lane.binding, getMidiInputDisplayName)
+)
+const bindingButtonClassName = computed(() =>
+  hasAutomationBinding.value
+    ? 'border-emerald-500/50 bg-emerald-500/12 text-emerald-200 hover:border-emerald-400/80 hover:bg-emerald-500/20'
+    : 'border-zinc-700 bg-zinc-950/90 text-zinc-400 hover:border-zinc-500 hover:text-zinc-100'
+)
+const bindingButtonTitle = computed(() =>
+  hasAutomationBinding.value
+    ? `Edit MIDI CC binding · ${automationBindingSummary.value}`
+    : 'Bind MIDI CC input'
 )
 const companionButtonClassName = computed(() =>
   companionControlled.value
@@ -325,6 +355,10 @@ function handlePointPointerCancel(event) {
 
 function openAutomationCompanionQr() {
   openAutomationCompanionModal(props.lane.id)
+}
+
+function openAutomationBinding() {
+  openAutomationBindingDialog(props.lane.id)
 }
 
 function cleanupPointDrag() {
