@@ -95,7 +95,7 @@
         </div>
 
         <div v-else class="rounded border border-zinc-800 bg-zinc-950/70 p-3 text-xs text-zinc-500">
-          MIDI Note bindings use every note from the selected device and write the note number directly. Releasing a key keeps the last value. Select the device and save.
+          MIDI Note bindings use every note from the selected device and write a keyboard index directly. C0 becomes 0 and C#0 becomes 1. Releasing a key keeps the last value. Select the device and save.
         </div>
 
         <div class="rounded border border-zinc-800 bg-zinc-950/70 p-3">
@@ -202,7 +202,7 @@ const bindingSummary = computed(() =>
 )
 const midiLearnStatus = computed(() => {
   if (draft.type === 'midiNote') {
-    return 'MIDI Note bindings use the selected device only. Learn is not needed.'
+    return 'MIDI Note bindings use the selected device only. C0 becomes 0, so Learn is not needed.'
   }
 
   if (isListeningForLearn.value) {

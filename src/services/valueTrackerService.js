@@ -444,6 +444,7 @@ export function getValueTrackerBindingSummary(binding, resolveDeviceName = null)
   if (normalizedBinding.type === 'midiNote') {
     return [
       'MIDI Note',
+      'C0 = 0',
       getValueTrackerBindingDeviceSummary(normalizedBinding.deviceId, resolveDeviceName)
     ].filter(Boolean).join(' · ')
   }

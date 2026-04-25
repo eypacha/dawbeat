@@ -5,6 +5,7 @@ import { enqueueSnackbar } from '@/services/notifications'
 const MIDI_NOTE_OFF = 0x80
 const MIDI_NOTE_ON = 0x90
 const MIDI_CONTROL_CHANGE = 0xB0
+const MIDI_NOTE_C0_OFFSET = 12
 const MAX_RECENT_MESSAGES = 12
 
 const midiSupport = Boolean(globalThis.navigator?.requestMIDIAccess)
@@ -314,7 +315,7 @@ function normalizeMidiMessage(event) {
       isNoteOff,
       note: noteValue,
       source: 'midiNote',
-      value: isNoteOff ? null : noteValue
+      value: isNoteOff ? null : normalizeMidiKeyboardValue(noteValue)
     }
   }
 
@@ -373,6 +374,12 @@ function normalizeMidiNoteValue(value) {
   }
 
   return Math.max(0, Math.min(127, Math.round(numericValue)))
+}
+
+function normalizeMidiKeyboardValue(value) {
+  // Value trackers treat MIDI notes as a C0-based keyboard index so the first
+  // playable note lands on 0 instead of the raw MIDI note number.
+  return Math.max(0, normalizeMidiNoteValue(value) - MIDI_NOTE_C0_OFFSET)
 }
 
 function createMidiMessageId() {
