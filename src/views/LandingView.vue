@@ -241,7 +241,7 @@ const features = [
   },
   {
     title: 'Keyboard and MIDI control',
-    description: 'Keyboard override, MIDI CC, MIDI Note, MIDI Learn, and external MIDI Clock transport sync.',
+    description: 'Keyboard override, MIDI CC, MIDI Keyboard, MIDI Learn, and external MIDI Clock transport sync.',
     icon: Keyboard
   },
   {

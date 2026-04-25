@@ -23,7 +23,7 @@
         >
           <option value="">None</option>
           <option value="midiCc">MIDI CC</option>
-          <option value="midiNote">MIDI Note</option>
+          <option value="midiNote">MIDI Keyboard</option>
           <option value="keyboard">Keyboard</option>
         </select>
       </label>
@@ -100,18 +100,10 @@
 
             <div class="flex shrink-0 gap-2">
               <Button
-                size="xs"
-                variant="ghost"
-                @click="handleEnableMidi"
-              >
-                {{ midiState.enabled ? 'Refresh' : 'Enable MIDI' }}
-              </Button>
-
-              <Button
                 v-if="showMidiLearnButton"
                 size="xs"
                 :variant="isListeningForLearn ? 'danger' : 'primary'"
-                :disabled="midiState.initializing"
+                :disabled="midiState.initializing || !midiState.enabled"
                 @click="handleLearn"
               >
                 {{ isListeningForLearn ? 'Stop Learn' : 'Learn' }}
@@ -149,9 +141,7 @@ import Button from '@/components/ui/Button.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import Modal from '@/components/ui/Modal.vue'
 import {
-  enableMidiInput,
   midiState,
-  refreshMidiInputs,
   startMidiLearn,
   stopMidiLearn
 } from '@/services/midiInputService'
@@ -192,7 +182,7 @@ const midiLearnStatus = computed(() => {
   }
 
   if (!midiState.enabled) {
-    return 'Enable MIDI first, then use Learn or fill the fields manually.'
+    return 'Enable MIDI in Settings first, then use Learn or fill the fields manually.'
   }
 
   if (isListeningForLearn.value) {
@@ -242,15 +232,6 @@ onBeforeUnmount(() => {
   stopLearning()
 })
 
-async function handleEnableMidi() {
-  if (midiState.enabled) {
-    refreshMidiInputs()
-    return
-  }
-
-  await enableMidiInput()
-}
-
 async function handleLearn() {
   if (draft.type !== 'midiCc' && draft.type !== 'midiNote') {
     return
@@ -261,9 +242,7 @@ async function handleLearn() {
     return
   }
 
-  const enabled = midiState.enabled || await enableMidiInput()
-
-  if (!enabled) {
+  if (!midiState.enabled) {
     return
   }
 

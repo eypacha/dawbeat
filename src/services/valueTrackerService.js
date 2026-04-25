@@ -253,62 +253,19 @@ export function getValueTrackerValueAtTimeWithLiveInput(
   fallback = VALUE_TRACKER_MIN,
   liveInput = null
 ) {
-  if (!Array.isArray(valueTrackerTrack?.clips) || !valueTrackerTrack.clips.length) {
-    const normalizedLiveInput = normalizeValueTrackerLiveInput(liveInput)
-    return normalizedLiveInput?.time <= timeTicks
-      ? normalizedLiveInput.value
-      : normalizeValueTrackerEventValue(fallback)
-  }
-
-  const timelineValue = getTimelineValueTrackerValueAtTime(timeTicks, valueTrackerTrack, fallback)
   const normalizedLiveInput = normalizeValueTrackerLiveInput(liveInput)
 
-  if (!normalizedLiveInput || normalizedLiveInput.time > timeTicks) {
-    return timelineValue
+  // Live input is a runtime override; it should keep winning across loop wraps
+  // instead of rewinding with transport position.
+  if (normalizedLiveInput) {
+    return normalizedLiveInput.value
   }
 
-  const nextEventTime = getNextValueTrackerEventTime(valueTrackerTrack, normalizedLiveInput.time)
-
-  if (nextEventTime !== null && timeTicks >= nextEventTime) {
-    return timelineValue
+  if (!Array.isArray(valueTrackerTrack?.clips) || !valueTrackerTrack.clips.length) {
+    return normalizeValueTrackerEventValue(fallback)
   }
 
-  return normalizedLiveInput.value
-}
-
-export function getNextValueTrackerEventTime(valueTrackerTrack, afterTime) {
-  const normalizedAfterTime = Number(afterTime)
-
-  if (!Number.isFinite(normalizedAfterTime)) {
-    return null
-  }
-
-  for (const clip of valueTrackerTrack?.clips ?? []) {
-    const clipStart = Number(clip?.start)
-
-    if (!Number.isFinite(clipStart)) {
-      continue
-    }
-
-    const stepSubdivision = normalizeValueTrackerStepSubdivision(clip.stepSubdivision)
-    const normalizedValues = normalizeValueTrackerValues(clip.values, clip.duration, stepSubdivision)
-
-    for (let stepIndex = 0; stepIndex < normalizedValues.length; stepIndex += 1) {
-      const eventValue = normalizeValueTrackerEventValue(normalizedValues[stepIndex])
-
-      if (eventValue === null) {
-        continue
-      }
-
-      const eventTime = clipStart + stepIndex / stepSubdivision
-
-      if (eventTime > normalizedAfterTime) {
-        return eventTime
-      }
-    }
-  }
-
-  return null
+  return getTimelineValueTrackerValueAtTime(timeTicks, valueTrackerTrack, fallback)
 }
 
 function getTimelineValueTrackerValueAtTime(timeTicks, valueTrackerTrack, fallback = VALUE_TRACKER_MIN) {
@@ -442,7 +399,7 @@ export function getValueTrackerBindingSummary(binding, resolveDeviceName = null)
 
   if (normalizedBinding.type === 'midiNote') {
     return [
-      'MIDI Note',
+      'MIDI Keyboard',
       'C-1 = 0',
       normalizedBinding.channel !== null ? `Ch ${normalizedBinding.channel}` : 'Any ch',
       getValueTrackerBindingDeviceSummary(normalizedBinding.deviceId, resolveDeviceName)

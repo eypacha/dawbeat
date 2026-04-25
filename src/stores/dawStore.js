@@ -3017,10 +3017,6 @@ export const useDawStore = defineStore('dawStore', {
     },
 
     setTime(time) {
-      if (Number(time) < Number(this.time)) {
-        this.valueTrackerLiveInputs = {}
-      }
-
       this.time = time
     },
 
