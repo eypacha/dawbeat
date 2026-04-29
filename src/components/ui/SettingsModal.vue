@@ -200,7 +200,7 @@
                   </span>
                 </div>
                 <p class="mt-1 text-xs text-zinc-500">
-                  Learn Play, Stop, Loop, and Rec transport control.
+                  Learn Play, Stop, Loop, and Rec controls.
                 </p>
               </div>
 
