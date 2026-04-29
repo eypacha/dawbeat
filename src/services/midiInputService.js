@@ -289,7 +289,7 @@ function normalizeMidiEvent(event, input) {
   }
 }
 
-function normalizeMidiMessage(event) {
+export function normalizeMidiMessage(event) {
   const { data, data1, data2, deviceId, deviceName, status } = event
 
   if (data.length < 3) {
@@ -361,7 +361,7 @@ function createMidiLearnBinding(message) {
       channel: message.channel,
       controller: null,
       deviceId: message.deviceId,
-      note: null,
+      note: normalizeMidiNoteValue(message.note),
       type: 'midiNote',
       variableName: null
     }

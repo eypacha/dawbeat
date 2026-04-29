@@ -92,9 +92,14 @@ export function refreshMidiClockDerivedState() {
 export function registerMidiClockTransport(handlers = {}) {
   transportHandlers = {
     continueFromExternalClock: handlers.continueFromExternalClock ?? null,
+    continueFromMidiTransport: handlers.continueFromMidiTransport ?? null,
     startFromExternalClock: handlers.startFromExternalClock ?? null,
-    stopFromExternalClock: handlers.stopFromExternalClock ?? null
+    startFromMidiTransport: handlers.startFromMidiTransport ?? null,
+    stopFromExternalClock: handlers.stopFromExternalClock ?? null,
+    stopFromMidiTransport: handlers.stopFromMidiTransport ?? null
   }
+
+  ensureMidiClockSubscription()
 
   return () => {
     if (transportHandlers?.startFromExternalClock === handlers.startFromExternalClock) {
@@ -126,6 +131,10 @@ function ensureMidiClockSubscription() {
 
 function handleMidiMessageEvent(message) {
   if (!midiClockState.enabled) {
+    if (handleStandardTransportMessage(message.status)) {
+      return
+    }
+
     return
   }
 
@@ -144,22 +153,56 @@ function handleMidiMessageEvent(message) {
     return
   }
 
-  if (message.status === MIDI_START) {
-    midiClockState.running = true
+  if (handleClockTransportMessage(message.status)) {
+    return
+  }
+}
+
+function handleClockTransportMessage(status) {
+  if (status === MIDI_START) {
+    if (midiClockState.enabled) {
+      midiClockState.running = true
+    }
     enqueueTransportCommand('startFromExternalClock')
-    return
+    return true
   }
 
-  if (message.status === MIDI_CONTINUE) {
-    midiClockState.running = true
+  if (status === MIDI_CONTINUE) {
+    if (midiClockState.enabled) {
+      midiClockState.running = true
+    }
     enqueueTransportCommand('continueFromExternalClock')
-    return
+    return true
   }
 
-  if (message.status === MIDI_STOP) {
-    midiClockState.running = false
+  if (status === MIDI_STOP) {
+    if (midiClockState.enabled) {
+      midiClockState.running = false
+    }
     enqueueTransportCommand('stopFromExternalClock')
+    return true
   }
+
+  return false
+}
+
+function handleStandardTransportMessage(status) {
+  if (status === MIDI_START) {
+    enqueueTransportCommand('startFromMidiTransport')
+    return true
+  }
+
+  if (status === MIDI_CONTINUE) {
+    enqueueTransportCommand('continueFromMidiTransport')
+    return true
+  }
+
+  if (status === MIDI_STOP) {
+    enqueueTransportCommand('stopFromMidiTransport')
+    return true
+  }
+
+  return false
 }
 
 function handleTimingClock(message) {

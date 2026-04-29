@@ -249,6 +249,7 @@ import {
 import { initKeyboardShortcuts } from '@/services/keyboardShortcuts'
 import { disposeMidiClock, registerMidiClockTransport } from '@/services/midiClockService'
 import { disposeMidiInput } from '@/services/midiInputService'
+import { registerMidiTransportHandlers } from '@/services/midiTransportService'
 import { getNextTimelineSectionLabelName } from '@/services/timelineSectionLabelService'
 import { findTimelineClip } from '@/services/dawStoreService'
 import { enqueueSnackbar } from '@/services/notifications'
@@ -307,6 +308,7 @@ const groupNameDialog = reactive({
 const valueTrackerDialogHistoryActive = ref(false)
 let disposeKeyboardShortcuts = null
 let disposeMidiClockTransport = null
+let disposeMidiTransportHandlers = null
 const transportPlayback = useTransportPlayback()
 const { stop } = transportPlayback
 const effectsCollapsed = ref(false)
@@ -1037,6 +1039,12 @@ onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
   window.addEventListener('contextmenu', handleGlobalContextMenu)
   disposeMidiClockTransport = registerMidiClockTransport(transportPlayback)
+  disposeMidiTransportHandlers = registerMidiTransportHandlers({
+    play: transportPlayback.play,
+    stop: transportPlayback.stop,
+    loop: () => dawStore.toggleLoop(),
+    record: transportPlayback.toggleRecord
+  })
   disposeKeyboardShortcuts = initKeyboardShortcuts({
     dawStore,
     transport: transportPlayback
@@ -1058,6 +1066,8 @@ onBeforeUnmount(() => {
   disposeKeyboardShortcuts = null
   disposeMidiClockTransport?.()
   disposeMidiClockTransport = null
+  disposeMidiTransportHandlers?.()
+  disposeMidiTransportHandlers = null
   disposeAutomationCompanionHost()
   disposeMidiClock()
   disposeMidiInput()

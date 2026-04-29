@@ -136,46 +136,204 @@
               >
             </div>
 
-            <label class="mt-4 block">
-              <span class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Clock input</span>
-              <select
-                class="mt-2 w-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none"
-                :disabled="!midiClockState.enabled || !midiState.inputs.length"
-                :value="midiClockState.selectedInputId"
-                @change="handleMidiClockInputChange"
+            <CollapseTransition>
+              <div
+                v-if="midiClockState.enabled"
+                class="p-0 mt-2"
               >
-                <option value="">Select MIDI input</option>
-                <option
-                  v-for="midiInput in midiState.inputs"
-                  :key="midiInput.id"
-                  :value="midiInput.id"
-                >
-                  {{ midiInput.name }}
-                </option>
-              </select>
-            </label>
+                <label class="block">
+                  <span class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Clock input</span>
+                  <select
+                    class="mt-2 w-full border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none"
+                    :disabled="!midiClockState.enabled || !midiState.inputs.length"
+                    :value="midiClockState.selectedInputId"
+                    @change="handleMidiClockInputChange"
+                  >
+                    <option value="">Select MIDI input</option>
+                    <option
+                      v-for="midiInput in midiState.inputs"
+                      :key="midiInput.id"
+                      :value="midiInput.id"
+                    >
+                      {{ midiInput.name }}
+                    </option>
+                  </select>
+                </label>
 
-            <div class="mt-4 grid gap-3 text-xs text-zinc-400 sm:grid-cols-2">
-              <div class="border border-zinc-800 bg-zinc-950/70 px-3 py-2">
-                <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">State</p>
-                <p class="mt-1 text-sm text-zinc-200">{{ midiClockTransportState }}</p>
+                <div class="mt-4 grid gap-3 text-xs text-zinc-400 sm:grid-cols-2">
+                  <div class="border border-zinc-800 bg-zinc-950/70 px-3 py-2">
+                    <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">State</p>
+                    <p class="mt-1 text-sm text-zinc-200">{{ midiClockTransportState }}</p>
+                  </div>
+
+                  <div class="border border-zinc-800 bg-zinc-950/70 px-3 py-2">
+                    <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">BPM</p>
+                    <p class="mt-1 text-sm text-zinc-200">{{ midiClockBpmLabel }}</p>
+                  </div>
+
+                  <div class="border border-zinc-800 bg-zinc-950/70 px-3 py-2">
+                    <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Effective Hz</p>
+                    <p class="mt-1 text-sm text-zinc-200">{{ midiClockSampleRateLabel }}</p>
+                  </div>
+
+                  <div class="border border-zinc-800 bg-zinc-950/70 px-3 py-2">
+                    <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Source</p>
+                    <p class="mt-1 text-sm text-zinc-200">{{ midiClockInputLabel }}</p>
+                  </div>
+                </div>
+              </div>
+            </CollapseTransition>
+          </div>
+
+          <div class="border border-zinc-800 bg-zinc-900/60">
+            <button
+              class="flex w-full items-start justify-between gap-4 p-4 text-left"
+              type="button"
+              :aria-expanded="transportLearnExpanded"
+              @click="toggleTransportLearnExpanded"
+            >
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <p class="text-sm text-zinc-200">Transport learn</p>
+                  <span class="border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-zinc-400">
+                    {{ midiTransportLearningLabel }}
+                  </span>
+                </div>
+                <p class="mt-1 text-xs text-zinc-500">
+                  Learn Play, Stop, Loop, and Rec transport control.
+                </p>
               </div>
 
-              <div class="border border-zinc-800 bg-zinc-950/70 px-3 py-2">
-                <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">BPM</p>
-                <p class="mt-1 text-sm text-zinc-200">{{ midiClockBpmLabel }}</p>
-              </div>
+              <ChevronDown
+                class="mt-1 h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200"
+                :class="transportLearnExpanded ? 'rotate-180' : ''"
+              />
+            </button>
 
-              <div class="border border-zinc-800 bg-zinc-950/70 px-3 py-2">
-                <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Effective Hz</p>
-                <p class="mt-1 text-sm text-zinc-200">{{ midiClockSampleRateLabel }}</p>
-              </div>
+            <CollapseTransition>
+              <div
+                v-if="transportLearnExpanded"
+                class="p-4"
+              >
+                <div class="space-y-3">
+                  <div class="border border-zinc-800 bg-zinc-950/70 p-3">
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <p class="text-sm text-zinc-200">Play</p>
+                        <p class="mt-1 text-xs text-zinc-500">{{ midiTransportPlayBindingLabel }}</p>
+                      </div>
 
-              <div class="border border-zinc-800 bg-zinc-950/70 px-3 py-2">
-                <p class="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Source</p>
-                <p class="mt-1 text-sm text-zinc-200">{{ midiClockInputLabel }}</p>
+                      <div class="flex shrink-0 gap-2">
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          :disabled="!midiTransportState.playBinding.type"
+                          @click="handleTransportBindingClear('play')"
+                        >
+                          Clear
+                        </Button>
+
+                        <Button
+                          size="xs"
+                          :disabled="midiState.initializing"
+                          :variant="midiTransportState.learningAction === 'play' ? 'danger' : 'primary'"
+                          @click="handleTransportBindingLearn('play')"
+                        >
+                          {{ midiTransportState.learningAction === 'play' ? 'Stop Learn' : 'Learn Play' }}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="border border-zinc-800 bg-zinc-950/70 p-3">
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <p class="text-sm text-zinc-200">Stop</p>
+                        <p class="mt-1 text-xs text-zinc-500">{{ midiTransportStopBindingLabel }}</p>
+                      </div>
+
+                      <div class="flex shrink-0 gap-2">
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          :disabled="!midiTransportState.stopBinding.type"
+                          @click="handleTransportBindingClear('stop')"
+                        >
+                          Clear
+                        </Button>
+
+                        <Button
+                          size="xs"
+                          :disabled="midiState.initializing"
+                          :variant="midiTransportState.learningAction === 'stop' ? 'danger' : 'primary'"
+                          @click="handleTransportBindingLearn('stop')"
+                        >
+                          {{ midiTransportState.learningAction === 'stop' ? 'Stop Learn' : 'Learn Stop' }}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="border border-zinc-800 bg-zinc-950/70 p-3">
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <p class="text-sm text-zinc-200">Loop</p>
+                        <p class="mt-1 text-xs text-zinc-500">{{ midiTransportLoopBindingLabel }}</p>
+                      </div>
+
+                      <div class="flex shrink-0 gap-2">
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          :disabled="!midiTransportState.loopBinding.type"
+                          @click="handleTransportBindingClear('loop')"
+                        >
+                          Clear
+                        </Button>
+
+                        <Button
+                          size="xs"
+                          :disabled="midiState.initializing"
+                          :variant="midiTransportState.learningAction === 'loop' ? 'danger' : 'primary'"
+                          @click="handleTransportBindingLearn('loop')"
+                        >
+                          {{ midiTransportState.learningAction === 'loop' ? 'Stop Learn' : 'Learn Loop' }}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="border border-zinc-800 bg-zinc-950/70 p-3">
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <p class="text-sm text-zinc-200">Rec</p>
+                        <p class="mt-1 text-xs text-zinc-500">{{ midiTransportRecordBindingLabel }}</p>
+                      </div>
+
+                      <div class="flex shrink-0 gap-2">
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          :disabled="!midiTransportState.recordBinding.type"
+                          @click="handleTransportBindingClear('record')"
+                        >
+                          Clear
+                        </Button>
+
+                        <Button
+                          size="xs"
+                          :disabled="midiState.initializing"
+                          :variant="midiTransportState.learningAction === 'record' ? 'danger' : 'primary'"
+                          @click="handleTransportBindingLearn('record')"
+                        >
+                          {{ midiTransportState.learningAction === 'record' ? 'Stop Learn' : 'Learn Rec' }}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            </CollapseTransition>
           </div>
 
           <div class="border border-zinc-800 bg-zinc-900/70 px-3 py-2">
@@ -215,10 +373,11 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { X } from 'lucide-vue-next'
+import { ChevronDown, X } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
+import CollapseTransition from '@/components/ui/CollapseTransition.vue'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import IconButton from '@/components/ui/IconButton.vue'
 import Modal from '@/components/ui/Modal.vue'
@@ -229,15 +388,24 @@ import { midiClockState, setMidiClockInput, setMidiClockReceiveEnabled } from '@
 import {
   enableMidiInput,
   formatMidiDebugMessage,
+  getMidiInputDisplayName,
   midiState,
   refreshMidiInputs
 } from '@/services/midiInputService'
+import {
+  clearMidiTransportBinding,
+  getMidiTransportBindingSummary,
+  midiTransportState,
+  resetMidiTransportBindings,
+  startMidiTransportLearn,
+  stopMidiTransportLearn
+} from '@/services/midiTransportService'
 import { enqueueSnackbar } from '@/services/notifications'
 import { clearProjectStorage } from '@/services/projectPersistence'
 import { useDawStore } from '@/stores/dawStore'
 import { useLibraryStore } from '@/stores/libraryStore'
 
-defineProps({
+const props = defineProps({
   visible: {
     type: Boolean,
     required: true
@@ -255,6 +423,7 @@ const resetConfirmVisible = ref(false)
 const restoreConfirmVisible = ref(false)
 const libraryRestoreInput = ref(null)
 const pendingLibraryRestoreItems = ref(null)
+const transportLearnExpanded = ref(false)
 const settingsTabs = [
   {
     id: 'general',
@@ -328,6 +497,37 @@ const midiClockSampleRateLabel = computed(() =>
 const midiClockInputLabel = computed(() =>
   midiClockState.syncSourceName || 'No input selected'
 )
+const midiTransportLearningLabel = computed(() => {
+  if (midiTransportState.learningAction === 'play') {
+    return 'Learning Play'
+  }
+
+  if (midiTransportState.learningAction === 'stop') {
+    return 'Learning Stop'
+  }
+
+  if (midiTransportState.learningAction === 'loop') {
+    return 'Learning Loop'
+  }
+
+  if (midiTransportState.learningAction === 'record') {
+    return 'Learning Rec'
+  }
+
+  return 'Idle'
+})
+const midiTransportPlayBindingLabel = computed(() =>
+  getMidiTransportBindingSummary(midiTransportState.playBinding, getMidiInputDisplayName)
+)
+const midiTransportStopBindingLabel = computed(() =>
+  getMidiTransportBindingSummary(midiTransportState.stopBinding, getMidiInputDisplayName)
+)
+const midiTransportLoopBindingLabel = computed(() =>
+  getMidiTransportBindingSummary(midiTransportState.loopBinding, getMidiInputDisplayName)
+)
+const midiTransportRecordBindingLabel = computed(() =>
+  getMidiTransportBindingSummary(midiTransportState.recordBinding, getMidiInputDisplayName)
+)
 const lastMidiMessageLabel = computed(() =>
   midiState.recentMessages.length
     ? formatMidiDebugMessage(midiState.recentMessages[0])
@@ -362,6 +562,39 @@ function handleMidiRefresh() {
   if (!refreshMidiInputs()) {
     void enableMidiInput()
   }
+}
+
+function toggleTransportLearnExpanded() {
+  transportLearnExpanded.value = !transportLearnExpanded.value
+}
+
+async function handleTransportBindingLearn(action) {
+  if (midiTransportState.learningAction === action) {
+    stopMidiTransportLearn()
+    return
+  }
+
+  if (!midiState.enabled) {
+    const enabled = await enableMidiInput()
+
+    if (!enabled) {
+      return
+    }
+  }
+
+  const started = startMidiTransportLearn(action)
+
+  if (!started) {
+    enqueueSnackbar('Could not start transport learn.', { variant: 'error' })
+  }
+}
+
+function handleTransportBindingClear(action) {
+  if (midiTransportState.learningAction === action) {
+    stopMidiTransportLearn()
+  }
+
+  clearMidiTransportBinding(action)
 }
 
 function formatNumberLabel(value) {
@@ -468,11 +701,30 @@ async function handleLibraryRestoreFileChange(event) {
 
 async function handleResetProject() {
   resetConfirmVisible.value = false
+  stopMidiTransportLearn()
   await stop()
   clearProjectStorage()
   libraryStore.resetToDefaultItems()
+  resetMidiTransportBindings()
   dawStore.resetProject()
-  enqueueSnackbar('Project reset and library restored to defaults', { variant: 'success' })
+  enqueueSnackbar('Project reset, library restored to defaults, and MIDI transport bindings cleared', { variant: 'success' })
   emit('close')
 }
+
+watch(
+  () => props.visible,
+  (visible) => {
+    if (!visible) {
+      stopMidiTransportLearn()
+      transportLearnExpanded.value = false
+      return
+    }
+
+    transportLearnExpanded.value = false
+  }
+)
+
+onBeforeUnmount(() => {
+  stopMidiTransportLearn()
+})
 </script>

@@ -407,8 +407,27 @@ export function useTransportPlayback() {
     }
   }
 
+  const startFromMidiTransport = async () => {
+    await seekToTime(0)
+
+    if (!playing.value) {
+      await play()
+    }
+  }
+
+  const continueFromMidiTransport = async () => {
+    if (!playing.value) {
+      await play()
+    }
+  }
+
+  const stopFromMidiTransport = async () => {
+    await stop()
+  }
+
   transportPlayback = {
     continueFromExternalClock,
+    continueFromMidiTransport,
     play,
     enableAudio,
     getCurrentTime,
@@ -416,7 +435,9 @@ export function useTransportPlayback() {
     record,
     seekToTime,
     startFromExternalClock,
+    startFromMidiTransport,
     stopFromExternalClock,
+    stopFromMidiTransport,
     toggleRecord,
     togglePlay,
     stop
